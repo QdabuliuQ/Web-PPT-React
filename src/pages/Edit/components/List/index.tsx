@@ -1,10 +1,11 @@
 import { memo } from 'react';
-import { Scrollbars } from 'react-custom-scrollbars';
-import style from './index.module.less';
 
-export default memo(function Panel() {
+import style from './index.module.less';
+import Scrollbars from 'react-custom-scrollbars';
+
+export default memo(function List() {
   return (
-    <div className={style.panel}>
+    <div className={style.list}>
       <Scrollbars
         autoHide
         autoHideTimeout={1000}

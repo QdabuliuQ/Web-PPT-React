@@ -7,28 +7,74 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint:prettier": "prettier --write --loglevel warn \"src/**/*.{js,ts,json,tsx,css,less,scss,html,md}\"",
+    "lint:eslint": "eslint \"{src}/**/*.{ts,tsx}\" --fix",
+    "lint:stylelint": "stylelint --fix \"**/*.{less,postcss,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/",
+    "prepare": "husky install",
+    "lint:fixJs": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src "
   },
   "dependencies": {
     "antd": "^5.20.3",
     "fabric": "^5.3.0",
     "react": "^18.3.1",
+    "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.1",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.4.0",
+    "@commitlint/config-conventional": "^19.2.2",
     "@eslint/js": "^9.9.0",
+    "@types/node": "^22.5.0",
     "@types/react": "^18.3.3",
+    "@types/react-custom-scrollbars": "^4.0.13",
     "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "@typescript-eslint/parser": "^8.3.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "eslint": "^9.9.0",
+    "eslint": "^9.9.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
-    "eslint-plugin-react-refresh": "^0.4.9",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "globals": "^15.9.0",
+    "husky": "^8.0.0",
+    "less": "^4.2.0",
     "less-loader": "^12.2.0",
+    "lint-staged": "^15.2.9",
+    "prettier": "^3.3.3",
+    "stylelint": "^16.8.2",
+    "stylelint-config-recess-order": "^5.1.0",
+    "stylelint-config-standard": "^36.0.1",
+    "stylelint-less": "^3.0.1",
+    "stylelint-prettier": "^5.0.2",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "{!(package)*.json,*.code-snippets,.!(browserslist)*rc}": [
+      "prettier --write--parser json"
+    ],
+    "package.json": [
+      "prettier --write"
+    ],
+    "*.{scss,less,styl}": [
+      "stylelint --fix",
+      "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write"
+    ]
   }
 }
