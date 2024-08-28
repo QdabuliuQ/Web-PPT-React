@@ -9,7 +9,7 @@ export default memo(function Panel() {
         autoHide
         autoHideTimeout={1000}
         style={{
-          height: 'calc(100vh - 60px)',
+          height: 'calc(100vh - 85px - 40px)',
         }}
       >
         <h1>ahhh</h1>
