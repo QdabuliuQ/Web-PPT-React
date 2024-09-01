@@ -1,0 +1,26 @@
+.buttonItem {
+  display: inline-flex;
+  flex-direction: column;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  cursor: pointer;
+  user-select: none;
+  margin-right: 5px;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  :global(.iconfont) {
+    padding-top: 5px;
+    font-size: 15px;
+  }
+
+  .buttonTitle {
+    padding-top: 5px;
+    font-size: 13px;
+  }
+}

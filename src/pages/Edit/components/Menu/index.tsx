@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import style from './index.module.less';
+import useStore from '@/stores';
 
 interface Menu {
   id: string;
@@ -11,21 +12,22 @@ export default memo(function Menu() {
   const menus = useMemo<Array<Menu>>(
     () => [
       {
-        id: '0',
+        id: 'start',
         title: '开始',
       },
       {
-        id: '1',
+        id: 'insert',
         title: '插入',
       },
     ],
     []
   );
 
-  const [active, setActive] = useState('');
+  const { activePanel, activePanelUpdate } = useStore();
+  console.log(activePanel, 'activePanel');
 
   const menuClick = (id: string) => {
-    setActive(id);
+    activePanelUpdate(id);
   };
 
   return (
@@ -34,7 +36,7 @@ export default memo(function Menu() {
         <div
           key={item.id}
           onClick={() => menuClick(item.id)}
-          className={`${style.menuItem} ${active === item.id ? style.activeMenuItem : ''}`}
+          className={`${style.menuItem} ${activePanel === item.id ? style.activeMenuItem : ''}`}
         >
           {item.title}
         </div>

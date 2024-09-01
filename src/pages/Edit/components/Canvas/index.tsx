@@ -1,14 +1,28 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import style from './index.module.less';
-import CanvasRuler from '../CanvasRuler';
 
 export default memo(function Canvas() {
+  const canvasMain = useRef<HTMLDivElement | null>(null);
+
+  const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    setWidth(canvasMain.current!.clientWidth * 0.8);
+    setHeight(canvasMain.current!.clientWidth * 0.8 * 0.6);
+  }, []);
+
   return (
-    <div className={style.canvas}>
-      {/* <CanvasRuler canvasWidth={500} canvasHeight={500}>
-        <canvas></canvas>
-      </CanvasRuler> */}
+    <div ref={canvasMain} className={style.canvas}>
+      <canvas
+        width={width}
+        height={height}
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+        }}
+      ></canvas>
     </div>
   );
 });
