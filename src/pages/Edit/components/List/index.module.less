@@ -21,7 +21,8 @@
     border-top: 1px solid #eaeaea;
 
     &:hover {
-      background-color: #f3f3f3;
+      background-color: @color;
+      color: #fff;
     }
 
     :global(.iconfont) {
@@ -30,10 +31,45 @@
   }
 
   .scrollContainer {
-    padding: 8px;
+    padding: 16px 8px;
+
+    .canvasPreviewItem {
+      margin-bottom: 15px;
+      cursor: pointer;
+      .canvasIndex {
+        margin-top: 5px;
+        font-size: 12px;
+        margin-bottom: 5px;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      &:not(:last-child) {
+        border-bottom: 1px solid #f1f1f1;
+      }
+
+      &:hover {
+        .previewItem {
+          box-shadow: 0 0 0 2px @color;
+        }
+        .canvasIndex {
+          color: @color;
+        }
+      }
+    }
+
+    .activePreviewItem {
+      .previewItem {
+        box-shadow: 0 0 0 2px @color;
+      }
+      .canvasIndex {
+        color: @color;
+      }
+    }
   }
 
   .empty {
+    height: calc(100vh - 85px - 80px);
     display: flex;
     align-items: center;
     justify-content: center;
