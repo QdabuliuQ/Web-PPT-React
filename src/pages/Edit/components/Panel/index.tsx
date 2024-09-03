@@ -1,8 +1,13 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { Scrollbars } from 'react-custom-scrollbars';
+import config from '@/config';
 import style from './index.module.less';
+import useStore from '@/stores';
 
 export default memo(function Panel() {
+  const { activeElement } = useStore();
+  console.log(activeElement);
+
   return (
     <div className={style.panel}>
       <Scrollbars
@@ -12,48 +17,7 @@ export default memo(function Panel() {
           height: 'calc(100vh - 85px - 40px)',
         }}
       >
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
-        <h1>ahhh</h1>
+        <div className={style.container}></div>
       </Scrollbars>
     </div>
   );
