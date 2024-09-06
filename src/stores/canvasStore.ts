@@ -56,8 +56,6 @@ export const createCanvasStore = (set: StoreApi<CanvasState>['setState']): Canva
       return set((state) => {
         for (let i = 0; i < state.canvas.length; i++) {
           if (state.canvas[i].id === id) {
-            console.log(fabricOption, id, '===');
-
             state.canvas[i].fabricOption = fabricOption;
             return {
               canvas: [...state.canvas],

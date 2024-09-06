@@ -4,10 +4,10 @@ import { fabric } from 'fabric';
 import style from './index.module.less';
 import useStore from '@/stores';
 import { type Fabric } from '@/types/fabirc';
-import { elementSelectEvent, elementDeselectEvent } from '@/utils';
+import { elementSelectEvent, elementDeselectEvent, overWriteToObject } from '@/utils';
 
 export default memo(function Canvas() {
-  const { activeCanvas, canvas, canvasUpdate } = useStore();
+  const { activeCanvas, canvas, canvasUpdate, instanceUpdate } = useStore();
 
   const canvasMain = useRef<HTMLDivElement | null>(null);
 
@@ -46,6 +46,8 @@ export default memo(function Canvas() {
         }
       );
 
+      instanceUpdate(instance.current);
+
       instance.current.on(
         'object:modified',
         _.debounce(() => {
@@ -55,12 +57,14 @@ export default memo(function Canvas() {
 
       for (let i = 0; i < canvas.length; i++) {
         if (canvas[i].id === activeCanvas) {
-          instance.current.loadFromJSON(canvas[i].fabricOption, () => {});
-          instance.current.getObjects().forEach((item) => {
-            if ((item as Fabric.Object).property.type !== 'background') {
-              item.on('selected', elementSelectEvent);
-              item.on('deselected', elementDeselectEvent);
-            }
+          instance.current.loadFromJSON(canvas[i].fabricOption, () => {
+            instance.current!.getObjects().forEach((item) => {
+              if ((item as Fabric.Object).property.type !== 'background') {
+                item.on('selected', elementSelectEvent);
+                item.on('deselected', elementDeselectEvent);
+              }
+              item.toObject = overWriteToObject(item.toObject);
+            });
           });
 
           break;

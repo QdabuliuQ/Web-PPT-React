@@ -4,8 +4,13 @@ import { createActivePanelStore, type ActivePanelState } from './activePanelStor
 import { type CanvasState, createCanvasStore } from './canvasStore';
 import { type ActiveCanvasState, createActiveCanvasStore } from './activeCanvasStore';
 import { type ActiveElementState, createActiveElementStore } from './activeElementStore';
+import { createInstanceStore, type InstanceState } from './instanceStore';
 
-type Store = ActivePanelState & CanvasState & ActiveCanvasState & ActiveElementState;
+type Store = ActivePanelState &
+  CanvasState &
+  ActiveCanvasState &
+  ActiveElementState &
+  InstanceState;
 
 const useStore = create(
   devtools((set: StoreApi<Store>['setState']) => ({
@@ -13,6 +18,7 @@ const useStore = create(
     ...createCanvasStore(set),
     ...createActiveCanvasStore(set),
     ...createActiveElementStore(set),
+    ...createInstanceStore(set),
   }))
 );
 
