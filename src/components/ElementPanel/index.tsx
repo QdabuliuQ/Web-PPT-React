@@ -1,7 +1,7 @@
 import { Controller } from '@/enums';
 import { Collapse, ColorPickerProps, InputNumberProps, SliderSingleProps } from 'antd';
 import config from '@/config';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import OptionItem from '../OptionItem';
 import { getElementOption } from '@/utils';
 import useStore from '@/stores';

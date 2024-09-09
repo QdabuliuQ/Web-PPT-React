@@ -5,7 +5,6 @@ import {
   forwardRef,
   memo,
   useCallback,
-  useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -154,13 +153,6 @@ const CanvasRuler = (props: Props, ref: ForwardedRef<CanvasRulerRef>) => {
     scaleDown,
     setGuideLines,
   }));
-
-  const saveGuideLineEvent = (active: string) => {
-    // guideLineInit(active, {
-    //   vertical: verticalRulerRef.current?.getGuides() as Array<number>,
-    //   horizontal: horizontalRulerRef.current?.getGuides() as Array<number>,
-    // });
-  };
 
   useEffect(() => {
     dragCanvas();

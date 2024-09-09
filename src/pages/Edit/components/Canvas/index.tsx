@@ -1,4 +1,4 @@
-import { act, memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import _ from 'lodash';
 import { fabric } from 'fabric';
 import style from './index.module.less';
