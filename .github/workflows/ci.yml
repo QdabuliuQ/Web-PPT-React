@@ -1,0 +1,25 @@
+name: GitHub Actions Build and Deploy Demo
+on:
+  push:  监听 push 操作，当通过 git push 推送的时候触发
+    branches:
+      - main  代码分支
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest  运行的虚拟环境
+    steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20  指定 node 版本
+    - name: Checkout
+      uses: actions/checkout@v4  获取源码
+    - name: Install and Build
+      run: |
+        npm install
+        npm run-script build
+    - name: Deploy  步骤的名称
+      uses: JamesIves/github-pages-deploy-action@releases/v3  构使用了这个 action 来部署项目
+      with: 传递参数给这个 action
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}  写入密钥【ACCESS_TOKEN】和之前步骤定义的密钥名称完全一致
+        BRANCH: gh-pages  静态文件存发分支
+        FOLDER: build
