@@ -24,7 +24,6 @@ export default memo(function Menu() {
   );
 
   const { activePanel, activePanelUpdate } = useStore();
-  console.log(activePanel, 'activePanel');
 
   const menuClick = (id: string) => {
     activePanelUpdate(id);

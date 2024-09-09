@@ -15,6 +15,7 @@
     "lint:fixJs": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src "
   },
   "dependencies": {
+    "@ant-design/icons": "^5.4.0",
     "@scena/react-guides": "^0.28.2",
     "antd": "^5.20.3",
     "events": "^3.3.0",

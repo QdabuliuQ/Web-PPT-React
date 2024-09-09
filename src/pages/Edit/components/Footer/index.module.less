@@ -1,0 +1,99 @@
+.footer {
+  padding: 0 25px;
+  height: 30px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .left {
+    display: flex;
+    align-items: center;
+
+    .count {
+      padding-right: 15px;
+      :global(.iconfont) {
+        padding-right: 5px;
+      }
+    }
+  }
+  .right {
+    display: flex;
+    align-items: center;
+
+    .activeItem {
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .textItem {
+      margin: 0 15px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      height: 30px;
+      cursor: pointer;
+
+      :global(.iconfont) {
+        padding-right: 5px;
+      }
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .btnItem {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+
+      :global(.iconfont) {
+        font-size: 12px;
+      }
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .scale {
+      display: flex;
+      align-items: center;
+      margin-left: 15px;
+
+      .slider {
+        width: 120px;
+        margin: 0 20px;
+      }
+    }
+
+    .play {
+      margin: 0 15px;
+      height: 20px;
+      background-color: @color;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      cursor: pointer;
+
+      :global(.iconfont) {
+        color: #fff;
+        font-size: 10px;
+      }
+
+      &:hover {
+        background-color: @colorHover;
+      }
+    }
+  }
+
+  .line {
+    height: 15px;
+    width: 1px;
+    background-color: #b9b9b9;
+  }
+}

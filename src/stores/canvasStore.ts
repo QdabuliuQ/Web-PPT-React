@@ -5,6 +5,7 @@ export namespace CanvasStore {
   export interface Canvas {
     id: string;
     fabricOption: Fabric.JSON;
+    remark: string;
   }
 }
 
@@ -18,6 +19,10 @@ export interface CanvasState {
   canvasInit: (canvas: Array<CanvasStore.Canvas>) => void;
 
   canvasUpdate: (fabricOption: Fabric.JSON, id: string) => void;
+
+  canvasDelete: (id: string) => void;
+
+  canvasRemarkUpdate: (id: string, remark: string) => void;
 }
 
 export const createCanvasStore = (set: StoreApi<CanvasState>['setState']): CanvasState => {
@@ -59,6 +64,32 @@ export const createCanvasStore = (set: StoreApi<CanvasState>['setState']): Canva
             state.canvas[i].fabricOption = fabricOption;
             return {
               canvas: [...state.canvas],
+            };
+          }
+        }
+        return state;
+      });
+    },
+
+    canvasDelete(id: string) {
+      return set((state) => {
+        for (let i = 0; i < state.canvas.length; i++) {
+          if (state.canvas[i].id === id) {
+            state.canvas.splice(i, 1);
+            break;
+          }
+        }
+        return state;
+      });
+    },
+
+    canvasRemarkUpdate(id: string, remark: string) {
+      return set((state) => {
+        for (let i = 0; i < state.canvas.length; i++) {
+          if (state.canvas[i].id === id) {
+            state.canvas[i].remark = remark;
+            return {
+              ...state,
             };
           }
         }

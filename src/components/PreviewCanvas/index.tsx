@@ -15,6 +15,9 @@ export default memo(function PreviewCanvas({ id, fabricOption, className, clickE
   const instanceRef = useRef<fabric.StaticCanvas | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+
   useEffect(() => {
     if (!instanceRef.current) {
       instanceRef.current = new fabric.StaticCanvas(canvasRef.current, {
@@ -34,6 +37,12 @@ export default memo(function PreviewCanvas({ id, fabricOption, className, clickE
     }
   }, [fabricOption]);
 
+  useEffect(() => {
+    console.log('!23', containerRef.current, containerRef.current!.clientWidth);
+
+    setZoom(containerRef.current!.clientWidth / 800);
+  }, []);
+
   const _clickEvent = useCallback(() => {
     if (clickEvent) {
       clickEvent(id, fabricOption);
@@ -41,8 +50,17 @@ export default memo(function PreviewCanvas({ id, fabricOption, className, clickE
   }, [clickEvent]);
 
   return (
-    <div onClick={_clickEvent} className={`${style.previewCanvas} ${className || ''}`}>
-      <canvas ref={canvasRef}></canvas>
+    <div
+      onClick={_clickEvent}
+      ref={containerRef}
+      className={`${style.previewCanvas} ${className || ''}`}
+    >
+      <canvas
+        style={{
+          zoom: zoom,
+        }}
+        ref={canvasRef}
+      ></canvas>
     </div>
   );
 });

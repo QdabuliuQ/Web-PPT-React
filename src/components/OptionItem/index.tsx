@@ -6,6 +6,7 @@ interface Props {
   title: string;
   children: ReactNode;
   className?: string;
+  key: string;
 }
 
 export default memo(function OptionItem({ title, children, className }: Props) {

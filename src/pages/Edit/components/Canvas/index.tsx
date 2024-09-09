@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { act, memo, useCallback, useEffect, useRef, useState } from 'react';
 import _ from 'lodash';
 import { fabric } from 'fabric';
 import style from './index.module.less';
@@ -7,7 +7,8 @@ import { type Fabric } from '@/types/fabirc';
 import { elementSelectEvent, elementDeselectEvent, overWriteToObject } from '@/utils';
 
 export default memo(function Canvas() {
-  const { activeCanvas, canvas, canvasUpdate, instanceUpdate } = useStore();
+  const { activeCanvas, canvas, canvasUpdate, instanceUpdate, remark, canvasRemarkUpdate } =
+    useStore();
 
   const canvasMain = useRef<HTMLDivElement | null>(null);
 
@@ -51,7 +52,7 @@ export default memo(function Canvas() {
       instance.current.on(
         'object:modified',
         _.debounce(() => {
-          canvasUpdate(instance.current!.toJSON(), activeCanvas);
+          canvasUpdate(instance.current!.toObject(), activeCanvas);
         }, 100)
       );
 
@@ -62,11 +63,18 @@ export default memo(function Canvas() {
               if ((item as Fabric.Object).property.type !== 'background') {
                 item.on('selected', elementSelectEvent);
                 item.on('deselected', elementDeselectEvent);
+                item.toObject = overWriteToObject(item.toObject);
+              } else {
+                item.toObject = overWriteToObject(item.toObject, [
+                  'selectable',
+                  'hasControls',
+                  'hoverCursor',
+                ]);
               }
-              item.toObject = overWriteToObject(item.toObject);
             });
           });
 
+          textareaRef.current!.value = canvas[i].remark;
           break;
         }
       }
@@ -81,17 +89,47 @@ export default memo(function Canvas() {
     };
   }, [activeCanvas]);
 
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const changeEvent = useCallback(
+    _.debounce(() => {
+      if (textareaRef.current) {
+        const { activeCanvas } = useStore.getState();
+        canvasRemarkUpdate(activeCanvas, textareaRef.current.value);
+      }
+    }, 200),
+    []
+  );
+
   return (
-    <div ref={canvasMain} className={style.canvas}>
-      <canvas
-        id="__canvas__"
-        width={width}
-        height={height}
+    <div className={style.canvas}>
+      <div
+        className={style.container}
         style={{
-          width: `${width}px`,
-          height: `${height}px`,
+          height: remark ? 'calc(100% - 35px)' : '100%',
         }}
-      ></canvas>
+        ref={canvasMain}
+      >
+        <canvas
+          id="__canvas__"
+          width={width}
+          height={height}
+          style={{
+            width: `${width}px`,
+            height: `${height}px`,
+          }}
+        ></canvas>
+      </div>
+      <div className={style.remark}>
+        <div className={style.textareaContainer}>
+          <textarea
+            ref={textareaRef}
+            placeholder="请输入备注"
+            rows={1}
+            maxLength={300}
+            onChange={changeEvent}
+          />
+        </div>
+      </div>
     </div>
   );
 });

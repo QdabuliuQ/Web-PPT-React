@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
-import '@/assets/icon/iconfont.css';
+// import '@/assets/icon/iconfont.css';
 import { ConfigProvider, type ThemeConfig } from 'antd';
 
 const config: ThemeConfig = {

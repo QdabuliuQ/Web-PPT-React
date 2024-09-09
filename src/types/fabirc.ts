@@ -13,6 +13,7 @@ export namespace Fabric {
     top: number;
     scaleX: number;
     scaleY: number;
+    angle: number;
     property: {
       id: string;
       type: string;
