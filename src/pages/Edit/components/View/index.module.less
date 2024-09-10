@@ -1,23 +1,26 @@
-@media screen and (max-width: 1000px) {
-  /*当屏幕尺寸小于600px时，应用下面的CSS样式*/
+@media screen and (width <= 1000px) {
+  /* 当屏幕尺寸小于600px时，应用下面的CSS样式 */
   .viewContainer {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
-@media screen and (min-width: 1001px) and (max-width: 1200px) {
-  /*当屏幕尺寸小于600px时，应用下面的CSS样式*/
+
+@media screen and (width >= 1001px) and (width <= 1200px) {
+  /* 当屏幕尺寸小于600px时，应用下面的CSS样式 */
   .viewContainer {
     grid-template-columns: 1fr 1fr 1fr 1fr;
   }
 }
-@media screen and (min-width: 1201px) and (max-width: 1400px) {
-  /*当屏幕尺寸小于600px时，应用下面的CSS样式*/
+
+@media screen and (width >= 1201px) and (width <= 1400px) {
+  /* 当屏幕尺寸小于600px时，应用下面的CSS样式 */
   .viewContainer {
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   }
 }
-@media screen and (min-width: 1401px) {
-  /*当屏幕尺寸小于600px时，应用下面的CSS样式*/
+
+@media screen and (width >= 1401px) {
+  /* 当屏幕尺寸小于600px时，应用下面的CSS样式 */
   .viewContainer {
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
   }
@@ -29,22 +32,32 @@
   background-color: #fff;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
-  box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 2px 2px rgb(0 0 0 / 10%);
 
   .viewContainer {
-    padding: 15px;
     display: grid;
     grid-gap: 20px;
+    padding: 15px;
+
+    .activePreviewItem {
+      .previewItem {
+        box-shadow: 0 0 0 2px @color;
+      }
+
+      .canvasIndex {
+        color: @color;
+      }
+    }
 
     .canvasPreviewItem {
-      text-align: center;
       min-width: 0; /* Allow shrinking */
+      text-align: center;
       cursor: pointer;
 
       .canvasIndex {
         margin-top: 5px;
-        font-size: 12px;
         margin-bottom: 5px;
+        font-size: 12px;
         font-weight: bold;
         text-align: center;
       }
@@ -53,27 +66,19 @@
         .previewItem {
           box-shadow: 0 0 0 2px @color;
         }
+
         .canvasIndex {
           color: @color;
         }
       }
     }
-
-    .activePreviewItem {
-      .previewItem {
-        box-shadow: 0 0 0 2px @color;
-      }
-      .canvasIndex {
-        color: @color;
-      }
-    }
   }
 
   .empty {
-    width: 100%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    height: 100%;
   }
 }

@@ -1,0 +1,45 @@
+.canvasPanel {
+  padding: 10px;
+
+  .panel {
+    padding: 15px 0;
+
+    :global(.ant-color-picker-trigger) {
+      width: 100%;
+      :global(.ant-color-picker-clear) {
+        width: 100%;
+      }
+      :global(.ant-color-picker-color-block) {
+        width: 100%;
+      }
+      :global(.ant-color-picker-clear)::after {
+        left: 50%;
+        transform: translateX(-70%) rotate(-45deg);
+      }
+    }
+
+    .texture {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-gap: 8px;
+      width: 100%;
+
+      .textureItem {
+        width: 100%;
+        cursor: pointer;
+        img {
+          aspect-ratio: 1/1;
+          width: 100%;
+        }
+      }
+    }
+
+    .optionItem {
+      margin-bottom: 15px;
+    }
+
+    .select {
+      width: 100%;
+    }
+  }
+}

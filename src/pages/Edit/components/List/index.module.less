@@ -1,28 +1,28 @@
 .list {
-  background-color: #fff;
-  width: 200px;
-  border-top-left-radius: 15px;
-  box-shadow: -5px 8px 12px 0px rgba(0, 0, 0, 0.33);
   position: relative;
   z-index: 1;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  width: 200px;
+  height: 100%;
+  background-color: #fff;
+  border-top-left-radius: 15px;
+  box-shadow: -5px 8px 12px 0 rgb(0 0 0 / 33%);
 
   .canvasAdd {
-    height: 35px;
-    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    height: 35px;
     cursor: pointer;
     user-select: none;
     border-top: 1px solid #eaeaea;
 
     &:hover {
-      background-color: @color;
       color: #fff;
+      background-color: @color;
     }
 
     :global(.iconfont) {
@@ -33,13 +33,24 @@
   .scrollContainer {
     padding: 16px 12px 0;
 
+    .activePreviewItem {
+      .previewItem {
+        box-shadow: 0 0 0 2px @color;
+      }
+
+      .canvasIndex {
+        color: @color;
+      }
+    }
+
     .canvasPreviewItem {
       margin-bottom: 15px;
       cursor: pointer;
+
       .canvasIndex {
         margin-top: 5px;
-        font-size: 12px;
         margin-bottom: 5px;
+        font-size: 12px;
         font-weight: bold;
         text-align: center;
       }
@@ -52,27 +63,19 @@
         .previewItem {
           box-shadow: 0 0 0 2px @color;
         }
+
         .canvasIndex {
           color: @color;
         }
       }
     }
-
-    .activePreviewItem {
-      .previewItem {
-        box-shadow: 0 0 0 2px @color;
-      }
-      .canvasIndex {
-        color: @color;
-      }
-    }
   }
 
   .empty {
-    height: calc(100vh - 85px - 80px);
     display: flex;
     align-items: center;
     justify-content: center;
+    height: calc(100vh - 85px - 80px);
     font-size: 14px;
   }
 }

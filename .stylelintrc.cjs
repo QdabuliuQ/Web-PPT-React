@@ -9,9 +9,17 @@ module.exports = {
   ],
 
   plugins: ['stylelint-less', 'stylelint-prettier'], // 配置stylelint less拓展插件
-
+  ignorePseudoClasses: [':global'],
   /* 自定义规则 */
-  rules: {},
+  rules: {
+    'selector-class-pattern': null,
+    'selector-pseudo-class-no-unknown': [
+      true,
+      {
+        ignorePseudoClasses: ['global'],
+      },
+    ],
+  },
   overrides: [
     // 若项目中存在less文件，添加以下配置
     {

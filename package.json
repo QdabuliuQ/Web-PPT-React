@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "lint:prettier": "prettier --write --loglevel warn \"src/**/*.{js,ts,json,tsx,css,less,scss,html,md}\"",
     "lint:eslint": "eslint \"{src}/**/*.{ts,tsx}\" --fix",
-    "lint:stylelint": "stylelint --fix \"**/*.{less,postcss,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/",
+    "lint:stylelint": "stylelint --fix \"**/*.{less,css,scss}\" --cache --cache-location node_modules/.cache/stylelint/",
     "prepare": "husky install",
     "lint:fixJs": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src "
   },
@@ -55,6 +55,7 @@
     "less": "^4.2.0",
     "less-loader": "^12.2.0",
     "lint-staged": "^15.2.9",
+    "postcss-less": "^6.0.0",
     "prettier": "^3.3.3",
     "stylelint": "^16.8.2",
     "stylelint-config-recess-order": "^5.1.0",

@@ -1,12 +1,11 @@
-import { memo, ReactNode } from 'react';
+import { memo, ReactNode } from 'react'
 
-import style from './index.module.less';
+import style from './index.module.less'
 
 interface Props {
-  title: string;
-  children: ReactNode;
-  className?: string;
-  key: string;
+  title: string
+  children: ReactNode
+  className?: string
 }
 
 export default memo(function OptionItem({ title, children, className }: Props) {
@@ -15,5 +14,5 @@ export default memo(function OptionItem({ title, children, className }: Props) {
       <div className={style.title}>{title}</div>
       {children}
     </div>
-  );
-});
+  )
+})

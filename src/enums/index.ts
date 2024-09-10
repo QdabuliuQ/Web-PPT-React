@@ -4,4 +4,5 @@ export enum Controller {
   inputNumber = 'inputNumber',
   switch = 'switch',
   slider = 'slider',
+  select = 'select'
 }

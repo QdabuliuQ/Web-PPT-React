@@ -1,5 +1,9 @@
-import rectConfig from './rect';
+import rectConfig from './rect'
+import textConfig from './text'
+import triangleConfig from './triangle'
 
 export default {
   rectConfig,
-};
+  textConfig,
+  triangleConfig
+}
