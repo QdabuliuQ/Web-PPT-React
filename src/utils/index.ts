@@ -1,7 +1,8 @@
 export {
   getNewCanvasOption,
   elementSelectEvent,
-  elementDeselectEvent
+  elementDeselectEvent,
+  getNewCanvas
 } from './canvas'
 export { getRandomID } from './common'
 export { getElementOption, overWriteToObject } from './element'

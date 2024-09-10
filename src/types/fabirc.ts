@@ -14,9 +14,13 @@ export namespace Fabric {
     scaleX: number;
     scaleY: number;
     angle: number;
+    selectable: boolean;
+    hasControls: boolean;
+    hoverCursor: string;
     property: {
       id: string;
       type: string;
     };
+    [propName: string]: any
   }
 }

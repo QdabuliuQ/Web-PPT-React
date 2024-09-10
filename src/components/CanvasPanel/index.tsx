@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { fabric } from 'fabric'
-import { ColorPicker, Radio, Select, Space } from 'antd'
+import { Button, ColorPicker, Radio, Select, Space } from 'antd'
 import OptionItem from '../OptionItem'
 import _ from 'lodash'
 import useStore from '@/stores'
@@ -9,6 +9,7 @@ import { Fabric } from '@/types/fabirc'
 import useTextureChange from './useTextureChange'
 import style from './index.module.less'
 import { getBgRectElementOption } from '@/utils/element'
+import useButtonHandle from './useButtonHandle'
 
 const files = import.meta.glob('@/assets/image/*.png')
 const images: Array<{ name: string; url: string }> = []
@@ -30,7 +31,10 @@ export default memo(function CanvasPanel() {
   const [value, setValue] = useState(1)
   const onChange = useCallback(({ target: { value } }: any) => {
     setValue(value)
-    if (value === 1) {
+    if (value === 0) {
+      clearBgrectFill()
+      setName('')
+    } else if (value === 1) {
       singleColorChange(null, '#fff')
       setName('')
     } else if (value === 2) {
@@ -54,6 +58,18 @@ export default memo(function CanvasPanel() {
     }
   }
 
+  const clearBgrectFill = () => {
+    const { instance, activeCanvas } = useStore.getState()
+    const el = getBgrectElement()
+    if (el) {
+      el.set({
+        fill: void 0
+      })
+      instance?.renderAll()
+      canvasUpdate(instance!.toObject(), activeCanvas)
+    }
+  }
+
   const singleColorChange = useCallback(
     _.debounce((_: unknown, value: string) => {
       const { instance, activeCanvas } = useStore.getState()
@@ -71,8 +87,6 @@ export default memo(function CanvasPanel() {
 
   const gradientColorChange = useCallback(
     _.debounce((_: unknown, value: string) => {
-      console.log(value)
-
       const { instance, activeCanvas } = useStore.getState()
       const el = getBgrectElement()
       const color = value
@@ -117,10 +131,10 @@ export default memo(function CanvasPanel() {
   useEffect(() => {
     const bgRect = getBgRectElementOption(activeCanvas) as Fabric.Object
     if (bgRect) {
-      console.log(bgRect.fill)
-
       setDefaultInfo(bgRect.fill)
-      if (typeof bgRect.fill === 'string') {
+      if (typeof bgRect.fill === 'undefined') {
+        setValue(0)
+      } else if (typeof bgRect.fill === 'string') {
         setValue(1)
       } else if ((bgRect.fill as any).type === 'linear') {
         setValue(2)
@@ -131,10 +145,17 @@ export default memo(function CanvasPanel() {
     }
   }, [activeCanvas])
 
+  const { updateAllEvent, resetAllEvent } = useButtonHandle()
+
+  const resetEvent = useCallback(() => {
+    resetAllEvent()
+  }, [])
+
   return (
     <div className={style.canvasPanel}>
       <Radio.Group onChange={onChange} value={value}>
         <Space direction="vertical">
+          <Radio value={0}>无填充</Radio>
           <Radio value={1}>纯色填充</Radio>
           <Radio value={2}>渐变填充</Radio>
           <Radio value={3}>纹理填充</Radio>
@@ -181,6 +202,17 @@ export default memo(function CanvasPanel() {
           ) : (
             <></>
           )}
+          <Button
+            onClick={updateAllEvent}
+            className={style.btn}
+            type="primary"
+            block
+          >
+            应用全部幻灯片
+          </Button>
+          <Button onClick={resetEvent} className={style.btn} block>
+            重置全部幻灯片
+          </Button>
         </div>
       ) : (
         <></>

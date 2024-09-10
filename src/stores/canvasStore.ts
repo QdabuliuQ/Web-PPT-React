@@ -23,6 +23,8 @@ export interface CanvasState {
   canvasDelete: (id: string) => void;
 
   canvasRemarkUpdate: (id: string, remark: string) => void;
+
+  canvasFabricOptionUpdate: (id: string, fabricOption: Fabric.JSON) => void
 }
 
 export const createCanvasStore = (set: StoreApi<CanvasState>['setState']): CanvasState => {
@@ -96,5 +98,19 @@ export const createCanvasStore = (set: StoreApi<CanvasState>['setState']): Canva
         return state;
       });
     },
+
+    canvasFabricOptionUpdate(id: string, fabricOption: Fabric.JSON) {
+      return set((state) => {
+        for (let i = 0; i < state.canvas.length; i++) {
+          if (state.canvas[i].id === id) {
+            state.canvas[i].fabricOption = fabricOption;
+            return {
+              ...state,
+            };
+          }
+        }
+        return state;
+      })
+    }
   };
 };
