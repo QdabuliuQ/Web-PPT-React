@@ -38,6 +38,7 @@ export default memo(function View() {
                   className={style.previewItem}
                   id={item.id}
                   fabricOption={item.fabricOption}
+                  visible={item.visible}
                 />
                 <div className={style.canvasIndex}>{index + 1}</div>
               </div>
