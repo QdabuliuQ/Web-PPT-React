@@ -1,21 +1,23 @@
-import type { StoreApi } from 'zustand';
+import type { StoreApi } from 'zustand'
 
 export interface ModeState {
-  mode: 'view' | 'list';
+  mode: 'view' | 'list'
 
-  modeUpdate: (mode: 'view' | 'list') => void;
+  modeUpdate: (mode: 'view' | 'list') => void
 }
 
-export const createModeStore = (set: StoreApi<ModeState>['setState']): ModeState => {
+export const createModeStore = (
+  set: StoreApi<ModeState>['setState']
+): ModeState => {
   return {
     mode: 'list',
 
     modeUpdate(mode: 'view' | 'list') {
       return set(() => {
         return {
-          mode,
-        };
-      });
-    },
-  };
-};
+          mode
+        }
+      })
+    }
+  }
+}

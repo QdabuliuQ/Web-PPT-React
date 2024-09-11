@@ -1,9 +1,9 @@
-import type { StoreApi } from 'zustand';
+import type { StoreApi } from 'zustand'
 
 export interface ActiveCanvasState {
-  activeCanvas: string;
+  activeCanvas: string
 
-  activeCanvasUpdate: (activeCanvas: string) => void;
+  activeCanvasUpdate: (activeCanvas: string) => void
 }
 
 export const createActiveCanvasStore = (
@@ -15,9 +15,9 @@ export const createActiveCanvasStore = (
     activeCanvasUpdate(activeCanvas: string) {
       return set(() => {
         return {
-          activeCanvas,
-        };
-      });
-    },
-  };
-};
+          activeCanvas
+        }
+      })
+    }
+  }
+}

@@ -1,9 +1,9 @@
-import { Input, type InputProps } from 'antd'
 import { memo, useCallback } from 'react'
+import { Input, type InputProps } from 'antd'
+import _ from 'lodash'
 
 import useStore from '@/stores'
 import type { Fabric } from '@/types/fabirc'
-import _ from 'lodash'
 
 interface Props extends InputProps {
   propName: string

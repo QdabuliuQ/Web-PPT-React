@@ -1,12 +1,21 @@
-import { StoreApi, create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { createActivePanelStore, type ActivePanelState } from './activePanelStore';
-import { type CanvasState, createCanvasStore } from './canvasStore';
-import { type ActiveCanvasState, createActiveCanvasStore } from './activeCanvasStore';
-import { type ActiveElementState, createActiveElementStore } from './activeElementStore';
-import { createInstanceStore, type InstanceState } from './instanceStore';
-import { createRemarkStore, type RemarkState } from './remarkStore';
-import { createModeStore, type ModeState } from './modeStore';
+import { create,StoreApi } from 'zustand'
+import { devtools } from 'zustand/middleware'
+
+import {
+  type ActiveCanvasState,
+  createActiveCanvasStore
+} from './activeCanvasStore'
+import {
+  type ActiveElementState,
+  createActiveElementStore
+} from './activeElementStore'
+import {
+  type ActivePanelState,
+  createActivePanelStore} from './activePanelStore'
+import { type CanvasState, createCanvasStore } from './canvasStore'
+import { createInstanceStore, type InstanceState } from './instanceStore'
+import { createModeStore, type ModeState } from './modeStore'
+import { createRemarkStore, type RemarkState } from './remarkStore'
 
 type Store = ActivePanelState &
   CanvasState &
@@ -14,7 +23,7 @@ type Store = ActivePanelState &
   ActiveElementState &
   InstanceState &
   RemarkState &
-  ModeState;
+  ModeState
 
 const useStore = create(
   devtools((set: StoreApi<Store>['setState']) => ({
@@ -24,8 +33,8 @@ const useStore = create(
     ...createActiveElementStore(set),
     ...createInstanceStore(set),
     ...createRemarkStore(set),
-    ...createModeStore(set),
+    ...createModeStore(set)
   }))
-);
+)
 
-export default useStore;
+export default useStore

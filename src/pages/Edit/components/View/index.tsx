@@ -1,26 +1,27 @@
-import { memo, useMemo } from 'react';
-import Scrollbars from 'react-custom-scrollbars';
+import { memo, useMemo } from 'react'
+import Scrollbars from 'react-custom-scrollbars'
+import { Empty } from 'antd'
 
-import style from './index.module.less';
-import useStore from '@/stores';
-import { Empty } from 'antd';
-import { CanvasStore } from '@/stores/canvasStore';
-import PreviewCanvas from '@/components/PreviewCanvas';
+import PreviewCanvas from '@/components/PreviewCanvas'
+import useStore from '@/stores'
+import { CanvasStore } from '@/stores/canvasStore'
+
+import style from './index.module.less'
 
 export default memo(function View() {
-  const { canvas, activeCanvas, activeCanvasUpdate, modeUpdate } = useStore();
+  const { canvas, activeCanvas, activeCanvasUpdate, modeUpdate } = useStore()
 
   const _style = useMemo(
     () => ({
-      height: '100%',
+      height: '100%'
     }),
     []
-  );
+  )
 
   const dbClickEvent = (id: string) => {
-    activeCanvasUpdate(id);
-    modeUpdate('list');
-  };
+    activeCanvasUpdate(id)
+    modeUpdate('list')
+  }
 
   return (
     <div className={style.view}>
@@ -49,5 +50,5 @@ export default memo(function View() {
         </div>
       )}
     </div>
-  );
-});
+  )
+})

@@ -1,7 +1,8 @@
-import { memo } from 'react';
-import ButtonItem from '../ButtonItem';
+import { memo } from 'react'
 
-import style from './index.module.less';
+import ButtonItem from '../ButtonItem'
+
+import style from './index.module.less'
 
 export default memo(function InsertPanel() {
   return (
@@ -10,5 +11,5 @@ export default memo(function InsertPanel() {
       <ButtonItem icon="i_triangle" title="三角形" />
       <ButtonItem icon="i_text" title="文本" />
     </div>
-  );
-});
+  )
+})

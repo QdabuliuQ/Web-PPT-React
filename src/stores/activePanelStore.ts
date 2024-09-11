@@ -1,9 +1,9 @@
-import type { StoreApi } from 'zustand';
+import type { StoreApi } from 'zustand'
 
 export interface ActivePanelState {
-  activePanel: string;
+  activePanel: string
 
-  activePanelUpdate: (activePanel: string) => void;
+  activePanelUpdate: (activePanel: string) => void
 }
 
 export const createActivePanelStore = (
@@ -15,9 +15,9 @@ export const createActivePanelStore = (
     activePanelUpdate(activePanel: string) {
       return set(() => {
         return {
-          activePanel,
-        };
-      });
-    },
-  };
-};
+          activePanel
+        }
+      })
+    }
+  }
+}

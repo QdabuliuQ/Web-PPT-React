@@ -1,10 +1,11 @@
-import { ColorPicker, type ColorPickerProps } from 'antd'
 import { memo, useCallback } from 'react'
+import { ColorPicker, type ColorPickerProps } from 'antd'
+import _ from 'lodash'
 
-import style from './index.module.less'
 import useStore from '@/stores'
 import { Fabric } from '@/types/fabirc'
-import _ from 'lodash'
+
+import style from './index.module.less'
 
 interface Props extends ColorPickerProps {
   propName: string

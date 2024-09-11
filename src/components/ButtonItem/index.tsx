@@ -1,7 +1,8 @@
 import { memo, useCallback } from 'react'
 
-import style from './index.module.less'
 import Icon from '../Icon'
+
+import style from './index.module.less'
 
 interface Props {
   icon: string

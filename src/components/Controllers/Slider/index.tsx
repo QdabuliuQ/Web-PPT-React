@@ -1,36 +1,37 @@
-import useStore from '@/stores';
-import { Fabric } from '@/types/fabirc';
-import { Slider } from 'antd';
-import { type SliderSingleProps } from 'antd/es/slider';
-import _ from 'lodash';
-import { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react'
+import { Slider } from 'antd'
+import { type SliderSingleProps } from 'antd/es/slider'
+import _ from 'lodash'
+
+import useStore from '@/stores'
+import { Fabric } from '@/types/fabirc'
 
 interface Props extends SliderSingleProps {
-  propName: string;
+  propName: string
 }
 
 export default memo(function _Slider({ propName, ...other }: Props) {
-  const { canvasUpdate } = useStore();
+  const { canvasUpdate } = useStore()
   const changeEvent = useCallback(
     _.debounce((value: number) => {
-      const { instance, activeElement, activeCanvas } = useStore.getState();
+      const { instance, activeElement, activeCanvas } = useStore.getState()
       if (instance) {
         for (let i = 0; i < instance._objects.length; i++) {
-          const element = instance._objects[i] as Fabric.Object;
+          const element = instance._objects[i] as Fabric.Object
           if (element.property.id === activeElement) {
             element.set({
-              [propName]: value,
-            });
+              [propName]: value
+            })
 
-            instance.renderAll();
-            canvasUpdate(instance.toObject(), activeCanvas);
-            break;
+            instance.renderAll()
+            canvasUpdate(instance.toObject(), activeCanvas)
+            break
           }
         }
       }
     }, 200),
     []
-  );
+  )
 
-  return <Slider {...(other ? other : {})} onChange={changeEvent} />;
-});
+  return <Slider {...(other ? other : {})} onChange={changeEvent} />
+})

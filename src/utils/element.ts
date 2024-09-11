@@ -1,6 +1,7 @@
+import { fabric } from 'fabric'
+
 import useStore from '@/stores'
 import { Fabric } from '@/types/fabirc'
-import { fabric } from 'fabric'
 
 export function getElementOption(cid: string, eid: string) {
   const { canvas } = useStore.getState()

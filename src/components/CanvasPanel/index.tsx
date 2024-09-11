@@ -1,15 +1,18 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
-import { fabric } from 'fabric'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { Button, ColorPicker, Radio, Select, Space } from 'antd'
-import OptionItem from '../OptionItem'
+import { fabric } from 'fabric'
 import _ from 'lodash'
+
 import useStore from '@/stores'
 import { Fabric } from '@/types/fabirc'
-import useTextureChange from './useTextureChange'
-import style from './index.module.less'
 import { getBgRectElementOption } from '@/utils/element'
+
+import OptionItem from '../OptionItem'
+
 import useButtonHandle from './useButtonHandle'
+import useTextureChange from './useTextureChange'
+
+import style from './index.module.less'
 
 const files = import.meta.glob('@/assets/image/*.png')
 const images: Array<{ name: string; url: string }> = []
@@ -29,20 +32,30 @@ for (const key in files) {
 export default memo(function CanvasPanel() {
   const { canvasUpdate, activeCanvas } = useStore()
   const [value, setValue] = useState(1)
+
   const onChange = useCallback(({ target: { value } }: any) => {
     setValue(value)
     if (value === 0) {
       clearBgrectFill()
       setName('')
+      setDefaultInfo(undefined)
     } else if (value === 1) {
       singleColorChange(null, '#fff')
       setName('')
+      setDefaultInfo('#fff')
     } else if (value === 2) {
       gradientColorChange(null, 'linear-gradient(90deg, rgba(0,0,0,0) 0%)')
       setName('')
+      setDefaultInfo([
+        {
+          color: 'rgba(0,0,0,0)',
+          percent: 0
+        }
+      ])
     } else {
       setName('texture1')
       textureClickEvent('texture1')
+      setRepeat('repeat')
     }
   }, [])
 
@@ -82,6 +95,20 @@ export default memo(function CanvasPanel() {
         canvasUpdate(instance!.toObject(), activeCanvas)
       }
     }, 200),
+    []
+  )
+
+  const linearColorFormat = useCallback(
+    (color: Array<{ color: string; offset: number }>) => {
+      const res: Array<{ color: string; percent: number }> = []
+      color.map((item) => {
+        res.push({
+          percent: item.offset * 100,
+          color: item.color
+        })
+      })
+      return res
+    },
     []
   )
 
@@ -128,10 +155,12 @@ export default memo(function CanvasPanel() {
   } = useTextureChange(getBgrectElement as any)
 
   const [defaultInfo, setDefaultInfo] = useState<any>()
+
   useEffect(() => {
     const bgRect = getBgRectElementOption(activeCanvas) as Fabric.Object
     if (bgRect) {
       setDefaultInfo(bgRect.fill)
+
       if (typeof bgRect.fill === 'undefined') {
         setValue(0)
       } else if (typeof bgRect.fill === 'string') {
@@ -149,6 +178,9 @@ export default memo(function CanvasPanel() {
 
   const resetEvent = useCallback(() => {
     resetAllEvent()
+    clearBgrectFill()
+    setName('')
+    setValue(0)
   }, [])
 
   return (
@@ -161,19 +193,29 @@ export default memo(function CanvasPanel() {
           <Radio value={3}>纹理填充</Radio>
         </Space>
       </Radio.Group>
-      {defaultInfo ? (
+      {defaultInfo && value !== 0 ? (
         <div className={style.panel}>
           {value === 1 ? (
             <OptionItem title="颜色">
               <ColorPicker
-                defaultValue={defaultInfo.fill}
+                key={value}
+                defaultValue={defaultInfo}
                 onChange={singleColorChange}
                 mode="single"
               />
             </OptionItem>
           ) : value === 2 ? (
             <OptionItem title="渐变色">
-              <ColorPicker onChange={gradientColorChange} mode="gradient" />
+              <ColorPicker
+                key={value}
+                defaultValue={
+                  defaultInfo.colorStops
+                    ? linearColorFormat(defaultInfo.colorStops)
+                    : []
+                }
+                onChange={gradientColorChange}
+                mode="gradient"
+              />
             </OptionItem>
           ) : value === 3 ? (
             <>
@@ -202,21 +244,21 @@ export default memo(function CanvasPanel() {
           ) : (
             <></>
           )}
-          <Button
-            onClick={updateAllEvent}
-            className={style.btn}
-            type="primary"
-            block
-          >
-            应用全部幻灯片
-          </Button>
-          <Button onClick={resetEvent} className={style.btn} block>
-            重置全部幻灯片
-          </Button>
         </div>
       ) : (
         <></>
       )}
+      <Button
+        onClick={updateAllEvent}
+        className={style.btn}
+        type="primary"
+        block
+      >
+        应用全部幻灯片
+      </Button>
+      <Button onClick={resetEvent} className={style.btn} block>
+        重置全部幻灯片
+      </Button>
     </div>
   )
 })

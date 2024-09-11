@@ -1,13 +1,14 @@
-import { Controller } from '@/enums';
-import { type Config } from '@/types/config';
-import common from './common';
+import { Controller } from '@/enums'
+import { type Config } from '@/types/config'
+
+import common from './common'
 
 const config: Array<Config.Item> = [
   ...(common as unknown as Array<Config.Item>),
   {
     type: Controller.colorPicker,
     title: '颜色',
-    key: 'fill',
+    key: 'fill'
   },
   {
     type: Controller.inputNumber,
@@ -15,8 +16,8 @@ const config: Array<Config.Item> = [
     key: 'rx',
     property: {
       min: 0,
-      max: 1000,
-    },
+      max: 1000
+    }
   },
   {
     type: Controller.inputNumber,
@@ -24,9 +25,9 @@ const config: Array<Config.Item> = [
     key: 'ry',
     property: {
       min: 0,
-      max: 1000,
-    },
-  },
-];
+      max: 1000
+    }
+  }
+]
 
-export default config;
+export default config

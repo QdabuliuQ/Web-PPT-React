@@ -1,11 +1,13 @@
-import { memo } from 'react';
-import style from './index.module.less';
-import useStore from '@/stores';
-import StartPanel from '@/components/StartPanel';
-import InsertPanel from '@/components/InsertPanel';
+import { memo } from 'react'
+
+import InsertPanel from '@/components/InsertPanel'
+import StartPanel from '@/components/StartPanel'
+import useStore from '@/stores'
+
+import style from './index.module.less'
 
 export default memo(function Header() {
-  const { activePanel } = useStore();
+  const { activePanel } = useStore()
 
   return (
     <div className={style.header}>
@@ -13,5 +15,5 @@ export default memo(function Header() {
         {activePanel === 'start' ? <StartPanel /> : <InsertPanel />}
       </div>
     </div>
-  );
-});
+  )
+})

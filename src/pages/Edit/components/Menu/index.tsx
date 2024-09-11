@@ -1,11 +1,12 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react'
 
-import style from './index.module.less';
-import useStore from '@/stores';
+import useStore from '@/stores'
+
+import style from './index.module.less'
 
 interface Menu {
-  id: string;
-  title: string;
+  id: string
+  title: string
 }
 
 export default memo(function Menu() {
@@ -13,21 +14,21 @@ export default memo(function Menu() {
     () => [
       {
         id: 'start',
-        title: '开始',
+        title: '开始'
       },
       {
         id: 'insert',
-        title: '插入',
-      },
+        title: '插入'
+      }
     ],
     []
-  );
+  )
 
-  const { activePanel, activePanelUpdate } = useStore();
+  const { activePanel, activePanelUpdate } = useStore()
 
   const menuClick = (id: string) => {
-    activePanelUpdate(id);
-  };
+    activePanelUpdate(id)
+  }
 
   return (
     <div className={style.menu}>
@@ -41,5 +42,5 @@ export default memo(function Menu() {
         </div>
       ))}
     </div>
-  );
-});
+  )
+})

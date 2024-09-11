@@ -1,35 +1,43 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react'
+import { Slider } from 'antd'
 
-import style from './index.module.less';
-import useStore from '@/stores';
-import Icon from '@/components/Icon';
-import { Slider } from 'antd';
+import Icon from '@/components/Icon'
+import useStore from '@/stores'
+
+import style from './index.module.less'
 
 export default memo(function Footer() {
-  const { activeCanvas, canvas, remarkUpdate, remark, mode, modeUpdate, activeElementUpdate } =
-    useStore();
+  const {
+    activeCanvas,
+    canvas,
+    remarkUpdate,
+    remark,
+    mode,
+    modeUpdate,
+    activeElementUpdate
+  } = useStore()
 
   const index = useMemo(() => {
     if (activeCanvas === '') {
-      return 0;
+      return 0
     }
     for (let i = 0; i < canvas.length; i++) {
       if (canvas[i].id === activeCanvas) {
-        return i + 1;
+        return i + 1
       }
     }
-    return 0;
-  }, [activeCanvas, canvas]);
+    return 0
+  }, [activeCanvas, canvas])
 
   const remarkEvent = useCallback(() => {
-    const { remark } = useStore.getState();
-    remarkUpdate(!remark);
-  }, []);
+    const { remark } = useStore.getState()
+    remarkUpdate(!remark)
+  }, [])
 
   const modeEvent = (mode: 'list' | 'view') => {
-    modeUpdate(mode);
-    activeElementUpdate('');
-  };
+    modeUpdate(mode)
+    activeElementUpdate('')
+  }
 
   return (
     <div className={style.footer}>
@@ -79,5 +87,5 @@ export default memo(function Footer() {
         </div>
       </div>
     </div>
-  );
-});
+  )
+})

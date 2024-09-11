@@ -1,8 +1,9 @@
-import useStore from '@/stores'
-import { Fabric } from '@/types/fabirc'
+import { memo, useCallback } from 'react'
 import { InputNumber, type InputNumberProps } from 'antd'
 import _ from 'lodash'
-import { memo, useCallback } from 'react'
+
+import useStore from '@/stores'
+import { Fabric } from '@/types/fabirc'
 
 import style from './index.module.less'
 

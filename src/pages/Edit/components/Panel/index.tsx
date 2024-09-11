@@ -1,9 +1,11 @@
 import { memo } from 'react'
 import { Scrollbars } from 'react-custom-scrollbars'
-import style from './index.module.less'
-import useStore from '@/stores'
-import ElementPanel from '@/components/ElementPanel'
+
 import CanvasPanel from '@/components/CanvasPanel'
+import ElementPanel from '@/components/ElementPanel'
+import useStore from '@/stores'
+
+import style from './index.module.less'
 export default memo(function Panel() {
   const { activeElement } = useStore()
 

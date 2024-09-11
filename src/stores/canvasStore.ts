@@ -1,116 +1,119 @@
-import { Fabric } from '@/types/fabirc';
-import type { StoreApi } from 'zustand';
+import type { StoreApi } from 'zustand'
+
+import { Fabric } from '@/types/fabirc'
 
 export namespace CanvasStore {
   export interface Canvas {
-    id: string;
-    fabricOption: Fabric.JSON;
-    remark: string;
+    id: string
+    fabricOption: Fabric.JSON
+    remark: string
   }
 }
 
 export interface CanvasState {
-  canvas: Array<CanvasStore.Canvas>;
+  canvas: Array<CanvasStore.Canvas>
 
-  canvasPush: (canvas: CanvasStore.Canvas) => void;
+  canvasPush: (canvas: CanvasStore.Canvas) => void
 
-  canvasInsert: (canvas: CanvasStore.Canvas, index: number) => void;
+  canvasInsert: (canvas: CanvasStore.Canvas, index: number) => void
 
-  canvasInit: (canvas: Array<CanvasStore.Canvas>) => void;
+  canvasInit: (canvas: Array<CanvasStore.Canvas>) => void
 
-  canvasUpdate: (fabricOption: Fabric.JSON, id: string) => void;
+  canvasUpdate: (fabricOption: Fabric.JSON, id: string) => void
 
-  canvasDelete: (id: string) => void;
+  canvasDelete: (id: string) => void
 
-  canvasRemarkUpdate: (id: string, remark: string) => void;
+  canvasRemarkUpdate: (id: string, remark: string) => void
 
   canvasFabricOptionUpdate: (id: string, fabricOption: Fabric.JSON) => void
 }
 
-export const createCanvasStore = (set: StoreApi<CanvasState>['setState']): CanvasState => {
+export const createCanvasStore = (
+  set: StoreApi<CanvasState>['setState']
+): CanvasState => {
   return {
     canvas: [],
 
     canvasPush(canvas: CanvasStore.Canvas) {
       return set((state) => {
         return {
-          canvas: [...state.canvas, canvas],
-        };
-      });
+          canvas: [...state.canvas, canvas]
+        }
+      })
     },
 
     canvasInsert(canvas: CanvasStore.Canvas, index: number) {
       return set((state) => {
         if (index > state.canvas.length) {
-          return state;
+          return state
         }
-        state.canvas.splice(index, 0, canvas);
+        state.canvas.splice(index, 0, canvas)
         return {
-          canvas: [...state.canvas],
-        };
-      });
+          canvas: [...state.canvas]
+        }
+      })
     },
 
     canvasInit(canvas: Array<CanvasStore.Canvas>) {
       return set(() => {
         return {
-          canvas,
-        };
-      });
+          canvas
+        }
+      })
     },
 
     canvasUpdate(fabricOption: Fabric.JSON, id: string) {
       return set((state) => {
         for (let i = 0; i < state.canvas.length; i++) {
           if (state.canvas[i].id === id) {
-            state.canvas[i].fabricOption = fabricOption;
+            state.canvas[i].fabricOption = fabricOption
             return {
-              canvas: [...state.canvas],
-            };
+              canvas: [...state.canvas]
+            }
           }
         }
-        return state;
-      });
+        return state
+      })
     },
 
     canvasDelete(id: string) {
       return set((state) => {
         for (let i = 0; i < state.canvas.length; i++) {
           if (state.canvas[i].id === id) {
-            state.canvas.splice(i, 1);
-            break;
+            state.canvas.splice(i, 1)
+            break
           }
         }
-        return state;
-      });
+        return state
+      })
     },
 
     canvasRemarkUpdate(id: string, remark: string) {
       return set((state) => {
         for (let i = 0; i < state.canvas.length; i++) {
           if (state.canvas[i].id === id) {
-            state.canvas[i].remark = remark;
+            state.canvas[i].remark = remark
             return {
-              ...state,
-            };
+              ...state
+            }
           }
         }
-        return state;
-      });
+        return state
+      })
     },
 
     canvasFabricOptionUpdate(id: string, fabricOption: Fabric.JSON) {
       return set((state) => {
         for (let i = 0; i < state.canvas.length; i++) {
           if (state.canvas[i].id === id) {
-            state.canvas[i].fabricOption = fabricOption;
+            state.canvas[i].fabricOption = fabricOption
             return {
-              ...state,
-            };
+              ...state
+            }
           }
         }
-        return state;
+        return state
       })
     }
-  };
-};
+  }
+}

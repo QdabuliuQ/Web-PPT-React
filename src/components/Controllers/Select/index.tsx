@@ -1,9 +1,9 @@
-import { Select, type SelectProps } from 'antd'
 import { memo, useCallback } from 'react'
+import { Select, type SelectProps } from 'antd'
+import _ from 'lodash'
 
 import useStore from '@/stores'
 import { type Fabric } from '@/types/fabirc'
-import _ from 'lodash'
 
 import style from './index.module.less'
 

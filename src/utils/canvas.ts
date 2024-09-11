@@ -1,5 +1,6 @@
 import useStore from '@/stores'
 import { Fabric } from '@/types/fabirc'
+
 import { getRandomID } from '.'
 
 export function elementSelectEvent(e: fabric.IEvent) {
@@ -198,7 +199,7 @@ export function getNewCanvasOption() {
 
 export function getNewCanvas() {
   return {
-    remark: "",
+    remark: '',
     id: getRandomID(10),
     fabricOption: {
       version: '5.3.0',
@@ -243,7 +244,7 @@ export function getNewCanvas() {
           selectable: false,
           hasControls: false,
           hoverCursor: 'default'
-        },
+        }
       ]
     }
   }

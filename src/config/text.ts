@@ -1,6 +1,7 @@
-import { Config } from '@/types/config'
-import common from './common'
 import { Controller } from '@/enums'
+import { Config } from '@/types/config'
+
+import common from './common'
 
 const config: Array<Config.Item> = [
   ...(common as unknown as Array<Config.Item>),

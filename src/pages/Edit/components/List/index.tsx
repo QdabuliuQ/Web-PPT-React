@@ -1,41 +1,50 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react'
+import Scrollbars from 'react-custom-scrollbars'
 
-import style from './index.module.less';
-import Scrollbars from 'react-custom-scrollbars';
-import useStore from '@/stores';
-import PreviewCanvas from '@/components/PreviewCanvas';
-import { CanvasStore } from '@/stores/canvasStore';
-import { getNewCanvasOption, getRandomID } from '@/utils';
-import { Fabric } from '@/types/fabirc';
-import ContextMenu from '@/components/ContextMenu';
-import { useContextMenu } from './useContextMenu';
-import Icon from '@/components/Icon';
+import ContextMenu from '@/components/ContextMenu'
+import Icon from '@/components/Icon'
+import PreviewCanvas from '@/components/PreviewCanvas'
+import useStore from '@/stores'
+import { CanvasStore } from '@/stores/canvasStore'
+import { Fabric } from '@/types/fabirc'
+import { getNewCanvasOption, getRandomID } from '@/utils'
+
+import { useContextMenu } from './useContextMenu'
+
+import style from './index.module.less'
 
 const style1 = {
-  height: 'calc(100vh - 85px - 80px)',
-};
+  height: 'calc(100vh - 85px - 80px)'
+}
 
 export default memo(function List() {
-  const { canvas, activeCanvas, activeCanvasUpdate, canvasPush, activeElementUpdate } = useStore();
+  const {
+    canvas,
+    activeCanvas,
+    activeCanvasUpdate,
+    canvasPush,
+    activeElementUpdate
+  } = useStore()
 
   const previewClickEvent = useCallback(
     (id: string) => {
-      activeCanvasUpdate(activeCanvas !== id ? id : '');
-      activeElementUpdate('');
+      activeCanvasUpdate(activeCanvas !== id ? id : '')
+      activeElementUpdate('')
     },
     [activeCanvas]
-  );
+  )
 
   const addEvent = useCallback(() => {
     canvasPush({
       id: getRandomID(10),
       fabricOption: getNewCanvasOption() as unknown as Fabric.JSON,
-      remark: '',
-    });
-  }, []);
+      remark: ''
+    })
+  }, [])
 
   // 右键菜单
-  const { contextMenuEvent, contextMenuData, contextMenuRef, menuClick } = useContextMenu();
+  const { contextMenuEvent, contextMenuData, contextMenuRef, menuClick } =
+    useContextMenu()
 
   return (
     <div className={style.list}>
@@ -74,5 +83,5 @@ export default memo(function List() {
         <Icon icon="i_add" />
       </div>
     </div>
-  );
-});
+  )
+})

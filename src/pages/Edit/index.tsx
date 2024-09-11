@@ -1,15 +1,15 @@
 import { memo, useEffect } from 'react'
-
-import Panel from './components/Panel'
-import Canvas from './components/Canvas'
-import Header from './components/Header'
-import List from './components/List'
-import Menu from './components/Menu'
+import { Empty } from 'antd'
 
 import config from '@/mock/ppt'
 import useStore from '@/stores'
-import { Empty } from 'antd'
+
+import Canvas from './components/Canvas'
 import Footer from './components/Footer'
+import Header from './components/Header'
+import List from './components/List'
+import Menu from './components/Menu'
+import Panel from './components/Panel'
 import View from './components/View'
 
 import style from './index.module.less'

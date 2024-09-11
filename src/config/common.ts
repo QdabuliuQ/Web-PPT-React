@@ -1,35 +1,35 @@
-import { Controller } from '@/enums';
+import { Controller } from '@/enums'
 
 export default [
   {
     title: '水平翻转',
     type: Controller.switch,
-    key: 'flipX',
+    key: 'flipX'
   },
   {
     title: '垂直翻转',
     type: Controller.switch,
-    key: 'flipY',
+    key: 'flipY'
   },
   {
     title: '边框颜色',
     type: Controller.colorPicker,
-    key: 'stroke',
+    key: 'stroke'
   },
   {
     title: '边框宽度',
     type: Controller.inputNumber,
-    key: 'strokeWidth',
+    key: 'strokeWidth'
   },
   {
     title: '倾斜X',
     type: Controller.inputNumber,
-    key: 'skewX',
+    key: 'skewX'
   },
   {
     title: '倾斜Y',
     type: Controller.inputNumber,
-    key: 'skewY',
+    key: 'skewY'
   },
   {
     title: '透明度',
@@ -37,8 +37,8 @@ export default [
     property: {
       max: 1,
       min: 0,
-      step: 0.1,
+      step: 0.1
     },
-    key: 'opacity',
-  },
-];
+    key: 'opacity'
+  }
+]

@@ -1,9 +1,9 @@
-import type { StoreApi } from 'zustand';
+import type { StoreApi } from 'zustand'
 
 export interface ActiveElementState {
-  activeElement: string;
+  activeElement: string
 
-  activeElementUpdate: (activeElement: string) => void;
+  activeElementUpdate: (activeElement: string) => void
 }
 
 export const createActiveElementStore = (
@@ -15,9 +15,9 @@ export const createActiveElementStore = (
     activeElementUpdate(activeElement: string) {
       return set(() => {
         return {
-          activeElement,
-        };
-      });
-    },
-  };
-};
+          activeElement
+        }
+      })
+    }
+  }
+}

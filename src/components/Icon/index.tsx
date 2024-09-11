@@ -1,22 +1,28 @@
-import { memo, useCallback } from 'react';
-import { createFromIconfontCN } from '@ant-design/icons';
-import { getAssetsFile } from '@/utils';
+import { memo, useCallback } from 'react'
+import { createFromIconfontCN } from '@ant-design/icons'
+
+import { getAssetsFile } from '@/utils'
 
 export interface IconProps {
-  icon: string;
-  clickEvent?: () => void;
-  style?: React.CSSProperties;
-  className?: string;
+  icon: string
+  clickEvent?: () => void
+  style?: React.CSSProperties
+  className?: string
 }
 
 const IconFont = createFromIconfontCN({
-  scriptUrl: getAssetsFile('icon/iconfont.js'),
-});
+  scriptUrl: getAssetsFile('icon/iconfont.js')
+})
 
-export default memo(function Icon({ icon, clickEvent, style, className }: IconProps) {
+export default memo(function Icon({
+  icon,
+  clickEvent,
+  style,
+  className
+}: IconProps) {
   const clickHandle = useCallback(() => {
-    clickEvent && clickEvent();
-  }, [clickEvent]);
+    clickEvent && clickEvent()
+  }, [clickEvent])
 
   return (
     <IconFont
@@ -25,5 +31,5 @@ export default memo(function Icon({ icon, clickEvent, style, className }: IconPr
       className={`iconfont ${className || ''}`}
       type={icon}
     />
-  );
-});
+  )
+})

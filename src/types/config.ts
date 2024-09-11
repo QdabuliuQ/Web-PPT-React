@@ -1,4 +1,3 @@
-import { Controller } from '@/enums'
 import type {
   ColorPickerProps,
   InputNumberProps,
@@ -7,6 +6,8 @@ import type {
   SliderSingleProps,
   SwitchProps
 } from 'antd'
+
+import { Controller } from '@/enums'
 
 export namespace Config {
   export interface Common<T extends keyof typeof Controller> {

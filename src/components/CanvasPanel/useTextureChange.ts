@@ -1,8 +1,9 @@
-import { Fabric } from '@/types/fabirc'
-import { getAssetsFile } from '@/utils'
 import { useCallback, useMemo, useState } from 'react'
 import { fabric } from 'fabric'
+
 import useStore from '@/stores'
+import { Fabric } from '@/types/fabirc'
+import { getAssetsFile } from '@/utils'
 
 export default function useTextureChange(
   getBgrectElement: () => Fabric.Object

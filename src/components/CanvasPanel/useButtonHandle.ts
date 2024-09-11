@@ -1,6 +1,7 @@
-import useStore from "@/stores";
-import { Fabric } from "@/types/fabirc";
-import { useCallback } from "react";
+import { useCallback } from 'react'
+
+import useStore from '@/stores'
+import { Fabric } from '@/types/fabirc'
 
 export default function useButtonHandle() {
   const { canvasFabricOptionUpdate } = useStore()
@@ -12,8 +13,13 @@ export default function useButtonHandle() {
         const bgRect = canvas[i].fabricOption.objects[0]
         for (let j = 0; j < canvas.length; j++) {
           if (canvas[j].id !== activeCanvas) {
-            canvas[j].fabricOption.objects[0].fill = JSON.parse(JSON.stringify(bgRect.fill))
-            canvasFabricOptionUpdate(canvas[j].id, JSON.parse(JSON.stringify(canvas[j].fabricOption)))
+            canvas[j].fabricOption.objects[0].fill = JSON.parse(
+              JSON.stringify(bgRect.fill)
+            )
+            canvasFabricOptionUpdate(
+              canvas[j].id,
+              JSON.parse(JSON.stringify(canvas[j].fabricOption))
+            )
           }
         }
         break

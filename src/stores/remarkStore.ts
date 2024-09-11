@@ -1,21 +1,23 @@
-import type { StoreApi } from 'zustand';
+import type { StoreApi } from 'zustand'
 
 export interface RemarkState {
-  remark: boolean;
+  remark: boolean
 
-  remarkUpdate: (remark: boolean) => void;
+  remarkUpdate: (remark: boolean) => void
 }
 
-export const createRemarkStore = (set: StoreApi<RemarkState>['setState']): RemarkState => {
+export const createRemarkStore = (
+  set: StoreApi<RemarkState>['setState']
+): RemarkState => {
   return {
     remark: false,
 
     remarkUpdate(remark: boolean) {
       return set(() => {
         return {
-          remark,
-        };
-      });
-    },
-  };
-};
+          remark
+        }
+      })
+    }
+  }
+}

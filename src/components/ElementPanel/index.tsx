@@ -1,27 +1,29 @@
-import { Controller } from '@/enums'
+import { memo, useEffect, useMemo, useState } from 'react'
 import {
   Collapse,
-  type InputProps,
   type ColorPickerProps,
   type InputNumberProps,
+  type InputProps,
   type SelectProps,
   type SliderSingleProps
 } from 'antd'
+
 import config from '@/config'
-import { memo, useEffect, useMemo, useState } from 'react'
-import OptionItem from '../OptionItem'
-import { getElementOption } from '@/utils'
+import { Controller } from '@/enums'
 import useStore from '@/stores'
 import { type Config } from '@/types/config'
 import { type Fabric } from '@/types/fabirc'
+import { getElementOption } from '@/utils'
+
+import ColorPicker from '../Controllers/ColorPicker'
+import Input from '../Controllers/Input'
+import InputNumber from '../Controllers/InputNumber'
+import Select from '../Controllers/Select'
+import Slider from '../Controllers/Slider'
+import Switch from '../Controllers/Switch'
+import OptionItem from '../OptionItem'
 
 import style from './index.module.less'
-import ColorPicker from '../Controllers/ColorPicker'
-import InputNumber from '../Controllers/InputNumber'
-import Switch from '../Controllers/Switch'
-import Slider from '../Controllers/Slider'
-import Select from '../Controllers/Select'
-import Input from '../Controllers/Input'
 
 export default memo(function ElementPanel() {
   const { activeElement, activeCanvas } = useStore()
