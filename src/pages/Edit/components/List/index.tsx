@@ -38,7 +38,8 @@ export default memo(function List() {
     canvasPush({
       id: getRandomID(10),
       fabricOption: getNewCanvasOption() as unknown as Fabric.JSON,
-      remark: ''
+      remark: '',
+      visible: true
     })
   }, [])
 
@@ -64,6 +65,7 @@ export default memo(function List() {
                   id={item.id}
                   fabricOption={item.fabricOption}
                   clickEvent={previewClickEvent}
+                  visible={item.visible}
                 />
                 <div className={style.canvasIndex}>{index + 1}</div>
               </div>

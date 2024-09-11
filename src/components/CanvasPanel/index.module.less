@@ -48,7 +48,25 @@
   }
 
   .btn {
-    margin-top: 12px;
+    margin-top: 15px;
     font-size: 13px;
+  }
+
+  .btnGroup {
+    width: 100%;
+    margin-top: 15px;
+    :global(.ant-btn) {
+      height: 32px;
+      flex: 1;
+      :global(.iconfont) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .splitLine {
+    width: 100%;
+    height: 1px;
+    background-color: #e7e7e7;
   }
 }

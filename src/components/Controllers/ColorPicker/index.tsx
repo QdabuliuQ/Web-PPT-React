@@ -12,7 +12,7 @@ interface Props extends ColorPickerProps {
 }
 
 export default memo(function _ColorPicker({ propName, ...other }: Props) {
-  const { canvasUpdate } = useStore()
+  const { canvasFabricOptionUpdate } = useStore()
 
   const changeEvent = useCallback(
     _.debounce((_: unknown, color: string) => {
@@ -26,7 +26,7 @@ export default memo(function _ColorPicker({ propName, ...other }: Props) {
             })
 
             instance.renderAll()
-            canvasUpdate(instance.toObject(), activeCanvas)
+            canvasFabricOptionUpdate(activeCanvas, instance.toObject())
             break
           }
         }

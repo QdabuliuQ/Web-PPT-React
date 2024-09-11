@@ -16,7 +16,7 @@ export default memo(function Canvas() {
   const {
     activeCanvas,
     canvas,
-    canvasUpdate,
+    canvasFabricOptionUpdate,
     instanceUpdate,
     remark,
     canvasRemarkUpdate
@@ -64,7 +64,7 @@ export default memo(function Canvas() {
       instance.current.on(
         'object:modified',
         _.debounce(() => {
-          canvasUpdate(instance.current!.toObject(), activeCanvas)
+          canvasFabricOptionUpdate(activeCanvas, instance.current!.toObject())
         }, 100)
       )
 

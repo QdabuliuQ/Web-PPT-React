@@ -8,7 +8,7 @@ import { getAssetsFile } from '@/utils'
 export default function useTextureChange(
   getBgrectElement: () => Fabric.Object
 ) {
-  const { canvasUpdate } = useStore()
+  const { canvasFabricOptionUpdate } = useStore()
 
   const [name, setName] = useState('texture1')
   const [repeat, setRepeat] = useState('repeat')
@@ -24,7 +24,7 @@ export default function useTextureChange(
         })
       })
       instance?.renderAll()
-      canvasUpdate(instance!.toObject(), activeCanvas)
+      canvasFabricOptionUpdate(activeCanvas, instance!.toObject())
     })
   }
 

@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 
 import useStore from '@/stores'
-import { Fabric } from '@/types/fabirc'
 
 export default function useButtonHandle() {
   const { canvasFabricOptionUpdate } = useStore()

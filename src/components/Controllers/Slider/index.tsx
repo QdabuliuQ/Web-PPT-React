@@ -11,7 +11,7 @@ interface Props extends SliderSingleProps {
 }
 
 export default memo(function _Slider({ propName, ...other }: Props) {
-  const { canvasUpdate } = useStore()
+  const { canvasFabricOptionUpdate } = useStore()
   const changeEvent = useCallback(
     _.debounce((value: number) => {
       const { instance, activeElement, activeCanvas } = useStore.getState()
@@ -24,7 +24,7 @@ export default memo(function _Slider({ propName, ...other }: Props) {
             })
 
             instance.renderAll()
-            canvasUpdate(instance.toObject(), activeCanvas)
+            canvasFabricOptionUpdate(activeCanvas, instance.toObject())
             break
           }
         }

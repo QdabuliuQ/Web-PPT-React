@@ -7,6 +7,7 @@ export namespace CanvasStore {
     id: string
     fabricOption: Fabric.JSON
     remark: string
+    visible: boolean
   }
 }
 
@@ -19,13 +20,17 @@ export interface CanvasState {
 
   canvasInit: (canvas: Array<CanvasStore.Canvas>) => void
 
-  canvasUpdate: (fabricOption: Fabric.JSON, id: string) => void
-
   canvasDelete: (id: string) => void
 
   canvasRemarkUpdate: (id: string, remark: string) => void
 
   canvasFabricOptionUpdate: (id: string, fabricOption: Fabric.JSON) => void
+
+  canvasByKeyUpdate: (
+    id: string,
+    key: keyof CanvasStore.Canvas,
+    data: any
+  ) => void
 }
 
 export const createCanvasStore = (
@@ -62,20 +67,6 @@ export const createCanvasStore = (
       })
     },
 
-    canvasUpdate(fabricOption: Fabric.JSON, id: string) {
-      return set((state) => {
-        for (let i = 0; i < state.canvas.length; i++) {
-          if (state.canvas[i].id === id) {
-            state.canvas[i].fabricOption = fabricOption
-            return {
-              canvas: [...state.canvas]
-            }
-          }
-        }
-        return state
-      })
-    },
-
     canvasDelete(id: string) {
       return set((state) => {
         for (let i = 0; i < state.canvas.length; i++) {
@@ -107,6 +98,20 @@ export const createCanvasStore = (
         for (let i = 0; i < state.canvas.length; i++) {
           if (state.canvas[i].id === id) {
             state.canvas[i].fabricOption = fabricOption
+            return {
+              canvas: [...state.canvas]
+            }
+          }
+        }
+        return state
+      })
+    },
+
+    canvasByKeyUpdate(id: string, key: keyof CanvasStore.Canvas, data: any) {
+      return set((state) => {
+        for (let i = 0; i < state.canvas.length; i++) {
+          if (state.canvas[i].id === id) {
+            ;(state.canvas[i] as any)[key] = data
             return {
               ...state
             }

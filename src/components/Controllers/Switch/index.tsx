@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default memo(function _Switch({ propName, defaultValue }: Props) {
-  const { canvasUpdate } = useStore()
+  const { canvasFabricOptionUpdate } = useStore()
 
   const [status, setStatus] = useState(defaultValue)
 
@@ -27,7 +27,7 @@ export default memo(function _Switch({ propName, defaultValue }: Props) {
           })
 
           instance.renderAll()
-          canvasUpdate(instance.toObject(), activeCanvas)
+          canvasFabricOptionUpdate(activeCanvas, instance.toObject())
           break
         }
       }

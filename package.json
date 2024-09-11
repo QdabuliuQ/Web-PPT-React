@@ -17,6 +17,7 @@
   "dependencies": {
     "@ant-design/icons": "^5.4.0",
     "@scena/react-guides": "^0.28.2",
+    "ahooks": "^3.8.1",
     "antd": "^5.20.3",
     "events": "^3.3.0",
     "fabric": "^5.3.0",

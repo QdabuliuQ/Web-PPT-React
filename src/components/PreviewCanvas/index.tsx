@@ -3,11 +3,14 @@ import { fabric } from 'fabric'
 
 import { type Fabric } from '@/types/fabirc'
 
+import Icon from '../Icon'
+
 import style from './index.module.less'
 
 interface Props {
   id: string
   fabricOption: Fabric.JSON
+  visible: boolean
   className?: string
   clickEvent?: (id: string, fabricOption: Fabric.JSON) => void
 }
@@ -16,6 +19,7 @@ let lastFabricOption: Fabric.JSON | null = null
 export default memo(function PreviewCanvas({
   id,
   fabricOption,
+  visible,
   className,
   clickEvent
 }: Props) {
@@ -45,8 +49,6 @@ export default memo(function PreviewCanvas({
   }, [fabricOption])
 
   useEffect(() => {
-    console.log('!23', containerRef.current, containerRef.current!.clientWidth)
-
     setZoom(containerRef.current!.clientWidth / 800)
   }, [])
 
@@ -68,6 +70,13 @@ export default memo(function PreviewCanvas({
         }}
         ref={canvasRef}
       ></canvas>
+      {!visible ? (
+        <div className={style.iconBox}>
+          <Icon icon="i_unvisible" className={style.unvisible} />
+        </div>
+      ) : (
+        <></>
+      )}
     </div>
   )
 })

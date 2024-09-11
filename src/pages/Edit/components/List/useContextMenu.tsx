@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
-import { ContextMenuItem,ContextMenuRef } from '@/components/ContextMenu'
+import { ContextMenuItem, ContextMenuRef } from '@/components/ContextMenu'
 import Icon from '@/components/Icon'
 import useStore from '@/stores'
 import { getNewCanvas, getRandomID } from '@/utils'
@@ -10,11 +10,15 @@ export function useContextMenu() {
     canvasDelete,
     activeElementUpdate,
     activeCanvasUpdate,
-    canvasInsert
+    canvasInsert,
+    canvasByKeyUpdate,
+    canvasFabricOptionUpdate
   } = useStore()
 
   const canvasId = useRef<string>('')
   const contextMenuRef = useRef<ContextMenuRef | null>(null)
+
+  const [visible, setVisible] = useState(true)
   const contextMenuData = useMemo<Array<ContextMenuItem>>(
     () => [
       {
@@ -31,13 +35,29 @@ export function useContextMenu() {
         prefix: <Icon icon="i_delete" style={{ marginRight: '10px' }} />,
         title: '删除幻灯片',
         key: 'delete'
-      }
+      },
+      {
+        prefix: <Icon icon="i_clear" style={{ marginRight: '10px' }} />,
+        title: '清空幻灯片',
+        key: 'clear'
+      },
+      visible
+        ? {
+            prefix: <Icon icon="i_unvisible" style={{ marginRight: '10px' }} />,
+            title: '隐藏幻灯片',
+            key: 'unvisible'
+          }
+        : {
+            prefix: <Icon icon="i_visible" style={{ marginRight: '10px' }} />,
+            title: '显示幻灯片',
+            key: 'visible'
+          }
     ],
-    []
+    [visible]
   )
 
   const menuClick = useCallback((_: unknown, key: string) => {
-    const { activeCanvas, canvas } = useStore.getState()
+    const { activeCanvas, canvas, instance } = useStore.getState()
 
     if (key === 'copy') {
       // 复制幻灯片
@@ -64,9 +84,38 @@ export function useContextMenu() {
           break
         }
       }
+    } else if (key === 'visible' || key === 'unvisible') {
+      // 隐藏/显示幻灯片
+      canvasByKeyUpdate(
+        canvasId.current,
+        'visible',
+        key === 'visible' ? true : false
+      )
+    } else if (key === 'clear') {
+      // 清空幻灯片内容
+      for (let i = 0; i < canvas.length; i++) {
+        if (canvas[i].id === canvasId.current) {
+          canvas[i].fabricOption.objects = canvas[i].fabricOption.objects.slice(
+            0,
+            1
+          )
+          canvasFabricOptionUpdate(canvasId.current, {
+            ...canvas[i].fabricOption
+          })
+          if (activeCanvas === canvasId.current) {
+            instance?.loadFromJSON(canvas[i].fabricOption, () => {
+              console.log(instance, 'instance')
+              instance?.renderAll()
+            })
+          }
+          break
+        }
+      }
     }
     canvasId.current = ''
-    contextMenuRef.current!.hide()
+    if (contextMenuRef.current) {
+      contextMenuRef.current!.hide()
+    }
   }, [])
   const contextMenuEvent = (
     ev: React.MouseEvent<HTMLDivElement>,
@@ -74,10 +123,18 @@ export function useContextMenu() {
   ) => {
     ev.preventDefault()
     canvasId.current = id
+    const { canvas } = useStore.getState()
+    for (let i = 0; i < canvas.length; i++) {
+      if (canvas[i].id === id) {
+        setVisible(canvas[i].visible)
+        break
+      }
+    }
     contextMenuRef.current!.show(ev.clientX, ev.clientY)
   }
 
   return {
+    canvasId,
     menuClick,
     contextMenuRef,
     contextMenuEvent,

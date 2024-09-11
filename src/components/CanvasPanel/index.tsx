@@ -1,12 +1,15 @@
 import { memo, useCallback, useEffect, useState } from 'react'
-import { Button, ColorPicker, Radio, Select, Space } from 'antd'
+import { Button, ColorPicker, Radio, Select, Space, Tooltip } from 'antd'
+import ButtonGroup from 'antd/es/button/button-group'
 import { fabric } from 'fabric'
 import _ from 'lodash'
 
+import { useContextMenu } from '@/pages/Edit/components/List/useContextMenu'
 import useStore from '@/stores'
 import { Fabric } from '@/types/fabirc'
 import { getBgRectElementOption } from '@/utils/element'
 
+import Icon from '../Icon'
 import OptionItem from '../OptionItem'
 
 import useButtonHandle from './useButtonHandle'
@@ -30,7 +33,7 @@ for (const key in files) {
 }
 
 export default memo(function CanvasPanel() {
-  const { canvasUpdate, activeCanvas } = useStore()
+  const { canvasFabricOptionUpdate, activeCanvas, canvas } = useStore()
   const [value, setValue] = useState(1)
 
   const onChange = useCallback(({ target: { value } }: any) => {
@@ -79,7 +82,7 @@ export default memo(function CanvasPanel() {
         fill: void 0
       })
       instance?.renderAll()
-      canvasUpdate(instance!.toObject(), activeCanvas)
+      canvasFabricOptionUpdate(activeCanvas, instance!.toObject())
     }
   }
 
@@ -92,7 +95,7 @@ export default memo(function CanvasPanel() {
           fill: value
         })
         instance?.renderAll()
-        canvasUpdate(instance!.toObject(), activeCanvas)
+        canvasFabricOptionUpdate(activeCanvas, instance!.toObject())
       }
     }, 200),
     []
@@ -139,7 +142,7 @@ export default memo(function CanvasPanel() {
           fill: gradient
         })
         instance?.renderAll()
-        canvasUpdate(instance!.toObject(), activeCanvas)
+        canvasFabricOptionUpdate(activeCanvas, instance!.toObject())
       }
     }, 200),
     []
@@ -154,6 +157,7 @@ export default memo(function CanvasPanel() {
     repeatOption
   } = useTextureChange(getBgrectElement as any)
 
+  const [canvasInfo, setCanvasInfo] = useState<any>()
   const [defaultInfo, setDefaultInfo] = useState<any>()
 
   useEffect(() => {
@@ -172,6 +176,15 @@ export default memo(function CanvasPanel() {
         setRepeat((bgRect.fill as any).repeat)
       }
     }
+
+    if (activeCanvas) {
+      for (let i = 0; i < canvas.length; i++) {
+        if (canvas[i].id === activeCanvas) {
+          setCanvasInfo(canvas[i])
+          break
+        }
+      }
+    }
   }, [activeCanvas])
 
   const { updateAllEvent, resetAllEvent } = useButtonHandle()
@@ -181,6 +194,12 @@ export default memo(function CanvasPanel() {
     clearBgrectFill()
     setName('')
     setValue(0)
+  }, [])
+
+  const { canvasId, menuClick } = useContextMenu()
+  canvasId.current = activeCanvas
+  const groupItemClickEvent = useCallback((type: string) => {
+    menuClick(null, type)
   }, [])
 
   return (
@@ -248,6 +267,7 @@ export default memo(function CanvasPanel() {
       ) : (
         <></>
       )}
+      <div className={style.splitLine}></div>
       <Button
         onClick={updateAllEvent}
         className={style.btn}
@@ -259,6 +279,51 @@ export default memo(function CanvasPanel() {
       <Button onClick={resetEvent} className={style.btn} block>
         重置全部幻灯片
       </Button>
+      <ButtonGroup className={style.btnGroup}>
+        <Tooltip placement="top" title="新建">
+          <Button
+            onClick={() => groupItemClickEvent('new')}
+            icon={<Icon icon="i_new" />}
+          />
+        </Tooltip>
+        <Tooltip placement="top" title="复制">
+          <Button
+            onClick={() => groupItemClickEvent('copy')}
+            icon={<Icon icon="i_copy" />}
+          />
+        </Tooltip>
+        <Tooltip placement="top" title="删除">
+          <Button
+            onClick={() => groupItemClickEvent('delete')}
+            icon={<Icon icon="i_delete" />}
+          />
+        </Tooltip>
+        <Tooltip placement="top" title="清空">
+          <Button
+            onClick={() => groupItemClickEvent('clear')}
+            icon={<Icon icon="i_clear" />}
+          />
+        </Tooltip>
+        {canvasInfo ? (
+          canvasInfo.visible ? (
+            <Tooltip placement="top" title="隐藏">
+              <Button
+                onClick={() => groupItemClickEvent('unvisible')}
+                icon={<Icon icon="i_unvisible" />}
+              />
+            </Tooltip>
+          ) : (
+            <Tooltip placement="top" title="显示">
+              <Button
+                onClick={() => groupItemClickEvent('visible')}
+                icon={<Icon icon="i_visible" />}
+              />
+            </Tooltip>
+          )
+        ) : (
+          <></>
+        )}
+      </ButtonGroup>
     </div>
   )
 })

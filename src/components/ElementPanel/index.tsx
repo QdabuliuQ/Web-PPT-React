@@ -33,7 +33,7 @@ export default memo(function ElementPanel() {
 
   useEffect(() => {
     if (info) {
-      setElConfig((config as any)[`${info.property.type}Config`])
+      setElConfig((config as any)[`${info.property.type}Config`]())
     }
   }, [])
 

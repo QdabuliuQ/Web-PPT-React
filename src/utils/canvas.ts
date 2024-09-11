@@ -200,6 +200,7 @@ export function getNewCanvasOption() {
 export function getNewCanvas() {
   return {
     remark: '',
+    visible: true,
     id: getRandomID(10),
     fabricOption: {
       version: '5.3.0',

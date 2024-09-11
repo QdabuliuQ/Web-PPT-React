@@ -1,5 +1,5 @@
 import { Controller } from '@/enums'
-import { Config } from '@/types/config'
+import { type Config } from '@/types/config'
 
 import common from './common'
 

@@ -12,7 +12,7 @@ interface Props extends InputNumberProps {
 }
 
 export default memo(function _InputNumber({ propName, ...other }: Props) {
-  const { canvasUpdate } = useStore()
+  const { canvasFabricOptionUpdate } = useStore()
 
   const changeEvent = useCallback(
     _.debounce((value: any) => {
@@ -26,7 +26,7 @@ export default memo(function _InputNumber({ propName, ...other }: Props) {
             })
 
             instance.renderAll()
-            canvasUpdate(instance.toObject(), activeCanvas)
+            canvasFabricOptionUpdate(activeCanvas, instance.toObject())
             break
           }
         }
