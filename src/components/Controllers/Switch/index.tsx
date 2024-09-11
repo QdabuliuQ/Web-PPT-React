@@ -22,9 +22,20 @@ export default memo(function _Switch({ propName, defaultValue }: Props) {
       for (let i = 0; i < instance._objects.length; i++) {
         const element = instance._objects[i] as Fabric.Object
         if (element.property.id === activeElement) {
-          element.set({
-            [propName]: !status
-          })
+          if (Object.prototype.hasOwnProperty.call(element, propName)) {
+            element.set({
+              [propName]: !status
+            })
+          } else if (
+            Object.prototype.hasOwnProperty.call(element.property, propName)
+          ) {
+            element.set({
+              property: {
+                ...element.property,
+                [propName]: !status
+              }
+            })
+          }
 
           instance.renderAll()
           canvasFabricOptionUpdate(activeCanvas, instance.toObject())

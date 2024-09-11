@@ -1,5 +1,6 @@
-import { fabric } from 'fabric'
 
+import { fabric } from 'fabric'
+import config from "./config"
 import { getRandomID, initElement } from '@/utils'
 
 const ICON =
@@ -11,7 +12,10 @@ interface Link extends Partial<fabric.Textbox> {
 }
 
 function linkClickEvent(this: any) {
-  console.log(this)
+  const { url } = this.property
+  if (url) {
+    window.open(url)
+  }
 }
 
 function createElement(text: string, url: string, option: Partial<Link> = {}) {
@@ -21,13 +25,17 @@ function createElement(text: string, url: string, option: Partial<Link> = {}) {
       type: 'link',
       url
     },
+    top: 0,
+    left: 0,
+    skewX: 0,
+    skewY: 0,
     text,
     hoverCursor: 'pointer',
     ...option
   } as { [propName: string]: any })
 
   initElement(link)
-  link.on('mouse:down', linkClickEvent)
+  link.on('mousedblclick', linkClickEvent)
 
   return link
 }
@@ -39,5 +47,6 @@ const info = {
 
 export default {
   createElement,
-  info
+  info,
+  config
 }

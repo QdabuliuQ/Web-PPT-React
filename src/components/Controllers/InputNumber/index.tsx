@@ -14,6 +14,8 @@ interface Props extends InputNumberProps {
 export default memo(function _InputNumber({ propName, ...other }: Props) {
   const { canvasFabricOptionUpdate } = useStore()
 
+  console.log(propName, other)
+
   const changeEvent = useCallback(
     _.debounce((value: any) => {
       const { instance, activeElement, activeCanvas } = useStore.getState()
@@ -21,9 +23,20 @@ export default memo(function _InputNumber({ propName, ...other }: Props) {
         for (let i = 0; i < instance._objects.length; i++) {
           const element = instance._objects[i] as Fabric.Object
           if (element.property.id === activeElement) {
-            element.set({
-              [propName]: value
-            })
+            if (Object.prototype.hasOwnProperty.call(element, propName)) {
+              element.set({
+                [propName]: value
+              })
+            } else if (
+              Object.prototype.hasOwnProperty.call(element.property, propName)
+            ) {
+              element.set({
+                property: {
+                  ...element.property,
+                  [propName]: value
+                }
+              })
+            }
 
             instance.renderAll()
             canvasFabricOptionUpdate(activeCanvas, instance.toObject())

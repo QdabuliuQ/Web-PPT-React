@@ -23,17 +23,29 @@ import Slider from '../Controllers/Slider'
 import Switch from '../Controllers/Switch'
 import OptionItem from '../OptionItem'
 
+import packages from '@/packages'
+
 import style from './index.module.less'
+import PositionButton from '../Controllers/PositionButton'
 
 export default memo(function ElementPanel() {
   const { activeElement, activeCanvas } = useStore()
 
   const info = getElementOption(activeCanvas, activeElement) as Fabric.Object
   const [elConfig, setElConfig] = useState<Array<Config.Item> | null>(null)
+  console.log(info.skewX, info.skewY, 'info')
 
   useEffect(() => {
     if (info) {
-      setElConfig((config as any)[`${info.property.type}Config`]())
+      if ((config as any)[`${info.property.type}Config`]) {
+        setElConfig((config as any)[`${info.property.type}Config`]())
+      } else {
+        setElConfig(
+          (packages as any)[
+            `${info.property.type.substring(0, 1).toUpperCase()}${info.property.type.substring(1)}`
+          ].info.config()
+        )
+      }
     }
   }, [])
 
@@ -93,7 +105,11 @@ export default memo(function ElementPanel() {
                     ? item.property
                     : {}) as ColorPickerProps)}
                   propName={item.key}
-                  defaultValue={(info as any)[item.key]}
+                  defaultValue={
+                    Object.prototype.hasOwnProperty.call(info, item.key)
+                      ? (info as any)[item.key]
+                      : (info as any).property[item.key]
+                  }
                 />
               ) : item.type === Controller.inputNumber ? (
                 <InputNumber
@@ -101,16 +117,28 @@ export default memo(function ElementPanel() {
                     ? item.property
                     : {}) as InputNumberProps)}
                   propName={item.key}
-                  defaultValue={(info as any)[item.key]}
+                  defaultValue={
+                    Object.prototype.hasOwnProperty.call(info, item.key)
+                      ? (info as any)[item.key]
+                      : (info as any).property[item.key]
+                  }
                 />
               ) : item.type === Controller.switch ? (
                 <Switch
-                  defaultValue={(info as any)[item.key]}
+                  defaultValue={
+                    Object.prototype.hasOwnProperty.call(info, item.key)
+                      ? (info as any)[item.key]
+                      : (info as any).property[item.key]
+                  }
                   propName={item.key}
                 />
               ) : item.type === Controller.slider ? (
                 <Slider
-                  defaultValue={(info as any)[item.key]}
+                  defaultValue={
+                    Object.prototype.hasOwnProperty.call(info, item.key)
+                      ? (info as any)[item.key]
+                      : (info as any).property[item.key]
+                  }
                   propName={item.key}
                   {...((item.property
                     ? item.property
@@ -118,13 +146,21 @@ export default memo(function ElementPanel() {
                 />
               ) : item.type === Controller.select ? (
                 <Select
-                  defaultValue={(info as any)[item.key]}
+                  defaultValue={
+                    Object.prototype.hasOwnProperty.call(info, item.key)
+                      ? (info as any)[item.key]
+                      : (info as any).property[item.key]
+                  }
                   propName={item.key}
                   {...((item.property ? item.property : {}) as SelectProps)}
                 />
               ) : item.type === Controller.input ? (
                 <Input
-                  defaultValue={(info as any)[item.key]}
+                  defaultValue={
+                    Object.prototype.hasOwnProperty.call(info, item.key)
+                      ? (info as any)[item.key]
+                      : (info as any).property[item.key]
+                  }
                   propName={item.key}
                   {...((item.property ? item.property : {}) as InputProps)}
                 />
@@ -143,6 +179,7 @@ export default memo(function ElementPanel() {
 
   return (
     <div>
+      <PositionButton />
       <Collapse
         defaultActiveKey={['1']}
         ghost

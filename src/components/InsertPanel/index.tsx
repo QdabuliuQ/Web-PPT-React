@@ -77,7 +77,7 @@ export default memo(function InsertPanel() {
           title={item.title}
         />
       ))}
-      <Link finish={finishEvent} />
+      <Link.component finish={finishEvent} />
     </div>
   )
 })

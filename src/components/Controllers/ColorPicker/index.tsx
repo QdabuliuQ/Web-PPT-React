@@ -21,9 +21,20 @@ export default memo(function _ColorPicker({ propName, ...other }: Props) {
         for (let i = 0; i < instance._objects.length; i++) {
           const element = instance._objects[i] as Fabric.Object
           if (element.property.id === activeElement) {
-            element.set({
-              [propName]: color
-            })
+            if (Object.prototype.hasOwnProperty.call(element, propName)) {
+              element.set({
+                [propName]: color
+              })
+            } else if (
+              Object.prototype.hasOwnProperty.call(element.property, propName)
+            ) {
+              element.set({
+                property: {
+                  ...element.property,
+                  [propName]: color
+                }
+              })
+            }
 
             instance.renderAll()
             canvasFabricOptionUpdate(activeCanvas, instance.toObject())

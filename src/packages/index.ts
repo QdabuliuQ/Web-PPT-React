@@ -1,5 +1,9 @@
 import Link from './link/main'
+import LinkInfo from "./link/"
 
 export default {
-  Link
+  Link: {
+    component: Link,
+    info: LinkInfo
+  }
 }
