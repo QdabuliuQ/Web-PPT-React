@@ -19,18 +19,20 @@ import style from './index.module.less'
 
 const files = import.meta.glob('@/assets/image/*.png')
 const images: Array<{ name: string; url: string }> = []
-for (const key in files) {
-  if (Object.prototype.hasOwnProperty.call(files, key)) {
-    const keys = key.split('/')
-    if (keys[keys.length - 1].indexOf('texture') !== -1) {
-      const name = keys[keys.length - 1].replace('.png', '')
-      images.push({
-        name,
-        url: ((await files[key]()) as any).default
-      })
+;(async function () {
+  for (const key in files) {
+    if (Object.prototype.hasOwnProperty.call(files, key)) {
+      const keys = key.split('/')
+      if (keys[keys.length - 1].indexOf('texture') !== -1) {
+        const name = keys[keys.length - 1].replace('.png', '')
+        images.push({
+          name,
+          url: ((await files[key]()) as any).default
+        })
+      }
     }
   }
-}
+})()
 
 export default memo(function CanvasPanel() {
   const { canvasFabricOptionUpdate, activeCanvas, canvas } = useStore()
