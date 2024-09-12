@@ -76,7 +76,6 @@ export function getCircleElement(option: { [propName: string]: any } = {}) {
     fill: '#c05316',
     ...option
   } as { [propName: string]: any })
-  console.log(circle)
 
   initElement(circle)
   return circle

@@ -7,7 +7,7 @@ import App from './App.tsx'
 
 const config: ThemeConfig = {
   token: {
-    colorPrimary: '#c05316'
+    colorPrimary: '#e5834b'
   }
 }
 

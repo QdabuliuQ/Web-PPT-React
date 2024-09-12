@@ -1,9 +1,15 @@
 import type { StoreApi } from 'zustand'
 
-export interface InstanceState {
-  instance: fabric.Canvas | null
+import { Fabric } from '@/types/fabirc'
 
-  instanceUpdate: (instance: fabric.Canvas) => void
+interface Int extends fabric.Canvas {
+  _objects: Array<Fabric.Object>
+}
+
+export interface InstanceState {
+  instance: Int | null
+
+  instanceUpdate: (instance: Int) => void
 }
 
 export const createInstanceStore = (
@@ -12,7 +18,7 @@ export const createInstanceStore = (
   return {
     instance: null,
 
-    instanceUpdate(instance: fabric.Canvas | null) {
+    instanceUpdate(instance: Int | null) {
       return set(() => {
         return {
           instance

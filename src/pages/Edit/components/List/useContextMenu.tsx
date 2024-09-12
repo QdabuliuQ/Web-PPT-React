@@ -23,33 +23,33 @@ export function useContextMenu() {
     () => [
       {
         prefix: <Icon icon="i_new" style={{ marginRight: '10px' }} />,
-        title: '新建幻灯片',
+        title: '新建(Shift+N)',
         key: 'new'
       },
       {
         prefix: <Icon icon="i_copy" style={{ marginRight: '10px' }} />,
-        title: '复制幻灯片',
+        title: '复制(Shift+C)',
         key: 'copy'
       },
       {
         prefix: <Icon icon="i_delete" style={{ marginRight: '10px' }} />,
-        title: '删除幻灯片',
+        title: '删除(Shift+D)',
         key: 'delete'
       },
       {
         prefix: <Icon icon="i_clear" style={{ marginRight: '10px' }} />,
-        title: '清空幻灯片',
+        title: '清空(Shift+R)',
         key: 'clear'
       },
       visible
         ? {
             prefix: <Icon icon="i_unvisible" style={{ marginRight: '10px' }} />,
-            title: '隐藏幻灯片',
+            title: '隐藏(Shift+V)',
             key: 'unvisible'
           }
         : {
             prefix: <Icon icon="i_visible" style={{ marginRight: '10px' }} />,
-            title: '显示幻灯片',
+            title: '显示(Shift+V)',
             key: 'visible'
           }
     ],
@@ -70,6 +70,8 @@ export function useContextMenu() {
         }
       }
     } else if (key === 'delete') {
+      console.log('111')
+
       // 删除幻灯片
       canvasDelete(canvasId.current)
       activeElementUpdate('')

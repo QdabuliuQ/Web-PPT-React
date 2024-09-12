@@ -5,6 +5,7 @@
   height: 30px;
   padding: 0 25px;
   font-size: 12px;
+  color: #fff;
 
   .left {
     display: flex;
@@ -22,6 +23,7 @@
   .right {
     display: flex;
     align-items: center;
+    color: #fff;
 
     .activeItem {
       background-color: rgb(0 0 0 / 5%) !important;
@@ -34,13 +36,18 @@
       padding: 0 10px;
       margin: 0 15px;
       cursor: pointer;
+      color: #fff;
 
       :global(.iconfont) {
         padding-right: 5px;
       }
 
       &:hover {
-        background-color: rgb(0 0 0 / 5%);
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+
+      &:active {
+        background-color: rgba(0, 0, 0, 0.1);
       }
     }
 
@@ -97,6 +104,6 @@
   .line {
     width: 1px;
     height: 15px;
-    background-color: #b9b9b9;
+    background-color: #d6d6d6;
   }
 }

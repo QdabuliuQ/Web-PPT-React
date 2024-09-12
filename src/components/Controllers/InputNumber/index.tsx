@@ -14,8 +14,6 @@ interface Props extends InputNumberProps {
 export default memo(function _InputNumber({ propName, ...other }: Props) {
   const { canvasFabricOptionUpdate } = useStore()
 
-  console.log(propName, other)
-
   const changeEvent = useCallback(
     _.debounce((value: any) => {
       const { instance, activeElement, activeCanvas } = useStore.getState()

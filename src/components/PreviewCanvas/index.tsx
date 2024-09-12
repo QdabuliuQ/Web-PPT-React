@@ -1,4 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { useMount } from 'ahooks'
+import { Spin } from 'antd'
 import { fabric } from 'fabric'
 
 import { type Fabric } from '@/types/fabirc'
@@ -48,9 +50,13 @@ export default memo(function PreviewCanvas({
     }
   }, [fabricOption])
 
-  useEffect(() => {
+  useMount(() => {
     setZoom(containerRef.current!.clientWidth / 800)
-  }, [])
+
+    setTimeout(() => {
+      setLoading(false)
+    }, 100)
+  })
 
   const _clickEvent = useCallback(() => {
     if (clickEvent) {
@@ -58,25 +64,32 @@ export default memo(function PreviewCanvas({
     }
   }, [clickEvent])
 
+  const [loading, setLoading] = useState(true)
+
   return (
     <div
       onClick={_clickEvent}
       ref={containerRef}
       className={`${style.previewCanvas} ${className || ''}`}
     >
-      <canvas
-        style={{
-          zoom: zoom
-        }}
-        ref={canvasRef}
-      ></canvas>
-      {!visible ? (
-        <div className={style.iconBox}>
-          <Icon icon="i_unvisible" className={style.unvisible} />
-        </div>
-      ) : (
-        <></>
-      )}
+      <Spin spinning={loading}>
+        <>
+          <canvas
+            style={{
+              zoom: zoom,
+              opacity: loading ? 0 : 1
+            }}
+            ref={canvasRef}
+          ></canvas>
+          {!visible ? (
+            <div className={style.iconBox}>
+              <Icon icon="i_unvisible" className={style.unvisible} />
+            </div>
+          ) : (
+            <></>
+          )}
+        </>
+      </Spin>
     </div>
   )
 })

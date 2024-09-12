@@ -1,7 +1,8 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { Slider } from 'antd'
 
 import Icon from '@/components/Icon'
+import KeyModal from '@/components/KeyModal'
 import useStore from '@/stores'
 
 import style from './index.module.less'
@@ -39,8 +40,13 @@ export default memo(function Footer() {
     activeElementUpdate('')
   }
 
+  const [open, setOpen] = useState(false)
+  const clickEvent = useCallback(() => setOpen(false), [])
+  const keyClickEvent = useCallback(() => setOpen(true), [])
+
   return (
     <div className={style.footer}>
+      <KeyModal onCancel={clickEvent} onOk={clickEvent} open={open} />
       <div className={style.left}>
         <div className={style.count}>
           <Icon icon="i_canvas" />
@@ -55,6 +61,11 @@ export default memo(function Footer() {
         >
           <Icon icon="i_remark" />
           备注
+        </div>
+        <div className={style.line}></div>
+        <div onClick={keyClickEvent} className={style.textItem}>
+          <Icon icon="i_keyboard" />
+          快捷键
         </div>
         <div className={style.line}></div>
         <div

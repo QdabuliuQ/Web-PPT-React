@@ -1,22 +1,15 @@
 import { memo, useCallback, useMemo } from 'react'
-import { useKeyPress } from 'ahooks'
-import { Button, Tooltip } from 'antd'
-import ButtonGroup from 'antd/es/button/button-group'
+import { Tooltip } from 'antd'
 
-import Icon from '@/components/Icon'
-import useElementAlign from '@/hooks/useElementAlign'
-import useStore from '@/stores'
+import Icon from '../Icon'
 
 import style from './index.module.less'
 
-export default memo(function PositionButton() {
-  const alignHandle = useElementAlign()
+interface Props {
+  clickEvent: (type: string) => void
+}
 
-  const clickEvent = useCallback((align: string) => {
-    const { activeElement } = useStore.getState()
-    alignHandle(activeElement, align)
-  }, [])
-
+export default memo(function ContextMenuZIndex({ clickEvent }: Props) {
   const positions = useMemo(
     () => [
       {
@@ -58,26 +51,15 @@ export default memo(function PositionButton() {
     []
   )
 
-  const keyPressEvent = useCallback((e: any) => {
-    e.preventDefault()
-    const index = Number(e.key) - 1
-    clickEvent(positions[index].key)
-  }, [])
-
-  useKeyPress(
-    ['ctrl.1', 'ctrl.2', 'ctrl.3', 'ctrl.4', 'ctrl.5', 'ctrl.6', 'ctrl.7'],
-    keyPressEvent
-  )
-
   return (
-    <div className={style.positionButton}>
-      <ButtonGroup className={style.buttonGroup}>
-        {positions.map((item) => (
-          <Tooltip key={item.key} placement="top" title={item.title}>
-            <Button onClick={() => clickEvent(item.key)} icon={item.icon} />
-          </Tooltip>
-        ))}
-      </ButtonGroup>
+    <div className={style.contextMenuZIndex}>
+      {positions.map((item) => (
+        <Tooltip key={item.key} placement="top" title={item.title}>
+          <div onClick={() => clickEvent(item.key)} className={style.menuItem}>
+            {item.icon}
+          </div>
+        </Tooltip>
+      ))}
     </div>
   )
 })

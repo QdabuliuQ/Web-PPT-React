@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react'
 import Scrollbars from 'react-custom-scrollbars'
+import { useKeyPress } from 'ahooks'
 
 import ContextMenu from '@/components/ContextMenu'
 import Icon from '@/components/Icon'
@@ -44,8 +45,47 @@ export default memo(function List() {
   }, [])
 
   // 右键菜单
-  const { contextMenuEvent, contextMenuData, contextMenuRef, menuClick } =
-    useContextMenu()
+  const {
+    canvasId,
+    contextMenuEvent,
+    contextMenuData,
+    contextMenuRef,
+    menuClick
+  } = useContextMenu()
+
+  const keyPressEvent = useCallback((e: any) => {
+    const { key } = e
+    const { activeCanvas, canvas } = useStore.getState()
+    if (activeCanvas) {
+      canvasId.current = activeCanvas
+      e.preventDefault()
+
+      for (let i = 0; i < canvas.length; i++) {
+        if (canvas[i].id === activeCanvas) {
+          menuClick(
+            null,
+            key === 'C'
+              ? 'copy'
+              : key === 'D'
+                ? 'delete'
+                : key === 'N'
+                  ? 'new'
+                  : key === 'R'
+                    ? 'clear'
+                    : canvas[i].visible
+                      ? 'unvisible'
+                      : 'visible'
+          )
+          break
+        }
+      }
+    }
+  }, [])
+
+  useKeyPress(
+    ['shift.n', 'shift.c', 'shift.d', 'shift.r', 'shift.v'],
+    keyPressEvent
+  )
 
   return (
     <div className={style.list}>
@@ -71,7 +111,6 @@ export default memo(function List() {
               </div>
             ))}
           </div>
-
           <ContextMenu
             ref={contextMenuRef}
             menuData={contextMenuData}

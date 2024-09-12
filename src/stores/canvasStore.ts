@@ -72,7 +72,9 @@ export const createCanvasStore = (
         for (let i = 0; i < state.canvas.length; i++) {
           if (state.canvas[i].id === id) {
             state.canvas.splice(i, 1)
-            break
+            return {
+              canvas: [...state.canvas]
+            }
           }
         }
         return state

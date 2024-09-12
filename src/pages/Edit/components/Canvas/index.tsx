@@ -1,7 +1,11 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { useKeyPress } from 'ahooks'
 import { fabric } from 'fabric'
 import _ from 'lodash'
 
+import ContextMenu from '@/components/ContextMenu'
+import useElementAlign from '@/hooks/useElementAlign'
+import useElementHandle from '@/hooks/useElementHandle'
 import useStore from '@/stores'
 import { type Fabric } from '@/types/fabirc'
 import {
@@ -9,6 +13,8 @@ import {
   elementSelectEvent,
   overWriteToObject
 } from '@/utils'
+
+import useContextMenu from './useContextMenu'
 
 import style from './index.module.less'
 
@@ -42,6 +48,26 @@ export default memo(function Canvas() {
     }
   }, [])
 
+  const {
+    elementDeleteEvent,
+    elementLockChangeEvent,
+    elementCopyEvent,
+    elementLayoutChange
+  } = useElementHandle()
+  const alignHandle = useElementAlign()
+  const {
+    contextMenuEvent,
+    elementContextMenuData,
+    elementContextMenuRef,
+    menuClickEvent
+  } = useContextMenu(
+    elementDeleteEvent,
+    elementLockChangeEvent,
+    elementCopyEvent,
+    alignHandle,
+    elementLayoutChange
+  )
+
   useEffect(() => {
     if (activeCanvas) {
       const width = 800
@@ -55,11 +81,14 @@ export default memo(function Canvas() {
         document.getElementById('__canvas__') as HTMLCanvasElement,
         {
           width,
-          height
+          height,
+          fireRightClick: true,
+          stopContextMenu: true,
+          fireMiddleClick: true
         }
       )
 
-      instanceUpdate(instance.current)
+      instanceUpdate(instance.current as any)
 
       instance.current.on(
         'object:modified',
@@ -67,6 +96,8 @@ export default memo(function Canvas() {
           canvasFabricOptionUpdate(activeCanvas, instance.current!.toObject())
         }, 100)
       )
+
+      instance.current.on('mouse:down', contextMenuEvent)
 
       for (let i = 0; i < canvas.length; i++) {
         if (canvas[i].id === activeCanvas) {
@@ -97,6 +128,7 @@ export default memo(function Canvas() {
         instance.current?.dispose()
         instance.current?.off('object:selected')
         instance.current?.off('object:modified')
+        instance.current?.off('mouse:down')
       }
     }
   }, [activeCanvas])
@@ -142,6 +174,11 @@ export default memo(function Canvas() {
           />
         </div>
       </div>
+      <ContextMenu
+        ref={elementContextMenuRef}
+        menuData={elementContextMenuData}
+        menuClick={menuClickEvent}
+      />
     </div>
   )
 })

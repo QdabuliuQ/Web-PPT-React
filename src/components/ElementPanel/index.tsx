@@ -10,83 +10,89 @@ import {
 
 import config from '@/config'
 import { Controller } from '@/enums'
+import packages from '@/packages'
 import useStore from '@/stores'
 import { type Config } from '@/types/config'
 import { type Fabric } from '@/types/fabirc'
 import { getElementOption } from '@/utils'
 
 import ColorPicker from '../Controllers/ColorPicker'
+import HandleButton from '../Controllers/HandleButton'
 import Input from '../Controllers/Input'
 import InputNumber from '../Controllers/InputNumber'
+import LayoutButton from '../Controllers/LayoutButton'
+import PositionButton from '../Controllers/PositionButton'
 import Select from '../Controllers/Select'
 import Slider from '../Controllers/Slider'
 import Switch from '../Controllers/Switch'
 import OptionItem from '../OptionItem'
 
-import packages from '@/packages'
-
 import style from './index.module.less'
-import PositionButton from '../Controllers/PositionButton'
 
 export default memo(function ElementPanel() {
-  const { activeElement, activeCanvas } = useStore()
+  const { activeElement, activeCanvas, canvas } = useStore()
 
-  const info = getElementOption(activeCanvas, activeElement) as Fabric.Object
+  const [info, setInfo] = useState<any>()
   const [elConfig, setElConfig] = useState<Array<Config.Item> | null>(null)
-  console.log(info.skewX, info.skewY, 'info')
 
   useEffect(() => {
-    if (info) {
-      if ((config as any)[`${info.property.type}Config`]) {
-        setElConfig((config as any)[`${info.property.type}Config`]())
+    const _info = getElementOption(activeCanvas, activeElement) as Fabric.Object
+    setInfo(_info)
+    if (_info) {
+      if ((config as any)[`${_info.property.type}Config`]) {
+        setElConfig((config as any)[`${_info.property.type}Config`]())
       } else {
         setElConfig(
           (packages as any)[
-            `${info.property.type.substring(0, 1).toUpperCase()}${info.property.type.substring(1)}`
+            `${_info.property.type.substring(0, 1).toUpperCase()}${_info.property.type.substring(1)}`
           ].info.config()
         )
       }
     }
-  }, [])
+  }, [activeElement, canvas])
 
   const basicInfoPanel = useMemo(
     () => [
       {
         key: '1',
         label: '基本属性',
-        children: [
-          <div key={1} className={style.infoItem}>
-            <div className={style.itemTitle}>宽度</div>
-            <div className={style.itemData}>
-              {(info.width * info.scaleX).toFixed(0)} Px
-            </div>
-          </div>,
-          <div key={2} className={style.infoItem}>
-            <div className={style.itemTitle}>高度</div>
-            <div className={style.itemData}>
-              {(info.height * info.scaleY).toFixed(0)} Px
-            </div>
-          </div>,
-          <div key={3} className={style.infoItem}>
-            <div className={style.itemTitle}>旋转角度</div>
-            <div className={style.itemData}>{info.angle} Deg</div>
-          </div>,
-          <div key={4} className={style.infoItem}>
-            <div className={style.itemTitle}>偏移X</div>
-            <div className={style.itemData}>
-              {(info.left - info.width / 2).toFixed(0)} Px
-            </div>
-          </div>,
-          <div key={5} className={style.infoItem}>
-            <div className={style.itemTitle}>偏移Y</div>
-            <div className={style.itemData}>
-              {(info.top - info.height / 2).toFixed(0)} Px
-            </div>
-          </div>
-        ]
+        children: info
+          ? [
+              <div key={1} className={style.infoItem}>
+                <div className={style.itemTitle}>宽度</div>
+                <div className={style.itemData}>
+                  {(info.width * info.scaleX).toFixed(0)} Px
+                </div>
+              </div>,
+              <div key={2} className={style.infoItem}>
+                <div className={style.itemTitle}>高度</div>
+                <div className={style.itemData}>
+                  {(info.height * info.scaleY).toFixed(0)} Px
+                </div>
+              </div>,
+              <div key={3} className={style.infoItem}>
+                <div className={style.itemTitle}>旋转角度</div>
+                <div className={style.itemData}>
+                  {info.angle.toFixed(0)} Deg
+                </div>
+              </div>,
+              <div key={4} className={style.infoItem}>
+                <div className={style.itemTitle}>偏移X</div>
+                <div className={style.itemData}>
+                  {(info.left - info.width / 2).toFixed(0)} Px
+                </div>
+              </div>,
+              <div key={5} className={style.infoItem}>
+                <div className={style.itemTitle}>偏移Y</div>
+                <div className={style.itemData}>
+                  {(info.top - info.height / 2).toFixed(0)} Px
+                </div>
+              </div>
+            ]
+          : []
       }
     ],
-    [info.width, info.scaleX, info.height, info.scaleY, info.left, info.top]
+    [info]
   )
 
   const elInfoPanel = useMemo(
@@ -104,6 +110,11 @@ export default memo(function ElementPanel() {
                   {...((item.property
                     ? item.property
                     : {}) as ColorPickerProps)}
+                  key={
+                    Object.prototype.hasOwnProperty.call(info, item.key)
+                      ? (info as any)[item.key]
+                      : (info as any).property[item.key]
+                  }
                   propName={item.key}
                   defaultValue={
                     Object.prototype.hasOwnProperty.call(info, item.key)
@@ -174,12 +185,14 @@ export default memo(function ElementPanel() {
         )}
       </div>
     ],
-    [info, elConfig]
+    [info, elConfig, activeElement]
   )
 
   return (
     <div>
       <PositionButton />
+      <LayoutButton />
+      <HandleButton />
       <Collapse
         defaultActiveKey={['1']}
         ghost

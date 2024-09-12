@@ -61,8 +61,8 @@ export function getNewCanvasOption() {
       {
         type: 'rect',
         version: '5.3.0',
-        originX: 'center',
-        originY: 'center',
+        originX: 'left',
+        originY: 'top',
         left: 0,
         top: 0,
         width: 100,
@@ -102,8 +102,8 @@ export function getNewCanvasOption() {
       {
         type: 'textbox',
         version: '5.3.0',
-        originX: 'center',
-        originY: 'center',
+        originX: 'left',
+        originY: 'top',
         left: 258.8,
         top: 126,
         width: 150,
@@ -159,8 +159,8 @@ export function getNewCanvasOption() {
       {
         type: 'triangle',
         version: '5.3.0',
-        originX: 'center',
-        originY: 'center',
+        originX: 'left',
+        originY: 'top',
         left: 127,
         top: 93,
         width: 100,
