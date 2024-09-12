@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Tooltip } from 'antd'
 
 import Icon from '../Icon'

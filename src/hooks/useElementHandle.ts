@@ -15,21 +15,6 @@ export default function useElementHandle() {
     return null
   }
 
-  const getElementByCanvas = (cid: string, eid: string) => {
-    const { canvas } = useStore.getState()
-    for (let i = 0; i < canvas.length; i++) {
-      if (canvas[i].id === cid) {
-        for (let j = 0; j < canvas[i].fabricOption.objects.length; j++) {
-          const element = canvas[i].fabricOption.objects[j]
-          if (element.property.id === eid) {
-            return element
-          }
-        }
-      }
-    }
-    return null
-  }
-
   // 元素删除
   const elementDeleteEvent = useCallback((eid: string) => {
     const {

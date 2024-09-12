@@ -1,5 +1,4 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { useKeyPress } from 'ahooks'
 import { fabric } from 'fabric'
 import _ from 'lodash'
 

@@ -1,9 +1,9 @@
 {
-  "name": "react-ppt",
+  "name": "web-ppt-react",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://QdabuliuQ.github.io/React-PPT",
+  "homepage": "https://QdabuliuQ.github.io/Web-PPT-React",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
