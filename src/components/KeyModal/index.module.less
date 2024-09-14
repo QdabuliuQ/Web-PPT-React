@@ -3,33 +3,40 @@
     &:first-child {
       margin-top: 15px;
     }
+
     &:not(:last-child) {
       margin-bottom: 10px;
     }
+
     .groupTitle {
-      font-size: 14px;
       padding-bottom: 5px;
-      color: @color;
+      font-size: 14px;
       font-weight: bold;
+      color: @color;
       border-bottom: 2px solid @color;
     }
   }
+
   .keys {
     display: flex;
     flex-wrap: wrap;
+
     .keyItem {
       padding: 10px;
-      text-align: center;
       font-size: 12px;
+      text-align: center;
       cursor: pointer;
       border-radius: 5px;
+
       .keyIcon {
         display: flex;
         align-items: center;
         font-size: 15px;
+
         :global(img) {
           height: 30px;
         }
+
         :global(span) {
           display: flex;
           align-items: center;

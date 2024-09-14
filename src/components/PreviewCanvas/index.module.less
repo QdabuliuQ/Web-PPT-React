@@ -1,31 +1,32 @@
 .previewCanvas {
+  position: relative;
   display: flex;
   align-items: center;
   overflow: hidden;
   border-radius: 4px;
   box-shadow: 0 0 3px 1px rgb(0 0 0 / 10%);
-  position: relative;
 
   canvas {
     zoom: calc(176 / 800);
   }
 
   .iconBox {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 30px;
     height: 30px;
     background-color: @color;
     border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    z-index: 2;
-    bottom: 10px;
-    right: 12px;
+
     .unvisible {
       font-size: 15px;
-      color: #fff;
       font-weight: bold;
+      color: #fff;
     }
   }
 }

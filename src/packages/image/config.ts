@@ -1,5 +1,4 @@
 import common from '@/config/common'
-import { Controller } from '@/enums'
 import { Config } from '@/types/config'
 
 export default function config() {

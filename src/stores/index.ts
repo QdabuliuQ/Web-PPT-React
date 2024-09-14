@@ -1,4 +1,4 @@
-import { create,StoreApi } from 'zustand'
+import { create, StoreApi } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
 import {
@@ -11,7 +11,8 @@ import {
 } from './activeElementStore'
 import {
   type ActivePanelState,
-  createActivePanelStore} from './activePanelStore'
+  createActivePanelStore
+} from './activePanelStore'
 import { type CanvasState, createCanvasStore } from './canvasStore'
 import { createInstanceStore, type InstanceState } from './instanceStore'
 import { createModeStore, type ModeState } from './modeStore'
