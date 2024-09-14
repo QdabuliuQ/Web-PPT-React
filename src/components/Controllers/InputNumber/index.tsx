@@ -36,6 +36,7 @@ export default memo(function _InputNumber({ propName, ...other }: Props) {
               })
             }
 
+            console.log(propName, element)
             instance.renderAll()
             canvasFabricOptionUpdate(activeCanvas, instance.toObject())
             break

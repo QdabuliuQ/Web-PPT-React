@@ -35,6 +35,7 @@ export default memo(function _ColorPicker({ propName, ...other }: Props) {
                 }
               })
             }
+            console.log(propName, element)
 
             instance.renderAll()
             canvasFabricOptionUpdate(activeCanvas, instance.toObject())

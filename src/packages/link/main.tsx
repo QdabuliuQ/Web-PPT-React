@@ -16,8 +16,10 @@ function Main(props: Props) {
   const { activeCanvas } = useStore()
 
   const clickEvent = useCallback(() => {
-    setVisible(true)
-  }, [])
+    if (activeCanvas) {
+      setVisible(true)
+    }
+  }, [activeCanvas])
 
   const [visible, setVisible] = useState(false)
 

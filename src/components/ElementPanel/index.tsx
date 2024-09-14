@@ -78,15 +78,11 @@ export default memo(function ElementPanel() {
               </div>,
               <div key={4} className={style.infoItem}>
                 <div className={style.itemTitle}>偏移X</div>
-                <div className={style.itemData}>
-                  {(info.left - info.width / 2).toFixed(0)} Px
-                </div>
+                <div className={style.itemData}>{info.left} Px</div>
               </div>,
               <div key={5} className={style.infoItem}>
                 <div className={style.itemTitle}>偏移Y</div>
-                <div className={style.itemData}>
-                  {(info.top - info.height / 2).toFixed(0)} Px
-                </div>
+                <div className={style.itemData}>{info.top} Px</div>
               </div>
             ]
           : []

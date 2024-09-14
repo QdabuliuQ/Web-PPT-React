@@ -13,8 +13,6 @@ import ButtonItem from '../ButtonItem'
 
 import style from './index.module.less'
 
-const { Link } = packages
-
 export default memo(function InsertPanel() {
   const { activeCanvas, canvasFabricOptionUpdate } = useStore()
 
@@ -62,6 +60,8 @@ export default memo(function InsertPanel() {
   const finishEvent = useCallback((option: any) => {
     const { instance, activeCanvas } = useStore.getState()
     instance?.add(option)
+    console.log(option, 'xxx')
+
     instance?.renderAll()
     canvasFabricOptionUpdate(activeCanvas, instance!.toObject())
   }, [])
@@ -77,7 +77,10 @@ export default memo(function InsertPanel() {
           title={item.title}
         />
       ))}
-      <Link.component finish={finishEvent} />
+      {Object.keys(packages).map((key: string) => {
+        const Component = (packages as any)[key].component
+        return <Component key={key} finish={finishEvent} />
+      })}
     </div>
   )
 })
