@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { memo, useCallback, useRef, useState } from 'react'
 import { Form, Input, Modal } from 'antd'
 
 import ButtonItem from '@/components/ButtonItem'
@@ -93,4 +93,4 @@ function Main(props: Props) {
   )
 }
 
-export default Main
+export default memo(Main)
