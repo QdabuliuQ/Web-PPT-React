@@ -8,3 +8,23 @@
         height: 16px;
     }
 }
+
+.shapeMenu {
+    padding: 10px;
+    .menuItem {
+        &:not(:last-child) {
+            margin-bottom: 10px;
+        }
+    }
+    .menuTitle {
+        font-size: 14px;
+        padding-right: 15px;
+        color: @color;
+        font-weight: bold;
+    }
+    .shapeContainer {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        grid-gap: 10px;
+    }
+}
