@@ -201,7 +201,7 @@ export default memo(function CanvasPanel() {
   const { canvasId, menuClick } = useContextMenu()
   canvasId.current = activeCanvas
   const groupItemClickEvent = useCallback((type: string) => {
-    menuClick(null, type)
+    menuClick(type)
   }, [])
 
   return (
