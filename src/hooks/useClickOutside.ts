@@ -8,7 +8,7 @@ export default function useClickOutside(
     const listener = (event: { button: number; target: any }) => {
       if (
         event.button === 0 &&
-        (!ref.current || !ref.current.contains(event.target))
+        (!ref || !ref.contains(event.target))
       ) {
         handler(event)
       }

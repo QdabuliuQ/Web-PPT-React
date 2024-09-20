@@ -41,7 +41,7 @@ export default memo(
       }
     }))
 
-    useClickOutside(domRef, () => {
+    useClickOutside(domRef.current, () => {
       setVisible(false)
     })
 

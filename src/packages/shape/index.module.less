@@ -10,7 +10,7 @@
 }
 
 .shapeMenu {
-    padding: 10px;
+    padding: 12px;
     .menuItem {
         &:not(:last-child) {
             margin-bottom: 10px;
@@ -18,13 +18,41 @@
     }
     .menuTitle {
         font-size: 14px;
-        padding-right: 15px;
+        padding-left: 10px;
         color: @color;
         font-weight: bold;
+        margin-bottom: 5px;
+        position: relative;
+        &::after {
+            position: absolute;
+            content: '';
+            width: 2px;
+            height: 70%;
+            background-color: @color;
+            left: 0;
+            transform: translateY(-50%);
+            top: 50%;
+        }
     }
     .shapeContainer {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
         grid-gap: 10px;
+        .shapeItem {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 5px;
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+        }
+    }
+}
+.popoverShape {
+    :global(.ant-popover-inner) {
+        padding: 0;
     }
 }

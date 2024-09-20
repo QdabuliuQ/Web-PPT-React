@@ -1,7 +1,9 @@
-import { memo, useEffect } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { Empty } from 'antd'
 
+import ContextMenu from '@/components/ContextMenu2'
 import config from '@/mock/ppt'
+import ContextMenuProvider from '@/provider/contextMenu'
 import useStore from '@/stores'
 
 import Canvas from './components/Canvas'
@@ -21,28 +23,37 @@ export default memo(function Edit() {
     canvasInit(config as any)
   }, [])
 
+  const contextMenuRef = useRef(null)
+
   return (
     <div className={style.edit}>
-      <Menu />
-      <Header />
-      {mode === 'list' ? (
-        <div className={style.editContainer}>
-          <List />
-          {activeCanvas !== '' ? (
-            <>
-              <Canvas />
-              <Panel />
-            </>
-          ) : (
-            <div className={style.canvasContainer}>
-              <Empty description="暂无选中" />
-            </div>
-          )}
-        </div>
-      ) : (
-        <View />
-      )}
-      <Footer />
+      <ContextMenu ref={contextMenuRef} />
+      <ContextMenuProvider.Provider
+        value={{
+          contextMenuRef: contextMenuRef.current
+        }}
+      >
+        <Menu />
+        <Header />
+        {mode === 'list' ? (
+          <div className={style.editContainer}>
+            <List />
+            {activeCanvas !== '' ? (
+              <>
+                <Canvas />
+                <Panel />
+              </>
+            ) : (
+              <div className={style.canvasContainer}>
+                <Empty description="暂无选中" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <View />
+        )}
+        <Footer />
+      </ContextMenuProvider.Provider>
     </div>
   )
 })

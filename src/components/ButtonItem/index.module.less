@@ -8,7 +8,10 @@
   margin-right: 5px;
   cursor: pointer;
   user-select: none;
+  outline: none;
+  border: none;
   border-radius: 5px;
+  background-color: transparent;
 
   &:hover {
     background-color: rgb(0 0 0 / 5%);
@@ -19,13 +22,20 @@
   }
 
   :global(.iconfont) {
-    padding-top: 5px;
     font-size: 15px;
   }
 
   .buttonTitle {
     padding-top: 5px;
     font-size: 13px;
+  }
+
+  .iconBox {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

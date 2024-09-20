@@ -2,7 +2,6 @@ import { memo, useCallback } from 'react'
 import Scrollbars from 'react-custom-scrollbars'
 import { useKeyPress } from 'ahooks'
 
-import ContextMenu from '@/components/ContextMenu'
 import Icon from '@/components/Icon'
 import PreviewCanvas from '@/components/PreviewCanvas'
 import useStore from '@/stores'
@@ -45,13 +44,7 @@ export default memo(function List() {
   }, [])
 
   // 右键菜单
-  const {
-    canvasId,
-    contextMenuEvent,
-    contextMenuData,
-    contextMenuRef,
-    menuClick
-  } = useContextMenu()
+  const { canvasId, menuClick, contextMenuEvent } = useContextMenu()
 
   const keyPressEvent = useCallback((e: any) => {
     const { key } = e
@@ -63,7 +56,6 @@ export default memo(function List() {
       for (let i = 0; i < canvas.length; i++) {
         if (canvas[i].id === activeCanvas) {
           menuClick(
-            null,
             key === 'C'
               ? 'copy'
               : key === 'D'
@@ -97,6 +89,7 @@ export default memo(function List() {
                 className={`${style.canvasPreviewItem} ${activeCanvas === item.id ? style.activePreviewItem : ''}`}
                 key={item.id}
                 onContextMenu={(ev: React.MouseEvent<HTMLDivElement>) =>
+                  // contextMenuEvent(ev, item.id)
                   contextMenuEvent(ev, item.id)
                 }
               >
@@ -111,11 +104,6 @@ export default memo(function List() {
               </div>
             ))}
           </div>
-          <ContextMenu
-            ref={contextMenuRef}
-            menuData={contextMenuData}
-            menuClick={(title: string, key: string) => menuClick(title, key)}
-          />
         </Scrollbars>
       ) : (
         <div className={style.empty}>暂无幻灯片</div>
