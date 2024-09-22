@@ -1,6 +1,6 @@
 import { useCallback, useContext, useMemo, useRef, useState } from 'react'
 
-import { MenuData } from '@/components/ContextMenu2'
+import { MenuData } from '@/components/ContextMenu'
 import Icon from '@/components/Icon'
 import ContextMenuProvider from '@/provider/contextMenu'
 import useStore from '@/stores'
@@ -72,7 +72,6 @@ export function useContextMenu() {
           }
         }
       }
-      console.log(contextMenuRef, '===')
       canvasId.current = ''
       if (contextMenuRef) {
         contextMenuRef!.hide()

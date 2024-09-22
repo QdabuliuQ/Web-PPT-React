@@ -2,7 +2,6 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { fabric } from 'fabric'
 import _ from 'lodash'
 
-import ContextMenu from '@/components/ContextMenu'
 import useElementAlign from '@/hooks/useElementAlign'
 import useElementHandle from '@/hooks/useElementHandle'
 import useStore from '@/stores'
@@ -54,12 +53,7 @@ export default memo(function Canvas() {
     elementLayoutChange
   } = useElementHandle()
   const alignHandle = useElementAlign()
-  const {
-    contextMenuEvent,
-    elementContextMenuData,
-    elementContextMenuRef,
-    menuClickEvent
-  } = useContextMenu(
+  const { contextMenuEvent } = useContextMenu(
     elementDeleteEvent,
     elementLockChangeEvent,
     elementCopyEvent,
@@ -173,11 +167,6 @@ export default memo(function Canvas() {
           />
         </div>
       </div>
-      <ContextMenu
-        ref={elementContextMenuRef}
-        menuData={elementContextMenuData}
-        menuClick={menuClickEvent}
-      />
     </div>
   )
 })

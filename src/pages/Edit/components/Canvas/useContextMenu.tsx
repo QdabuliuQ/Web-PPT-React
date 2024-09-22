@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useMemo, useRef, useState } from 'react'
 
-import { ContextMenuRef } from '@/components/ContextMenu'
+import { MenuData } from '@/components/ContextMenu'
 import ContextMenuPosition from '@/components/ContextMenuPosition'
 import Icon from '@/components/Icon'
+import ContextMenuProvider from '@/provider/contextMenu'
 import useStore from '@/stores'
 
 function SplitLine() {
@@ -25,7 +26,8 @@ export default function useContextMenu(
   elementAlignEvent: (eid: string, align: string) => void,
   elementLayoutChange: (eid: string, type: string) => void
 ) {
-  const elementContextMenuRef = useRef<ContextMenuRef | null>(null)
+  const { contextMenuRef } = useContext(ContextMenuProvider)
+
   const { activeElementUpdate } = useStore()
 
   const style = useMemo(
@@ -37,59 +39,88 @@ export default function useContextMenu(
 
   const clickEvent = useCallback((type: string) => {
     elementAlignEvent(elementId.current, type)
-    elementContextMenuRef.current?.hide()
+    if (contextMenuRef) {
+      contextMenuRef!.hide()
+    }
     elementId.current = ''
   }, [])
 
+  const menuClickEvent = useCallback(
+    (key: string) => {
+      if (key === 'copy') {
+        elementCopyEvent(elementId.current)
+      } else if (key === 'lock' || key === 'unlock') {
+        elementLockChangeEvent(elementId.current, key)
+      } else if (key === 'delete') {
+        elementDeleteEvent(elementId.current)
+      } else {
+        elementLayoutChange(elementId.current, key)
+      }
+      elementId.current = ''
+      if (contextMenuRef) {
+        contextMenuRef!.hide()
+      }
+    },
+    [contextMenuRef]
+  )
+
   const [isLock, setIsLock] = useState(false)
-  const elementContextMenuData = useMemo(
+  const elementContextMenuData = useMemo<Array<MenuData>>(
     () => [
       <ContextMenuPosition clickEvent={clickEvent} />,
       <SplitLine />,
       {
         title: '复制(Ctrl+C)',
         prefix: <Icon icon="i_copy" style={style} />,
-        key: 'copy'
+        key: 'copy',
+        clickEvent: menuClickEvent
       },
       isLock
         ? {
             title: '解锁(Ctrl+L)',
             prefix: <Icon icon="i_unlock" style={style} />,
-            key: 'unlock'
+            key: 'unlock',
+            clickEvent: menuClickEvent
           }
         : {
             title: '锁定(Ctrl+L)',
             prefix: <Icon icon="i_lock" style={style} />,
-            key: 'lock'
+            key: 'lock',
+            clickEvent: menuClickEvent
           },
       {
         title: '删除(Ctrl+D)',
         prefix: <Icon icon="i_delete" style={style} />,
-        key: 'delete'
+        key: 'delete',
+        clickEvent: menuClickEvent
       },
       <SplitLine />,
       {
         title: '上移一层(Shift+1)',
         prefix: <Icon icon="i_to_top" style={style} />,
-        key: 'bringForward'
+        key: 'bringForward',
+        clickEvent: menuClickEvent
       },
       {
         title: '下移一层(Shift+2)',
         prefix: <Icon icon="i_to_bottom" style={style} />,
-        key: 'sendBackwards'
+        key: 'sendBackwards',
+        clickEvent: menuClickEvent
       },
       {
         title: '置于顶层(Shift+3)',
         prefix: <Icon icon="i_top" style={style} />,
-        key: 'bringToFront'
+        key: 'bringToFront',
+        clickEvent: menuClickEvent
       },
       {
         title: '置于底层(Shift+4)',
         prefix: <Icon icon="i_bottom" style={style} />,
-        key: 'sendToBack'
+        key: 'sendToBack',
+        clickEvent: menuClickEvent
       }
     ],
-    [isLock]
+    [isLock, contextMenuRef]
   )
 
   const contextMenuEvent = useCallback((opt: any) => {
@@ -97,11 +128,7 @@ export default function useContextMenu(
     if (opt.button === 3) {
       if (!opt.target || opt.target.property.type === 'background') return
       const { instance } = useStore.getState()
-      ;(
-        elementContextMenuRef.current as unknown as {
-          show: (x: number, y: number) => void
-        }
-      ).show(evt.clientX, evt.clientY)
+      contextMenuRef?.show(evt.clientX, evt.clientY, elementContextMenuData)
       elementId.current = opt.target.property.id
       setIsLock(opt.target.lockMovementX && opt.target.lockMovementY)
       activeElementUpdate(elementId.current)
@@ -112,24 +139,7 @@ export default function useContextMenu(
 
   const elementId = useRef('')
 
-  const menuClickEvent = useCallback((_: unknown, key: string) => {
-    if (key === 'copy') {
-      elementCopyEvent(elementId.current)
-    } else if (key === 'lock' || key === 'unlock') {
-      elementLockChangeEvent(elementId.current, key)
-    } else if (key === 'delete') {
-      elementDeleteEvent(elementId.current)
-    } else {
-      elementLayoutChange(elementId.current, key)
-    }
-    elementContextMenuRef.current?.hide()
-    elementId.current = ''
-  }, [])
-
   return {
-    elementContextMenuRef,
-    elementContextMenuData,
-    contextMenuEvent,
-    menuClickEvent
+    contextMenuEvent
   }
 }

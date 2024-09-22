@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-import { ContextMenuRef } from '@/components/ContextMenu2'
+import { ContextMenuRef } from '@/components/ContextMenu'
 
 interface ContextMenuProviderInf {
   contextMenuRef: null | ContextMenuRef

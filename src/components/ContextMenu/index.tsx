@@ -1,7 +1,6 @@
 import type { ForwardedRef, ReactNode } from 'react'
 import { forwardRef, memo, useImperativeHandle, useRef, useState } from 'react'
-
-import useClickOutside from '@/hooks/useClickOutside'
+import { useClickAway } from 'ahooks'
 
 import style from './index.module.less'
 
@@ -14,17 +13,22 @@ export interface ContextMenuItem {
 
 export interface ContextMenuRef {
   hide: () => void
-  show: (x: number, y: number) => void
+  show: (x: number, y: number, menu: Array<MenuData | ReactNode>) => void
 }
 
-interface Props {
-  menuData: Array<ContextMenuItem | ReactNode>
-  menuClick: (title: string, key: string) => void
+export type MenuItem = {
+  prefix?: ReactNode
+  suffix?: ReactNode
+  title: string
+  key: string
+  clickEvent: (key: string) => void
 }
+
+export type MenuData = MenuItem | ReactNode
 
 export default memo(
   forwardRef(function ContextMenu(
-    props: Props,
+    _: unknown,
     ref: ForwardedRef<ContextMenuRef>
   ) {
     const [visible, setVisible] = useState<boolean>(false)
@@ -32,18 +36,23 @@ export default memo(
     const [y, setY] = useState<number>(0)
     const domRef = useRef(null)
 
+    const [menuData, setMenuData] = useState<Array<MenuData>>([])
+
     useImperativeHandle(ref, () => ({
       hide: () => setVisible(false),
-      show: (x: number, y: number) => {
+      show: (x: number, y: number, menu: Array<MenuData>) => {
         setVisible(true)
         setX(x)
         setY(y)
+        if (menu !== menuData) {
+          setMenuData(menu)
+        }
       }
     }))
 
-    useClickOutside(domRef.current, () => {
+    useClickAway(() => {
       setVisible(false)
-    })
+    }, domRef)
 
     return visible ? (
       <div
@@ -54,35 +63,24 @@ export default memo(
         }}
         className={style.contextMenu}
       >
-        {props.menuData &&
-          props.menuData.map(
-            (item: ContextMenuItem | ReactNode, index: number) =>
-              (item as ContextMenuItem).title ? (
-                <div
-                  onClick={() =>
-                    props.menuClick(
-                      (item as ContextMenuItem).title,
-                      (item as ContextMenuItem).key
-                    )
-                  }
-                  key={(item as ContextMenuItem).title}
-                  className={style.menuItem}
-                >
-                  {(item as ContextMenuItem).prefix ? (
-                    (item as ContextMenuItem).prefix
-                  ) : (
-                    <></>
-                  )}
-                  <span>{(item as ContextMenuItem).title}</span>
-                  {(item as ContextMenuItem).suffix ? (
-                    (item as ContextMenuItem).suffix
-                  ) : (
-                    <></>
-                  )}
-                </div>
-              ) : (
-                <div key={index}>{item as ReactNode}</div>
-              )
+        {menuData.length &&
+          menuData.map((item: MenuData, index: number) =>
+            (item as MenuItem)!.title ? (
+              <div
+                onClick={() => {
+                  console.log(11)
+                  ;(item as MenuItem).clickEvent((item as MenuItem).key)
+                }}
+                key={(item as MenuItem).title}
+                className={style.menuItem}
+              >
+                {(item as MenuItem).prefix ? (item as MenuItem).prefix : <></>}
+                <span>{(item as MenuItem).title}</span>
+                {(item as MenuItem).suffix ? (item as MenuItem).suffix : <></>}
+              </div>
+            ) : (
+              <div key={index}>{item as ReactNode}</div>
+            )
           )}
       </div>
     ) : (

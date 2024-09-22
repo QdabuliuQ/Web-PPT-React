@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef } from 'react'
 import { Empty } from 'antd'
 
-import ContextMenu from '@/components/ContextMenu2'
+import ContextMenu from '@/components/ContextMenu'
 import config from '@/mock/ppt'
 import ContextMenuProvider from '@/provider/contextMenu'
 import useStore from '@/stores'
