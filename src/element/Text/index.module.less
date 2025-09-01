@@ -1,0 +1,81 @@
+/* Text 组件样式 */
+
+.textElement {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  word-break: break-word;
+  overflow: hidden; /* 隐藏超出边界的文本 */
+  box-sizing: border-box;
+  outline: none;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 0;
+  padding: 4px; /* 设置默认padding，与编辑模式保持一致 */
+  cursor: text; /* 文本输入光标 */
+  user-select: none;
+  min-height: auto;
+  transition: border 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+  /* 选中状态样式 */
+  &.selected {
+    outline: 2px solid var(--primary-color, #ff7043);
+    outline-offset: -2px;
+  }
+
+  /* 拖拽模式样式 - 禁用所有动画以避免延迟 */
+  &.dragging {
+    transition: none !important;
+    /* 移除 pointer-events: none，因为它会阻止双击事件 */
+  }
+
+  /* 编辑模式样式 */
+  &.editing {
+    /* 利用已有的透明border，只改变颜色，不影响尺寸 */
+    border-color: var(--primary-color, #ff7043);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    /* 轻微的内边距，不会挤压文本 */
+    padding: 4px;
+    cursor: text;
+    user-select: text;
+    min-height: 20px;
+    /* 编辑模式下允许垂直方向溢出，确保用户能看到正在输入的内容 */
+    overflow: hidden auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    &:focus {
+      box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        0 0 0 2px rgba(255, 112, 67, 0.2);
+    }
+  }
+
+  /* 空状态提示 */
+  &.empty:not(.editing) {
+    &::after {
+      content: '双击编辑';
+      color: #999;
+      font-style: italic;
+      opacity: 0.7;
+    }
+  }
+
+  /* 确保编辑时不显示伪元素 */
+  &.editing::after {
+    display: none;
+  }
+
+  /* 禁用浏览器默认的文本编辑样式 */
+  &[contenteditable="true"] {
+    &:focus {
+      outline: none;
+    }
+    
+    /* 禁用一些浏览器默认样式 */
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+}

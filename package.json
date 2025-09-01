@@ -16,7 +16,7 @@
     "mobx-react-lite": "^4.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-movable": "^3.4.1"
+    "react-moveable": "^0.56.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
