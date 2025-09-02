@@ -5,140 +5,134 @@ import styles from "./index.module.less";
 export interface MovableWrapperProps {
   // 基础属性
   id: string;
-  
+
   // 激活状态控制
   active?: boolean; // 是否激活（显示控制点）
-  
+
   // 功能开关
   draggable?: boolean;
   resizable?: boolean;
   rotatable?: boolean;
-  
+
   // 容器和边界
   containerSelector?: string;
   bounds?: { left: number; top: number; right: number; bottom: number };
-  
+
   // 事件回调
   onDragStart?: () => void;
   onDrag?: (params: { x: number; y: number; transform: string }) => void;
   onDragEnd?: () => void;
   onResizeStart?: () => void;
-  onResize?: (params: { width: number; height: number; transform: string }) => void;
+  onResize?: (params: {
+    width: number;
+    height: number;
+    transform: string;
+  }) => void;
   onResizeEnd?: () => void;
   onRotateStart?: () => void;
   onRotate?: (params: { rotate: number; transform: string }) => void;
   onRotateEnd?: () => void;
 }
 
-export const MovableWrapper: FC<MovableWrapperProps> = memo(({
-  id,
-  active = true, // 默认为激活状态
-  draggable = true,
-  resizable = true,
-  rotatable = true,
-  containerSelector = '#canvas-container',
-  bounds,
-  onDragStart,
-  onDrag,
-  onDragEnd,
-  onResizeStart,
-  onResize,
-  onResizeEnd,
-  onRotateStart,
-  onRotate,
-  onRotateEnd
-}) => {
-
+export const MovableWrapper: FC<MovableWrapperProps> = memo(
+  ({
+    id,
+    active = true, // 默认为激活状态
+    draggable = true,
+    resizable = true,
+    rotatable = true,
+    bounds,
+    onDragStart,
+    onDrag,
+    onDragEnd,
+    onResizeStart,
+    onResize,
+    onResizeEnd,
+    onRotateStart,
+    onRotate,
+    onRotateEnd,
+  }) => {
     // 拖拽事件处理
-  const handleDragStart = () => {
-    onDragStart?.();
-  };
+    const handleDragStart = () => {
+      onDragStart?.();
+    };
 
-  const handleDrag = (e: {
-    target: EventTarget;
-    transform: string;
-  }) => {
-    const { target, transform } = e;
-    (target as HTMLElement).style.transform = transform;
-    
-    if (onDrag) {
-      // 提取位置信息
-      const matrix = new DOMMatrix(transform);
-      onDrag({
-        x: matrix.m41,
-        y: matrix.m42,
-        transform
-      });
-    }
-  };
+    const handleDrag = (e: { target: EventTarget; transform: string }) => {
+      const { target, transform } = e;
+      (target as HTMLElement).style.transform = transform;
 
-  const handleDragEnd = () => {
-    onDragEnd?.();
-  };
+      if (onDrag) {
+        // 提取位置信息
+        const matrix = new DOMMatrix(transform);
+        onDrag({
+          x: matrix.m41,
+          y: matrix.m42,
+          transform,
+        });
+      }
+    };
 
-  // 缩放事件处理
-  const handleResizeStart = () => {
-    onResizeStart?.();
-  };
+    const handleDragEnd = () => {
+      onDragEnd?.();
+    };
 
-  const handleResize = (e: {
-    target: EventTarget;
-    width: number;
-    height: number;
-    transform: string;
-  }) => {
-    const { target, width, height, transform } = e;
-    (target as HTMLElement).style.width = `${width}px`;
-    (target as HTMLElement).style.height = `${height}px`;
-    (target as HTMLElement).style.transform = transform;
-    
-    if (onResize) {
-      onResize({ width, height, transform });
-    }
-  };
+    // 缩放事件处理
+    const handleResizeStart = () => {
+      onResizeStart?.();
+    };
 
-  const handleResizeEnd = () => {
-    onResizeEnd?.();
-  };
+    const handleResize = (e: {
+      target: EventTarget;
+      width: number;
+      height: number;
+      transform: string;
+    }) => {
+      const { target, width, height, transform } = e;
+      (target as HTMLElement).style.width = `${width}px`;
+      (target as HTMLElement).style.height = `${height}px`;
+      (target as HTMLElement).style.transform = transform;
 
-  // 旋转事件处理
-  const handleRotateStart = () => {
-    onRotateStart?.();
-  };
+      if (onResize) {
+        onResize({ width, height, transform });
+      }
+    };
 
-  const handleRotate = (e: {
-    target: EventTarget;
-    transform: string;
-  }) => {
-    const { target, transform } = e;
-    (target as HTMLElement).style.transform = transform;
-    
-    if (onRotate) {
-      // 提取旋转角度信息
-      const matrix = new DOMMatrix(transform);
-      const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
-      onRotate({ rotate: angle, transform });
-    }
-  };
+    const handleResizeEnd = () => {
+      onResizeEnd?.();
+    };
 
-  const handleRotateEnd = () => {
-    onRotateEnd?.();
-  };
+    // 旋转事件处理
+    const handleRotateStart = () => {
+      onRotateStart?.();
+    };
 
-  return (
-    <Moveable
+    const handleRotate = (e: { target: EventTarget; transform: string }) => {
+      const { target, transform } = e;
+      (target as HTMLElement).style.transform = transform;
+
+      if (onRotate) {
+        // 提取旋转角度信息
+        const matrix = new DOMMatrix(transform);
+        const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
+        onRotate({ rotate: angle, transform });
+      }
+    };
+
+    const handleRotateEnd = () => {
+      onRotateEnd?.();
+    };
+
+    return (
+      <Moveable
         target={active ? `#${id}` : null} // 根据激活状态控制target
-        container={document.querySelector(containerSelector) as HTMLElement}
+        container={document.querySelector("#canvas-container") as HTMLElement}
         className={styles.moveableWrapper}
-        
         // 功能配置 - 只有在激活状态下才启用功能
         draggable={active && draggable}
         resizable={active && resizable}
         rotatable={active && rotatable}
-        
         // 边界限制
         bounds={bounds}
-        
         // 事件处理
         onDragStart={handleDragStart}
         onDrag={handleDrag}
@@ -149,7 +143,6 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(({
         onRotateStart={handleRotateStart}
         onRotate={handleRotate}
         onRotateEnd={handleRotateEnd}
-        
         // 其他配置
         throttleDrag={0}
         throttleResize={0}
@@ -160,7 +153,8 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(({
         origin={false}
         padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
       />
-  );
-});
+    );
+  }
+);
 
-MovableWrapper.displayName = 'MovableWrapper';
+MovableWrapper.displayName = "MovableWrapper";

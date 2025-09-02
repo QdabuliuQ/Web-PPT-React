@@ -1,231 +1,313 @@
-import { memo, useState, useRef, useEffect, type FC } from "react";
 import { MovableWrapper } from "@/components";
-import styles from "./index.module.less";
+import { PanelButton } from "@/components/PanelButton";
+import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import { getRandomId } from "@/utils";
+import { Text as TextIcon } from "@icon-park/react";
+import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
-import { pageInfoStore, pageActiveStore, elementActiveStore } from "@/store";
+import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
+import styles from "./index.module.less";
+export { TextPanel, TextPanelKey, TextPanelTitle } from "./panel";
 
 export interface ITextProps {
-    type: "text"
-    id: string
-    text: string
-    fontSize: number
-    fontWeight: number
-    fontFamily: string
-    color: string
-    x: number
-    y: number
-    width: number
-    height: number
-    rotate: number
-    zIndex: number
-    // 元素选中回调
-    onSelect?: () => void
+  type: "text";
+  id: string;
+  text: string;
+  fontSize: number;
+  fontWeight: number;
+  fontFamily: string;
+  color: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotate: number;
+  zIndex: number;
+  onSelect?: () => void;
+  onUnSelect?: () => void;
 }
 
 const Component: FC<ITextProps> = (props) => {
-    const { 
-        id, 
-        text, 
-        x, 
-        y, 
-        width, 
-        height, 
-        fontSize, 
-        fontWeight,
-        fontFamily,
-        color, 
-        rotate, 
-        zIndex,
-        onSelect
-    } = props
-    const [isEditing, setIsEditing] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
-    const textRef = useRef<HTMLDivElement>(null);
-    
-    // 从 MobX store 中获取选中状态
-    const isSelected = elementActiveStore.isElementActive(id);
-    
-    // 拖拽开始
-    const handleDragStart = () => {
-        setIsDragging(true);
+  const {
+    id,
+    text,
+    x,
+    y,
+    width,
+    height,
+    fontSize,
+    fontWeight,
+    fontFamily,
+    color,
+    rotate,
+    zIndex,
+    onSelect,
+    onUnSelect,
+  } = props;
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const textRef = useRef<HTMLDivElement>(null);
+
+  // 从 MobX store 中获取选中状态
+  const isSelected = elementActiveStore.isElementActive(id);
+
+  // 拖拽开始
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  // 拖拽结束
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  // 缩放开始
+  const handleResizeStart = () => {
+    setIsDragging(true);
+  };
+
+  // 缩放结束
+  const handleResizeEnd = () => {
+    setIsDragging(false);
+  };
+
+  // 旋转开始
+  const handleRotateStart = () => {
+    setIsDragging(true);
+  };
+
+  // 旋转结束
+  const handleRotateEnd = () => {
+    setIsDragging(false);
+  };
+
+  // 处理单击事件 - 激活元素
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // 如果正在编辑，不处理点击激活
+    if (isEditing) {
+      return;
+    }
+
+    // 调用外部传入的选择回调
+    onSelect?.();
+  };
+
+  // 进入编辑模式
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // 防止在拖拽状态下误触发编辑
+    if (isDragging) {
+      return;
+    }
+
+    // 确保元素被激活
+    onSelect?.();
+    setIsEditing(true);
+  };
+
+  // 保存编辑
+  const handleSave = () => {
+    if (textRef.current) {
+      const newText = textRef.current.textContent || "";
+      if (newText !== text) {
+        pptStore.setElementInfo(pageActiveStore.getPageActive() as string, id, {
+          ...props,
+          text: newText,
+        });
+      }
+    }
+    setIsEditing(false);
+  };
+
+  // 处理键盘事件
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡，避免触发拖拽
+
+    if (e.key === "Enter" && e.ctrlKey) {
+      // Ctrl + Enter 保存
+      handleSave();
+    } else if (e.key === "Escape") {
+      // Esc 取消编辑，恢复原文本
+      if (textRef.current) {
+        textRef.current.textContent = text;
+      }
+      setIsEditing(false);
+    }
+  };
+
+  // 点击外部保存
+  const handleBlur = () => {
+    handleSave();
+  };
+
+  // 同步文本内容到 contentEditable 元素
+  useEffect(() => {
+    if (textRef.current && !isEditing) {
+      textRef.current.textContent = text;
+    }
+  }, [text, isEditing]);
+
+  // 自动聚焦和选择文本
+  useEffect(() => {
+    if (isEditing && textRef.current) {
+      // 进入编辑模式时，确保不在拖拽状态
+      setIsDragging(false);
+
+      // 设置内容
+      textRef.current.textContent = text;
+
+      // 聚焦
+      textRef.current.focus();
+
+      // 选择所有文本
+      const range = document.createRange();
+      range.selectNodeContents(textRef.current);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+  }, [isEditing, text]);
+
+  // 添加全局鼠标事件监听，防止拖拽状态卡住
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      // 鼠标释放时重置拖拽状态
+      setIsDragging(false);
     };
 
-    // 拖拽结束
-    const handleDragEnd = () => {
-        setIsDragging(false);
+    document.addEventListener("mouseup", handleGlobalMouseUp);
+    return () => {
+      document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
+  }, []);
 
-    // 缩放开始
-    const handleResizeStart = () => {
-        setIsDragging(true);
-    };
+  useEffect(() => {
+    if (!isSelected) {
+      onUnSelect?.();
+    }
+  }, [isSelected, onUnSelect]);
 
-    // 缩放结束
-    const handleResizeEnd = () => {
-        setIsDragging(false);
-    };
+  // 动态样式（位置、大小、颜色等）
+  const dynamicStyle = useMemo(
+    () => ({
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      transform: `rotate(${rotate}deg)`,
+      zIndex: zIndex,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      fontFamily: fontFamily,
+      color: color,
+      cursor: isSelected ? "text" : "pointer",
+    }),
+    [
+      x,
+      y,
+      width,
+      height,
+      rotate,
+      zIndex,
+      fontSize,
+      fontWeight,
+      fontFamily,
+      color,
+      isSelected,
+    ]
+  );
 
-    // 旋转开始
-    const handleRotateStart = () => {
-        setIsDragging(true);
-    };
+  // 组合CSS类名
+  const className = [
+    styles.textElement,
+    isEditing ? styles.editing : "",
+    isDragging ? styles.dragging : "",
+    isSelected && !isEditing ? styles.selected : "",
+    !text && !isEditing ? styles.empty : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-    // 旋转结束
-    const handleRotateEnd = () => {
-        setIsDragging(false);
-    };
+  return (
+    <>
+      <div
+        ref={textRef}
+        id={id}
+        className={className}
+        contentEditable={isEditing}
+        suppressContentEditableWarning={true}
+        style={dynamicStyle}
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+        onKeyDown={isEditing ? handleKeyDown : undefined}
+        onBlur={isEditing ? handleBlur : undefined}
+      >
+        {text || (isEditing ? "" : "")}
+      </div>
 
-    // 选中元素
-    const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onSelect?.();
-    };
+      {/* 只在非编辑模式下显示拖拽控件 */}
+      {!isEditing && (
+        <MovableWrapper
+          id={id}
+          active={isSelected} // 根据选中状态控制激活
+          bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onResizeStart={handleResizeStart}
+          onResizeEnd={handleResizeEnd}
+          onRotateStart={handleRotateStart}
+          onRotateEnd={handleRotateEnd}
+        />
+      )}
+    </>
+  );
+};
 
-    // 进入编辑模式
-    const handleDoubleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        
-        // 防止在拖拽状态下误触发编辑
-        if (isDragging) {
-            return;
-        }
-        
-        setIsEditing(true);
-    };
+export const Text = memo(observer(Component));
 
-    // 保存编辑
-    const handleSave = () => {
-        if (textRef.current) {
-            const newText = textRef.current.textContent || '';
-            if (newText !== text) {
-                pageInfoStore.setElementInfo(pageActiveStore.getPageActive() as string, id, {
-                    ...props,
-                    text: newText
-                })
-            }
-        }
-        setIsEditing(false);
-    };
+export const CreateText = (props: Partial<ITextProps> = {}) => {
+  const defaultProps = {
+    text: "Hello, world!",
+    fontSize: 16,
+    fontWeight: 400,
+    fontFamily: "Arial",
+    color: "#000000",
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+    rotate: 0,
+    zIndex: 0,
+  };
+  return {
+    ...defaultProps,
+    ...props,
+    id: `text_${getRandomId()}`,
+    type: "text" as const,
+  };
+};
 
-    // 处理键盘事件
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        e.stopPropagation(); // 阻止事件冒泡，避免触发拖拽
-        
-        if (e.key === 'Enter' && e.ctrlKey) {
-            // Ctrl + Enter 保存
-            handleSave();
-        } else if (e.key === 'Escape') {
-            // Esc 取消编辑，恢复原文本
-            if (textRef.current) {
-                textRef.current.textContent = text;
-            }
-            setIsEditing(false);
-        }
-    };
+export const TextButton = memo(
+  observer(function TextButton() {
+    const pageId = pageActiveStore.getPageActive() as string;
 
-    // 点击外部保存
-    const handleBlur = () => {
-        handleSave();
-    };
-
-    // 同步文本内容到 contentEditable 元素
-    useEffect(() => {
-        if (textRef.current && !isEditing) {
-            textRef.current.textContent = text;
-        }
-    }, [text, isEditing]);
-
-    // 自动聚焦和选择文本
-    useEffect(() => {
-        if (isEditing && textRef.current) {
-            // 进入编辑模式时，确保不在拖拽状态
-            setIsDragging(false);
-            
-            // 设置内容
-            textRef.current.textContent = text;
-            
-            // 聚焦
-            textRef.current.focus();
-            
-            // 选择所有文本
-            const range = document.createRange();
-            range.selectNodeContents(textRef.current);
-            const selection = window.getSelection();
-            selection?.removeAllRanges();
-            selection?.addRange(range);
-        }
-    }, [isEditing, text]);
-
-    // 添加全局鼠标事件监听，防止拖拽状态卡住
-    useEffect(() => {
-        const handleGlobalMouseUp = () => {
-            // 鼠标释放时重置拖拽状态
-            setIsDragging(false);
-        };
-
-        document.addEventListener('mouseup', handleGlobalMouseUp);
-        return () => {
-            document.removeEventListener('mouseup', handleGlobalMouseUp);
-        };
-    }, []);
-
-    // 动态样式（位置、大小、颜色等）
-    const dynamicStyle = {
-        left: x,
-        top: y,
-        width: width,
-        height: height,
-        transform: `rotate(${rotate}deg)`,
-        zIndex: zIndex,
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        fontFamily: fontFamily,
-        color: color,
-    };
-
-    // 组合CSS类名
-    const className = [
-        styles.textElement,
-        isEditing ? styles.editing : '',
-        isDragging ? styles.dragging : '',
-        isSelected && !isEditing ? styles.selected : '',
-        !text && !isEditing ? styles.empty : ''
-    ].filter(Boolean).join(' ');
+    const clickHandle = useMemoizedFn(() => {
+      const option = CreateText();
+      pptStore.addElementInfo(pageId, option);
+      if (pageActiveStore.getPageActive()) {
+        elementActiveStore.setElementActive(option.id);
+      }
+    });
 
     return (
-        <>
-            <div 
-                ref={textRef}
-                id={id}
-                className={className}
-                contentEditable={isEditing}
-                suppressContentEditableWarning={true}
-                style={dynamicStyle}
-                onClick={handleClick}
-                onDoubleClick={handleDoubleClick}
-                onKeyDown={isEditing ? handleKeyDown : undefined}
-                onBlur={isEditing ? handleBlur : undefined}
-            >
-                {text || (isEditing ? '' : '')}
-            </div>
-            
-            {/* 只在非编辑模式下显示拖拽控件 */}
-            {!isEditing && (
-                <MovableWrapper
-                    id={id}
-                    active={isSelected} // 根据选中状态控制激活
-                    containerSelector="#canvas-container"
-                    bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onResizeStart={handleResizeStart}
-                    onResizeEnd={handleResizeEnd}
-                    onRotateStart={handleRotateStart}
-                    onRotateEnd={handleRotateEnd}
-                />
-            )}
-        </>
+      <PanelButton
+        icon={<TextIcon style={{ fontSize: "24px" }} />}
+        title="文本"
+        onClick={clickHandle}
+      />
     );
-}
-
-export const Text = memo(observer(Component))
+  })
+);

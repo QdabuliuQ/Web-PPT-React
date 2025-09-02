@@ -1,9 +1,5 @@
 import { type FC } from "react";
 
 export const Start: FC = () => {
-    return (
-        <div>
-            start
-        </div>
-    );
-}
+  return <div>start</div>;
+};

@@ -1,1 +1,1 @@
-export { MovableWrapper, type MovableWrapperProps } from './MovableWrapper';
+export { MovableWrapper, type MovableWrapperProps } from "./MovableWrapper";

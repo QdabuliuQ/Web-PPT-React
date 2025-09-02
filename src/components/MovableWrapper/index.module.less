@@ -1,28 +1,28 @@
 /* MovableWrapper 橙色主题样式 */
 
 .moveableWrapper {
-    :global(.moveable-line) {
-        background-color: var(--primary-color) !important;
-    }
+  :global(.moveable-line) {
+    background-color: var(--primary-color) !important;
+  }
 
-    :global(.moveable-control) {
-        background-color: var(--primary-color) !important;
-        position: relative;
-    }
+  :global(.moveable-control) {
+    background-color: var(--primary-color) !important;
+    position: relative;
+  }
 
-    :global(.moveable-control)::after {
-        position: absolute;
-        content: "";
-        width: 5px;
-        height: 5px;
-        background-color: #fff;
-        border-radius: 50%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
+  :global(.moveable-control)::after {
+    position: absolute;
+    content: "";
+    width: 5px;
+    height: 5px;
+    background-color: #fff;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 
-    :global(.moveable-rotation-control) {
-        border-color: #fff !important;
-    }
+  :global(.moveable-rotation-control) {
+    border-color: #fff !important;
+  }
 }
