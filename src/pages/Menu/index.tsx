@@ -9,10 +9,9 @@ export const Menu: FC = observer(() => {
     () => Panel[activePanelKey] || null,
     [activePanelKey]
   ) as unknown as React.ComponentType;
-  console.log(activePanelKey, Panel);
 
   return (
-    <div className="mx-[20px] bg-[#fff] rounded-[10px] h-[70px] flex items-center justify-center">
+    <div className="mx-[20px] bg-[#fff] rounded-[10px] h-[65px] py-[7px] flex items-center justify-center">
       {ActivePanelComponent && typeof ActivePanelComponent === "function" ? (
         <ActivePanelComponent />
       ) : null}
