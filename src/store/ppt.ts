@@ -34,25 +34,49 @@ class PPTStore {
   };
 
   setElementInfo(pageId: string, elementId: string, elementInfo: ITextProps) {
-    for (let i = 0; i < this.pptInfo.pages.length; i++) {
-      if (this.pptInfo.pages[i].id === pageId) {
-        for (let j = 0; j < this.pptInfo.pages[i].elements.length; j++) {
-          if (this.pptInfo.pages[i].elements[j].id === elementId) {
-            this.pptInfo.pages[i].elements[j] = { ...elementInfo };
-          }
-        }
-      }
-    }
-    this.pptInfo = { ...this.pptInfo };
+    // 找到页面
+    const pageIndex = this.pptInfo.pages.findIndex(
+      (page) => page.id === pageId
+    );
+    if (pageIndex === -1) return;
+
+    // 找到元素
+    const elementIndex = this.pptInfo.pages[pageIndex].elements.findIndex(
+      (element) => element.id === elementId
+    );
+    if (elementIndex === -1) return;
+
+    // 创建新的 pages 数组，触发响应式更新
+    const newPages = [...this.pptInfo.pages];
+    newPages[pageIndex] = {
+      ...newPages[pageIndex],
+      elements: [...newPages[pageIndex].elements],
+    };
+    newPages[pageIndex].elements[elementIndex] = { ...elementInfo };
+
+    this.pptInfo = {
+      ...this.pptInfo,
+      pages: newPages,
+    };
   }
 
   addElementInfo(pageId: string, elementInfo: ITextProps) {
-    for (let i = 0; i < this.pptInfo.pages.length; i++) {
-      if (this.pptInfo.pages[i].id === pageId) {
-        this.pptInfo.pages[i].elements.push(elementInfo);
-      }
-    }
-    this.pptInfo = { ...this.pptInfo };
+    const pageIndex = this.pptInfo.pages.findIndex(
+      (page) => page.id === pageId
+    );
+    if (pageIndex === -1) return;
+
+    // 创建新的 pages 数组，触发响应式更新
+    const newPages = [...this.pptInfo.pages];
+    newPages[pageIndex] = {
+      ...newPages[pageIndex],
+      elements: [...newPages[pageIndex].elements, elementInfo],
+    };
+
+    this.pptInfo = {
+      ...this.pptInfo,
+      pages: newPages,
+    };
   }
 
   getElementInfo(pageId: string, elementId: string) {

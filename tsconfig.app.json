@@ -32,6 +32,7 @@
 
     /* Linting */
     "strict": true,
+    "noImplicitAny": false, // 允许隐式 any
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,

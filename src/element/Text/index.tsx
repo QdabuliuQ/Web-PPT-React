@@ -6,6 +6,7 @@ import { Text as TextIcon } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
+import { PlacementMapped } from "./constant";
 import styles from "./index.module.less";
 export { TextPanel, TextPanelKey, TextPanelTitle } from "./panel";
 
@@ -17,6 +18,29 @@ export interface ITextProps {
   fontWeight: number;
   fontFamily: string;
   color: string;
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  strikethrough: boolean;
+  lineHeight: number;
+  shadow: boolean;
+  shadowOffsetX: number;
+  shadowOffsetY: number;
+  shadowColor: string;
+  borderStyle: string;
+  borderWidth: number;
+  borderColor: string;
+  backgroundColor: string;
+  placement:
+    | "left-top"
+    | "left-center"
+    | "left-bottom"
+    | "center-top"
+    | "center-center"
+    | "center-bottom"
+    | "right-top"
+    | "right-center"
+    | "right-bottom";
   x: number;
   y: number;
   width: number;
@@ -39,6 +63,20 @@ const Component: FC<ITextProps> = (props) => {
     fontWeight,
     fontFamily,
     color,
+    bold,
+    italic,
+    underline,
+    strikethrough,
+    lineHeight,
+    shadow,
+    shadowOffsetX,
+    shadowOffsetY,
+    shadowColor,
+    borderWidth,
+    borderStyle,
+    borderColor,
+    backgroundColor,
+    placement,
     rotate,
     zIndex,
     onSelect,
@@ -190,20 +228,39 @@ const Component: FC<ITextProps> = (props) => {
     }
   }, [isSelected, onUnSelect]);
 
+  const placementConvey = useMemoizedFn((placement) => {
+    const mapped = PlacementMapped[placement as keyof typeof PlacementMapped];
+    const [align, justify] = mapped.split(" ");
+    return {
+      display: "flex",
+      alignItems: align,
+      justifyContent: justify,
+    };
+  });
+
   // 动态样式（位置、大小、颜色等）
   const dynamicStyle = useMemo(
     () => ({
       left: x,
       top: y,
-      width: width,
-      height: height,
+      width,
+      height,
       transform: `rotate(${rotate}deg)`,
-      zIndex: zIndex,
-      fontSize: fontSize,
-      fontWeight: fontWeight,
+      zIndex,
+      fontSize,
+      fontWeight: bold ? "bold" : "normal",
+      fontStyle: italic ? "italic" : "normal",
       fontFamily: fontFamily,
-      color: color,
+      textDecoration: `${underline ? "underline" : ""} ${strikethrough ? "line-through" : ""}`,
+      lineHeight,
+      color,
+      textShadow: shadow
+        ? `0 ${shadowOffsetX}px ${shadowOffsetY}px ${shadowColor}`
+        : "none",
+      border: `${borderWidth}px ${borderStyle} ${borderColor}`,
+      ...placementConvey(placement),
       cursor: isSelected ? "text" : "pointer",
+      backgroundColor,
     }),
     [
       x,
@@ -213,9 +270,22 @@ const Component: FC<ITextProps> = (props) => {
       rotate,
       zIndex,
       fontSize,
-      fontWeight,
+      bold,
+      italic,
       fontFamily,
+      underline,
+      strikethrough,
+      lineHeight,
       color,
+      shadow,
+      shadowOffsetX,
+      shadowOffsetY,
+      shadowColor,
+      borderWidth,
+      borderStyle,
+      borderColor,
+      placementConvey,
+      placement,
       isSelected,
     ]
   );
@@ -245,7 +315,7 @@ const Component: FC<ITextProps> = (props) => {
         onKeyDown={isEditing ? handleKeyDown : undefined}
         onBlur={isEditing ? handleBlur : undefined}
       >
-        {text || (isEditing ? "" : "")}
+        <span>{text || (isEditing ? "" : "")}</span>
       </div>
 
       {/* 只在非编辑模式下显示拖拽控件 */}

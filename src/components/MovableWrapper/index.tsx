@@ -88,6 +88,7 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(
       transform: string;
     }) => {
       const { target, width, height, transform } = e;
+
       (target as HTMLElement).style.width = `${width}px`;
       (target as HTMLElement).style.height = `${height}px`;
       (target as HTMLElement).style.transform = transform;
@@ -148,10 +149,14 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(
         throttleResize={0}
         throttleRotate={0}
         keepRatio={false}
-        edge={true}
+        edge={true} // 启用边框线，但用CSS隐藏并重新绘制
         zoom={1}
         origin={false}
         padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
+        // 设置较低的 z-index，确保不遮挡 popover
+        style={{ zIndex: 999, width: undefined }}
+        // 自定义渲染方向，只显示控制点
+        renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
       />
     );
   }

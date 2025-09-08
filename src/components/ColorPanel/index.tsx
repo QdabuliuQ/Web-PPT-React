@@ -1,36 +1,6 @@
 import { memo, type FC } from "react";
 import { HexColorPicker } from "react-colorful";
-
-// react-colorful 自定义样式
-const colorPickerStyles = `
-  .react-colorful {
-    width: 100%;
-    height: 180px;
-  }
-  
-  .react-colorful__saturation {
-    border-radius: 8px 8px 0 0;
-  }
-  
-  .react-colorful__hue {
-    height: 24px;
-    border-radius: 0 0 8px 8px;
-  }
-  
-  .react-colorful__pointer {
-    width: 18px;
-    height: 18px;
-    border-width: 2px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  
-  .react-colorful__saturation-pointer {
-    width: 16px;
-    height: 16px;
-    border-width: 2px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-`;
+import styles from "./index.module.less";
 
 interface IColorPanelProps {
   value?: string;
@@ -129,8 +99,7 @@ export const ColorPanel: FC<IColorPanelProps> = memo(
     };
 
     return (
-      <div className="bg-white min-w-[220px]">
-        <style>{colorPickerStyles}</style>
+      <div className={`bg-white min-w-[220px] ${styles.colorPanel}`}>
         {/* 自定义颜色选择器 */}
         <div className="mb-4 pb-4 border-b border-gray-100">
           <div className="flex flex-col items-center">
@@ -154,6 +123,29 @@ export const ColorPanel: FC<IColorPanelProps> = memo(
         {/* 预设颜色面板 */}
         <div className="mb-4">
           <div className="space-y-1">
+            {/* 无颜色按钮 */}
+            <div className="flex gap-1 mb-2">
+              <div
+                className={`w-full h-7 rounded cursor-pointer transition-all duration-200 relative border border-gray-300 bg-white ${
+                  value === "transparent" || value === ""
+                    ? "border-2 border-primary shadow-lg z-10"
+                    : "hover:shadow-md"
+                }`}
+                onClick={() => handlePresetClick("transparent")}
+                title="无颜色"
+                style={{
+                  background: "white",
+                  position: "relative",
+                }}
+              >
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-gray-600">
+                  无颜色
+                </span>
+                {(value === "transparent" || value === "") && (
+                  <div className="absolute inset-0 rounded border-2 border-white shadow-inner" />
+                )}
+              </div>
+            </div>
             {presetColors.map((colorRow, rowIndex) => (
               <div key={rowIndex} className="flex gap-1">
                 {colorRow.map((color, colorIndex) => (
@@ -162,7 +154,7 @@ export const ColorPanel: FC<IColorPanelProps> = memo(
                     className={`w-6 h-6 rounded cursor-pointer transition-all duration-200 relative ${
                       value === color
                         ? "border-2 border-primary shadow-lg scale-110 z-10"
-                        : "border border-gray-300 hover:border-gray-400 hover:shadow-md hover:scale-105"
+                        : "hover:shadow-md hover:scale-105"
                     }`}
                     style={{ backgroundColor: color }}
                     onClick={() => handlePresetClick(color)}

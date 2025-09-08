@@ -1,28 +1,83 @@
 /* MovableWrapper 橙色主题样式 */
 
 .moveableWrapper {
+  /* 设置 moveable 控制层的 z-index，确保低于 popover */
+  z-index: 999 !important;
+
+  /* 隐藏边框线，但保留旋转线 */
   :global(.moveable-line) {
+    display: none !important;
+  }
+
+  /* 显示旋转控制点的连接线 */
+  :global(.moveable-line.moveable-rotation-line) {
+    display: block !important;
     background-color: var(--primary-color) !important;
+  }
+
+  /* 创建自定义边框，确保不延伸到控制点内部 */
+  :global(.moveable-control-box)::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 1px solid #d9d9d9;
+    pointer-events: none;
+    z-index: 1000;
+    box-sizing: border-box;
   }
 
   :global(.moveable-control) {
     background-color: var(--primary-color) !important;
     position: relative;
+    z-index: 1001 !important; /* 确保控制点在边框线之上 */
+    border: 2px solid #fff !important; /* 白色边框 */
+    box-shadow: 0 0 0 1px var(--primary-color) !important; /* 外层主题色边框 */
   }
 
   :global(.moveable-control)::after {
     position: absolute;
     content: "";
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     background-color: #fff;
     border-radius: 50%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 1002 !important; /* 确保内部白点在最上层 */
   }
 
   :global(.moveable-rotation-control) {
-    border-color: #fff !important;
+    background-color: var(--primary-color) !important;
+    border: 2px solid #fff !important;
+    border-radius: 50% !important;
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* 旋转控制点的内部圆点 */
+  :global(.moveable-rotation-control)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1003;
+  }
+
+  /* 确保所有 moveable 相关元素的 z-index 都低于 popover */
+  :global(.moveable-area) {
+    z-index: 999 !important;
+  }
+
+  :global(.moveable-direction) {
+    z-index: 999 !important;
   }
 }
