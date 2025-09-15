@@ -15,7 +15,6 @@ export interface ITextProps {
   id: string;
   text: string;
   fontSize: number;
-  fontWeight: number;
   fontFamily: string;
   color: string;
   bold: boolean;
@@ -27,10 +26,14 @@ export interface ITextProps {
   shadowOffsetX: number;
   shadowOffsetY: number;
   shadowColor: string;
+  border: boolean;
   borderStyle: string;
   borderWidth: number;
   borderColor: string;
   backgroundColor: string;
+  stroke: boolean;
+  strokeColor: string;
+  strokeWidth: number;
   placement:
     | "left-top"
     | "left-center"
@@ -60,7 +63,6 @@ const Component: FC<ITextProps> = (props) => {
     width,
     height,
     fontSize,
-    fontWeight,
     fontFamily,
     color,
     bold,
@@ -72,16 +74,22 @@ const Component: FC<ITextProps> = (props) => {
     shadowOffsetX,
     shadowOffsetY,
     shadowColor,
+    border,
     borderWidth,
     borderStyle,
     borderColor,
     backgroundColor,
+    stroke,
+    strokeColor,
+    strokeWidth,
     placement,
     rotate,
     zIndex,
     onSelect,
     onUnSelect,
   } = props;
+  console.log(backgroundColor, "backgroundColor");
+
   const [isEditing, setIsEditing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -255,9 +263,12 @@ const Component: FC<ITextProps> = (props) => {
       lineHeight,
       color,
       textShadow: shadow
-        ? `0 ${shadowOffsetX}px ${shadowOffsetY}px ${shadowColor}`
+        ? `${shadowOffsetY}px ${shadowOffsetX}px 5px ${shadowColor}`
         : "none",
-      border: `${borderWidth}px ${borderStyle} ${borderColor}`,
+      border: border
+        ? `${borderWidth}px ${borderStyle} ${borderColor}`
+        : "none",
+      "-webkit-text-stroke": stroke ? `${strokeWidth}px ${strokeColor}` : "",
       ...placementConvey(placement),
       cursor: isSelected ? "text" : "pointer",
       backgroundColor,
@@ -281,12 +292,17 @@ const Component: FC<ITextProps> = (props) => {
       shadowOffsetX,
       shadowOffsetY,
       shadowColor,
+      border,
       borderWidth,
       borderStyle,
       borderColor,
+      stroke,
+      strokeColor,
+      strokeWidth,
       placementConvey,
       placement,
       isSelected,
+      backgroundColor,
     ]
   );
 

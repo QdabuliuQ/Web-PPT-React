@@ -48,7 +48,7 @@ export const Menu: FC = observer(() => {
   return (
     <div
       ref={containerRef}
-      className="w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[65px] mx-[20px]"
+      className="w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px]"
     >
       <ScrollBars
         style={{ width: "100%", height: "100%" }}

@@ -1,4 +1,9 @@
-import { ColorPanel, PanelLargeButton, PanelSplitLine } from "@/components";
+import {
+  ColorPanel,
+  PanelLargeButton,
+  PanelSelect,
+  PanelSplitLine,
+} from "@/components";
 import { PanelDropdownButton } from "@/components/PanelDropdownButton";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import {
@@ -22,6 +27,7 @@ import {
   Strikethrough,
   TextBold,
   TextItalic,
+  TextStyle,
   TextUnderline,
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
@@ -30,7 +36,6 @@ import {
   ColorPicker,
   InputNumber,
   Popover,
-  Select,
   Slider,
   Tooltip,
 } from "antd";
@@ -71,8 +76,6 @@ export const TextPanel: FC<ITextPanelProps> = () => {
   const [shadowX, setShadowX] = useState(0);
   const [shadowY, setShadowY] = useState(0);
   const [shadowColor, setShadowColor] = useState("#000000");
-  const [fontSizeSelectOpen, setFontSizeSelectOpen] = useState(false);
-  const [borderStyleSelectOpen, setBorderStyleSelectOpen] = useState(false);
 
   const handleColorChange = (color: string) => {
     setCurrentColor(color);
@@ -126,14 +129,13 @@ export const TextPanel: FC<ITextPanelProps> = () => {
   const propertyChangeHandle = useMemoizedFn(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (key: keyof ITextProps, value: any) => {
-      console.log(value, "value");
-
       if (!currentElement) return;
       if (key === "fontSize" && value <= 1) {
         return;
       }
-      console.log(key, value);
-
+      if (key === "lineHeight" && value < 1) {
+        return;
+      }
       setCurrentElement({ ...currentElement, type: "text", [key]: value });
     }
   );
@@ -143,12 +145,16 @@ export const TextPanel: FC<ITextPanelProps> = () => {
 
   // 通用防抖颜色变更函数
   const debouncedColorChange = useCallback(
-    (property: keyof ITextProps) => (color: string) => {
+    (property: keyof ITextProps) => (color: string, color2?: string) => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
+      let currentColor = color;
+      if (property === "shadowColor" || property === "borderColor") {
+        currentColor = color2 as string;
+      }
       debounceTimerRef.current = setTimeout(() => {
-        propertyChangeHandle(property, color);
+        propertyChangeHandle(property, currentColor);
       }, 300);
     },
     [propertyChangeHandle]
@@ -180,7 +186,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
   }, [currentElement]);
 
   return (
-    <div className="h-[50px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
+    <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
       <div className="h-full flex items-center gap-[5px] flex-shrink-0">
         {largeButtons.map((item) => {
           return (
@@ -200,22 +206,15 @@ export const TextPanel: FC<ITextPanelProps> = () => {
       </div>
       <PanelSplitLine />
       <div className="h-full flex flex-col justify-center gap-[3px] flex-shrink-0">
-        <div className="flex gap-[5px]">
+        <div className="flex gap-[5px] items-center">
           <Tooltip title="文本字体大小">
-            <div
-              onMouseEnter={() => setFontSizeSelectOpen(true)}
-              onMouseLeave={() => setFontSizeSelectOpen(false)}
-            >
-              <Select
-                value={currentElement?.fontSize}
-                style={{ width: 82 }}
-                size="small"
-                options={fontSize}
-                open={fontSizeSelectOpen}
-                onOpenChange={setFontSizeSelectOpen}
-                onChange={(value) => propertyChangeHandle("fontSize", value)}
-              />
-            </div>
+            <PanelSelect
+              value={currentElement?.fontSize}
+              style={{ width: 82 }}
+              size="small"
+              options={fontSize}
+              onChange={(value) => propertyChangeHandle("fontSize", value)}
+            />
           </Tooltip>
           <Tooltip title="增大字号">
             <Button
@@ -341,7 +340,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
             }}
           />
         </div>
-        <div className="flex gap-[5px]">
+        <div className="flex gap-[5px] items-center">
           <Popover
             content={
               <ColorPanel
@@ -393,9 +392,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
             value={currentElement?.lineHeight.toString()}
             icon={<AutoHeightOne theme="outline" size="14" fill="#333" />}
             onSelect={(key) => {
-              console.log("选中行高:", key);
-              // 这里添加更新元素行高的逻辑
-              // 例如: updateElementLineHeight(parseFloat(key))
+              propertyChangeHandle("lineHeight", parseFloat(key));
             }}
             menu={{
               items: [
@@ -418,17 +415,29 @@ export const TextPanel: FC<ITextPanelProps> = () => {
               ],
             }}
           />
-          <Tooltip title="增大行高">
+          <Tooltip title="增大行高" placement="bottom">
             <Button
               size="small"
               type="text"
+              onClick={() =>
+                propertyChangeHandle(
+                  "lineHeight",
+                  currentElement!.lineHeight + 0.5
+                )
+              }
               icon={<Add theme="outline" size="13" fill="#333" />}
             />
           </Tooltip>
-          <Tooltip title="减小行高">
+          <Tooltip title="减小行高" placement="bottom">
             <Button
               size="small"
               type="text"
+              onClick={() =>
+                propertyChangeHandle(
+                  "lineHeight",
+                  currentElement!.lineHeight - 0.5
+                )
+              }
               icon={<Reduce theme="outline" size="13" fill="#333" />}
             />
           </Tooltip>
@@ -440,9 +449,11 @@ export const TextPanel: FC<ITextPanelProps> = () => {
           title="阴影"
           active={currentElement?.shadow}
           icon={<DropShadowDown theme="outline" size="18" fill="#333" />}
-          onClick={toggleShadow}
+          onClick={() => {
+            propertyChangeHandle("shadow", !currentElement?.shadow);
+          }}
         />
-        <div className="flex flex-col justify-center gap-[4px]">
+        <div className="flex flex-col justify-center gap-[10px]">
           <div className="flex items-center gap-[6px]">
             <span className="text-[12px] text-gray-500 min-w-[8px]">X</span>
             <Slider
@@ -451,7 +462,9 @@ export const TextPanel: FC<ITextPanelProps> = () => {
               max={100}
               defaultValue={currentElement?.shadowOffsetX}
               value={currentElement?.shadowOffsetX}
-              onChange={handleShadowXChange}
+              onChange={(value) => {
+                propertyChangeHandle("shadowOffsetX", value);
+              }}
               disabled={!currentElement?.shadow}
             />
           </div>
@@ -463,7 +476,9 @@ export const TextPanel: FC<ITextPanelProps> = () => {
               max={100}
               defaultValue={currentElement?.shadowOffsetY}
               value={currentElement?.shadowOffsetY}
-              onChange={handleShadowYChange}
+              onChange={(value) => {
+                propertyChangeHandle("shadowOffsetY", value);
+              }}
               disabled={!currentElement?.shadow}
             />
           </div>
@@ -471,77 +486,86 @@ export const TextPanel: FC<ITextPanelProps> = () => {
         <ColorPicker
           className={styles.colorPicker}
           value={currentElement?.shadowColor}
-          onChange={handleShadowColorChange}
+          onChange={debouncedColorChange("shadowColor") as any}
           disabled={!currentElement?.shadow}
         />
       </div>
       <PanelSplitLine />
-      <div className="h-full flex flex-col justify-center gap-[3px] flex-shrink-0">
-        <div className="flex gap-[10px]">
-          <Tooltip title="边框样式" placement="top">
-            <div
-              onMouseEnter={() => setBorderStyleSelectOpen(true)}
-              onMouseLeave={() => setBorderStyleSelectOpen(false)}
-            >
-              <Select
+      <div className="h-full flex justify-center gap-[5px] flex-shrink-0">
+        <PanelLargeButton
+          title="边框"
+          active={currentElement?.border}
+          icon={<Square theme="outline" size="18" fill="#333" />}
+          onClick={() => {
+            propertyChangeHandle("border", !currentElement?.border);
+          }}
+        />
+        <div className="flex gap-[6px]">
+          <div className="flex h-full flex-col justify-between">
+            <Tooltip title="边框宽度" placement="top">
+              <InputNumber
+                value={currentElement?.borderWidth}
+                style={{ width: "85px" }}
+                size="small"
+                onChange={(value) => {
+                  propertyChangeHandle("borderWidth", value);
+                }}
+                disabled={!currentElement?.border}
+              />
+            </Tooltip>
+            <Tooltip title="边框样式" placement="top">
+              <PanelSelect
                 value={currentElement?.borderStyle}
                 style={{ width: "85px" }}
                 size="small"
                 options={Border}
-                open={borderStyleSelectOpen}
-                onOpenChange={setBorderStyleSelectOpen}
+                onChange={(value) => {
+                  propertyChangeHandle("borderStyle", value);
+                }}
+                disabled={!currentElement?.border}
               />
-            </div>
-          </Tooltip>
-          <Tooltip title="边框宽度" placement="top">
-            <InputNumber
-              value={currentElement?.borderWidth}
-              style={{ width: "85px" }}
+            </Tooltip>
+          </div>
+          <Popover>
+            <ColorPicker
               size="small"
+              className={styles.colorPicker}
+              value={currentElement?.borderColor}
+              disabled={!currentElement?.border}
+              onChange={debouncedColorChange("borderColor") as any}
             />
-          </Tooltip>
+          </Popover>
         </div>
-        <div className="flex gap-[5px]">
-          <Popover
-            content={
-              <ColorPanel
-                value={currentElement?.borderColor}
-                onChange={debouncedColorChange("borderColor")}
-              />
-            }
-            trigger="hover"
-            placement="bottomLeft"
-          >
-            <Button
-              type="text"
-              size="small"
-              icon={<Square theme="outline" size="14" fill="#333" />}
-            >
-              边框颜色
-            </Button>
-          </Popover>
-          <Popover
-            content={
-              <ColorPanel
-                value={
-                  currentBackgroundColor === "transparent"
-                    ? "#ffffff"
-                    : currentBackgroundColor
-                }
-                onChange={debouncedColorChange("backgroundColor")}
-              />
-            }
-            trigger="hover"
-            placement="bottomLeft"
-          >
-            <Button
-              type="text"
-              size="small"
-              icon={<BackgroundColor theme="outline" size="15" fill="#333" />}
-            >
-              填充颜色
-            </Button>
-          </Popover>
+      </div>
+      <PanelSplitLine />
+      <div className="h-full flex gap-[10px]">
+        <PanelLargeButton
+          active={currentElement?.stroke}
+          icon={<TextStyle theme="outline" size="18" fill="#333" />}
+          title="描边"
+          onClick={() => {
+            propertyChangeHandle("stroke", !currentElement?.stroke);
+          }}
+        />
+        <div className="flex flex-col gap-[15px]">
+          <Slider
+            style={{ width: 90, margin: 0 }}
+            min={0}
+            max={10}
+            defaultValue={currentElement?.strokeWidth}
+            value={currentElement?.strokeWidth}
+            onChange={(value) => {
+              propertyChangeHandle("strokeWidth", value);
+            }}
+            disabled={!currentElement?.stroke}
+          />
+          <ColorPicker
+            value={currentElement?.strokeColor}
+            onChange={debouncedColorChange("strokeColor") as any}
+            className={`${styles.colorPicker} ${styles.colorPickerRotate}`}
+            size="small"
+            disabled={!currentElement?.stroke}
+          />
         </div>
       </div>
     </div>

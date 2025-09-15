@@ -4,16 +4,24 @@
   aspect-ratio: 1/1;
 
   :global(.ant-color-picker-clear) {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   :global(.ant-color-picker-clear)::after {
-    width: 80px;
+    width: 80px !important;
   }
 
   :global(.ant-color-picker-color-block) {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.colorPickerRotate {
+  :global(.ant-color-picker-clear) {
+    &::after {
+      transform: rotate(348deg) !important;
+    }
   }
 }
