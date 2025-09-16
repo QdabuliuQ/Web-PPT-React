@@ -1,0 +1,78 @@
+/* 自定义 OverlayScrollbars 样式 - 3px滚动条 */
+.os-scrollbar-horizontal .os-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05) !important;
+  height: 3px !important;
+  border-radius: 1.5px !important;
+}
+
+.os-scrollbar-horizontal .os-scrollbar-handle {
+  background: rgba(0, 0, 0, 0.3) !important;
+  height: 3px !important;
+  border-radius: 1.5px !important;
+  min-width: 20px !important;
+}
+
+.os-scrollbar-horizontal .os-scrollbar-handle:hover {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 调整滚动条位置 - 贴底显示 */
+.os-scrollbar-horizontal {
+  bottom: 0 !important;
+  position: absolute !important;
+}
+
+/* 隐藏垂直滚动条 */
+.os-scrollbar-vertical {
+  display: none !important;
+}
+
+/* 优化过渡动画 */
+.os-scrollbar-handle {
+  transition: background-color 0.3s ease !important;
+}
+
+/* 确保滚动条在容器内 */
+.os-viewport {
+  overflow: hidden !important;
+}
+
+/* 强制滚动条贴底 - 更具体的选择器 */
+.os-host > .os-scrollbar-horizontal,
+.os-host-horizontal > .os-scrollbar-horizontal {
+  bottom: 0 !important;
+  position: absolute !important;
+}
+
+/* 确保轨道也贴底 */
+.os-scrollbar-horizontal .os-scrollbar-track {
+  bottom: 0 !important;
+  position: relative !important;
+  height: 3px !important;
+}
+
+/* 滚动条容器样式 */
+.os-host {
+  position: relative !important;
+}
+
+/* 为了确保滚动条显示在容器底部的最终方案 */
+[data-overlayscrollbars-initialize] .os-scrollbar-horizontal {
+  bottom: 0 !important;
+}
+
+/* 针对自定义类名的样式 */
+.custom-scrollbar .os-scrollbar-horizontal {
+  bottom: 0 !important;
+  height: 3px !important;
+}
+
+.custom-scrollbar .os-scrollbar-horizontal .os-scrollbar-track {
+  bottom: 0 !important;
+  height: 3px !important;
+}
+
+.custom-scrollbar .os-scrollbar-horizontal .os-scrollbar-handle {
+  bottom: 0 !important;
+  height: 3px !important;
+}

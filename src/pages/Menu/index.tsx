@@ -1,8 +1,10 @@
 import { menuActiveStore } from "@/store";
 import { observer } from "mobx-react-lite";
-import ScrollBars from "rc-scrollbars";
+import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
+import "overlayscrollbars/overlayscrollbars.css";
 import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import Panel from "./components";
+import "./overlay-scrollbar.css";
 
 export const Menu: FC = observer(() => {
   const activePanelKey = menuActiveStore.menuActive as keyof typeof Panel;
@@ -50,33 +52,19 @@ export const Menu: FC = observer(() => {
       ref={containerRef}
       className="w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px]"
     >
-      <ScrollBars
-        style={{ width: "100%", height: "100%" }}
-        autoHide
-        autoHideTimeout={1000}
-        renderThumbHorizontal={({ style, ...props }) => (
-          <div
-            {...props}
-            style={{
-              ...style,
-              backgroundColor: "#d1d5db",
-              borderRadius: "4px",
-              height: "4px",
-            }}
-          />
-        )}
-        renderTrackHorizontal={({ style, ...props }) => (
-          <div
-            {...props}
-            style={{
-              ...style,
-              backgroundColor: "#f3f4f6",
-              borderRadius: "4px",
-              height: "4px",
-              bottom: "2px",
-            }}
-          />
-        )}
+      <OverlayScrollbarsComponent
+        className="custom-scrollbar"
+        options={{
+          scrollbars: {
+            autoHide: "scroll",
+            autoHideDelay: 1000,
+          },
+          overflow: {
+            x: "scroll",
+            y: "hidden",
+          },
+        }}
+        style={{ width: "100%", height: "100%", position: "relative" }}
       >
         <div
           style={{
@@ -94,7 +82,7 @@ export const Menu: FC = observer(() => {
             ) : null}
           </div>
         </div>
-      </ScrollBars>
+      </OverlayScrollbarsComponent>
     </div>
   );
 });

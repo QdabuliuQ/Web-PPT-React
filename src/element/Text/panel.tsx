@@ -1,6 +1,7 @@
 import {
   ColorPanel,
   PanelLargeButton,
+  PanelPreview,
   PanelSelect,
   PanelSplitLine,
 } from "@/components";
@@ -69,54 +70,6 @@ export const TextPanel: FC<ITextPanelProps> = () => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [backgroundColorPickerOpen, setBackgroundColorPickerOpen] =
     useState(false);
-  const [currentColor, setCurrentColor] = useState("#000000");
-  const [currentBackgroundColor, setCurrentBackgroundColor] =
-    useState("transparent");
-  const [shadowEnabled, setShadowEnabled] = useState(false);
-  const [shadowX, setShadowX] = useState(0);
-  const [shadowY, setShadowY] = useState(0);
-  const [shadowColor, setShadowColor] = useState("#000000");
-
-  const handleColorChange = (color: string) => {
-    setCurrentColor(color);
-    // 这里可以添加实际的颜色应用逻辑
-    console.log("选择的颜色:", color);
-  };
-
-  const handleBackgroundColorChange = (color: string) => {
-    setCurrentBackgroundColor(color);
-    // 这里可以添加实际的背景颜色应用逻辑
-    console.log("选择的背景颜色:", color);
-  };
-
-  const clearBackgroundColor = () => {
-    setCurrentBackgroundColor("transparent");
-    setBackgroundColorPickerOpen(false);
-    // 这里可以添加清除背景颜色的逻辑
-    console.log("清除背景颜色");
-  };
-
-  const toggleShadow = () => {
-    setShadowEnabled(!shadowEnabled);
-  };
-
-  const handleShadowXChange = (value: number) => {
-    setShadowX(value);
-    // 这里可以添加实际的阴影应用逻辑
-    console.log("阴影X偏移:", value);
-  };
-
-  const handleShadowYChange = (value: number) => {
-    setShadowY(value);
-    // 这里可以添加实际的阴影应用逻辑
-    console.log("阴影Y偏移:", value);
-  };
-
-  const handleShadowColorChange = (_color: any, colorString: string) => {
-    setShadowColor(colorString);
-    // 这里可以添加实际的阴影颜色应用逻辑
-    console.log("阴影颜色:", colorString);
-  };
 
   useEffect(() => {
     pptStore.setElementInfo(
@@ -183,7 +136,11 @@ export const TextPanel: FC<ITextPanelProps> = () => {
         icon: <Strikethrough theme="outline" size="18" fill="#333" />,
       },
     ];
-  }, [currentElement]);
+  }, []);
+
+  const handlePreviewSelect = useMemoizedFn((item: Partial<ITextProps>) => {
+    setCurrentElement((prev) => ({ ...prev, ...item }) as ITextProps);
+  });
 
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
@@ -191,6 +148,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
         {largeButtons.map((item) => {
           return (
             <PanelLargeButton
+              key={item.key}
               title={item.title}
               active={currentElement?.[item.key as keyof ITextProps] as boolean}
               onClick={() =>
@@ -368,11 +326,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
           <Popover
             content={
               <ColorPanel
-                value={
-                  currentBackgroundColor === "transparent"
-                    ? "#ffffff"
-                    : currentBackgroundColor
-                }
+                value={currentElement?.backgroundColor || "#ffffff"}
                 onChange={debouncedColorChange("backgroundColor")}
               />
             }
@@ -568,6 +522,8 @@ export const TextPanel: FC<ITextPanelProps> = () => {
           />
         </div>
       </div>
+      <PanelSplitLine />
+      <PanelPreview onSelect={handlePreviewSelect} />
     </div>
   );
 };
