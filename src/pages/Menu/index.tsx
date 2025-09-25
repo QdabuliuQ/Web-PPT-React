@@ -2,16 +2,13 @@ import { menuActiveStore } from "@/store";
 import { observer } from "mobx-react-lite";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import "overlayscrollbars/overlayscrollbars.css";
-import { useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useEffect, useRef, useState, type FC } from "react";
 import Panel from "./components";
 import "./overlay-scrollbar.css";
 
 export const Menu: FC = observer(() => {
   const activePanelKey = menuActiveStore.menuActive as keyof typeof Panel;
-  const ActivePanelComponent = useMemo(
-    () => Panel[activePanelKey] || null,
-    [activePanelKey]
-  ) as unknown as React.ComponentType;
+  const ActivePanelComponent = Panel[activePanelKey];
 
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -76,10 +73,7 @@ export const Menu: FC = observer(() => {
           }}
         >
           <div ref={contentRef} style={{ flexShrink: 0 }}>
-            {ActivePanelComponent &&
-            typeof ActivePanelComponent === "function" ? (
-              <ActivePanelComponent />
-            ) : null}
+            {ActivePanelComponent ? <ActivePanelComponent /> : null}
           </div>
         </div>
       </OverlayScrollbarsComponent>

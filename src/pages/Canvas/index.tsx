@@ -1,4 +1,5 @@
-import { Text, TextPanelKey, type ITextProps } from "@/element/Text";
+import { Table, type ITableProps } from "@/element/Table";
+import { Text, type ITextProps } from "@/element/Text";
 import MockData from "@/mock";
 import {
   elementActiveStore,
@@ -17,10 +18,6 @@ import {
   type FC,
 } from "react";
 import type { JSX } from "react/jsx-runtime";
-
-const PanelKeyMapped = {
-  text: TextPanelKey,
-};
 
 const Component: FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -76,9 +73,14 @@ const Component: FC = () => {
       pageActiveStore.setPageActive(pages[0].id);
     }
 
+    console.log("page", pages);
+
+    // 检查是否有已选中的元素，如果有则设置对应的panel
+    // Header组件会自动检查已选中的元素并设置菜单，这里不需要重复设置
+
     // 初始化缩放，延迟确保DOM完全渲染
     setTimeout(calculateScale, 0);
-  }, []);
+  }, [calculateScale]);
 
   // 监听窗口大小变化 - 性能优化版本
   useEffect(() => {
@@ -119,23 +121,20 @@ const Component: FC = () => {
     // 检查点击的是否是画布本身（而不是其中的元素）
     if (e.target === e.currentTarget) {
       elementActiveStore.resetElementActive();
+      // 取消选择时切换回开始页面
+      menuActiveStore.setActiveMenu("start");
     }
   }, []);
 
   // 处理元素选中 - 优化版本
   const handleElementSelect = useCallback((elementId: string) => {
-    elementActiveStore.setElementActive(elementId);
-    const element = pptStore.getElementInfo(
-      pageActiveStore.getPageActive() as string,
-      elementId
-    );
-    if (element && PanelKeyMapped[element.type]) {
-      menuActiveStore.setActiveMenu(PanelKeyMapped[element.type]);
-    }
-  }, []);
+    const currentActiveElement = elementActiveStore.getElementActive();
 
-  const handleElementUnSelect = useCallback(() => {
-    menuActiveStore.setActiveMenu("start");
+    // 如果选中的是不同的元素，或者没有选中任何元素，则进行切换
+    if (currentActiveElement !== elementId) {
+      elementActiveStore.setElementActive(elementId);
+      // Header组件会自动处理菜单激活，这里不需要重复设置
+    }
   }, []);
 
   // 直接获取页面数据，observer 会自动响应 store 变化
@@ -172,20 +171,32 @@ const Component: FC = () => {
       >
         {pages.length > 0 &&
           pages[0].elements
-            .map((element: JSX.IntrinsicAttributes & ITextProps) => {
-              if (element.type === "text") {
-                return (
-                  <Text
-                    key={element.id}
-                    {...element}
-                    type="text"
-                    onSelect={() => handleElementSelect(element.id)}
-                    onUnSelect={handleElementUnSelect}
-                  />
-                );
+            .map(
+              (
+                element: JSX.IntrinsicAttributes & (ITextProps | ITableProps)
+              ) => {
+                if (element.type === "text") {
+                  return (
+                    <Text
+                      key={element.id}
+                      {...element}
+                      type="text"
+                      onSelect={() => handleElementSelect(element.id)}
+                    />
+                  );
+                } else if (element.type === "table") {
+                  return (
+                    <Table
+                      key={element.id}
+                      {...element}
+                      type="table"
+                      onSelect={() => handleElementSelect(element.id)}
+                    />
+                  );
+                }
+                return null;
               }
-              return null;
-            })
+            )
             .filter(Boolean)}
       </div>
     </div>

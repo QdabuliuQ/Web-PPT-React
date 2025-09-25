@@ -29,6 +29,21 @@
     box-sizing: border-box;
   }
 
+  /* 当启用边框拖拽时，显示边框线 */
+  &.borderDraggable {
+    :global(.moveable-line) {
+      display: block !important; // 显示边框线
+      background-color: var(--primary-color) !important; // 主题色背景
+      cursor: move !important; // 鼠标指针样式
+    }
+
+    // 旋转线保持原样，不显示拖拽光标
+    :global(.moveable-line.moveable-rotation-line) {
+      cursor: default !important;
+      background-color: var(--primary-color) !important;
+    }
+  }
+
   :global(.moveable-control) {
     background-color: var(--primary-color) !important;
     position: relative;

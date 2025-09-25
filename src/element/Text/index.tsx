@@ -1,18 +1,19 @@
 import { MovableWrapper } from "@/components";
 import { PanelButton } from "@/components/PanelButton";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { Text as TextIcon } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useMovableElement } from "../../hooks/useMovableElement";
 import { PlacementMapped } from "./constant";
 import styles from "./index.module.less";
 export { TextPanel, TextPanelKey, TextPanelTitle } from "./panel";
 
-export interface ITextProps {
+export interface ITextProps extends ICommonElementProps {
   type: "text";
-  id: string;
   text: string;
   fontSize: number;
   fontFamily: string;
@@ -44,14 +45,6 @@ export interface ITextProps {
     | "right-top"
     | "right-center"
     | "right-bottom";
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotate: number;
-  zIndex: number;
-  onSelect?: () => void;
-  onUnSelect?: () => void;
 }
 
 const Component: FC<ITextProps> = (props) => {
@@ -88,46 +81,52 @@ const Component: FC<ITextProps> = (props) => {
     onSelect,
     onUnSelect,
   } = props;
-  console.log(backgroundColor, "backgroundColor");
 
   const [isEditing, setIsEditing] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
+
+  // 使用通用的可移动元素hook
+  const {
+    isDragging,
+    handleDragStart,
+    handleDrag,
+    handleDragEnd,
+    handleResizeStart,
+    handleResize,
+    handleResizeEnd,
+    handleRotateStart,
+    handleRotate,
+    handleRotateEnd,
+  } = useMovableElement({
+    id,
+    props,
+    onStateChange: (dragging) => {
+      // 处理拖拽结束时的transform清理
+      if (!dragging && textRef.current) {
+        textRef.current.style.transform = `rotate(${rotate}deg)`;
+      }
+    },
+  });
 
   // 从 MobX store 中获取选中状态
   const isSelected = elementActiveStore.isElementActive(id);
 
-  // 拖拽开始
-  const handleDragStart = () => {
-    setIsDragging(true);
+  // 处理鼠标按下事件 - 立即激活元素
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // 如果正在编辑，不处理鼠标按下激活
+    if (isEditing) {
+      return;
+    }
+
+    // 立即激活元素
+    if (!isSelected) {
+      onSelect?.();
+    }
   };
 
-  // 拖拽结束
-  const handleDragEnd = () => {
-    setIsDragging(false);
-  };
-
-  // 缩放开始
-  const handleResizeStart = () => {
-    setIsDragging(true);
-  };
-
-  // 缩放结束
-  const handleResizeEnd = () => {
-    setIsDragging(false);
-  };
-
-  // 旋转开始
-  const handleRotateStart = () => {
-    setIsDragging(true);
-  };
-
-  // 旋转结束
-  const handleRotateEnd = () => {
-    setIsDragging(false);
-  };
-
-  // 处理单击事件 - 激活元素
+  // 处理单击事件 - 只激活元素
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -136,11 +135,11 @@ const Component: FC<ITextProps> = (props) => {
       return;
     }
 
-    // 调用外部传入的选择回调
+    // 单击只负责激活元素，不进入编辑模式
     onSelect?.();
   };
 
-  // 进入编辑模式
+  // 进入编辑模式 - 只有双击
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -151,6 +150,7 @@ const Component: FC<ITextProps> = (props) => {
 
     // 确保元素被激活
     onSelect?.();
+    // 进入编辑模式
     setIsEditing(true);
   };
 
@@ -199,8 +199,7 @@ const Component: FC<ITextProps> = (props) => {
   // 自动聚焦和选择文本
   useEffect(() => {
     if (isEditing && textRef.current) {
-      // 进入编辑模式时，确保不在拖拽状态
-      setIsDragging(false);
+      // 编辑模式时会自动停止拖拽
 
       // 设置内容
       textRef.current.textContent = text;
@@ -220,8 +219,7 @@ const Component: FC<ITextProps> = (props) => {
   // 添加全局鼠标事件监听，防止拖拽状态卡住
   useEffect(() => {
     const handleGlobalMouseUp = () => {
-      // 鼠标释放时重置拖拽状态
-      setIsDragging(false);
+      // 全局鼠标释放监听已由hook内部处理
     };
 
     document.addEventListener("mouseup", handleGlobalMouseUp);
@@ -249,6 +247,7 @@ const Component: FC<ITextProps> = (props) => {
   // 动态样式（位置、大小、颜色等）
   const dynamicStyle = useMemo(
     () => ({
+      // 拖拽过程中不应用MobX的x/y，避免与transform冲突
       left: x,
       top: y,
       width,
@@ -268,7 +267,7 @@ const Component: FC<ITextProps> = (props) => {
       border: border
         ? `${borderWidth}px ${borderStyle} ${borderColor}`
         : "none",
-      "-webkit-text-stroke": stroke ? `${strokeWidth}px ${strokeColor}` : "",
+      WebkitTextStroke: stroke ? `${strokeWidth}px ${strokeColor}` : "",
       ...placementConvey(placement),
       cursor: isSelected ? "text" : "pointer",
       backgroundColor,
@@ -287,6 +286,7 @@ const Component: FC<ITextProps> = (props) => {
       underline,
       strikethrough,
       lineHeight,
+      isDragging,
       color,
       shadow,
       shadowOffsetX,
@@ -326,6 +326,7 @@ const Component: FC<ITextProps> = (props) => {
         contentEditable={isEditing}
         suppressContentEditableWarning={true}
         style={dynamicStyle}
+        onMouseDown={handleMouseDown}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onKeyDown={isEditing ? handleKeyDown : undefined}
@@ -338,13 +339,16 @@ const Component: FC<ITextProps> = (props) => {
       {!isEditing && (
         <MovableWrapper
           id={id}
-          active={isSelected} // 根据选中状态控制激活
+          active={isSelected} // 只有选中时才激活拖拽
           bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
           onDragStart={handleDragStart}
+          onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           onResizeStart={handleResizeStart}
+          onResize={handleResize}
           onResizeEnd={handleResizeEnd}
           onRotateStart={handleRotateStart}
+          onRotate={handleRotate}
           onRotateEnd={handleRotateEnd}
         />
       )}
@@ -355,10 +359,9 @@ const Component: FC<ITextProps> = (props) => {
 export const Text = memo(observer(Component));
 
 export const CreateText = (props: Partial<ITextProps> = {}) => {
-  const defaultProps = {
+  const defaultProps: Omit<ITextProps, "type" | "id"> = {
     text: "Hello, world!",
     fontSize: 16,
-    fontWeight: 400,
     fontFamily: "Arial",
     color: "#000000",
     x: 0,
@@ -367,6 +370,24 @@ export const CreateText = (props: Partial<ITextProps> = {}) => {
     height: 100,
     rotate: 0,
     zIndex: 0,
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    lineHeight: 1,
+    shadow: false,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowColor: "#000000",
+    border: false,
+    borderWidth: 0,
+    borderStyle: "solid",
+    borderColor: "#000000",
+    backgroundColor: "#ffffff",
+    stroke: false,
+    strokeColor: "#000000",
+    strokeWidth: 0,
+    placement: "center-center",
   };
   return {
     ...defaultProps,

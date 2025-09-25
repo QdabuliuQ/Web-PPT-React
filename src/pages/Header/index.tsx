@@ -34,7 +34,6 @@ export const Header: FC = observer(() => {
 
   const pageActive = pageActiveStore.getPageActive();
   const elementActive = elementActiveStore.getElementActive();
-  const pages = pptStore.getPages();
 
   const [elementPanel, setElementPanel] = useState<{
     key: string;
@@ -43,21 +42,22 @@ export const Header: FC = observer(() => {
 
   useEffect(() => {
     if (pageActive && elementActive) {
-      for (let i = 0; i < pages.length; i++) {
-        if (pages[i].id === pageActive) {
-          for (let j = 0; j < pages[i].elements.length; j++) {
-            if (pages[i].elements[j].id === elementActive) {
-              if (MenuMapped[pages[i].elements[j].type]) {
-                setElementPanel(MenuMapped[pages[i].elements[j].type]);
-                return;
-              }
-            }
-          }
-        }
+      // 使用store的getElementInfo方法来获取元素信息
+      const element = pptStore.getElementInfo(pageActive, elementActive);
+
+      if (element && MenuMapped[element.type as keyof typeof MenuMapped]) {
+        const panel = MenuMapped[element.type as keyof typeof MenuMapped];
+        setElementPanel(panel);
+        // 自动切换到对应的panel
+        menuActiveStore.setActiveMenu(panel.key);
+        return;
       }
     }
+
+    // 没有选中元素时，切换回开始页面
     setElementPanel(null);
-  }, [elementActive, pageActive, pages]);
+    menuActiveStore.setActiveMenu("start");
+  }, [elementActive, pageActive]);
 
   const otherPanelClick = useMemoizedFn(() => {
     menuActiveStore.setActiveMenu(elementPanel?.key || "");

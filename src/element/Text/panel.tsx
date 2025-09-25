@@ -40,44 +40,36 @@ import {
   Slider,
   Tooltip,
 } from "antd";
-import {
-  type FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { observer } from "mobx-react-lite";
+import { type FC, useCallback, useMemo, useRef, useState } from "react";
 import type { ITextProps } from ".";
 import { Border } from "./constant";
 import styles from "./panel.module.less";
 interface ITextPanelProps {
-  title: string;
+  title?: string;
 }
 
 const fontSize = Array.from({ length: (50 - 12) / 2 + 1 }, (_, i) => {
   const size = 12 + i * 2;
   return { label: size, value: size };
 });
-export const TextPanel: FC<ITextPanelProps> = () => {
-  const [currentElement, setCurrentElement] = useState(
-    pptStore.getElementInfo(
-      pageActiveStore.getPageActive() as string,
-      elementActiveStore.getElementActive() as string
-    )
-  );
-
+export const TextPanel: FC<ITextPanelProps> = observer(() => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [backgroundColorPickerOpen, setBackgroundColorPickerOpen] =
     useState(false);
 
-  useEffect(() => {
-    pptStore.setElementInfo(
-      pageActiveStore.getPageActive() as string,
-      currentElement?.id as string,
-      currentElement as ITextProps
-    );
-  }, [currentElement]);
+  // 直接从store获取当前元素，observer会自动响应变化
+  const activeElementId = elementActiveStore.getElementActive();
+  const pageId = pageActiveStore.getPageActive();
+
+  // 简化实现：直接获取元素，不使用useMemo
+  let currentElement: ITextProps | null = null;
+  if (activeElementId && pageId) {
+    const element = pptStore.getElementInfo(pageId, activeElementId);
+    if (element && element.type === "text") {
+      currentElement = element as ITextProps;
+    }
+  }
 
   const propertyChangeHandle = useMemoizedFn(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,7 +81,17 @@ export const TextPanel: FC<ITextPanelProps> = () => {
       if (key === "lineHeight" && value < 1) {
         return;
       }
-      setCurrentElement({ ...currentElement, type: "text", [key]: value });
+      // 直接更新store中的元素信息
+      const updatedElement = {
+        ...currentElement,
+        type: "text",
+        [key]: value,
+      } as ITextProps;
+      pptStore.setElementInfo(
+        pageActiveStore.getPageActive() as string,
+        currentElement.id,
+        updatedElement
+      );
     }
   );
 
@@ -139,8 +141,23 @@ export const TextPanel: FC<ITextPanelProps> = () => {
   }, []);
 
   const handlePreviewSelect = useMemoizedFn((item: Partial<ITextProps>) => {
-    setCurrentElement((prev) => ({ ...prev, ...item }) as ITextProps);
+    if (!currentElement) return;
+    const updatedElement = { ...currentElement, ...item } as ITextProps;
+    pptStore.setElementInfo(
+      pageActiveStore.getPageActive() as string,
+      currentElement.id,
+      updatedElement
+    );
   });
+
+  // 如果没有选中的文本元素，显示提示
+  if (!currentElement) {
+    return (
+      <div className="h-[53px] inline-flex items-center justify-center px-[50px] min-w-fit my-[7px]">
+        <span className="text-gray-500">请选择一个文本元素</span>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
@@ -445,7 +462,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
         />
       </div>
       <PanelSplitLine />
-      <div className="h-full flex justify-center gap-[5px] flex-shrink-0">
+      <div className="h-full flex justify-center gap-[10px] flex-shrink-0">
         <PanelLargeButton
           title="边框"
           active={currentElement?.border}
@@ -526,7 +543,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
       <PanelPreview onSelect={handlePreviewSelect} />
     </div>
   );
-};
+});
 
 export const TextPanelTitle = "文本工具";
 export const TextPanelKey = "text";

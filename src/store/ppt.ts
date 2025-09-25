@@ -1,9 +1,10 @@
+import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
 import { makeAutoObservable } from "mobx";
 
 type IPage = Array<{
   id: string;
-  elements: Array<ITextProps>;
+  elements: Array<ITextProps | ITableProps>;
 }>;
 
 interface IPPT {

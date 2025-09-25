@@ -1,0 +1,136 @@
+.tableContainer {
+  position: absolute;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.headerRow {
+  background-color: #f6f8fa;
+  font-weight: bold;
+}
+
+.dataRow {
+  background-color: #ffffff;
+
+  &:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  &:hover {
+    background-color: #f0f8ff;
+  }
+}
+
+.headerCell {
+  border: 1px solid #d0d7de;
+  text-align: left;
+  vertical-align: top;
+  background-color: #f6f8fa;
+  font-weight: bold;
+  color: #24292f;
+  min-width: 60px;
+}
+
+.dataCell {
+  border: 1px solid #d0d7de;
+  text-align: left;
+  vertical-align: top;
+  background-color: inherit;
+  min-width: 60px;
+
+  &:hover {
+    background-color: #f0f8ff;
+  }
+}
+
+// 单元格基础样式（去除原有的contenteditable相关样式）
+.cellBase {
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  background-color: transparent;
+}
+
+// 单元格内容容器
+.cellContent {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+  min-height: 20px;
+  outline: none;
+  padding: 8px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+}
+
+// 列调整句柄 - 单元格内简单拖拽线
+.columnResizeHandle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background-color: transparent;
+  border-right: 1px solid transparent;
+  transition: border-color 0.2s;
+  z-index: 10;
+
+  &:hover {
+    background-color: rgba(0, 120, 255, 0.1) !important;
+  }
+
+  &.resizing {
+    border-right: 2px solid var(--primary-color, #f25f00);
+  }
+}
+
+// 行调整句柄 - 单元格内简单拖拽线
+.rowResizeHandle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  cursor: row-resize;
+  background-color: transparent;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+  z-index: 10;
+
+  &:hover {
+    background-color: rgba(0, 120, 255, 0.1) !important;
+  }
+
+  &.resizing {
+    border-bottom: 2px solid var(--primary-color, #f25f00);
+  }
+}
+
+// 响应式调整
+@media (max-width: 768px) {
+  .table {
+    font-size: 12px;
+  }
+
+  .headerCell,
+  .dataCell {
+    padding: 4px;
+  }
+}
