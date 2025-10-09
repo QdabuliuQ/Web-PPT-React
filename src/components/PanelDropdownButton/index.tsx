@@ -10,6 +10,7 @@ interface IPanelDropdownButtonProps {
   content?: React.ReactNode;
   value?: string; // 当前选中的key
   onSelect?: (key: string) => void; // 选择回调
+  disabled?: boolean;
 }
 
 export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
@@ -20,6 +21,7 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
   content,
   value,
   onSelect,
+  disabled,
 }) => {
   // 处理菜单选中状态和样式
   const enhancedMenu = menu
@@ -64,7 +66,7 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
 
   return (
     <Dropdown {...dropdownProps}>
-      <Button size="small" type="text">
+      <Button size="small" type="text" disabled={disabled}>
         <div className="flex items-center gap-[4px]">
           {icon}
           <span>{title}</span>

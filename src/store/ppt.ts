@@ -34,7 +34,11 @@ class PPTStore {
     this.pptInfo = { ...this.pptInfo };
   };
 
-  setElementInfo(pageId: string, elementId: string, elementInfo: ITextProps) {
+  setElementInfo(
+    pageId: string,
+    elementId: string,
+    elementInfo: ITextProps | ITableProps
+  ) {
     // 找到页面
     const pageIndex = this.pptInfo.pages.findIndex(
       (page) => page.id === pageId

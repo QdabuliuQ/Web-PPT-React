@@ -24,3 +24,8 @@ export const PlacementMapped = {
   "right-center": "center flex-end",
   "right-bottom": "flex-end flex-end",
 };
+
+export const FontSize = Array.from({ length: (50 - 12) / 2 + 1 }, (_, i) => {
+  const size = 12 + i * 2;
+  return { label: size, value: size };
+});

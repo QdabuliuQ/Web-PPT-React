@@ -77,6 +77,13 @@
   border: 2px solid transparent;
   border-radius: 4px;
   transition: all 0.2s ease-in-out;
+
+  // 选中状态样式
+  &.selectedCell {
+    background-color: rgba(0, 120, 255, 0.2) !important;
+    border: 2px solid #0078ff !important;
+    box-shadow: 0 0 4px rgba(0, 120, 255, 0.4);
+  }
 }
 
 // 列调整句柄 - 单元格内简单拖拽线
@@ -120,17 +127,5 @@
 
   &.resizing {
     border-bottom: 2px solid var(--primary-color, #f25f00);
-  }
-}
-
-// 响应式调整
-@media (max-width: 768px) {
-  .table {
-    font-size: 12px;
-  }
-
-  .headerCell,
-  .dataCell {
-    padding: 4px;
   }
 }

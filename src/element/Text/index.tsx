@@ -286,7 +286,6 @@ const Component: FC<ITextProps> = (props) => {
       underline,
       strikethrough,
       lineHeight,
-      isDragging,
       color,
       shadow,
       shadowOffsetX,

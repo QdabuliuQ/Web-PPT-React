@@ -6,19 +6,10 @@ import {
   PanelSplitLine,
 } from "@/components";
 import { PanelDropdownButton } from "@/components/PanelDropdownButton";
+import { PanelPlacementButton } from "@/components/PanelPlacementButton";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import {
   Add,
-  AlignmentHorizontalBottom,
-  AlignmentHorizontalCenter,
-  AlignmentHorizontalTop,
-  AlignmentLeftBottom,
-  AlignmentLeftCenter,
-  AlignmentLeftTop,
-  AlignmentRightBottom,
-  AlignmentRightCenter,
-  AlignmentRightTop,
-  AlignTextLeft,
   AutoHeightOne,
   BackgroundColor,
   ColorCard,
@@ -43,16 +34,12 @@ import {
 import { observer } from "mobx-react-lite";
 import { type FC, useCallback, useMemo, useRef, useState } from "react";
 import type { ITextProps } from ".";
-import { Border } from "./constant";
+import { Border, FontSize } from "./constant";
 import styles from "./panel.module.less";
 interface ITextPanelProps {
   title?: string;
 }
 
-const fontSize = Array.from({ length: (50 - 12) / 2 + 1 }, (_, i) => {
-  const size = 12 + i * 2;
-  return { label: size, value: size };
-});
 export const TextPanel: FC<ITextPanelProps> = observer(() => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [backgroundColorPickerOpen, setBackgroundColorPickerOpen] =
@@ -72,7 +59,6 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
   }
 
   const propertyChangeHandle = useMemoizedFn(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (key: keyof ITextProps, value: any) => {
       if (!currentElement) return;
       if (key === "fontSize" && value <= 1) {
@@ -150,15 +136,6 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
     );
   });
 
-  // 如果没有选中的文本元素，显示提示
-  if (!currentElement) {
-    return (
-      <div className="h-[53px] inline-flex items-center justify-center px-[50px] min-w-fit my-[7px]">
-        <span className="text-gray-500">请选择一个文本元素</span>
-      </div>
-    );
-  }
-
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
       <div className="h-full flex items-center gap-[5px] flex-shrink-0">
@@ -187,7 +164,7 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
               value={currentElement?.fontSize}
               style={{ width: 82 }}
               size="small"
-              options={fontSize}
+              options={FontSize}
               onChange={(value) => propertyChangeHandle("fontSize", value)}
             />
           </Tooltip>
@@ -211,108 +188,9 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
               icon={<Reduce theme="outline" size="13" fill="#333" />}
             />
           </Tooltip>
-          <PanelDropdownButton
-            title="对齐"
+          <PanelPlacementButton
             value={currentElement?.placement}
-            icon={<AlignTextLeft theme="outline" size="14" fill="#333" />}
-            onSelect={(key) => {
-              propertyChangeHandle("placement", key);
-            }}
-            menu={{
-              items: [
-                {
-                  key: "left-top",
-                  label: "左上对齐",
-                  icon: (
-                    <AlignmentLeftTop theme="outline" size="15" fill="#333" />
-                  ),
-                },
-                {
-                  key: "left-center",
-                  label: "左中对齐",
-                  icon: (
-                    <AlignmentLeftCenter
-                      theme="outline"
-                      size="15"
-                      fill="#333"
-                    />
-                  ),
-                },
-                {
-                  key: "left-bottom",
-                  label: "左下对齐",
-                  icon: (
-                    <AlignmentLeftBottom
-                      theme="outline"
-                      size="15"
-                      fill="#333"
-                    />
-                  ),
-                },
-                {
-                  key: "center-top",
-                  label: "中上对齐",
-                  icon: (
-                    <AlignmentHorizontalTop
-                      theme="outline"
-                      size="15"
-                      fill="#333"
-                    />
-                  ),
-                },
-                {
-                  key: "center-center",
-                  label: "水平垂直居中",
-                  icon: (
-                    <AlignmentHorizontalCenter
-                      theme="outline"
-                      size="15"
-                      fill="#333"
-                    />
-                  ),
-                },
-                {
-                  key: "center-bottom",
-                  label: "中下对齐",
-                  icon: (
-                    <AlignmentHorizontalBottom
-                      theme="outline"
-                      size="15"
-                      fill="#333"
-                    />
-                  ),
-                },
-                {
-                  key: "right-top",
-                  label: "右上对齐",
-                  icon: (
-                    <AlignmentRightTop theme="outline" size="15" fill="#333" />
-                  ),
-                },
-                {
-                  key: "right-center",
-                  label: "右中对齐",
-                  icon: (
-                    <AlignmentRightCenter
-                      theme="outline"
-                      size="15"
-                      fill="#333"
-                    />
-                  ),
-                },
-                {
-                  key: "right-bottom",
-                  label: "右下对齐",
-                  icon: (
-                    <AlignmentRightBottom
-                      theme="outline"
-                      size="15"
-                      fill="#333"
-                    />
-                  ),
-                },
-              ],
-            }}
+            onSelect={(key) => propertyChangeHandle("placement", key)}
           />
         </div>
         <div className="flex gap-[5px] items-center">

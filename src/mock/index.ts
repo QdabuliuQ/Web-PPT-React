@@ -42,14 +42,14 @@ export default {
           id: "table_" + getRandomId(),
           fontSize: 14,
           fontFamily: "Arial, sans-serif",
-          placement: "center-center",
           color: "#000000",
           dataSource: [
             [
               {
                 value: "姓名",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -57,7 +57,8 @@ export default {
               {
                 value: "年龄",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -65,7 +66,8 @@ export default {
               {
                 value: "职位",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -75,7 +77,8 @@ export default {
               {
                 value: "张三",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -83,7 +86,8 @@ export default {
               {
                 value: "25",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -92,7 +96,8 @@ export default {
                 value:
                   "前端开发工程师\n负责React和TypeScript开发\n维护项目架构",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -102,7 +107,8 @@ export default {
               {
                 value: "李四",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -110,7 +116,8 @@ export default {
               {
                 value: "30",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",
@@ -118,7 +125,8 @@ export default {
               {
                 value: "产品经理\n负责需求分析\n项目管理",
                 fontSize: 14,
-                bold: true,
+                bold: false,
+                italic: false,
                 placement: "center-center",
                 backgroundColor: "#fff",
                 color: "#000",

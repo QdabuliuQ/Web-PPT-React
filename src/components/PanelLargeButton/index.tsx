@@ -1,11 +1,12 @@
 import { useMemoizedFn } from "ahooks";
 import { Button } from "antd";
-import { useMemo, type FC } from "react";
+import { cloneElement, isValidElement, useMemo, type FC } from "react";
 interface IPanelLargeButtonProps {
   title: string;
   icon: React.ReactNode;
   onClick?: () => void;
   active?: boolean;
+  disabled?: boolean;
 }
 
 export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
@@ -13,9 +14,12 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
   icon,
   onClick,
   active = false,
+  disabled = false,
 }) => {
   const clickHandle = useMemoizedFn(() => {
-    onClick?.();
+    if (!disabled) {
+      onClick?.();
+    }
   });
 
   const styles = useMemo(() => {
@@ -49,14 +53,34 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
     };
   }, [active]);
 
+  // 处理禁用状态下的icon颜色
+  const renderIcon = useMemo(() => {
+    if (!isValidElement(icon)) return icon;
+
+    // 如果是禁用状态，修改icon的fill颜色为灰色
+    if (disabled) {
+      return cloneElement(icon, {
+        ...icon.props,
+        fill: "#bbb", // 禁用状态的灰色
+      });
+    }
+
+    return icon;
+  }, [icon, disabled]);
+
   return (
-    <Button style={styles} onClick={clickHandle} type="text">
+    <Button
+      style={styles}
+      onClick={clickHandle}
+      type="text"
+      disabled={disabled}
+    >
       <i
         style={{
           marginBottom: "6px",
         }}
       >
-        {icon}
+        {renderIcon}
       </i>
       {title}
     </Button>

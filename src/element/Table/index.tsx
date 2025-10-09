@@ -2,11 +2,24 @@ import { MovableWrapper } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId, placementConvey } from "@/utils";
+import { globalEventBus } from "@/utils/eventBus";
+import { useMemoizedFn } from "ahooks";
+import { Modal } from "antd";
 import { observer } from "mobx-react-lite";
 import { memo, useCallback, useEffect, useRef, useState, type FC } from "react";
+import Spreadsheet from "x-data-spreadsheet";
+import "x-data-spreadsheet/dist/locale/zh-cn";
+import "x-data-spreadsheet/dist/xspreadsheet.css";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import type { PlacementMapped } from "../Text/constant";
+import {
+  BASE_TABLE_EVENTS,
+  getTableEventName,
+  type CellOperationData,
+  type CellSelectionChangeData,
+} from "./events";
 import styles from "./index.module.less";
+export { TablePanel, TablePanelKey, TablePanelTitle } from "./panel";
 
 export interface ITableProps extends ICommonElementProps {
   type: "table";
@@ -16,6 +29,9 @@ export interface ITableProps extends ICommonElementProps {
       color: string;
       backgroundColor: string;
       bold: boolean;
+      italic: boolean;
+      underline: boolean;
+      strikethrough: boolean;
       value: string | number;
       placement: keyof typeof PlacementMapped;
     }>
@@ -48,6 +64,20 @@ const Component: FC<ITableProps> = (props) => {
   } | null>(null);
   const [currentColumnWidths, setCurrentColumnWidths] = useState(columnWidths);
   const [currentRowHeights, setCurrentRowHeights] = useState(rowHeights || []);
+
+  // 弹窗状态管理
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 单元格选中状态管理
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+
+  // 拖拽选择状态管理
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{
+    row: number;
+    col: number;
+  } | null>(null);
 
   // 当props变化时更新本地状态
   useEffect(() => {
@@ -185,6 +215,108 @@ const Component: FC<ITableProps> = (props) => {
     props,
   ]);
 
+  // 计算矩形范围内所有单元格的工具函数
+  const getCellsInRange = useCallback(
+    (
+      start: { row: number; col: number },
+      end: { row: number; col: number }
+    ) => {
+      const minRow = Math.min(start.row, end.row);
+      const maxRow = Math.max(start.row, end.row);
+      const minCol = Math.min(start.col, end.col);
+      const maxCol = Math.max(start.col, end.col);
+
+      const cells = new Set<string>();
+      for (let row = minRow; row <= maxRow; row++) {
+        for (let col = minCol; col <= maxCol; col++) {
+          // 确保不超出表格边界
+          if (row < tableData.length && col < tableData[row].length) {
+            cells.add(`${row}-${col}`);
+          }
+        }
+      }
+      return cells;
+    },
+    [tableData]
+  );
+
+  // 监听拖拽选择的全局鼠标事件
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !tableRef.current) return;
+
+      // 查找鼠标位置对应的单元格
+      const cells = tableRef.current.querySelectorAll("td");
+      let targetRow = -1;
+      let targetCol = -1;
+
+      for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i];
+        const cellRect = cell.getBoundingClientRect();
+        const cellX = e.clientX - cellRect.left;
+        const cellY = e.clientY - cellRect.top;
+
+        if (
+          cellX >= 0 &&
+          cellX <= cellRect.width &&
+          cellY >= 0 &&
+          cellY <= cellRect.height
+        ) {
+          // 从cell的key属性获取行列信息
+          const key = cell.getAttribute("data-cell-key");
+          if (key) {
+            const [row, col] = key.split("-").map(Number);
+            targetRow = row;
+            targetCol = col;
+            break;
+          }
+        }
+      }
+
+      if (targetRow >= 0 && targetCol >= 0 && dragStart) {
+        // 实时更新选中的单元格范围
+        const rangeSelected = getCellsInRange(dragStart, {
+          row: targetRow,
+          col: targetCol,
+        });
+        setSelectedCells(rangeSelected);
+      }
+    };
+
+    const handleMouseUp = () => {
+      // 拖拽结束时发布选择状态变化事件
+      if (isDragging) {
+        const eventName = getTableEventName(
+          BASE_TABLE_EVENTS.CELL_SELECTION_CHANGE,
+          id
+        );
+        globalEventBus.emit(eventName, {
+          selectedCells: selectedCells,
+          isShiftPressed,
+        } as CellSelectionChangeData);
+      }
+
+      setIsDragging(false);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [
+    isDragging,
+    dragStart,
+    getCellsInRange,
+    id,
+    isShiftPressed,
+    selectedCells,
+  ]);
+
   // 使用通用的可移动元素hook
   const {
     handleDragStart,
@@ -204,6 +336,109 @@ const Component: FC<ITableProps> = (props) => {
   // 从 MobX store 中获取选中状态
   const isSelected = elementActiveStore.isElementActive(id);
 
+  // 监听shift键状态
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        setIsShiftPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        setIsShiftPressed(false);
+      }
+    };
+
+    // 只有在表格被选中时才监听键盘事件
+    if (isSelected) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isSelected]);
+
+  // 当表格失去激活状态时清空单元格选中状态
+  useEffect(() => {
+    if (!isSelected) {
+      setSelectedCells(new Set());
+      setIsShiftPressed(false);
+      setIsDragging(false);
+      setDragStart(null);
+
+      // 发布选择状态清空事件
+      const eventName = getTableEventName(
+        BASE_TABLE_EVENTS.CELL_SELECTION_CHANGE,
+        id
+      );
+      globalEventBus.emit(eventName, {
+        selectedCells: new Set(),
+        isShiftPressed: false,
+      } as CellSelectionChangeData);
+    }
+  }, [isSelected, id]);
+
+  // 处理单元格操作
+  const handleCellOperationInternal = useCallback(
+    (
+      operation: "bold" | "italic" | "underline" | "strikethrough",
+      selectedCells: Set<string>
+    ) => {
+      if (selectedCells.size === 0) return;
+
+      const pageId = pageActiveStore.getPageActive();
+      if (!pageId) return;
+
+      // 克隆当前数据源
+      const newDataSource = tableData.map((row) =>
+        row.map((cell) => ({ ...cell }))
+      );
+
+      // 对选中的单元格应用操作
+      selectedCells.forEach((cellKey) => {
+        const [rowIndex, colIndex] = cellKey.split("-").map(Number);
+        if (newDataSource[rowIndex] && newDataSource[rowIndex][colIndex]) {
+          // 切换对应的样式属性
+          newDataSource[rowIndex][colIndex][operation] =
+            !newDataSource[rowIndex][colIndex][operation];
+        }
+      });
+
+      // 更新到store
+      pptStore.setElementInfo(pageId, id, {
+        ...props,
+        dataSource: newDataSource,
+      } as any);
+    },
+    [tableData, props, id]
+  );
+
+  // 监听来自panel的单元格操作事件
+  useEffect(() => {
+    const cellOperationEventName = getTableEventName(
+      BASE_TABLE_EVENTS.CELL_OPERATION,
+      id
+    );
+
+    const handleCellOperation = (data: unknown) => {
+      const operationData = data as CellOperationData;
+      handleCellOperationInternal(
+        operationData.operation,
+        operationData.selectedCells
+      );
+    };
+
+    globalEventBus.on(cellOperationEventName, handleCellOperation);
+
+    return () => {
+      globalEventBus.off(cellOperationEventName, handleCellOperation);
+    };
+  }, [id, handleCellOperationInternal]);
+
   // 直接使用百分比，无需计算
   // columnWidths 和 rowHeights 已经是百分比数组
 
@@ -216,6 +451,226 @@ const Component: FC<ITableProps> = (props) => {
     [onSelect]
   );
 
+  // 处理单元格点击事件
+  const handleCellClick = useCallback(
+    (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
+      e.stopPropagation(); // 阻止事件冒泡
+
+      // 只有在表格被选中且按住shift键时才允许选中单元格
+      if (isSelected && isShiftPressed) {
+        const cellKey = `${rowIndex}-${colIndex}`;
+        setSelectedCells((prevSelected) => {
+          const newSelected = new Set(prevSelected);
+          if (newSelected.has(cellKey)) {
+            // 如果已选中，则取消选中
+            newSelected.delete(cellKey);
+          } else {
+            // 如果未选中，则选中
+            newSelected.add(cellKey);
+          }
+
+          // 发布选择状态变化事件
+          const eventName = getTableEventName(
+            BASE_TABLE_EVENTS.CELL_SELECTION_CHANGE,
+            id
+          );
+          globalEventBus.emit(eventName, {
+            selectedCells: newSelected,
+            isShiftPressed,
+          } as CellSelectionChangeData);
+
+          return newSelected;
+        });
+      } else {
+        // 如果没有按住shift，正常激活表格
+        onSelect?.();
+      }
+    },
+    [isSelected, isShiftPressed, onSelect, id]
+  );
+
+  // 处理单元格鼠标按下事件
+  const handleCellMouseDown = useCallback(
+    (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
+      // 只有在表格被选中且按住shift键时才允许拖拽选择
+      if (isSelected && isShiftPressed) {
+        e.preventDefault(); // 阻止默认行为
+        e.stopPropagation(); // 阻止事件冒泡
+
+        setIsDragging(true);
+        setDragStart({ row: rowIndex, col: colIndex });
+
+        // 开始拖拽时先选中起始单元格
+        setSelectedCells(new Set([`${rowIndex}-${colIndex}`]));
+      }
+    },
+    [isSelected, isShiftPressed]
+  );
+
+  // 数据格式转换函数
+  const convertToXSpreadsheetData = useCallback(() => {
+    const data = {
+      name: "sheet1",
+      rows: {} as any,
+    };
+
+    // 转换数据行
+    tableData.forEach((row, rowIndex) => {
+      data.rows[rowIndex] = { cells: {} };
+
+      row.forEach((cell, colIndex) => {
+        data.rows[rowIndex].cells[colIndex] = {
+          text: cell.value.toString(),
+        };
+      });
+    });
+
+    return data;
+  }, [tableData]);
+
+  // 处理双击事件，打开弹窗
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation(); // 阻止事件冒泡
+
+      // 如果按住shift键，则不打开编辑窗口
+      if (isShiftPressed) {
+        return;
+      }
+
+      // 双击时就准备Excel数据
+      preparedDataRef.current = convertToXSpreadsheetData();
+      console.log("双击准备Excel数据:", preparedDataRef.current);
+
+      setIsModalOpen(true);
+    },
+    [convertToXSpreadsheetData, isShiftPressed]
+  );
+
+  // 关闭弹窗
+  const saveExcelData = useMemoizedFn(() => {
+    // 获取x-spreadsheet的数据
+    const spreadsheetData = spreadsheetInstanceRef.current.getData();
+
+    // 转换为表格数据格式
+    const newTableData: ITableProps["dataSource"] = [];
+    for (let i = 0; i < tableData.length; i++) {
+      newTableData[i] = [];
+      for (let j = 0; j < tableData[i].length; j++) {
+        const item = JSON.parse(JSON.stringify(tableData[i][j]));
+        item.value = spreadsheetData[0].rows[i]?.cells[j]?.text || "";
+        newTableData[i].push(item);
+      }
+    }
+
+    // 更新表格数据到store
+    const pageId = pageActiveStore.getPageActive();
+    if (pageId) {
+      // 获取当前元素完整信息
+      const currentElement = pptStore.getElementInfo(pageId, id);
+      if (currentElement) {
+        // 更新元素的dataSource属性
+        pptStore.setElementInfo(pageId, id, {
+          ...currentElement,
+          dataSource: newTableData,
+        } as any); // 使用any避免类型限制
+      }
+    }
+  });
+
+  const handleSaveAndClose = useCallback(() => {
+    saveExcelData();
+    setIsModalOpen(false);
+    preparedDataRef.current = null;
+  }, [saveExcelData]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    preparedDataRef.current = null;
+  }, []);
+
+  // SpreadsheetEditor组件引用
+  const spreadsheetContainerRef = useRef<HTMLDivElement>(null);
+  const spreadsheetInstanceRef = useRef<any>(null);
+  const preparedDataRef = useRef<any>(null);
+
+  // 清理Spreadsheet
+  const cleanupSpreadsheet = useCallback(() => {
+    if (spreadsheetInstanceRef.current) {
+      // 清理DOM内容
+      if (spreadsheetContainerRef.current) {
+        spreadsheetContainerRef.current.innerHTML = "";
+      }
+      // 清理实例引用
+      spreadsheetInstanceRef.current = null;
+    }
+    // 清理预准备的数据
+    preparedDataRef.current = null;
+  }, []);
+
+  // 监听Modal打开状态，初始化Spreadsheet
+  useEffect(() => {
+    if (isModalOpen) {
+      // 使用 setTimeout 确保Modal渲染完成后再初始化
+      const timer = setTimeout(() => {
+        if (
+          spreadsheetContainerRef.current &&
+          !spreadsheetInstanceRef.current
+        ) {
+          // 创建 spreadsheet 实例
+          spreadsheetInstanceRef.current = new Spreadsheet(
+            spreadsheetContainerRef.current,
+            {
+              mode: "edit",
+              showToolbar: false,
+              showGrid: true,
+              showContextmenu: false,
+              showBottomBar: false,
+              view: {
+                height: () => 500,
+                width: () => {
+                  const container = spreadsheetContainerRef.current;
+                  if (container) {
+                    return container.clientWidth;
+                  }
+                  return 900;
+                },
+              },
+              // 设置最大行数和列数
+              row: {
+                len: 50, // 最大行数50
+                height: 40, // 默认行高
+              },
+              col: {
+                len: 50, // 最大列数50
+                width: 100, // 默认列宽
+                indexWidth: 60, // 行号列宽度
+                minWidth: 60, // 最小列宽
+              },
+            }
+          );
+
+          // 加载双击时准备的数据
+          const data = preparedDataRef.current || convertToXSpreadsheetData();
+          spreadsheetInstanceRef.current.loadData(data);
+          console.log("加载Excel数据到spreadsheet:", data);
+
+          // 监听数据变化
+          spreadsheetInstanceRef.current.change = (newData: any) => {
+            console.log("表格数据已更新:", newData);
+          };
+        }
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        cleanupSpreadsheet();
+      };
+    } else {
+      cleanupSpreadsheet();
+    }
+  }, [isModalOpen, convertToXSpreadsheetData, cleanupSpreadsheet]);
+
   return (
     <>
       <div
@@ -226,6 +681,7 @@ const Component: FC<ITableProps> = (props) => {
           height: `${props.height}px`,
         }}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
       >
         <table
           ref={tableRef}
@@ -245,6 +701,7 @@ const Component: FC<ITableProps> = (props) => {
                   return (
                     <td
                       key={`${rowIndex}-${colIndex}`}
+                      data-cell-key={`${rowIndex}-${colIndex}`}
                       className={`${
                         rowIndex === 0 ? styles.headerCell : styles.dataCell
                       } ${styles.cellBase}`}
@@ -255,13 +712,23 @@ const Component: FC<ITableProps> = (props) => {
                             ? `${currentRowHeights[rowIndex]}%`
                             : "auto", // 应用行高比例
                       }}
+                      onClick={(e) => handleCellClick(rowIndex, colIndex, e)}
+                      onMouseDown={(e) =>
+                        handleCellMouseDown(rowIndex, colIndex, e)
+                      }
                     >
                       <div
-                        className={styles.cellContent}
+                        className={`${styles.cellContent} ${
+                          selectedCells.has(`${rowIndex}-${colIndex}`)
+                            ? styles.selectedCell
+                            : ""
+                        }`}
                         style={{
                           fontSize: `${cell.fontSize}px`,
                           color: cell.color,
                           fontWeight: cell.bold ? "bold" : "normal",
+                          fontStyle: cell.italic ? "italic" : "normal",
+                          textDecoration: `${cell.underline ? "underline" : ""} ${cell.strikethrough ? "line-through" : ""}`,
                           backgroundColor: cell.backgroundColor,
                           ...placementConvey(cell.placement), // flex布局应用到wrapper
                         }}
@@ -304,7 +771,7 @@ const Component: FC<ITableProps> = (props) => {
       </div>
       <MovableWrapper
         id={id}
-        active={isSelected && !resizing} // 选中且不在调整状态时才激活拖拽
+        active={isSelected && !resizing && !isDragging} // 选中且不在调整状态且不在拖拽选择状态时才激活拖拽
         bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
         dragOnlyButton={false} // 可以直接拖拽表格
         onDragStart={handleDragStart}
@@ -317,6 +784,32 @@ const Component: FC<ITableProps> = (props) => {
         onRotate={handleRotate}
         onRotateEnd={handleRotateEnd}
       />
+
+      {/* 双击弹窗 */}
+      <Modal
+        title="表格数据编辑"
+        open={isModalOpen}
+        onOk={handleSaveAndClose}
+        onCancel={handleCloseModal}
+        okText="保存"
+        cancelText="取消"
+        width={1000}
+        centered
+        destroyOnClose={true}
+      >
+        <div style={{ padding: "10px 0" }}>
+          <div
+            ref={spreadsheetContainerRef}
+            style={{
+              height: "500px",
+              width: "100%",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          />
+        </div>
+      </Modal>
     </>
   );
 };
@@ -331,7 +824,10 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           fontSize: 14,
           color: "#000000",
           backgroundColor: "#f5f5f5",
-          bold: true,
+          bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "姓名",
           placement: "center-center",
         },
@@ -339,7 +835,10 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           fontSize: 14,
           color: "#000000",
           backgroundColor: "#f5f5f5",
-          bold: true,
+          bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "年龄",
           placement: "center-center",
         },
@@ -347,7 +846,10 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           fontSize: 14,
           color: "#000000",
           backgroundColor: "#f5f5f5",
-          bold: true,
+          bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "职位",
           placement: "center-center",
         },
@@ -358,6 +860,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "张三",
           placement: "left-center",
         },
@@ -366,6 +871,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: 25,
           placement: "center-center",
         },
@@ -374,6 +882,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "开发工程师",
           placement: "left-center",
         },
@@ -384,6 +895,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "李四",
           placement: "left-center",
         },
@@ -392,6 +906,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: 30,
           placement: "center-center",
         },
@@ -400,6 +917,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "产品经理",
           placement: "left-center",
         },
@@ -410,6 +930,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "王五",
           placement: "left-center",
         },
@@ -418,6 +941,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: 28,
           placement: "center-center",
         },
@@ -426,6 +952,9 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
           color: "#000000",
           backgroundColor: "#ffffff",
           bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
           value: "设计师",
           placement: "left-center",
         },

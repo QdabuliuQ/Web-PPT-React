@@ -1,3 +1,4 @@
+import { TablePanelKey, TablePanelTitle } from "@/element/Table";
 import { TextPanelKey, TextPanelTitle } from "@/element/Text";
 import {
   elementActiveStore,
@@ -14,6 +15,10 @@ const MenuMapped = {
   text: {
     key: TextPanelKey,
     title: TextPanelTitle,
+  },
+  table: {
+    key: TablePanelKey,
+    title: TablePanelTitle,
   },
 };
 
