@@ -3,14 +3,15 @@ import { Down } from "@icon-park/react";
 import { Button, Dropdown, type DropDownProps } from "antd";
 import { type FC } from "react";
 interface IPanelDropdownButtonProps {
-  icon: React.ReactNode;
-  title: string;
+  icon?: React.ReactNode;
+  title?: string;
   menu?: DropDownProps["menu"];
   dropdownRender?: () => React.ReactNode;
   content?: React.ReactNode;
   value?: string; // 当前选中的key
   onSelect?: (key: string) => void; // 选择回调
   disabled?: boolean;
+  button?: React.ReactNode;
 }
 
 export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
@@ -22,6 +23,7 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
   value,
   onSelect,
   disabled,
+  button,
 }) => {
   // 处理菜单选中状态和样式
   const enhancedMenu = menu
@@ -66,13 +68,19 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
 
   return (
     <Dropdown {...dropdownProps}>
-      <Button size="small" type="text" disabled={disabled}>
-        <div className="flex items-center gap-[4px]">
-          {icon}
-          <span>{title}</span>
-          <Down theme="outline" size="10" fill="#333" />
-        </div>
-      </Button>
+      <div className="inline-block">
+        {button ? (
+          button
+        ) : (
+          <Button size="small" type="text" disabled={disabled}>
+            <div className="flex items-center gap-[4px]">
+              {icon}
+              <span>{title}</span>
+              <Down theme="outline" size="10" fill="#333" />
+            </div>
+          </Button>
+        )}
+      </div>
     </Dropdown>
   );
 };

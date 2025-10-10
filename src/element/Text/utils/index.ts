@@ -22,7 +22,7 @@ export function propsToCssStyle(props: Partial<ITextProps>) {
           ? `${props.borderWidth}px ${props.borderStyle} ${props.borderColor}`
           : "none";
       } else if (key === "stroke") {
-        styles["-webkit-text-stroke"] = props.stroke
+        styles.WebkitTextStroke = props.stroke
           ? `${props.strokeWidth}px ${props.strokeColor}`
           : "";
       } else {

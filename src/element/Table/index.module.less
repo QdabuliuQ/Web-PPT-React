@@ -11,7 +11,7 @@
   width: 100%;
   height: 100%;
   border-collapse: collapse;
-  table-layout: auto;
+  table-layout: fixed; /* 固定布局模式，防止内容影响布局 */
   font-family: inherit;
   font-size: inherit;
 }
@@ -67,16 +67,18 @@
 .cellContent {
   white-space: pre-wrap;
   word-break: break-word;
-  line-height: 1.4;
-  min-height: 20px;
+  line-height: 1.2; /* 减小行高以节省空间 */
   outline: none;
-  padding: 8px;
+  padding: 4px 8px; /* 调整内边距 */
   width: 100%;
   height: 100%;
   box-sizing: border-box;
   border: 2px solid transparent;
   border-radius: 4px;
   transition: all 0.2s ease-in-out;
+  overflow: hidden; /* 隐藏溢出内容 */
+  display: flex; /* 使用flex布局配合placement */
+  align-items: center; /* 垂直居中 */
 
   // 选中状态样式
   &.selectedCell {

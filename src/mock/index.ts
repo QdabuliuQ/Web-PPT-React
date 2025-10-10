@@ -40,9 +40,6 @@ export default {
         {
           type: "table",
           id: "table_" + getRandomId(),
-          fontSize: 14,
-          fontFamily: "Arial, sans-serif",
-          color: "#000000",
           dataSource: [
             [
               {

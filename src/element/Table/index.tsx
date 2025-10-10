@@ -6,7 +6,15 @@ import { globalEventBus } from "@/utils/eventBus";
 import { useMemoizedFn } from "ahooks";
 import { Modal } from "antd";
 import { observer } from "mobx-react-lite";
-import { memo, useCallback, useEffect, useRef, useState, type FC } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from "react";
 import Spreadsheet from "x-data-spreadsheet";
 import "x-data-spreadsheet/dist/locale/zh-cn";
 import "x-data-spreadsheet/dist/xspreadsheet.css";
@@ -50,6 +58,12 @@ const Component: FC<ITableProps> = (props) => {
     fontFamily = "Arial, sans-serif",
     columnWidths,
     rowHeights,
+    x,
+    y,
+    width,
+    height,
+    rotate,
+    zIndex,
     onSelect,
   } = props;
   const tableRef = useRef<HTMLTableElement>(null);
@@ -82,8 +96,14 @@ const Component: FC<ITableProps> = (props) => {
   // 当props变化时更新本地状态
   useEffect(() => {
     setCurrentColumnWidths(columnWidths);
-    setCurrentRowHeights(rowHeights || []);
-  }, [columnWidths, rowHeights]);
+    // 如果没有设置行高，则平均分配
+    if (!rowHeights || rowHeights.length === 0) {
+      const avgHeight = 100 / tableData.length;
+      setCurrentRowHeights(Array(tableData.length).fill(avgHeight));
+    } else {
+      setCurrentRowHeights(rowHeights);
+    }
+  }, [columnWidths, rowHeights, tableData.length]);
 
   // 表格调整功能相关回调
   const handleColumnResize = useCallback(
@@ -671,15 +691,24 @@ const Component: FC<ITableProps> = (props) => {
     }
   }, [isModalOpen, convertToXSpreadsheetData, cleanupSpreadsheet]);
 
+  const dynamicStyle = useMemo(
+    () => ({
+      width,
+      height,
+      left: x,
+      top: y,
+      transform: `rotate(${rotate}deg)`,
+      zIndex,
+    }),
+    [height, rotate, width, x, y, zIndex]
+  );
+
   return (
     <>
       <div
         className={styles.tableContainer}
         id={id}
-        style={{
-          width: `${props.width}px`,
-          height: `${props.height}px`,
-        }}
+        style={dynamicStyle}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
       >
@@ -707,10 +736,7 @@ const Component: FC<ITableProps> = (props) => {
                       } ${styles.cellBase}`}
                       style={{
                         width: `${currentColumnWidths[colIndex]}%`, // 应用列宽比例
-                        height:
-                          currentRowHeights.length > 0
-                            ? `${currentRowHeights[rowIndex]}%`
-                            : "auto", // 应用行高比例
+                        height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
                       }}
                       onClick={(e) => handleCellClick(rowIndex, colIndex, e)}
                       onMouseDown={(e) =>
@@ -736,8 +762,8 @@ const Component: FC<ITableProps> = (props) => {
                         {cell.value || ""}
                       </div>
 
-                      {/* 列调整句柄 - 不在最后一列显示 */}
-                      {colIndex < row.length - 1 && (
+                      {/* 列调整句柄 - 只有在表格被选中且不在最后一列时显示 */}
+                      {isSelected && colIndex < row.length - 1 && (
                         <div
                           className={`${styles.columnResizeHandle} ${
                             resizing?.type === "column" &&
@@ -749,8 +775,8 @@ const Component: FC<ITableProps> = (props) => {
                         />
                       )}
 
-                      {/* 行调整句柄 - 不在最后一行显示 */}
-                      {rowIndex < tableData.length - 1 && (
+                      {/* 行调整句柄 - 只有在表格被选中且不在最后一行时显示 */}
+                      {isSelected && rowIndex < tableData.length - 1 && (
                         <div
                           className={`${styles.rowResizeHandle} ${
                             resizing?.type === "row" &&
@@ -773,7 +799,10 @@ const Component: FC<ITableProps> = (props) => {
         id={id}
         active={isSelected && !resizing && !isDragging} // 选中且不在调整状态且不在拖拽选择状态时才激活拖拽
         bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
-        dragOnlyButton={false} // 可以直接拖拽表格
+        x={x}
+        y={y}
+        width={width}
+        height={height}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
@@ -961,7 +990,7 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
       ],
     ],
     columnWidths: [25, 25, 50], // 第一列25%, 第二列25%, 第三列50%
-    rowHeights: [25, 25, 25, 25], // 四行各占25%（包括表头）
+    rowHeights: [25, 25, 25, 25], // 四行各占25%（包括表头）- 确保行高固定
     fontSize: 14,
     fontFamily: "Arial, sans-serif",
     x: 0,

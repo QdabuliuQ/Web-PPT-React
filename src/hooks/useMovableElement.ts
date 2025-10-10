@@ -76,7 +76,14 @@ export const useMovableElement = <
     if (finalPosition.current && initialPosition.current) {
       const finalPos = { ...finalPosition.current };
 
-      // 先清除transform，然后立即更新store和拖拽状态
+      // 清除拖拽过程中的 translate transform，恢复元素原始 transform
+      const target = document.getElementById(id);
+      if (target) {
+        // 重置为元素应有的 transform（只包含旋转）
+        target.style.transform = `rotate(${props.rotate || 0}deg)`;
+      }
+
+      // 更新store和拖拽状态
       pptStore.setElementInfo(pageActiveStore.getPageActive() as string, id, {
         ...props,
         x: finalPos.x,

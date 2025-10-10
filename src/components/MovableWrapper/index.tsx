@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, type FC } from "react";
+import { memo, useEffect, useRef, useState, type FC } from "react";
 import type { MoveableManagerInterface, Renderer } from "react-moveable";
 import Moveable from "react-moveable";
 import styles from "./index.module.less";
@@ -57,6 +57,12 @@ export interface MovableWrapperProps {
   containerSelector?: string;
   bounds?: { left: number; top: number; right: number; bottom: number };
 
+  // 位置信息 - 用于响应外部位置变化
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+
   // 事件回调
   onDragStart?: () => void;
   onDrag?: (params: { x: number; y: number; transform: string }) => void;
@@ -82,6 +88,10 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(
     rotatable = true,
     dragOnlyButton = false,
     bounds,
+    x,
+    y,
+    width,
+    height,
     onDragStart,
     onDrag,
     onDragEnd,
@@ -94,6 +104,8 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(
   }) => {
     // 用于存储拖拽句柄元素引用
     const [dragHandle, setDragHandle] = useState<HTMLElement | null>(null);
+    // Moveable 实例引用
+    const moveableRef = useRef<any>(null);
 
     // 获取拖拽句柄元素引用
     useEffect(() => {
@@ -113,6 +125,16 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(
         setDragHandle(null);
       }
     }, [dragOnlyButton, active, id]);
+
+    // 监听位置变化，更新 Moveable
+    useEffect(() => {
+      if (moveableRef.current && active) {
+        // 延迟一帧更新，确保 DOM 已更新
+        requestAnimationFrame(() => {
+          moveableRef.current.updateRect();
+        });
+      }
+    }, [x, y, width, height, active]);
 
     // 拖拽事件处理
     const handleDragStart = () => {
@@ -197,6 +219,7 @@ export const MovableWrapper: FC<MovableWrapperProps> = memo(
 
     return (
       <Moveable
+        ref={moveableRef}
         target={active ? `#${id}` : null} // 根据激活状态控制target
         container={document.querySelector("#canvas-container") as HTMLElement}
         className={`${styles.moveableWrapper} ${

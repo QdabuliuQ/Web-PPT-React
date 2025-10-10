@@ -1,5 +1,5 @@
 import { useMemoizedFn } from "ahooks";
-import { Button } from "antd";
+import { Button, type ButtonProps } from "antd";
 import { cloneElement, isValidElement, useMemo, type FC } from "react";
 interface IPanelLargeButtonProps {
   title: string;
@@ -7,6 +7,7 @@ interface IPanelLargeButtonProps {
   onClick?: () => void;
   active?: boolean;
   disabled?: boolean;
+  type?: ButtonProps["type"];
 }
 
 export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
@@ -15,6 +16,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
   onClick,
   active = false,
   disabled = false,
+  type,
 }) => {
   const clickHandle = useMemoizedFn(() => {
     if (!disabled) {
@@ -72,7 +74,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
     <Button
       style={styles}
       onClick={clickHandle}
-      type="text"
+      type={type}
       disabled={disabled}
     >
       <i

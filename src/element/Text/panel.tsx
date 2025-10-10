@@ -5,8 +5,11 @@ import {
   PanelSelect,
   PanelSplitLine,
 } from "@/components";
+import { PanelCommonSetting } from "@/components/PanelCommonSetting";
 import { PanelDropdownButton } from "@/components/PanelDropdownButton";
 import { PanelPlacementButton } from "@/components/PanelPlacementButton";
+import { usePositionElement, type Position } from "@/hooks/usePositionElement";
+import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import {
   Add,
@@ -32,7 +35,7 @@ import {
   Tooltip,
 } from "antd";
 import { observer } from "mobx-react-lite";
-import { type FC, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type FC } from "react";
 import type { ITextProps } from ".";
 import { Border, FontSize } from "./constant";
 import styles from "./panel.module.less";
@@ -134,6 +137,27 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
       currentElement.id,
       updatedElement
     );
+  });
+
+  const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
+    useZIndexElement(
+      pageActiveStore.getPageActive() as string,
+      activeElementId as string
+    );
+  const { positionHandle } = usePositionElement(
+    pageActiveStore.getPageActive() as string,
+    activeElementId as string
+  );
+  const onZIndexChange = useMemoizedFn((key: string) => {
+    if (key === "toFront") {
+      toFrontHandle();
+    } else if (key === "sendForward") {
+      sendForwardHandle();
+    } else if (key === "sendBackward") {
+      sendBackwardHandle();
+    } else if (key === "toBack") {
+      toBackHandle();
+    }
   });
 
   return (
@@ -419,6 +443,11 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
       </div>
       <PanelSplitLine />
       <PanelPreview onSelect={handlePreviewSelect} />
+      <PanelSplitLine />
+      <PanelCommonSetting
+        onPositionChange={(key) => positionHandle(key as Position)}
+        onZIndexChange={onZIndexChange}
+      />
     </div>
   );
 });

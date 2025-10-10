@@ -340,6 +340,10 @@ const Component: FC<ITextProps> = (props) => {
           id={id}
           active={isSelected} // 只有选中时才激活拖拽
           bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
+          x={x}
+          y={y}
+          width={width}
+          height={height}
           onDragStart={handleDragStart}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}

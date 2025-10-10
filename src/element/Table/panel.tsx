@@ -4,7 +4,10 @@ import {
   PanelSelect,
   PanelSplitLine,
 } from "@/components";
+import { PanelCommonSetting } from "@/components/PanelCommonSetting";
 import { PanelPlacementButton } from "@/components/PanelPlacementButton";
+import { usePositionElement, type Position } from "@/hooks/usePositionElement";
+import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { globalEventBus } from "@/utils/eventBus";
 import {
@@ -41,10 +44,6 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
 
   const activeElementId = elementActiveStore.getElementActive();
-  const activeElementInfo = pptStore.getElementInfo(
-    pageActiveStore.getPageActive() as string,
-    activeElementId as string
-  );
 
   // 监听表格单元格选择状态变化
   useEffect(() => {
@@ -107,53 +106,15 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
       console.log("handleCellOperation", operation, value);
 
       if (!activeElementId || selectedCells.size === 0) return;
-      const cellIndexs = Array.from(selectedCells).sort(
-        (a: string, b: string) => {
-          const [rowIndex1, colIndex1] = a.split("-").map(Number);
-          const [rowIndex2, colIndex2] = b.split("-").map(Number);
-          return rowIndex1 - rowIndex2 || colIndex1 - colIndex2;
-        }
+
+      // 使用 pptStore 的 updateTableCells 方法来处理更新
+      pptStore.updateTableCells(
+        pageActiveStore.getPageActive() as string,
+        activeElementId as string,
+        selectedCells,
+        operation as string,
+        value
       );
-      const [rowStartIndex, colStartIndex] = cellIndexs[0]
-        .split("-")
-        .map(Number);
-      const [rowEndIndex, colEndIndex] = cellIndexs[cellIndexs.length - 1]
-        .split("-")
-        .map(Number);
-      const { dataSource } = activeElementInfo as ITableProps;
-      if (dataSource && dataSource.length) {
-        for (let i = rowStartIndex; i <= rowEndIndex; i++) {
-          for (let j = colStartIndex; j <= colEndIndex; j++) {
-            const cell = dataSource[i][j];
-            if (
-              operation === "bold" ||
-              operation === "italic" ||
-              operation === "underline" ||
-              operation === "strikethrough"
-            ) {
-              cell[operation] = !cell[operation];
-            } else if (value === "add" || value === "decrease") {
-              const size =
-                (cell as any)[operation] + (value === "add" ? 1 : -1) >= 50
-                  ? 50
-                  : (cell as any)[operation] + (value === "add" ? 1 : -1) <= 12
-                    ? 12
-                    : (cell as any)[operation] + (value === "add" ? 1 : -1);
-              (cell as any)[operation] = size;
-            } else {
-              (cell as any)[operation] = value;
-            }
-          }
-        }
-        pptStore.setElementInfo(
-          pageActiveStore.getPageActive() as string,
-          activeElementId as string,
-          {
-            ...activeElementInfo,
-            dataSource,
-          } as ITableProps
-        );
-      }
     }
   );
 
@@ -168,6 +129,27 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
       }, 300);
     }
   );
+
+  const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
+    useZIndexElement(
+      pageActiveStore.getPageActive() as string,
+      activeElementId as string
+    );
+  const { positionHandle } = usePositionElement(
+    pageActiveStore.getPageActive() as string,
+    activeElementId as string
+  );
+  const onZIndexChange = useMemoizedFn((key: string) => {
+    if (key === "toFront") {
+      toFrontHandle();
+    } else if (key === "sendForward") {
+      sendForwardHandle();
+    } else if (key === "sendBackward") {
+      sendBackwardHandle();
+    } else if (key === "toBack") {
+      toBackHandle();
+    }
+  });
 
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
@@ -348,6 +330,11 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
           </Button>
         </div>
       </div>
+      <PanelSplitLine />
+      <PanelCommonSetting
+        onPositionChange={(key) => positionHandle(key as Position)}
+        onZIndexChange={onZIndexChange}
+      />
     </div>
   );
 });

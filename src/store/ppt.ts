@@ -94,6 +94,71 @@ class PPTStore {
     }
     return null;
   }
+
+  getAllElementInfo(pageId: string) {
+    return (
+      this.pptInfo.pages.find((page) => page.id === pageId)?.elements || []
+    );
+  }
+
+  updateTableCells = (
+    pageId: string,
+    elementId: string,
+    selectedCells: Set<string>,
+    operation: string,
+    value?: any
+  ) => {
+    const element = this.getElementInfo(pageId, elementId) as ITableProps;
+    if (!element || !element.dataSource) return;
+
+    // 深拷贝 dataSource
+    const newDataSource = element.dataSource.map((row) =>
+      row.map((cell) => ({ ...cell }))
+    );
+
+    // 获取选中的单元格范围
+    const cellIndexs = Array.from(selectedCells).sort(
+      (a: string, b: string) => {
+        const [rowIndex1, colIndex1] = a.split("-").map(Number);
+        const [rowIndex2, colIndex2] = b.split("-").map(Number);
+        return rowIndex1 - rowIndex2 || colIndex1 - colIndex2;
+      }
+    );
+
+    if (cellIndexs.length === 0) return;
+
+    const [rowStartIndex, colStartIndex] = cellIndexs[0].split("-").map(Number);
+    const [rowEndIndex, colEndIndex] = cellIndexs[cellIndexs.length - 1]
+      .split("-")
+      .map(Number);
+
+    // 更新选中的单元格
+    for (let i = rowStartIndex; i <= rowEndIndex; i++) {
+      for (let j = colStartIndex; j <= colEndIndex; j++) {
+        const cell = newDataSource[i][j] as any;
+        if (
+          operation === "bold" ||
+          operation === "italic" ||
+          operation === "underline" ||
+          operation === "strikethrough"
+        ) {
+          cell[operation] = !cell[operation];
+        } else if (value === "add" || value === "decrease") {
+          const currentValue = cell[operation] || 14;
+          const newValue = currentValue + (value === "add" ? 1 : -1);
+          cell[operation] = Math.max(12, Math.min(50, newValue));
+        } else {
+          cell[operation] = value;
+        }
+      }
+    }
+
+    // 使用现有的 setElementInfo 方法更新整个元素
+    this.setElementInfo(pageId, elementId, {
+      ...element,
+      dataSource: newDataSource,
+    });
+  };
 }
 
 export const pptStore = new PPTStore();
