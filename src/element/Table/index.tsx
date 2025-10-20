@@ -1,4 +1,6 @@
 import { MovableWrapper } from "@/components";
+import useCommonContextMenu from "@/hooks/useCommonContextMenu";
+import { useContextMenu } from "@/hooks/useContextMenu";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId, placementConvey } from "@/utils";
@@ -48,6 +50,11 @@ export interface ITableProps extends ICommonElementProps {
   rowHeights?: number[]; // 行高百分比，可选，默认auto
   fontSize: number;
   fontFamily?: string;
+  // 边框样式配置
+  borderColor?: string;
+  borderWidth?: number;
+  borderStyle?: "solid" | "dashed" | "dotted" | "double" | "none";
+  borderRadius?: number;
 }
 
 const Component: FC<ITableProps> = (props) => {
@@ -64,6 +71,9 @@ const Component: FC<ITableProps> = (props) => {
     height,
     rotate,
     zIndex,
+    borderColor = "#d0d7de",
+    borderWidth = 1,
+    borderStyle = "solid",
     onSelect,
   } = props;
   const tableRef = useRef<HTMLTableElement>(null);
@@ -476,33 +486,42 @@ const Component: FC<ITableProps> = (props) => {
     (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
       e.stopPropagation(); // 阻止事件冒泡
 
-      // 只有在表格被选中且按住shift键时才允许选中单元格
-      if (isSelected && isShiftPressed) {
+      // 只要表格被选中就允许单元格操作
+      if (isSelected) {
         const cellKey = `${rowIndex}-${colIndex}`;
+
+        // 检查是否需要清空选中状态
         setSelectedCells((prevSelected) => {
-          const newSelected = new Set(prevSelected);
-          if (newSelected.has(cellKey)) {
-            // 如果已选中，则取消选中
-            newSelected.delete(cellKey);
-          } else {
-            // 如果未选中，则选中
-            newSelected.add(cellKey);
+          // 判断点击的单元格是否已选中
+          const isCurrentlySelected = prevSelected.has(cellKey);
+          // 判断当前是否有任何选中的单元格
+          const hasSelectedCells = prevSelected.size > 0;
+
+          // 核心逻辑：有选中 + 点击未选中 = 清空所有
+          if (hasSelectedCells && !isCurrentlySelected) {
+            const emptySelected = new Set<string>();
+
+            // 发布选择状态变化事件
+            const eventName = getTableEventName(
+              BASE_TABLE_EVENTS.CELL_SELECTION_CHANGE,
+              id
+            );
+            globalEventBus.emit(eventName, {
+              selectedCells: emptySelected,
+              isShiftPressed,
+            } as CellSelectionChangeData);
+
+            return emptySelected;
           }
 
-          // 发布选择状态变化事件
-          const eventName = getTableEventName(
-            BASE_TABLE_EVENTS.CELL_SELECTION_CHANGE,
-            id
-          );
-          globalEventBus.emit(eventName, {
-            selectedCells: newSelected,
-            isShiftPressed,
-          } as CellSelectionChangeData);
-
-          return newSelected;
+          // 其他情况保持原有选中状态不变
+          return prevSelected;
         });
+
+        // 激活表格
+        onSelect?.();
       } else {
-        // 如果没有按住shift，正常激活表格
+        // 如果表格未被选中，正常激活表格
         onSelect?.();
       }
     },
@@ -703,9 +722,41 @@ const Component: FC<ITableProps> = (props) => {
     [height, rotate, width, x, y, zIndex]
   );
 
+  const { commonMenu } = useCommonContextMenu(
+    pageActiveStore.getPageActive() as string,
+    elementActiveStore.getElementActive() as string
+  );
+
+  const { ContextMenu, show } = useContextMenu(
+    [
+      {
+        type: "item",
+        label: "插入行",
+        onClick: () => {
+          console.log("插入行被点击");
+        },
+      },
+      {
+        type: "separator",
+      },
+      ...commonMenu,
+    ],
+    id
+  );
+
   return (
     <>
+      <ContextMenu />
       <div
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // 右键时也激活选中表格
+          onSelect?.();
+
+          show({ event: e });
+        }}
         className={styles.tableContainer}
         id={id}
         style={dynamicStyle}
@@ -737,6 +788,7 @@ const Component: FC<ITableProps> = (props) => {
                       style={{
                         width: `${currentColumnWidths[colIndex]}%`, // 应用列宽比例
                         height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
+                        border: `${borderWidth}px ${borderStyle} ${borderColor}`,
                       }}
                       onClick={(e) => handleCellClick(rowIndex, colIndex, e)}
                       onMouseDown={(e) =>

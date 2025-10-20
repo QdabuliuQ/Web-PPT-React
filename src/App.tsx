@@ -1,5 +1,7 @@
 import Index from "@/pages/index";
 import { ConfigProvider } from "antd";
+import "react-contexify/dist/ReactContexify.css";
+import "./App.css";
 
 function App() {
   return (

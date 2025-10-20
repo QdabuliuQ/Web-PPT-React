@@ -16,7 +16,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
   onClick,
   active = false,
   disabled = false,
-  type,
+  type = "text",
 }) => {
   const clickHandle = useMemoizedFn(() => {
     if (!disabled) {

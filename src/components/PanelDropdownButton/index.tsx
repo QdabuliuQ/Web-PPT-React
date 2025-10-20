@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Down } from "@icon-park/react";
 import { Button, Dropdown, type DropDownProps } from "antd";
 import { type FC } from "react";

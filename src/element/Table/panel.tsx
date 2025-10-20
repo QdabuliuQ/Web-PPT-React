@@ -9,6 +9,7 @@ import { PanelPlacementButton } from "@/components/PanelPlacementButton";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import globalStyles from "@/styles/global.module.less";
 import { globalEventBus } from "@/utils/eventBus";
 import {
   Add,
@@ -24,12 +25,12 @@ import {
   TextItalic,
   TextUnderline,
 } from "@icon-park/react";
-import { useMemoizedFn } from "ahooks";
-import { Button, Popover, Tooltip } from "antd";
+import { useDebounceFn, useMemoizedFn } from "ahooks";
+import { Button, ColorPicker, InputNumber, Popover, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import type { ITableProps } from ".";
-import { FontSize as FontSizeList } from "../Text/constant";
+import { Border, FontSize as FontSizeList } from "../Text/constant";
 import {
   BASE_TABLE_EVENTS,
   getTableEventName,
@@ -118,15 +119,10 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
     }
   );
 
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // 使用 useDebounce 替代手动防抖
   const debouncedColorChange = useMemoizedFn(
     (property: keyof ITableProps["dataSource"][0][0]) => (color: string) => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        handleCellOperation(property, color);
-      }, 300);
+      debouncedHandleCellOperation.run(property, color);
     }
   );
 
@@ -150,6 +146,105 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
       toBackHandle();
     }
   });
+
+  const pageId = pageActiveStore.getPageActive();
+  // 简化实现：直接获取元素，不使用useMemo
+  let currentElement: ITableProps | null = null;
+  if (activeElementId && pageId) {
+    const element = pptStore.getElementInfo(pageId, activeElementId);
+    if (element && element.type === "table") {
+      currentElement = element as ITableProps;
+    }
+  }
+
+  // 防抖处理单元格操作
+  const debouncedHandleCellOperation = useDebounceFn(
+    (operation: keyof ITableProps["dataSource"][0][0], value?: any) => {
+      if (!activeElementId || selectedCells.size === 0) return;
+
+      pptStore.updateTableCells(
+        pageActiveStore.getPageActive() as string,
+        activeElementId as string,
+        selectedCells,
+        operation as string,
+        value
+      );
+    },
+    { wait: 300 }
+  );
+
+  const styleHandle = useDebounceFn(
+    (key: keyof ITableProps, value: any) => {
+      if (!activeElementId) return;
+      pptStore.setElementInfo(
+        pageActiveStore.getPageActive() as string,
+        activeElementId as string,
+        {
+          ...currentElement,
+          [key]: value,
+        } as ITableProps
+      );
+    },
+    { wait: 300 }
+  );
+
+  // 插入行处理函数
+  const handleInsertRow = useMemoizedFn((position: "above" | "below") => {
+    if (!activeElementId || selectedCells.size === 0) return;
+
+    pptStore.insertTableRow(
+      pageActiveStore.getPageActive() as string,
+      activeElementId as string,
+      selectedCells,
+      position
+    );
+  });
+
+  // 插入列处理函数
+  const handleInsertColumn = useMemoizedFn((position: "left" | "right") => {
+    if (!activeElementId || selectedCells.size === 0) return;
+
+    pptStore.insertTableColumn(
+      pageActiveStore.getPageActive() as string,
+      activeElementId as string,
+      selectedCells,
+      position
+    );
+  });
+
+  // 表格操作按钮配置
+  const tableActionButtons = [
+    // 行操作
+    [
+      {
+        key: "insertRowAbove",
+        icon: <ArrowUp theme="outline" size="13" />,
+        text: "在上方插入行",
+        onClick: () => handleInsertRow("above"),
+      },
+      {
+        key: "insertRowBelow",
+        icon: <ArrowDown theme="outline" size="13" />,
+        text: "在下方插入行",
+        onClick: () => handleInsertRow("below"),
+      },
+    ],
+    // 列操作
+    [
+      {
+        key: "insertColumnLeft",
+        icon: <ArrowLeft theme="outline" size="13" />,
+        text: "在左边插入列",
+        onClick: () => handleInsertColumn("left"),
+      },
+      {
+        key: "insertColumnRight",
+        icon: <ArrowRight theme="outline" size="13" />,
+        text: "在右边插入列",
+        onClick: () => handleInsertColumn("right"),
+      },
+    ],
+  ];
 
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
@@ -180,7 +275,9 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
               size="small"
               options={FontSizeList}
               disabled={selectedCells.size === 0}
-              onChange={(value) => handleCellOperation("fontSize", value)}
+              onChange={(value) =>
+                debouncedHandleCellOperation.run("fontSize", value)
+              }
             />
           </Tooltip>
           <Tooltip title="增大字号">
@@ -269,65 +366,64 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
       </div>
       <PanelSplitLine />
       <div className="h-full flex flex-col justify-between">
-        <div className="flex items-center gap-[5px]">
-          <Button
-            size="small"
-            type="text"
-            disabled={selectedCells.size === 0}
-            icon={
-              <ArrowUp
-                theme="outline"
-                size="13"
-                fill={selectedCells.size === 0 ? "#bbb" : "#333"}
-              />
-            }
-          >
-            在上方插入行
-          </Button>
-          <Button
-            size="small"
-            type="text"
-            disabled={selectedCells.size === 0}
-            icon={
-              <ArrowDown
-                theme="outline"
-                size="13"
-                fill={selectedCells.size === 0 ? "#bbb" : "#333"}
-              />
-            }
-          >
-            在下方插入行
-          </Button>
+        {tableActionButtons.map((buttonGroup, groupIndex) => (
+          <div key={groupIndex} className="flex items-center gap-[5px]">
+            {buttonGroup.map((button) => (
+              <Button
+                key={button.key}
+                size="small"
+                type="text"
+                disabled={selectedCells.size === 0}
+                onClick={button.onClick}
+                icon={
+                  <span
+                    style={{
+                      color: selectedCells.size === 0 ? "#bbb" : "#333",
+                    }}
+                  >
+                    {button.icon}
+                  </span>
+                }
+              >
+                {button.text}
+              </Button>
+            ))}
+          </div>
+        ))}
+      </div>
+      <PanelSplitLine />
+      <div className="h-full flex gap-[6px]">
+        <div className="flex h-full flex-col justify-between">
+          <Tooltip title="边框宽度" placement="top">
+            <InputNumber
+              value={currentElement?.borderWidth}
+              style={{ width: "85px" }}
+              size="small"
+              disabled={!currentElement?.borderWidth}
+              onChange={(value) => styleHandle.run("borderWidth", value)}
+            />
+          </Tooltip>
+          <Tooltip title="边框样式" placement="top">
+            <PanelSelect
+              value={currentElement?.borderStyle}
+              style={{ width: "85px" }}
+              size="small"
+              options={Border}
+              disabled={!currentElement?.borderStyle}
+              onChange={(value) => styleHandle.run("borderStyle", value)}
+            />
+          </Tooltip>
         </div>
-        <div className="flex items-center gap-[5px]">
-          <Button
-            size="small"
-            type="text"
-            disabled={selectedCells.size === 0}
-            icon={
-              <ArrowLeft
-                theme="outline"
-                size="13"
-                fill={selectedCells.size === 0 ? "#bbb" : "#333"}
-              />
-            }
-          >
-            在左边插入列
-          </Button>
-          <Button
-            size="small"
-            type="text"
-            disabled={selectedCells.size === 0}
-            icon={
-              <ArrowRight
-                theme="outline"
-                size="13"
-                fill={selectedCells.size === 0 ? "#bbb" : "#333"}
-              />
-            }
-          >
-            在右边插入列
-          </Button>
+        <div className="">
+          <Tooltip title="边框颜色" placement="top">
+            <ColorPicker
+              size="small"
+              className={globalStyles.colorPicker}
+              value={currentElement?.borderColor}
+              disabled={!currentElement?.borderColor}
+              onChange={(_, color) => styleHandle.run("borderColor", color)}
+            />
+          </Tooltip>
         </div>
       </div>
       <PanelSplitLine />
