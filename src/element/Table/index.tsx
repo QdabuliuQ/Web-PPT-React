@@ -1,6 +1,5 @@
 import { MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
-import { useContextMenu } from "@/hooks/useContextMenu";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId, placementConvey } from "@/utils";
@@ -29,6 +28,7 @@ import {
   type CellSelectionChangeData,
 } from "./events";
 import styles from "./index.module.less";
+import { getTableMenuItems } from "./menu";
 export { TablePanel, TablePanelKey, TablePanelTitle } from "./panel";
 
 export interface ITableProps extends ICommonElementProps {
@@ -722,40 +722,22 @@ const Component: FC<ITableProps> = (props) => {
     [height, rotate, width, x, y, zIndex]
   );
 
+  // 获取通用菜单
   const { commonMenu } = useCommonContextMenu(
     pageActiveStore.getPageActive() as string,
     elementActiveStore.getElementActive() as string
   );
 
-  const { ContextMenu, show } = useContextMenu(
-    [
-      {
-        type: "item",
-        label: "插入行",
-        onClick: () => {
-          console.log("插入行被点击");
-        },
-      },
-      {
-        type: "separator",
-      },
-      ...commonMenu,
-    ],
-    id
-  );
-
   return (
     <>
-      <ContextMenu />
       <div
         onContextMenu={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          // 右键时也激活选中表格
           onSelect?.();
-
-          show({ event: e });
+          const menuItems = [...getTableMenuItems(), ...commonMenu];
+          (e as any).customData = {
+            type: "element_table",
+            menuItems,
+          };
         }}
         className={styles.tableContainer}
         id={id}
@@ -876,7 +858,7 @@ const Component: FC<ITableProps> = (props) => {
         cancelText="取消"
         width={1000}
         centered
-        destroyOnClose={true}
+        destroyOnHidden={true}
       >
         <div style={{ padding: "10px 0" }}>
           <div

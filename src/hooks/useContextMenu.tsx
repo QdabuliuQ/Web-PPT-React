@@ -20,6 +20,8 @@ export type MenuItem = {
 export type Menu = Array<MenuItem>;
 
 export const useContextMenu = (menu: Menu, menuId: string) => {
+  const { show, hideAll } = useContextMenuReact({ id: menuId });
+
   const contextMenu = useMemo(() => {
     // 递归渲染菜单项
     const renderMenuItems = (items: Menu): React.ReactNode[] => {
@@ -34,35 +36,9 @@ export const useContextMenu = (menu: Menu, menuId: string) => {
             return (
               <Item
                 key={key}
-                // 尽早关闭，避免后续逻辑阻止关闭（某些版本不支持也不影响）
-                onMouseDown={() => {
-                  const apiAny = menuApi as unknown as {
-                    hide?: () => void;
-                    hideAll?: () => void;
-                  };
-                  apiAny.hideAll?.();
-                  apiAny.hide?.();
-                }}
                 onClick={(args) => {
-                  // 始终在点击后关闭菜单，避免个别项不自动关闭
-                  try {
-                    item.onClick?.(args);
-                  } finally {
-                    // 先尝试通过实例 API 关闭（兼容不同版本）
-                    const apiAny = menuApi as unknown as {
-                      hide?: () => void;
-                      hideAll?: () => void;
-                    };
-                    apiAny.hideAll?.();
-                    apiAny.hide?.();
-
-                    // 动态导入以避免类型提示与导出差异导致的编译问题
-                    // 兼容旧版本可能未导出 hideAll 的情况
-                    void import("react-contexify").then((m) => {
-                      // @ts-expect-error 兼容不同版本导出差异
-                      (m.hideAll ?? m.closeAll ?? (() => {}))();
-                    });
-                  }
+                  item.onClick?.(args);
+                  hideAll();
                 }}
                 disabled={item.disabled}
               >
@@ -98,10 +74,7 @@ export const useContextMenu = (menu: Menu, menuId: string) => {
     };
 
     return renderMenuItems(menu);
-  }, [menu]);
-
-  const menuApi = useContextMenuReact({ id: menuId });
-  const { show } = menuApi;
+  }, [menu, hideAll]);
 
   const ContextMenu = useMemo(() => {
     return () =>

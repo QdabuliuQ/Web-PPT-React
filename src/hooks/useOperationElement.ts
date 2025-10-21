@@ -1,4 +1,4 @@
-import { copyElementStore, pptStore } from "@/store";
+import { copyElementStore, elementActiveStore, pptStore } from "@/store";
 import { getRandomId } from "@/utils";
 import { useMemoizedFn } from "ahooks";
 
@@ -17,11 +17,13 @@ export default function useOperationElement(
     if (!element) return;
     copyElementStore.setCopiedElement(element);
     pptStore.removeElementInfo(pageActive, elementActive);
+    elementActiveStore.resetElementActive();
   });
 
   const deleteHandle = useMemoizedFn(() => {
     if (!element) return;
     pptStore.removeElementInfo(pageActive, elementActive);
+    elementActiveStore.resetElementActive();
   });
 
   const pasteHandle = useMemoizedFn(() => {

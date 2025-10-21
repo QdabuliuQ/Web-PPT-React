@@ -51,14 +51,11 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
-    setIsOpen(open);
-  };
-
-  const handleDropdownVisibleChange = (visible: boolean) => {
     // 当下拉框可见状态改变时，清除定时器
-    if (visible && timerRef.current) {
+    if (open && timerRef.current) {
       clearTimeout(timerRef.current);
     }
+    setIsOpen(open);
   };
 
   const wrapperProps =
@@ -68,12 +65,7 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
 
   return (
     <div {...wrapperProps}>
-      <Select
-        {...selectProps}
-        open={isOpen}
-        onOpenChange={handleOpenChange}
-        onDropdownVisibleChange={handleDropdownVisibleChange}
-      />
+      <Select {...selectProps} open={isOpen} onOpenChange={handleOpenChange} />
     </div>
   );
 };

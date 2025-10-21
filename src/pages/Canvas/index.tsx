@@ -1,27 +1,26 @@
 import { Table, type ITableProps } from "@/element/Table";
 import { Text, type ITextProps } from "@/element/Text";
+import type { MenuItem } from "@/hooks/useContextMenu";
+import { useContextMenu } from "@/hooks/useContextMenu";
 import MockData from "@/mock";
 import {
+  copyElementStore,
   elementActiveStore,
   menuActiveStore,
   pageActiveStore,
   pptStore,
 } from "@/store";
+import { getRandomId } from "@/utils";
+import { Clipboard } from "@icon-park/react";
+import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FC,
-} from "react";
+import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
 import type { JSX } from "react/jsx-runtime";
 
 const Component: FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const lastContainerSizeRef = useRef({ width: 0, height: 0 });
 
   // Canvas 固定尺寸 - 使用常量避免重复声明
@@ -29,7 +28,7 @@ const Component: FC = () => {
   const CANVAS_HEIGHT = useMemo(() => 700, []);
 
   // 计算缩放比例 - 性能优化版本
-  const calculateScale = useCallback(() => {
+  const calculateScale = useMemoizedFn(() => {
     if (!containerRef.current) return;
 
     const containerRect = containerRef.current.getBoundingClientRect();
@@ -62,7 +61,7 @@ const Component: FC = () => {
     if (Math.abs(newScale - scale) > 0.005) {
       setScale(newScale);
     }
-  }, [CANVAS_WIDTH, scale]);
+  });
 
   useEffect(() => {
     pptStore.setPages(JSON.parse(JSON.stringify(MockData)).pages);
@@ -72,12 +71,6 @@ const Component: FC = () => {
     if (pages.length > 0) {
       pageActiveStore.setPageActive(pages[0].id);
     }
-
-    console.log("page", pages);
-
-    // 检查是否有已选中的元素，如果有则设置对应的panel
-    // Header组件会自动检查已选中的元素并设置菜单，这里不需要重复设置
-
     // 初始化缩放，延迟确保DOM完全渲染
     setTimeout(calculateScale, 0);
   }, [calculateScale]);
@@ -117,17 +110,34 @@ const Component: FC = () => {
   }, [calculateScale]);
 
   // 处理画布点击事件 - 优化版本
-  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+  const handleCanvasClick = useMemoizedFn((e: React.MouseEvent) => {
     // 检查点击的是否是画布本身（而不是其中的元素）
     if (e.target === e.currentTarget) {
       elementActiveStore.resetElementActive();
       // 取消选择时切换回开始页面
       menuActiveStore.setActiveMenu("start");
     }
-  }, []);
+  });
+
+  // 手动关闭菜单的函数
+  const closeMenu = useMemoizedFn(() => {
+    setMenuItems([]);
+  });
+
+  // 添加全局点击事件监听器来关闭菜单
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      closeMenu();
+    };
+
+    document.addEventListener("click", handleGlobalClick);
+    return () => {
+      document.removeEventListener("click", handleGlobalClick);
+    };
+  }, [closeMenu]);
 
   // 处理元素选中 - 优化版本
-  const handleElementSelect = useCallback((elementId: string) => {
+  const handleElementSelect = useMemoizedFn((elementId: string) => {
     const currentActiveElement = elementActiveStore.getElementActive();
 
     // 如果选中的是不同的元素，或者没有选中任何元素，则进行切换
@@ -135,7 +145,32 @@ const Component: FC = () => {
       elementActiveStore.setElementActive(elementId);
       // Header组件会自动处理菜单激活，这里不需要重复设置
     }
-  }, []);
+  });
+
+  const handleCanvasPaste = useMemoizedFn((x?: number, y?: number) => {
+    const pageActive = pageActiveStore.getPageActive();
+    if (!pageActive) return;
+
+    const copied = copyElementStore.getCopiedElement();
+    if (!copied) return;
+
+    const newElement = JSON.parse(JSON.stringify(copied));
+    newElement.id = newElement.id.split("_")[0] + "_" + getRandomId();
+
+    // 如果提供了坐标，设置元素位置
+    if (x !== undefined && y !== undefined) {
+      newElement.x = x;
+      newElement.y = y;
+    }
+    pptStore.addElementInfo(pageActive, newElement as any);
+    elementActiveStore.setElementActive(newElement.id);
+  });
+
+  // 创建画布右键菜单
+  const { ContextMenu, show } = useContextMenu(
+    menuItems,
+    "canvas-context-menu"
+  );
 
   // 直接获取页面数据，observer 会自动响应 store 变化
   const pages = pptStore.getPages();
@@ -163,11 +198,56 @@ const Component: FC = () => {
       ref={containerRef}
       className="w-[calc(100%-230px)] h-[100%] relative overflow-hidden"
     >
+      <ContextMenu />
       <div
         id="canvas-container"
         className="absolute bg-[#fff] overflow-hidden transition-transform duration-200 ease-in-out"
         style={canvasStyle}
         onClick={handleCanvasClick}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const menuItems: MenuItem[] = [];
+          if ((e as any).customData) {
+            const { menuItems: customMenuItems } = (e as any).customData;
+            // 为每个自定义菜单项包装 onClick 处理函数
+            const wrappedCustomMenuItems = customMenuItems.map((item: any) => ({
+              ...item,
+              onClick: item.onClick
+                ? () => {
+                    item.onClick();
+                    closeMenu();
+                  }
+                : undefined,
+            }));
+            menuItems.push(...wrappedCustomMenuItems);
+          } else {
+            // 获取画布容器的位置信息
+            const canvasContainer = e.currentTarget as HTMLElement;
+            const canvasRect = canvasContainer.getBoundingClientRect();
+
+            // 计算鼠标在画布内部的相对坐标
+            const canvasX = (e.clientX - canvasRect.left) / scale;
+            const canvasY = (e.clientY - canvasRect.top) / scale;
+            menuItems.push({
+              type: "item" as const,
+              label: "粘贴",
+              icon: <Clipboard theme="outline" size="13" fill="#333" />,
+              onClick: () => {
+                handleCanvasPaste(canvasX, canvasY);
+                closeMenu();
+              },
+              disabled: !copyElementStore.hasCopiedElement(),
+            });
+            elementActiveStore.resetElementActive();
+          }
+
+          // 更新菜单项状态
+          setMenuItems(menuItems);
+          // 显示菜单
+          show({ event: e });
+        }}
       >
         {pages.length > 0 &&
           pages[0].elements

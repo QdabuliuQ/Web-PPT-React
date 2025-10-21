@@ -125,6 +125,9 @@ export default function useCommonContextMenu(
       },
     ],
     [
+      copyHandle,
+      cutHandle,
+      deleteHandle,
       positionHandle,
       sendBackwardHandle,
       sendForwardHandle,
