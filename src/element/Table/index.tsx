@@ -8,7 +8,6 @@ import { useMemoizedFn } from "ahooks";
 import { Modal } from "antd";
 import { observer } from "mobx-react-lite";
 import {
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -61,6 +60,7 @@ const Component: FC<ITableProps> = (props) => {
   const {
     dataSource,
     id,
+    mode = "edit",
     fontSize,
     fontFamily = "Arial, sans-serif",
     columnWidths,
@@ -77,6 +77,7 @@ const Component: FC<ITableProps> = (props) => {
     onSelect,
   } = props;
   const tableRef = useRef<HTMLTableElement>(null);
+  const moveableRef = useRef<any>(null);
   const tableData = dataSource;
 
   // 表格调整相关状态
@@ -103,6 +104,49 @@ const Component: FC<ITableProps> = (props) => {
     col: number;
   } | null>(null);
 
+  // 从DOM读取并更新列宽和行高的通用方法
+  const updateColumnWidthsAndRowHeightsFromDOM = useMemoizedFn(() => {
+    if (!tableRef.current) return;
+
+    const table = tableRef.current;
+    const containerRect = table.getBoundingClientRect();
+
+    // 计算列宽百分比
+    const calculatedColumnWidths: number[] = [];
+    const rows = table.querySelectorAll("tr");
+    if (rows.length > 0) {
+      const firstRow = rows[0];
+      const cells = firstRow.querySelectorAll("td");
+      cells.forEach((cell) => {
+        const cellRect = cell.getBoundingClientRect();
+        const widthPercent = (cellRect.width / containerRect.width) * 100;
+        calculatedColumnWidths.push(widthPercent);
+      });
+    }
+
+    // 计算行高百分比
+    const calculatedRowHeights: number[] = [];
+    rows.forEach((row) => {
+      const rowRect = row.getBoundingClientRect();
+      const heightPercent = (rowRect.height / containerRect.height) * 100;
+      calculatedRowHeights.push(heightPercent);
+    });
+
+    // 获取当前页面ID并更新store
+    const pageId = pageActiveStore.getPageActive();
+    if (pageId) {
+      const currentElement = pptStore.getElementInfo(pageId, id);
+      if (currentElement) {
+        pptStore.setElementInfo(pageId, id, {
+          ...currentElement,
+          columnWidths: calculatedColumnWidths,
+          rowHeights:
+            calculatedRowHeights.length > 0 ? calculatedRowHeights : undefined,
+        } as any);
+      }
+    }
+  });
+
   // 当props变化时更新本地状态
   useEffect(() => {
     setCurrentColumnWidths(columnWidths);
@@ -115,11 +159,88 @@ const Component: FC<ITableProps> = (props) => {
     }
   }, [columnWidths, rowHeights, tableData.length]);
 
+  // 监听 dataSource 变化，自动调整 columnWidths 和 rowHeights
+  useEffect(() => {
+    const pageId = pageActiveStore.getPageActive();
+    if (!pageId) return;
+
+    // 检查列数是否发生变化
+    const currentColCount = tableData.length > 0 ? tableData[0].length : 0;
+    const expectedColCount = columnWidths.length;
+
+    // 检查行数是否发生变化
+    const currentRowCount = tableData.length;
+    const expectedRowCount = rowHeights?.length || 0;
+
+    let needsUpdate = false;
+    let newColumnWidths = [...columnWidths];
+    let newRowHeights = rowHeights ? [...rowHeights] : [];
+
+    // 处理列数变化
+    if (currentColCount !== expectedColCount) {
+      if (currentColCount > expectedColCount) {
+        // 新增列，平均分配剩余宽度
+        const avgWidth = 100 / currentColCount;
+        newColumnWidths = Array(currentColCount).fill(avgWidth);
+      } else if (currentColCount < expectedColCount) {
+        // 删除列，保持现有列的宽度比例
+        newColumnWidths = columnWidths.slice(0, currentColCount);
+        // 重新归一化到100%
+        const totalWidth = newColumnWidths.reduce(
+          (sum, width) => sum + width,
+          0
+        );
+        newColumnWidths = newColumnWidths.map(
+          (width) => (width / totalWidth) * 100
+        );
+      }
+      needsUpdate = true;
+    }
+
+    // 处理行数变化
+    if (currentRowCount !== expectedRowCount) {
+      if (currentRowCount > expectedRowCount) {
+        // 新增行，平均分配高度
+        const avgHeight = 100 / currentRowCount;
+        newRowHeights = Array(currentRowCount).fill(avgHeight);
+      } else if (currentRowCount < expectedRowCount) {
+        // 删除行，保持现有行的高度比例
+        newRowHeights = (rowHeights || []).slice(0, currentRowCount);
+        // 重新归一化到100%
+        const totalHeight = newRowHeights.reduce(
+          (sum, height) => sum + height,
+          0
+        );
+        newRowHeights = newRowHeights.map(
+          (height) => (height / totalHeight) * 100
+        );
+      }
+      needsUpdate = true;
+    }
+
+    // 如果需要更新，保存到store
+    if (needsUpdate) {
+      const currentElement = pptStore.getElementInfo(pageId, id);
+      if (currentElement) {
+        pptStore.setElementInfo(pageId, id, {
+          ...currentElement,
+          columnWidths: newColumnWidths,
+          rowHeights: newRowHeights.length > 0 ? newRowHeights : undefined,
+        } as any);
+      }
+    }
+  }, [tableData, columnWidths, rowHeights, id]);
+
   // 表格调整功能相关回调
   const handleColumnResize = useCallback(
     (colIndex: number, e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+
+      // 预览模式下不允许调整列宽
+      if (mode === "preview") {
+        return;
+      }
 
       setResizing({
         type: "column",
@@ -128,13 +249,18 @@ const Component: FC<ITableProps> = (props) => {
         startSize: currentColumnWidths[colIndex],
       });
     },
-    [currentColumnWidths]
+    [currentColumnWidths, mode]
   );
 
   const handleRowResize = useCallback(
     (rowIndex: number, e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+
+      // 预览模式下不允许调整行高
+      if (mode === "preview") {
+        return;
+      }
 
       setResizing({
         type: "row",
@@ -143,7 +269,7 @@ const Component: FC<ITableProps> = (props) => {
         startSize: currentRowHeights[rowIndex] || 25, // 默认25%
       });
     },
-    [currentRowHeights]
+    [currentRowHeights, mode]
   );
 
   // 监听全局鼠标事件处理调整
@@ -212,19 +338,9 @@ const Component: FC<ITableProps> = (props) => {
     };
 
     const handleMouseUp = () => {
-      // 拖拽结束时，将最新的大小数据保存到MobX store
+      // 拖拽结束时，从DOM重新计算并更新列宽和行高
       if (resizing) {
-        // 保存调整后的大小数据到MobX store
-        pptStore.setElementInfo(
-          pageActiveStore.getPageActive() as string,
-          id,
-          {
-            ...props,
-            columnWidths: currentColumnWidths,
-            rowHeights:
-              currentRowHeights.length > 0 ? currentRowHeights : undefined,
-          } as any // 使用any避免类型冲突
-        );
+        updateColumnWidthsAndRowHeightsFromDOM();
       }
       setResizing(null);
     };
@@ -243,6 +359,7 @@ const Component: FC<ITableProps> = (props) => {
     tableData.length,
     id,
     props,
+    updateColumnWidthsAndRowHeightsFromDOM,
   ]);
 
   // 计算矩形范围内所有单元格的工具函数
@@ -354,13 +471,26 @@ const Component: FC<ITableProps> = (props) => {
     handleDragEnd,
     handleResizeStart,
     handleResize,
-    handleResizeEnd,
+    handleResizeEnd: originalHandleResizeEnd,
     handleRotateStart,
     handleRotate,
     handleRotateEnd,
   } = useMovableElement({
     id,
     props,
+    onMoveableRefresh: () => {
+      // 刷新 Moveable 位置
+      if (moveableRef.current) {
+        moveableRef.current.updateRect();
+      }
+    },
+  });
+
+  // 包装 handleResizeEnd，在 resize 结束后更新列宽和行高
+  const handleResizeEnd = useMemoizedFn(() => {
+    originalHandleResizeEnd();
+    // resize 结束后，从DOM重新计算并更新列宽和行高
+    updateColumnWidthsAndRowHeightsFromDOM();
   });
 
   // 从 MobX store 中获取选中状态
@@ -368,29 +498,31 @@ const Component: FC<ITableProps> = (props) => {
 
   // 监听shift键状态
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Shift") {
-        setIsShiftPressed(true);
-      }
-    };
+    if (mode === "edit") {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Shift") {
+          setIsShiftPressed(true);
+        }
+      };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "Shift") {
-        setIsShiftPressed(false);
-      }
-    };
+      const handleKeyUp = (e: KeyboardEvent) => {
+        if (e.key === "Shift") {
+          setIsShiftPressed(false);
+        }
+      };
 
-    // 只有在表格被选中时才监听键盘事件
-    if (isSelected) {
-      document.addEventListener("keydown", handleKeyDown);
-      document.addEventListener("keyup", handleKeyUp);
+      // 只有在表格被选中时才监听键盘事件
+      if (isSelected) {
+        document.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keyup", handleKeyUp);
+      }
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("keyup", handleKeyUp);
+      };
     }
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [isSelected]);
+  }, [isSelected, mode]);
 
   // 当表格失去激活状态时清空单元格选中状态
   useEffect(() => {
@@ -476,15 +608,26 @@ const Component: FC<ITableProps> = (props) => {
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation(); // 阻止事件冒泡到Canvas
+
+      // 预览模式下不允许激活表格
+      if (mode === "preview") {
+        return;
+      }
+
       onSelect?.();
     },
-    [onSelect]
+    [onSelect, mode]
   );
 
   // 处理单元格点击事件
   const handleCellClick = useCallback(
     (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
       e.stopPropagation(); // 阻止事件冒泡
+
+      // 预览模式下不允许单元格操作
+      if (mode === "preview") {
+        return;
+      }
 
       // 只要表格被选中就允许单元格操作
       if (isSelected) {
@@ -525,12 +668,17 @@ const Component: FC<ITableProps> = (props) => {
         onSelect?.();
       }
     },
-    [isSelected, isShiftPressed, onSelect, id]
+    [isSelected, isShiftPressed, onSelect, id, mode]
   );
 
   // 处理单元格鼠标按下事件
   const handleCellMouseDown = useCallback(
     (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
+      // 预览模式下不允许拖拽选择
+      if (mode === "preview") {
+        return;
+      }
+
       // 只有在表格被选中且按住shift键时才允许拖拽选择
       if (isSelected && isShiftPressed) {
         e.preventDefault(); // 阻止默认行为
@@ -543,7 +691,7 @@ const Component: FC<ITableProps> = (props) => {
         setSelectedCells(new Set([`${rowIndex}-${colIndex}`]));
       }
     },
-    [isSelected, isShiftPressed]
+    [isSelected, isShiftPressed, mode]
   );
 
   // 数据格式转换函数
@@ -572,6 +720,11 @@ const Component: FC<ITableProps> = (props) => {
     (e: React.MouseEvent) => {
       e.stopPropagation(); // 阻止事件冒泡
 
+      // 预览模式下不允许打开编辑弹窗
+      if (mode === "preview") {
+        return;
+      }
+
       // 如果按住shift键，则不打开编辑窗口
       if (isShiftPressed) {
         return;
@@ -579,11 +732,10 @@ const Component: FC<ITableProps> = (props) => {
 
       // 双击时就准备Excel数据
       preparedDataRef.current = convertToXSpreadsheetData();
-      console.log("双击准备Excel数据:", preparedDataRef.current);
 
       setIsModalOpen(true);
     },
-    [convertToXSpreadsheetData, isShiftPressed]
+    [convertToXSpreadsheetData, isShiftPressed, mode]
   );
 
   // 关闭弹窗
@@ -692,12 +844,6 @@ const Component: FC<ITableProps> = (props) => {
           // 加载双击时准备的数据
           const data = preparedDataRef.current || convertToXSpreadsheetData();
           spreadsheetInstanceRef.current.loadData(data);
-          console.log("加载Excel数据到spreadsheet:", data);
-
-          // 监听数据变化
-          spreadsheetInstanceRef.current.change = (newData: any) => {
-            console.log("表格数据已更新:", newData);
-          };
         }
       }, 100);
 
@@ -728,19 +874,12 @@ const Component: FC<ITableProps> = (props) => {
     elementActiveStore.getElementActive() as string
   );
 
-  return (
-    <>
+  const Table = useMemoizedFn(
+    ({ onContextMenu }: { onContextMenu?: (e: React.MouseEvent) => void }) => (
       <div
-        onContextMenu={(e) => {
-          onSelect?.();
-          const menuItems = [...getTableMenuItems(), ...commonMenu];
-          (e as any).customData = {
-            type: "element_table",
-            menuItems,
-          };
-        }}
+        onContextMenu={onContextMenu || (() => {})}
         className={styles.tableContainer}
-        id={id}
+        id={mode === "preview" ? `preview_${id}` : id}
         style={dynamicStyle}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
@@ -829,7 +968,23 @@ const Component: FC<ITableProps> = (props) => {
           </tbody>
         </table>
       </div>
+    )
+  );
+
+  return mode === "edit" ? (
+    <>
+      <Table
+        onContextMenu={(e: any) => {
+          onSelect?.();
+          const menuItems = [...getTableMenuItems(), ...commonMenu];
+          (e as any).customData = {
+            type: "element_table",
+            menuItems,
+          };
+        }}
+      />
       <MovableWrapper
+        ref={moveableRef}
         id={id}
         active={isSelected && !resizing && !isDragging} // 选中且不在调整状态且不在拖拽选择状态时才激活拖拽
         bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
@@ -837,6 +992,7 @@ const Component: FC<ITableProps> = (props) => {
         y={y}
         width={width}
         height={height}
+        rotate={rotate}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
@@ -847,8 +1003,6 @@ const Component: FC<ITableProps> = (props) => {
         onRotate={handleRotate}
         onRotateEnd={handleRotateEnd}
       />
-
-      {/* 双击弹窗 */}
       <Modal
         title="表格数据编辑"
         open={isModalOpen}
@@ -874,10 +1028,12 @@ const Component: FC<ITableProps> = (props) => {
         </div>
       </Modal>
     </>
+  ) : (
+    <Table />
   );
 };
 
-export const Table = memo(observer(Component));
+export const Table = observer(Component);
 
 export const CreateTable = (props: Partial<ITableProps> = {}) => {
   const defaultProps: Omit<ITableProps, "type" | "id"> = {
@@ -1027,6 +1183,7 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
     rowHeights: [25, 25, 25, 25], // 四行各占25%（包括表头）- 确保行高固定
     fontSize: 14,
     fontFamily: "Arial, sans-serif",
+    mode: "edit",
     x: 0,
     y: 0,
     width: 300,

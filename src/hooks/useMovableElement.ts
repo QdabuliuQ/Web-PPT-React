@@ -8,6 +8,7 @@ interface UseMovableElementProps<
   id: string;
   props: T;
   onStateChange?: (isDragging: boolean) => void;
+  onMoveableRefresh?: () => void;
 }
 
 interface UseMovableElementReturn {
@@ -36,6 +37,7 @@ export const useMovableElement = <
   id,
   props,
   onStateChange,
+  onMoveableRefresh,
 }: UseMovableElementProps<T>): UseMovableElementReturn => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -76,12 +78,7 @@ export const useMovableElement = <
     if (finalPosition.current && initialPosition.current) {
       const finalPos = { ...finalPosition.current };
 
-      // 清除拖拽过程中的 translate transform，恢复元素原始 transform
-      const target = document.getElementById(id);
-      if (target) {
-        // 重置为元素应有的 transform（只包含旋转）
-        target.style.transform = `rotate(${props.rotate || 0}deg)`;
-      }
+      console.log(props.mode, "===", finalPos);
 
       // 更新store和拖拽状态
       pptStore.setElementInfo(pageActiveStore.getPageActive() as string, id, {
@@ -89,6 +86,11 @@ export const useMovableElement = <
         x: finalPos.x,
         y: finalPos.y,
       } as any);
+
+      // 通知外部刷新 Moveable 位置
+      setTimeout(() => {
+        onMoveableRefresh?.();
+      }, 200);
 
       updateDraggingState(false);
       finalPosition.current = null;

@@ -47,8 +47,9 @@ export interface ITextProps extends ICommonElementProps {
     | "right-bottom";
 }
 
-const Component: FC<ITextProps> = (props) => {
+const Component: FC<ITextProps> = observer((props) => {
   const {
+    mode = "edit",
     id,
     text,
     x,
@@ -84,6 +85,7 @@ const Component: FC<ITextProps> = (props) => {
 
   const [isEditing, setIsEditing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
+  const moveableRef = useRef<any>(null);
 
   // 使用通用的可移动元素hook
   const {
@@ -106,12 +108,16 @@ const Component: FC<ITextProps> = (props) => {
         textRef.current.style.transform = `rotate(${rotate}deg)`;
       }
     },
+    onMoveableRefresh: () => {
+      // 刷新 Moveable 位置
+      if (moveableRef.current) {
+        moveableRef.current.updateRect();
+      }
+    },
   });
 
-  // 从 MobX store 中获取选中状态
   const isSelected = elementActiveStore.isElementActive(id);
 
-  // 处理鼠标按下事件 - 立即激活元素
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -130,7 +136,7 @@ const Component: FC<ITextProps> = (props) => {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // 如果正在编辑，不处理点击激活
+    // 如果正在编辑，不处理点击激活（避免编辑时误触）
     if (isEditing) {
       return;
     }
@@ -191,14 +197,14 @@ const Component: FC<ITextProps> = (props) => {
 
   // 同步文本内容到 contentEditable 元素
   useEffect(() => {
-    if (textRef.current && !isEditing) {
+    if (mode === "edit" && textRef.current && !isEditing) {
       textRef.current.textContent = text;
     }
-  }, [text, isEditing]);
+  }, [text, isEditing, mode]);
 
   // 自动聚焦和选择文本
   useEffect(() => {
-    if (isEditing && textRef.current) {
+    if (mode === "edit" && isEditing && textRef.current) {
       // 编辑模式时会自动停止拖拽
 
       // 设置内容
@@ -214,25 +220,13 @@ const Component: FC<ITextProps> = (props) => {
       selection?.removeAllRanges();
       selection?.addRange(range);
     }
-  }, [isEditing, text]);
-
-  // 添加全局鼠标事件监听，防止拖拽状态卡住
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      // 全局鼠标释放监听已由hook内部处理
-    };
-
-    document.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => {
-      document.removeEventListener("mouseup", handleGlobalMouseUp);
-    };
-  }, []);
+  }, [isEditing, mode, text]);
 
   useEffect(() => {
-    if (!isSelected) {
+    if (mode === "edit" && !isSelected) {
       onUnSelect?.();
     }
-  }, [isSelected, onUnSelect]);
+  }, [isSelected, mode, onUnSelect]);
 
   const placementConvey = useMemoizedFn((placement) => {
     const mapped = PlacementMapped[placement as keyof typeof PlacementMapped];
@@ -316,7 +310,7 @@ const Component: FC<ITextProps> = (props) => {
     .filter(Boolean)
     .join(" ");
 
-  return (
+  return mode === "edit" ? (
     <>
       <div
         ref={textRef}
@@ -333,17 +327,17 @@ const Component: FC<ITextProps> = (props) => {
       >
         <span>{text || (isEditing ? "" : "")}</span>
       </div>
-
-      {/* 只在非编辑模式下显示拖拽控件 */}
       {!isEditing && (
         <MovableWrapper
+          ref={moveableRef}
           id={id}
-          active={isSelected} // 只有选中时才激活拖拽
+          active={isSelected} // 选中时激活拖拽
           bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
           x={x}
           y={y}
           width={width}
           height={height}
+          rotate={rotate}
           onDragStart={handleDragStart}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
@@ -356,13 +350,18 @@ const Component: FC<ITextProps> = (props) => {
         />
       )}
     </>
+  ) : (
+    <div id={`preview_${id}`} className={className} style={dynamicStyle}>
+      <span>{text || (isEditing ? "" : "")}</span>
+    </div>
   );
-};
+});
 
-export const Text = memo(observer(Component));
+export const Text = memo(Component);
 
 export const CreateText = (props: Partial<ITextProps> = {}) => {
   const defaultProps: Omit<ITextProps, "type" | "id"> = {
+    mode: "edit",
     text: "Hello, world!",
     fontSize: 16,
     fontFamily: "Arial",

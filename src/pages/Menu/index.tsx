@@ -1,4 +1,5 @@
 import { menuActiveStore } from "@/store";
+import { useDebounceFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import "overlayscrollbars/overlayscrollbars.css";
@@ -14,19 +15,25 @@ export const Menu: FC = observer(() => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [needsScroll, setNeedsScroll] = useState(false);
 
-  useEffect(() => {
-    const checkSizes = () => {
-      if (containerRef.current && contentRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        const contentWidth = contentRef.current.scrollWidth;
-        setNeedsScroll(contentWidth > containerWidth);
-      }
-    };
+  // 检查是否需要滚动
+  const checkSizes = () => {
+    if (containerRef.current && contentRef.current) {
+      const containerWidth = containerRef.current.offsetWidth;
+      const contentWidth = contentRef.current.scrollWidth;
+      setNeedsScroll(contentWidth > containerWidth);
+    }
+  };
 
+  // 防抖处理的 resize 事件
+  const { run: debouncedCheckSizes } = useDebounceFn(checkSizes, {
+    wait: 300,
+  });
+
+  useEffect(() => {
     checkSizes();
 
-    // 监听窗口大小变化
-    window.addEventListener("resize", checkSizes);
+    // 监听窗口大小变化（使用防抖）
+    window.addEventListener("resize", debouncedCheckSizes);
 
     // 使用 MutationObserver 监听内容变化
     const observer = new MutationObserver(checkSizes);
@@ -39,15 +46,15 @@ export const Menu: FC = observer(() => {
     }
 
     return () => {
-      window.removeEventListener("resize", checkSizes);
+      window.removeEventListener("resize", debouncedCheckSizes);
       observer.disconnect();
     };
-  }, [ActivePanelComponent]);
+  }, [ActivePanelComponent, debouncedCheckSizes]);
 
   return (
     <div
       ref={containerRef}
-      className="w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px]"
+      className="w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px] max-h-[70px] min-h-[70px]"
     >
       <OverlayScrollbarsComponent
         className="custom-scrollbar"

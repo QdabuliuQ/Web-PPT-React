@@ -1,4 +1,11 @@
-import { memo, useEffect, useRef, useState, type FC } from "react";
+import {
+  forwardRef,
+  memo,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import type { MoveableManagerInterface, Renderer } from "react-moveable";
 import Moveable from "react-moveable";
 import styles from "./index.module.less";
@@ -62,6 +69,7 @@ export interface MovableWrapperProps {
   y?: number;
   width?: number;
   height?: number;
+  rotate?: number;
 
   // 事件回调
   onDragStart?: () => void;
@@ -79,194 +87,325 @@ export interface MovableWrapperProps {
   onRotateEnd?: () => void;
 }
 
-export const MovableWrapper: FC<MovableWrapperProps> = memo(
-  ({
-    id,
-    active = true, // 默认为激活状态
-    draggable = true,
-    resizable = true,
-    rotatable = true,
-    dragOnlyButton = false,
-    bounds,
-    x,
-    y,
-    width,
-    height,
-    onDragStart,
-    onDrag,
-    onDragEnd,
-    onResizeStart,
-    onResize,
-    onResizeEnd,
-    onRotateStart,
-    onRotate,
-    onRotateEnd,
-  }) => {
-    // 用于存储拖拽句柄元素引用
-    const [dragHandle, setDragHandle] = useState<HTMLElement | null>(null);
-    // Moveable 实例引用
-    const moveableRef = useRef<any>(null);
+export const MovableWrapper = memo(
+  forwardRef<any, MovableWrapperProps>(
+    (
+      {
+        id,
+        active = true, // 默认为激活状态
+        draggable = true,
+        resizable = true,
+        rotatable = true,
+        dragOnlyButton = false,
+        bounds,
+        x,
+        y,
+        width,
+        height,
+        rotate,
+        onDragStart,
+        onDrag,
+        onDragEnd,
+        onResizeStart,
+        onResize,
+        onResizeEnd,
+        onRotateStart,
+        onRotate,
+        onRotateEnd,
+      },
+      ref
+    ) => {
+      // 用于存储拖拽句柄元素引用
+      const [dragHandle, setDragHandle] = useState<HTMLElement | null>(null);
+      // Moveable 实例引用
+      const moveableRef = useRef<any>(null);
 
-    // 获取拖拽句柄元素引用
-    useEffect(() => {
-      if (dragOnlyButton && active) {
-        setDragHandle(null);
-        // 等待DOM更新后查找拖拽句柄元素
-        const timer = setTimeout(() => {
-          const handleElement = document.querySelector(
-            ".moveable-drag-handle"
-          ) as HTMLElement;
-          console.log(handleElement, "dragHandle");
-          setDragHandle(handleElement || null);
-        }, 100); // 给一些时间让moveable渲染完成
+      // 暴露 Moveable 实例给父组件
+      useImperativeHandle(ref, () => ({
+        updateRect: () => moveableRef.current?.updateRect(),
+        get moveableRef() {
+          return moveableRef.current;
+        },
+      }));
 
-        return () => clearTimeout(timer);
-      } else {
-        setDragHandle(null);
-      }
-    }, [dragOnlyButton, active, id]);
+      // 获取拖拽句柄元素引用
+      useEffect(() => {
+        if (dragOnlyButton && active) {
+          setDragHandle(null);
+          // 等待DOM更新后查找拖拽句柄元素
+          const timer = setTimeout(() => {
+            try {
+              const handleElement = document.querySelector(
+                ".moveable-drag-handle"
+              ) as HTMLElement;
+              setDragHandle(handleElement || null);
+            } catch (error) {
+              console.warn("Failed to find drag handle element:", error);
+              setDragHandle(null);
+            }
+          }, 100); // 给一些时间让moveable渲染完成
 
-    // 监听位置变化，更新 Moveable
-    useEffect(() => {
-      if (moveableRef.current && active) {
-        // 延迟一帧更新，确保 DOM 已更新
-        requestAnimationFrame(() => {
+          return () => clearTimeout(timer);
+        } else {
+          setDragHandle(null);
+        }
+      }, [dragOnlyButton, active, id]);
+
+      // 监听位置变化和激活状态，更新 Moveable
+      useEffect(() => {
+        if (moveableRef.current && active) {
+          // 延迟一帧更新，确保 DOM 已更新
+          requestAnimationFrame(() => {
+            if (moveableRef.current) {
+              moveableRef.current.updateRect();
+            }
+          });
+
+          // 额外延迟更新，确保位置完全同步
+          setTimeout(() => {
+            if (moveableRef.current) {
+              moveableRef.current.updateRect();
+            }
+          }, 50);
+        }
+      }, [x, y, width, height, rotate, active]);
+
+      // 拖拽事件处理
+      const handleDragStart = () => {
+        onDragStart?.();
+      };
+
+      const handleDrag = (e: {
+        target: EventTarget;
+        transform: string;
+        translate: number[];
+      }) => {
+        const { target, transform, translate } = e;
+
+        // 在拖拽过程中应用 transform，让 Moveable 正确显示
+        (target as HTMLElement).style.transform = transform;
+
+        if (onDrag) {
+          // 使用translate数组计算相对偏移
+          const [deltaX, deltaY] = translate;
+
+          onDrag({
+            x: deltaX,
+            y: deltaY,
+            transform,
+          });
+        }
+      };
+
+      const handleDragEnd = () => {
+        const targetElement = document.getElementById(id);
+
+        let finalLeft = x || 0;
+        let finalTop = y || 0;
+
+        // 先从 transform 中提取 translate 值，计算最终位置
+        if (targetElement) {
+          const transform = window.getComputedStyle(targetElement).transform;
+
+          if (transform && transform !== "none") {
+            const matrix = new DOMMatrix(transform);
+            const translateX = matrix.m41;
+            const translateY = matrix.m42;
+
+            // 获取当前的 left/top
+            const currentLeft = parseFloat(targetElement.style.left) || 0;
+            const currentTop = parseFloat(targetElement.style.top) || 0;
+
+            // 计算最终位置
+            finalLeft = currentLeft + translateX;
+            finalTop = currentTop + translateY;
+
+            console.log("[MovableWrapper] handleDragEnd - 计算位置", {
+              id,
+              currentLeft,
+              currentTop,
+              translateX,
+              translateY,
+              finalLeft,
+              finalTop,
+              propsX: x,
+              propsY: y,
+            });
+
+            // 立即应用最终位置
+            targetElement.style.left = `${finalLeft}px`;
+            targetElement.style.top = `${finalTop}px`;
+          }
+
+          // 清除拖拽产生的 transform translate，只保留 rotate
+          targetElement.style.transform = `rotate(${rotate || 0}deg)`;
+        }
+
+        // 立即更新 Moveable 位置
+        if (moveableRef.current) {
+          console.log("[MovableWrapper] 立即更新 Moveable");
           moveableRef.current.updateRect();
-        });
-      }
-    }, [x, y, width, height, active]);
+        }
 
-    // 拖拽事件处理
-    const handleDragStart = () => {
-      onDragStart?.();
-    };
-
-    const handleDrag = (e: {
-      target: EventTarget;
-      transform: string;
-      translate: number[];
-    }) => {
-      const { target, transform, translate } = e;
-
-      // 让moveable控制框跟随元素位置，应用transform
-      (target as HTMLElement).style.transform = transform;
-
-      if (onDrag) {
-        // 使用translate数组计算相对偏移
-        const [deltaX, deltaY] = translate;
-
-        onDrag({
-          x: deltaX,
-          y: deltaY,
-          transform,
-        });
-      }
-    };
-
-    const handleDragEnd = () => {
-      // 确保在拖拽结束时元素位置稳定
-      requestAnimationFrame(() => {
+        // 调用父组件的 onDragEnd 回调
+        // 父组件会用这个最终位置更新 store
         onDragEnd?.();
-      });
-    };
 
-    // 缩放事件处理
-    const handleResizeStart = () => {
-      onResizeStart?.();
-    };
+        // 延迟更新 Moveable，等待 props 更新和重新渲染完成
+        requestAnimationFrame(() => {
+          if (moveableRef.current) {
+            console.log("[MovableWrapper] requestAnimationFrame 更新 Moveable");
+            moveableRef.current.updateRect();
+          }
+        });
 
-    const handleResize = (e: {
-      target: EventTarget;
-      width: number;
-      height: number;
-      transform: string;
-    }) => {
-      const { target, width, height, transform } = e;
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (moveableRef.current) {
+            console.log("[MovableWrapper] 100ms 后更新 Moveable", {
+              id,
+              moveableExists: !!moveableRef.current,
+              domLeft: el?.style.left,
+              domTop: el?.style.top,
+              propsX: x,
+              propsY: y,
+            });
+            moveableRef.current.updateRect();
+          }
+        }, 100);
 
-      (target as HTMLElement).style.width = `${width}px`;
-      (target as HTMLElement).style.height = `${height}px`;
-      (target as HTMLElement).style.transform = transform;
+        setTimeout(() => {
+          if (moveableRef.current) {
+            console.log("[MovableWrapper] 200ms 后更新 Moveable");
+            moveableRef.current.updateRect();
+          }
+        }, 200);
 
-      if (onResize) {
-        onResize({ width, height, transform });
+        setTimeout(() => {
+          if (moveableRef.current) {
+            console.log("[MovableWrapper] 300ms 后更新 Moveable");
+            moveableRef.current.updateRect();
+          }
+        }, 300);
+
+        setTimeout(() => {
+          if (moveableRef.current) {
+            console.log("[MovableWrapper] 500ms 后更新 Moveable");
+            moveableRef.current.updateRect();
+          }
+        }, 500);
+      };
+
+      // 缩放事件处理
+      const handleResizeStart = () => {
+        onResizeStart?.();
+      };
+
+      const handleResize = (e: {
+        target: EventTarget;
+        width: number;
+        height: number;
+        transform: string;
+      }) => {
+        const { target, width, height, transform } = e;
+
+        (target as HTMLElement).style.width = `${width}px`;
+        (target as HTMLElement).style.height = `${height}px`;
+        (target as HTMLElement).style.transform = transform;
+
+        if (onResize) {
+          onResize({ width, height, transform });
+        }
+      };
+
+      const handleResizeEnd = () => {
+        onResizeEnd?.();
+      };
+
+      // 旋转事件处理
+      const handleRotateStart = () => {
+        onRotateStart?.();
+      };
+
+      const handleRotate = (e: { target: EventTarget; transform: string }) => {
+        const { target, transform } = e;
+        (target as HTMLElement).style.transform = transform;
+
+        if (onRotate) {
+          // 提取旋转角度信息
+          const matrix = new DOMMatrix(transform);
+          const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
+          onRotate({ rotate: angle, transform });
+        }
+      };
+
+      const handleRotateEnd = () => {
+        onRotateEnd?.();
+      };
+
+      // 如果未激活，不渲染 Moveable
+      if (!active) {
+        return null;
       }
-    };
 
-    const handleResizeEnd = () => {
-      onResizeEnd?.();
-    };
-
-    // 旋转事件处理
-    const handleRotateStart = () => {
-      onRotateStart?.();
-    };
-
-    const handleRotate = (e: { target: EventTarget; transform: string }) => {
-      const { target, transform } = e;
-      (target as HTMLElement).style.transform = transform;
-
-      if (onRotate) {
-        // 提取旋转角度信息
-        const matrix = new DOMMatrix(transform);
-        const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
-        onRotate({ rotate: angle, transform });
+      // 确保目标元素存在
+      const targetElement = document.getElementById(id);
+      if (!targetElement) {
+        console.warn(`Target element with id "${id}" not found`);
+        return null;
       }
-    };
 
-    const handleRotateEnd = () => {
-      onRotateEnd?.();
-    };
-
-    return (
-      <Moveable
-        ref={moveableRef}
-        target={active ? `#${id}` : null} // 根据激活状态控制target
-        container={document.querySelector("#canvas-container") as HTMLElement}
-        className={`${styles.moveableWrapper} ${
-          dragOnlyButton ? styles.borderDraggable : ""
-        }`}
-        // 功能配置 - 只有在激活状态下才启用功能
-        draggable={active && draggable}
-        resizable={active && resizable}
-        rotatable={active && rotatable}
-        // 自定义 ables - 当需要拖拽按钮时添加拖拽句柄
-        ables={dragOnlyButton ? [DragHandleViewable] : []}
-        // 拖拽区域配置：false表示不在moveable area添加拖拽事件
-        // dragArea={false}
-        // dragTarget：指定哪个元素作为拖拽目标
-        dragTarget={dragOnlyButton && dragHandle ? dragHandle : `#${id}`}
-        // 当设置了dragTarget时，是否允许目标元素本身也可拖拽
-        dragTargetSelf={!dragOnlyButton}
-        // 自定义属性，启用拖拽句柄视图
-        props={{
-          dragHandleViewable: dragOnlyButton,
-        }}
-        // 边界限制
-        bounds={bounds}
-        // 事件处理
-        onDragStart={handleDragStart}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-        onResizeStart={handleResizeStart}
-        onResize={handleResize}
-        onResizeEnd={handleResizeEnd}
-        onRotateStart={handleRotateStart}
-        onRotate={handleRotate}
-        onRotateEnd={handleRotateEnd}
-        // 其他配置
-        throttleDrag={0}
-        throttleResize={0}
-        throttleRotate={0}
-        keepRatio={false}
-        edge={true} // 启用边框线，但用CSS隐藏并重新绘制
-        zoom={1}
-        origin={false}
-        padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
-        // 自定义渲染方向，只显示控制点
-        renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
-      />
-    );
-  }
+      return (
+        <Moveable
+          ref={moveableRef}
+          target={`#${id}`}
+          container={document.querySelector("#canvas-container") as HTMLElement}
+          className={`${styles.moveableWrapper} ${
+            dragOnlyButton ? styles.borderDraggable : ""
+          }`}
+          // 功能配置
+          draggable={draggable}
+          resizable={resizable}
+          rotatable={rotatable}
+          // 自定义 ables - 当需要拖拽按钮时添加拖拽句柄
+          ables={dragOnlyButton ? [DragHandleViewable] : []}
+          // 拖拽区域配置：false表示不在moveable area添加拖拽事件
+          // dragArea={false}
+          // dragTarget：指定哪个元素作为拖拽目标
+          dragTarget={dragOnlyButton && dragHandle ? dragHandle : `#${id}`}
+          // 当设置了dragTarget时，是否允许目标元素本身也可拖拽
+          dragTargetSelf={!dragOnlyButton}
+          // 自定义属性，启用拖拽句柄视图
+          props={{
+            dragHandleViewable: dragOnlyButton,
+          }}
+          // 边界限制
+          bounds={bounds}
+          // 事件处理
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          onResizeStart={handleResizeStart}
+          onResize={handleResize}
+          onResizeEnd={handleResizeEnd}
+          onRotateStart={handleRotateStart}
+          onRotate={handleRotate}
+          onRotateEnd={handleRotateEnd}
+          // 其他配置
+          throttleDrag={0}
+          throttleResize={0}
+          throttleRotate={0}
+          keepRatio={false}
+          edge={true} // 启用边框线，但用CSS隐藏并重新绘制
+          zoom={1}
+          origin={false}
+          padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
+          // 自定义渲染方向，只显示控制点
+          renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
+        />
+      );
+    }
+  )
 );
 
 MovableWrapper.displayName = "MovableWrapper";

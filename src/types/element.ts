@@ -6,6 +6,7 @@ export interface ICommonElementProps {
   height: number;
   rotate: number;
   zIndex: number;
+  mode: "preview" | "play" | "edit";
   onSelect?: () => void;
   onUnSelect?: () => void;
 }

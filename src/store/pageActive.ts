@@ -22,6 +22,10 @@ class PageActiveStore {
   resetPageActive = () => {
     this.pageActive = null;
   };
+
+  getPageIndex = (pages: any[]) => {
+    return pages.findIndex((page: any) => page.id === this.pageActive);
+  };
 }
 
 export const pageActiveStore = new PageActiveStore();

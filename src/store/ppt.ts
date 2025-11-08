@@ -1,38 +1,141 @@
 import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
 import type { PlacementMapped } from "@/element/Text/constant";
+import { getRandomId } from "@/utils";
 import { makeAutoObservable } from "mobx";
 
-type IPage = Array<{
+export type Elements = ITextProps | ITableProps;
+export type Page = {
   id: string;
-  elements: Array<ITextProps | ITableProps>;
-}>;
+  elements: Array<Elements>;
+  visible?: boolean;
+};
 
-interface IPPT {
-  pages: IPage;
-}
+type IPage = Array<Page>;
 
 class PPTStore {
-  pptInfo: IPPT = {
-    pages: [],
-  };
+  pages: IPage = [];
 
   constructor() {
     makeAutoObservable(this);
   }
 
   setPages = (pages: IPage) => {
-    this.pptInfo.pages = pages;
-    this.pptInfo = { ...this.pptInfo };
+    this.pages = pages;
+  };
+
+  getActivePage = (pageId: string): Page | undefined => {
+    return this.pages.find((page) => page.id === pageId);
   };
 
   getPages = () => {
-    return this.pptInfo.pages;
+    return this.pages;
   };
 
   resetPages = () => {
-    this.pptInfo.pages = [];
-    this.pptInfo = { ...this.pptInfo };
+    this.pages = [];
+  };
+
+  // 添加新页面（插入到指定页面之后）
+  addPage = (afterPageId?: string) => {
+    const newPage: Page = {
+      id: `page_${getRandomId()}`,
+      elements: [],
+    };
+
+    if (afterPageId) {
+      // 找到指定页面的索引
+      const index = this.pages.findIndex((page) => page.id === afterPageId);
+      if (index !== -1) {
+        // 插入到指定页面之后
+        this.pages.splice(index + 1, 0, newPage);
+      } else {
+        // 如果没找到，添加到末尾
+        this.pages.push(newPage);
+      }
+    } else {
+      // 没有指定位置，添加到末尾
+      this.pages.push(newPage);
+    }
+
+    return newPage.id;
+  };
+
+  // 删除页面
+  deletePage = (pageId: string) => {
+    // 至少保留一个页面
+    if (this.pages.length <= 1) {
+      return false;
+    }
+
+    const index = this.pages.findIndex((page) => page.id === pageId);
+    if (index !== -1) {
+      this.pages.splice(index, 1);
+      return true;
+    }
+
+    return false;
+  };
+
+  // 复制页面（插入到指定页面之后）
+  duplicatePage = (pageId: string) => {
+    const pageIndex = this.pages.findIndex((page) => page.id === pageId);
+    if (pageIndex === -1) return null;
+
+    const originalPage = this.pages[pageIndex];
+
+    // 深拷贝页面和元素
+    const newPage: Page = {
+      id: `page_${getRandomId()}`,
+      elements: originalPage.elements.map((element) => ({
+        ...element,
+        id: `${element.id.split("_")[0]}_${getRandomId()}`,
+      })),
+    };
+
+    this.pages.splice(pageIndex + 1, 0, newPage);
+
+    return newPage.id;
+  };
+
+  // 移动页面
+  movePage = (pageId: string, direction: "up" | "down" | "first" | "last") => {
+    const pageIndex = this.pages.findIndex((page) => page.id === pageId);
+    if (pageIndex === -1) return false;
+
+    const [page] = this.pages.splice(pageIndex, 1);
+
+    let newIndex = pageIndex;
+    switch (direction) {
+      case "up":
+        newIndex = Math.max(0, pageIndex - 1);
+        break;
+      case "down":
+        newIndex = Math.min(this.pages.length, pageIndex + 1);
+        break;
+      case "first":
+        newIndex = 0;
+        break;
+      case "last":
+        newIndex = this.pages.length;
+        break;
+    }
+
+    this.pages.splice(newIndex, 0, page);
+
+    return true;
+  };
+
+  // 切换页面可见性
+  togglePageVisible = (pageId: string) => {
+    const pageIndex = this.pages.findIndex((page) => page.id === pageId);
+    if (pageIndex === -1) return false;
+
+    // 直接修改页面的 visible 属性
+    const currentVisible = this.pages[pageIndex].visible;
+    this.pages[pageIndex].visible = currentVisible === false ? true : false;
+
+    return true;
   };
 
   setElementInfo(
@@ -41,54 +144,44 @@ class PPTStore {
     elementInfo: ITextProps | ITableProps
   ) {
     // 找到页面
-    const pageIndex = this.pptInfo.pages.findIndex(
-      (page) => page.id === pageId
-    );
+    const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return;
 
     // 找到元素
-    const elementIndex = this.pptInfo.pages[pageIndex].elements.findIndex(
+    const elementIndex = this.pages[pageIndex].elements.findIndex(
       (element) => element.id === elementId
     );
     if (elementIndex === -1) return;
 
     // 创建新的 pages 数组，触发响应式更新
-    const newPages = [...this.pptInfo.pages];
+    const newPages = [...this.pages];
     newPages[pageIndex] = {
       ...newPages[pageIndex],
       elements: [...newPages[pageIndex].elements],
     };
     newPages[pageIndex].elements[elementIndex] = { ...elementInfo };
 
-    this.pptInfo = {
-      ...this.pptInfo,
-      pages: newPages,
-    };
+    this.pages = newPages;
   }
 
   addElementInfo(pageId: string, elementInfo: ITextProps | ITableProps) {
-    const pageIndex = this.pptInfo.pages.findIndex(
-      (page) => page.id === pageId
-    );
+    const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return;
 
     // 创建新的 pages 数组，触发响应式更新
-    const newPages = [...this.pptInfo.pages];
+    const newPages = [...this.pages];
     newPages[pageIndex] = {
       ...newPages[pageIndex],
       elements: [...newPages[pageIndex].elements, elementInfo],
     };
 
-    this.pptInfo = {
-      ...this.pptInfo,
-      pages: newPages,
-    };
+    this.pages = newPages;
   }
 
   getElementInfo(pageId: string, elementId: string) {
-    for (let i = 0; i < this.pptInfo.pages.length; i++) {
-      if (this.pptInfo.pages[i].id === pageId) {
-        return this.pptInfo.pages[i].elements.find(
+    for (let i = 0; i < this.pages.length; i++) {
+      if (this.pages[i].id === pageId) {
+        return this.pages[i].elements.find(
           (element) => element.id === elementId
         );
       }
@@ -97,27 +190,20 @@ class PPTStore {
   }
 
   getAllElementInfo(pageId: string) {
-    return (
-      this.pptInfo.pages.find((page) => page.id === pageId)?.elements || []
-    );
+    return this.pages.find((page) => page.id === pageId)?.elements || [];
   }
 
   removeElementInfo = (pageId: string, elementId: string) => {
-    const pageIndex = this.pptInfo.pages.findIndex(
-      (page) => page.id === pageId
-    );
+    const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return;
 
-    const oldPage = this.pptInfo.pages[pageIndex];
+    const oldPage = this.pages[pageIndex];
     const newElements = oldPage.elements.filter((el) => el.id !== elementId);
 
-    const newPages = [...this.pptInfo.pages];
+    const newPages = [...this.pages];
     newPages[pageIndex] = { ...oldPage, elements: newElements };
 
-    this.pptInfo = {
-      ...this.pptInfo,
-      pages: newPages,
-    };
+    this.pages = newPages;
   };
 
   updateTableCells = (

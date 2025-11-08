@@ -4,6 +4,7 @@ export default {
   pages: [
     {
       id: getRandomId(),
+      visible: true,
       elements: [
         {
           type: "text",
@@ -37,6 +38,117 @@ export default {
           rotate: 0,
           zIndex: 0,
         },
+        {
+          type: "table",
+          id: "table_" + getRandomId(),
+          dataSource: [
+            [
+              {
+                value: "姓名",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+              {
+                value: "年龄",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+              {
+                value: "职位",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+            ],
+            [
+              {
+                value: "张三",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+              {
+                value: "25",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+              {
+                value:
+                  "前端开发工程师\n负责React和TypeScript开发\n维护项目架构",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+            ],
+            [
+              {
+                value: "李四",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+              {
+                value: "30",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+              {
+                value: "产品经理\n负责需求分析\n项目管理",
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                placement: "center-center",
+                backgroundColor: "#fff",
+                color: "#000",
+              },
+            ],
+          ],
+          columnWidths: [20, 20, 60], // 第一列20%, 第二列20%, 第三列60%
+          rowHeights: [33.33, 33.33, 33.34], // 三行均等分配
+          x: 250,
+          y: 100,
+          width: 300,
+          height: 150,
+          rotate: 0,
+          zIndex: 1,
+          borderColor: "#ccc",
+          borderWidth: "1",
+          borderStyle: "solid",
+        },
+      ],
+    },
+    {
+      id: getRandomId(),
+      visible: true,
+      elements: [
         {
           type: "table",
           id: "table_" + getRandomId(),

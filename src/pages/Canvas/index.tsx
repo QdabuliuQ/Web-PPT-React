@@ -10,14 +10,23 @@ import {
   pageActiveStore,
   pptStore,
 } from "@/store";
+import type { Elements } from "@/store/ppt";
 import { getRandomId } from "@/utils";
 import { Clipboard } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
-import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import type { JSX } from "react/jsx-runtime";
 
-const Component: FC = () => {
+interface CanvasProps {
+  mode?: "preview" | "play" | "edit";
+  page?: {
+    id: string;
+    elements: Array<Elements>;
+  };
+}
+
+const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -63,20 +72,30 @@ const Component: FC = () => {
     }
   });
 
+  // 初始化数据 - 只执行一次
   useEffect(() => {
-    pptStore.setPages(JSON.parse(JSON.stringify(MockData)).pages);
+    // 只在没有数据时初始化
+    if (pptStore.getPages().length === 0) {
+      pptStore.setPages(JSON.parse(JSON.stringify(MockData)).pages);
 
-    const pages = pptStore.getPages();
+      const pages = pptStore.getPages();
 
-    if (pages.length > 0) {
-      pageActiveStore.setPageActive(pages[0].id);
+      if (pages.length > 0) {
+        pageActiveStore.setPageActive(pages[0].id);
+      }
     }
-    // 初始化缩放，延迟确保DOM完全渲染
+  }, []);
+
+  // 初始化缩放
+  useEffect(() => {
     setTimeout(calculateScale, 0);
   }, [calculateScale]);
 
-  // 监听窗口大小变化 - 性能优化版本
+  // 监听窗口大小变化 - 性能优化版本（preview 模式下不需要）
   useEffect(() => {
+    // preview 模式下不需要监听窗口大小变化
+    if (mode === "preview") return;
+
     let timeoutId: NodeJS.Timeout;
     let rafId: number;
 
@@ -107,10 +126,15 @@ const Component: FC = () => {
       window.removeEventListener("resize", handleResize);
       resizeObserver?.disconnect();
     };
-  }, [calculateScale]);
+  }, [calculateScale, mode]);
 
   // 处理画布点击事件 - 优化版本
   const handleCanvasClick = useMemoizedFn((e: React.MouseEvent) => {
+    // 预览模式下不处理点击事件
+    if (mode === "preview") {
+      return;
+    }
+
     // 检查点击的是否是画布本身（而不是其中的元素）
     if (e.target === e.currentTarget) {
       elementActiveStore.resetElementActive();
@@ -138,6 +162,11 @@ const Component: FC = () => {
 
   // 处理元素选中 - 优化版本
   const handleElementSelect = useMemoizedFn((elementId: string) => {
+    // 预览模式下不允许选择元素
+    if (mode === "preview") {
+      return;
+    }
+
     const currentActiveElement = elementActiveStore.getElementActive();
 
     // 如果选中的是不同的元素，或者没有选中任何元素，则进行切换
@@ -148,6 +177,11 @@ const Component: FC = () => {
   });
 
   const handleCanvasPaste = useMemoizedFn((x?: number, y?: number) => {
+    // 预览模式下不允许粘贴
+    if (mode === "preview") {
+      return;
+    }
+
     const pageActive = pageActiveStore.getPageActive();
     if (!pageActive) return;
 
@@ -173,14 +207,17 @@ const Component: FC = () => {
   );
 
   // 直接获取页面数据，observer 会自动响应 store 变化
-  const pages = pptStore.getPages();
+  const currentPage =
+    mode === "edit"
+      ? pptStore.getActivePage(pageActiveStore.getPageActive() as string)
+      : page;
 
   // Canvas 样式对象 - 使用 useMemo 缓存，避免每次渲染创建新对象
   const canvasStyle = useMemo(
     () => ({
       width: `${CANVAS_WIDTH}px`,
       height: `${CANVAS_HEIGHT}px`,
-      transform: `scale(${scale})`,
+      transform: `scale(${mode === "preview" ? 1 : scale})`,
       transformOrigin: "center center",
       left: "50%",
       top: "50%",
@@ -190,24 +227,21 @@ const Component: FC = () => {
       willChange: "transform",
       backfaceVisibility: "hidden" as const,
     }),
-    [CANVAS_WIDTH, CANVAS_HEIGHT, scale]
+    [CANVAS_WIDTH, CANVAS_HEIGHT, mode, scale]
   );
 
-  return (
-    <div
-      ref={containerRef}
-      className="w-[calc(100%-230px)] h-[100%] relative overflow-hidden"
-    >
-      <ContextMenu />
+  const CanvasContainer = useMemoizedFn(() => {
+    return mode === "edit" ? (
       <div
         id="canvas-container"
         className="absolute bg-[#fff] overflow-hidden transition-transform duration-200 ease-in-out"
-        style={canvasStyle}
+        style={{
+          ...canvasStyle,
+        }}
         onClick={handleCanvasClick}
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
-
           const menuItems: MenuItem[] = [];
           if ((e as any).customData) {
             const { menuItems: customMenuItems } = (e as any).customData;
@@ -249,8 +283,8 @@ const Component: FC = () => {
           show({ event: e });
         }}
       >
-        {pages.length > 0 &&
-          pages[0].elements
+        {currentPage &&
+          currentPage.elements
             .map(
               (
                 element: JSX.IntrinsicAttributes & (ITextProps | ITableProps)
@@ -261,6 +295,7 @@ const Component: FC = () => {
                       key={element.id}
                       {...element}
                       type="text"
+                      mode={mode}
                       onSelect={() => handleElementSelect(element.id)}
                     />
                   );
@@ -270,6 +305,7 @@ const Component: FC = () => {
                       key={element.id}
                       {...element}
                       type="table"
+                      mode={mode}
                       onSelect={() => handleElementSelect(element.id)}
                     />
                   );
@@ -279,8 +315,56 @@ const Component: FC = () => {
             )
             .filter(Boolean)}
       </div>
+    ) : (
+      <div
+        id="preview-canvas-container"
+        className="absolute bg-[#fff] overflow-hidden transition-transform duration-200 ease-in-out"
+        style={{
+          ...canvasStyle,
+        }}
+      >
+        {currentPage &&
+          currentPage.elements
+            .map(
+              (
+                element: JSX.IntrinsicAttributes & (ITextProps | ITableProps)
+              ) => {
+                if (element.type === "text") {
+                  return (
+                    <Text
+                      key={element.id}
+                      {...element}
+                      type="text"
+                      mode={mode}
+                    />
+                  );
+                } else if (element.type === "table") {
+                  return (
+                    <Table
+                      key={element.id}
+                      {...element}
+                      type="table"
+                      mode={mode}
+                    />
+                  );
+                }
+                return null;
+              }
+            )
+            .filter(Boolean)}
+      </div>
+    );
+  });
+
+  return (
+    <div
+      ref={containerRef}
+      className={`${mode === "edit" ? "w-[calc(100%-230px)] h-[100%] relative overflow-hidden" : "w-full h-full relative"}`}
+    >
+      {mode === "edit" ? <ContextMenu /> : null}
+      <CanvasContainer />
     </div>
   );
 };
 
-export const Canvas: FC = memo(observer(Component));
+export const Canvas: FC<CanvasProps> = observer(Component);
