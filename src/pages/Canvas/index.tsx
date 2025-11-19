@@ -1,9 +1,11 @@
+import { Icon, type IIconProps } from "@/element/Icon";
+import { Image, type IImageProps } from "@/element/Image";
 import { Table, type ITableProps } from "@/element/Table";
 import { Text, type ITextProps } from "@/element/Text";
 import type { MenuItem } from "@/hooks/useContextMenu";
-import { useContextMenu } from "@/hooks/useContextMenu";
 import MockData from "@/mock";
 import {
+  contextMenuStore,
   copyElementStore,
   elementActiveStore,
   menuActiveStore,
@@ -29,7 +31,6 @@ interface CanvasProps {
 const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const lastContainerSizeRef = useRef({ width: 0, height: 0 });
 
   // Canvas 固定尺寸 - 使用常量避免重复声明
@@ -143,23 +144,6 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
     }
   });
 
-  // 手动关闭菜单的函数
-  const closeMenu = useMemoizedFn(() => {
-    setMenuItems([]);
-  });
-
-  // 添加全局点击事件监听器来关闭菜单
-  useEffect(() => {
-    const handleGlobalClick = () => {
-      closeMenu();
-    };
-
-    document.addEventListener("click", handleGlobalClick);
-    return () => {
-      document.removeEventListener("click", handleGlobalClick);
-    };
-  }, [closeMenu]);
-
   // 处理元素选中 - 优化版本
   const handleElementSelect = useMemoizedFn((elementId: string) => {
     // 预览模式下不允许选择元素
@@ -200,11 +184,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
     elementActiveStore.setElementActive(newElement.id);
   });
 
-  // 创建画布右键菜单
-  const { ContextMenu, show } = useContextMenu(
-    menuItems,
-    "canvas-context-menu"
-  );
+  // 关闭右键菜单
+  const closeMenu = useMemoizedFn(() => {
+    contextMenuStore.hideMenu();
+  });
 
   // 直接获取页面数据，observer 会自动响应 store 变化
   const currentPage =
@@ -277,17 +260,16 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
             elementActiveStore.resetElementActive();
           }
 
-          // 更新菜单项状态
-          setMenuItems(menuItems);
-          // 显示菜单
-          show({ event: e });
+          // 显示全局右键菜单
+          contextMenuStore.showMenu(menuItems, e);
         }}
       >
         {currentPage &&
           currentPage.elements
             .map(
               (
-                element: JSX.IntrinsicAttributes & (ITextProps | ITableProps)
+                element: JSX.IntrinsicAttributes &
+                  (ITextProps | ITableProps | IIconProps | IImageProps)
               ) => {
                 if (element.type === "text") {
                   return (
@@ -305,6 +287,26 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
                       key={element.id}
                       {...element}
                       type="table"
+                      mode={mode}
+                      onSelect={() => handleElementSelect(element.id)}
+                    />
+                  );
+                } else if (element.type === "icon") {
+                  return (
+                    <Icon
+                      key={element.id}
+                      {...element}
+                      type="icon"
+                      mode={mode}
+                      onSelect={() => handleElementSelect(element.id)}
+                    />
+                  );
+                } else if (element.type === "image") {
+                  return (
+                    <Image
+                      key={element.id}
+                      {...element}
+                      type="image"
                       mode={mode}
                       onSelect={() => handleElementSelect(element.id)}
                     />
@@ -327,7 +329,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
           currentPage.elements
             .map(
               (
-                element: JSX.IntrinsicAttributes & (ITextProps | ITableProps)
+                element: JSX.IntrinsicAttributes &
+                  (ITextProps | ITableProps | IIconProps | IImageProps)
               ) => {
                 if (element.type === "text") {
                   return (
@@ -347,6 +350,24 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
                       mode={mode}
                     />
                   );
+                } else if (element.type === "icon") {
+                  return (
+                    <Icon
+                      key={element.id}
+                      {...element}
+                      type="icon"
+                      mode={mode}
+                    />
+                  );
+                } else if (element.type === "image") {
+                  return (
+                    <Image
+                      key={element.id}
+                      {...element}
+                      type="image"
+                      mode={mode}
+                    />
+                  );
                 }
                 return null;
               }
@@ -361,7 +382,6 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page }) => {
       ref={containerRef}
       className={`${mode === "edit" ? "w-[calc(100%-230px)] h-[100%] relative overflow-hidden" : "w-full h-full relative"}`}
     >
-      {mode === "edit" ? <ContextMenu /> : null}
       <CanvasContainer />
     </div>
   );

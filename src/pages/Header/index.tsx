@@ -1,3 +1,4 @@
+import { IconPanelKey, IconPanelTitle } from "@/element/Icon";
 import { TablePanelKey, TablePanelTitle } from "@/element/Table";
 import { TextPanelKey, TextPanelTitle } from "@/element/Text";
 import {
@@ -19,6 +20,10 @@ const MenuMapped = {
   table: {
     key: TablePanelKey,
     title: TablePanelTitle,
+  },
+  icon: {
+    key: IconPanelKey,
+    title: IconPanelTitle,
   },
 };
 

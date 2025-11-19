@@ -7,6 +7,20 @@ export default {
       visible: true,
       elements: [
         {
+          type: "icon",
+          id: "icon_" + getRandomId(),
+          iconName: "Home",
+          fill: ["#000000"],
+          theme: "outline",
+          strokeWidth: 3,
+          x: 100,
+          y: 100,
+          width: 100,
+          height: 100,
+          rotate: 0,
+          zIndex: 0,
+        },
+        {
           type: "text",
           id: "text_" + getRandomId(),
           text: "Hello, world!",

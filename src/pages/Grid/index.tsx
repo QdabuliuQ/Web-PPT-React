@@ -1,4 +1,3 @@
-import { usePageContextMenu } from "@/hooks";
 import {
   displayStatusStore,
   elementActiveStore,
@@ -6,6 +5,7 @@ import {
   pptStore,
 } from "@/store";
 import type { Page } from "@/store/ppt";
+import { showPageContextMenu } from "@/utils/pageContextMenu";
 import { PreviewCloseOne } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
@@ -17,9 +17,6 @@ const GridComponent: FC = () => {
   const pageActive = pageActiveStore.getPageActive();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.2);
-
-  // 使用页面右键菜单 hook
-  const { ContextMenu, handleContextMenu } = usePageContextMenu();
 
   // 计算缩放比例
   const calculateScale = () => {
@@ -42,6 +39,13 @@ const GridComponent: FC = () => {
   const { run: debouncedCalculateScale } = useDebounceFn(calculateScale, {
     wait: 300,
   });
+
+  // 处理右键菜单
+  const handleContextMenu = useMemoizedFn(
+    (e: React.MouseEvent, pageId: string) => {
+      showPageContextMenu({ pageId, event: e });
+    }
+  );
 
   // 处理双击切换到编辑模式
   const handleDoubleClick = useMemoizedFn((pageId: string) => {
@@ -68,7 +72,6 @@ const GridComponent: FC = () => {
 
   return (
     <div ref={containerRef} className="flex-1 overflow-auto p-[20px]">
-      <ContextMenu />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-[20px]">
         {pages.map((page: Page, index: number) => (
           <div

@@ -80,6 +80,8 @@ export interface MovableWrapperProps {
     width: number;
     height: number;
     transform: string;
+    deltaX?: number;
+    deltaY?: number;
   }) => void;
   onResizeEnd?: () => void;
   onRotateStart?: () => void;
@@ -154,19 +156,7 @@ export const MovableWrapper = memo(
       // 监听位置变化和激活状态，更新 Moveable
       useEffect(() => {
         if (moveableRef.current && active) {
-          // 延迟一帧更新，确保 DOM 已更新
-          requestAnimationFrame(() => {
-            if (moveableRef.current) {
-              moveableRef.current.updateRect();
-            }
-          });
-
-          // 额外延迟更新，确保位置完全同步
-          setTimeout(() => {
-            if (moveableRef.current) {
-              moveableRef.current.updateRect();
-            }
-          }, 50);
+          moveableRef.current.updateRect();
         }
       }, [x, y, width, height, rotate, active]);
 
@@ -198,102 +188,7 @@ export const MovableWrapper = memo(
       };
 
       const handleDragEnd = () => {
-        const targetElement = document.getElementById(id);
-
-        let finalLeft = x || 0;
-        let finalTop = y || 0;
-
-        // 先从 transform 中提取 translate 值，计算最终位置
-        if (targetElement) {
-          const transform = window.getComputedStyle(targetElement).transform;
-
-          if (transform && transform !== "none") {
-            const matrix = new DOMMatrix(transform);
-            const translateX = matrix.m41;
-            const translateY = matrix.m42;
-
-            // 获取当前的 left/top
-            const currentLeft = parseFloat(targetElement.style.left) || 0;
-            const currentTop = parseFloat(targetElement.style.top) || 0;
-
-            // 计算最终位置
-            finalLeft = currentLeft + translateX;
-            finalTop = currentTop + translateY;
-
-            console.log("[MovableWrapper] handleDragEnd - 计算位置", {
-              id,
-              currentLeft,
-              currentTop,
-              translateX,
-              translateY,
-              finalLeft,
-              finalTop,
-              propsX: x,
-              propsY: y,
-            });
-
-            // 立即应用最终位置
-            targetElement.style.left = `${finalLeft}px`;
-            targetElement.style.top = `${finalTop}px`;
-          }
-
-          // 清除拖拽产生的 transform translate，只保留 rotate
-          targetElement.style.transform = `rotate(${rotate || 0}deg)`;
-        }
-
-        // 立即更新 Moveable 位置
-        if (moveableRef.current) {
-          console.log("[MovableWrapper] 立即更新 Moveable");
-          moveableRef.current.updateRect();
-        }
-
-        // 调用父组件的 onDragEnd 回调
-        // 父组件会用这个最终位置更新 store
         onDragEnd?.();
-
-        // 延迟更新 Moveable，等待 props 更新和重新渲染完成
-        requestAnimationFrame(() => {
-          if (moveableRef.current) {
-            console.log("[MovableWrapper] requestAnimationFrame 更新 Moveable");
-            moveableRef.current.updateRect();
-          }
-        });
-
-        setTimeout(() => {
-          const el = document.getElementById(id);
-          if (moveableRef.current) {
-            console.log("[MovableWrapper] 100ms 后更新 Moveable", {
-              id,
-              moveableExists: !!moveableRef.current,
-              domLeft: el?.style.left,
-              domTop: el?.style.top,
-              propsX: x,
-              propsY: y,
-            });
-            moveableRef.current.updateRect();
-          }
-        }, 100);
-
-        setTimeout(() => {
-          if (moveableRef.current) {
-            console.log("[MovableWrapper] 200ms 后更新 Moveable");
-            moveableRef.current.updateRect();
-          }
-        }, 200);
-
-        setTimeout(() => {
-          if (moveableRef.current) {
-            console.log("[MovableWrapper] 300ms 后更新 Moveable");
-            moveableRef.current.updateRect();
-          }
-        }, 300);
-
-        setTimeout(() => {
-          if (moveableRef.current) {
-            console.log("[MovableWrapper] 500ms 后更新 Moveable");
-            moveableRef.current.updateRect();
-          }
-        }, 500);
       };
 
       // 缩放事件处理
@@ -301,20 +196,22 @@ export const MovableWrapper = memo(
         onResizeStart?.();
       };
 
-      const handleResize = (e: {
-        target: EventTarget;
-        width: number;
-        height: number;
-        transform: string;
-      }) => {
-        const { target, width, height, transform } = e;
+      const handleResize = (e: any) => {
+        const { target, width, height, transform, drag } = e;
 
         (target as HTMLElement).style.width = `${width}px`;
         (target as HTMLElement).style.height = `${height}px`;
         (target as HTMLElement).style.transform = transform;
 
         if (onResize) {
-          onResize({ width, height, transform });
+          onResize({
+            width,
+            height,
+            transform,
+            // 传递位置变化信息
+            deltaX: drag?.translate?.[0] || 0,
+            deltaY: drag?.translate?.[1] || 0,
+          });
         }
       };
 

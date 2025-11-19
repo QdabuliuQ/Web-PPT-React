@@ -1,10 +1,12 @@
+import type { IIconProps } from "@/element/Icon";
+import type { IImageProps } from "@/element/Image";
 import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
 import type { PlacementMapped } from "@/element/Text/constant";
 import { getRandomId } from "@/utils";
 import { makeAutoObservable } from "mobx";
 
-export type Elements = ITextProps | ITableProps;
+export type Elements = ITextProps | ITableProps | IIconProps | IImageProps;
 export type Page = {
   id: string;
   elements: Array<Elements>;
@@ -141,7 +143,7 @@ class PPTStore {
   setElementInfo(
     pageId: string,
     elementId: string,
-    elementInfo: ITextProps | ITableProps
+    elementInfo: ITextProps | ITableProps | IIconProps | IImageProps
   ) {
     // 找到页面
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
@@ -164,7 +166,10 @@ class PPTStore {
     this.pages = newPages;
   }
 
-  addElementInfo(pageId: string, elementInfo: ITextProps | ITableProps) {
+  addElementInfo(
+    pageId: string,
+    elementInfo: ITextProps | ITableProps | IIconProps | IImageProps
+  ) {
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return;
 
@@ -294,7 +299,7 @@ class PPTStore {
     const newRow = firstRow.map(() => ({
       fontSize: 14,
       color: "#333333",
-      backgroundColor: "transparent",
+      backgroundColor: "#fff",
       bold: false,
       italic: false,
       underline: false,

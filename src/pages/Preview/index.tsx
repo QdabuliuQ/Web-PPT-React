@@ -1,6 +1,6 @@
-import { usePageContextMenu } from "@/hooks";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import type { Page } from "@/store/ppt";
+import { showPageContextMenu } from "@/utils/pageContextMenu";
 import { Add, PreviewCloseOne } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Tooltip } from "antd";
@@ -38,10 +38,16 @@ const PreviewComponent: FC = () => {
     }, 100);
   });
 
-  // 使用页面右键菜单 hook
-  const { ContextMenu, handleContextMenu } = usePageContextMenu({
-    onScrollToBottom: scrollToBottom,
-  });
+  // 处理右键菜单
+  const handleContextMenu = useMemoizedFn(
+    (e: React.MouseEvent, pageId: string) => {
+      showPageContextMenu({
+        pageId,
+        event: e,
+        onScrollToBottom: scrollToBottom,
+      });
+    }
+  );
 
   // 处理点击页面切换
   const handlePageClick = useMemoizedFn((pageId: string) => {
@@ -104,7 +110,6 @@ const PreviewComponent: FC = () => {
       ref={containerRef}
       className="w-[230px] min-w-[230px] box-border border-r border-[#d5d5d5] flex flex-col"
     >
-      <ContextMenu />
       <OverlayScrollbarsComponent
         ref={scrollContainerRef}
         className="flex-1"

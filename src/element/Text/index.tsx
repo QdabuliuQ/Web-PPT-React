@@ -1,6 +1,12 @@
 import { MovableWrapper } from "@/components";
 import { PanelButton } from "@/components/PanelButton";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import useCommonContextMenu from "@/hooks/useCommonContextMenu";
+import {
+  contextMenuStore,
+  elementActiveStore,
+  pageActiveStore,
+  pptStore,
+} from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { Text as TextIcon } from "@icon-park/react";
@@ -10,6 +16,7 @@ import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import { PlacementMapped } from "./constant";
 import styles from "./index.module.less";
+import { getTextMenuItems } from "./menu";
 export { TextPanel, TextPanelKey, TextPanelTitle } from "./panel";
 
 export interface ITextProps extends ICommonElementProps {
@@ -102,11 +109,9 @@ const Component: FC<ITextProps> = observer((props) => {
   } = useMovableElement({
     id,
     props,
-    onStateChange: (dragging) => {
-      // 处理拖拽结束时的transform清理
-      if (!dragging && textRef.current) {
-        textRef.current.style.transform = `rotate(${rotate}deg)`;
-      }
+    onStateChange: (_dragging) => {
+      // 拖拽结束时不需要手动设置 transform，由 dynamicStyle 控制
+      // transform 由 translate 和 rotate 组成，通过 dynamicStyle 统一管理
     },
     onMoveableRefresh: () => {
       // 刷新 Moveable 位置
@@ -117,6 +122,32 @@ const Component: FC<ITextProps> = observer((props) => {
   });
 
   const isSelected = elementActiveStore.isElementActive(id);
+
+  // 获取当前页面ID
+  const pageId = pageActiveStore.getPageActive() || "";
+
+  // 使用通用右键菜单hook
+  const { commonMenu } = useCommonContextMenu(pageId, id);
+
+  // 处理右键菜单
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 如果正在编辑，不显示右键菜单
+    if (isEditing) {
+      return;
+    }
+
+    // 如果未选中，先选中
+    if (!isSelected) {
+      onSelect?.();
+    }
+
+    // 显示右键菜单，合并文本菜单和通用菜单
+    const menuItems = [...getTextMenuItems(), ...commonMenu];
+    contextMenuStore.showMenu(menuItems, e);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -241,12 +272,9 @@ const Component: FC<ITextProps> = observer((props) => {
   // 动态样式（位置、大小、颜色等）
   const dynamicStyle = useMemo(
     () => ({
-      // 拖拽过程中不应用MobX的x/y，避免与transform冲突
-      left: x,
-      top: y,
       width,
       height,
-      transform: `rotate(${rotate}deg)`,
+      transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
       zIndex,
       fontSize,
       fontWeight: bold ? "bold" : "normal",
@@ -322,6 +350,7 @@ const Component: FC<ITextProps> = observer((props) => {
         onMouseDown={handleMouseDown}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
+        onContextMenu={handleContextMenu}
         onKeyDown={isEditing ? handleKeyDown : undefined}
         onBlur={isEditing ? handleBlur : undefined}
       >
@@ -413,7 +442,7 @@ export const TextButton = memo(
 
     return (
       <PanelButton
-        icon={<TextIcon style={{ fontSize: "24px" }} />}
+        icon={<TextIcon fill="#333" style={{ fontSize: "24px" }} />}
         title="文本"
         onClick={clickHandle}
       />

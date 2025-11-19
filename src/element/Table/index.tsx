@@ -20,6 +20,7 @@ import "x-data-spreadsheet/dist/locale/zh-cn";
 import "x-data-spreadsheet/dist/xspreadsheet.css";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import type { PlacementMapped } from "../Text/constant";
+import TableButtonComponent from "./button";
 import {
   BASE_TABLE_EVENTS,
   getTableEventName,
@@ -860,9 +861,7 @@ const Component: FC<ITableProps> = (props) => {
     () => ({
       width,
       height,
-      left: x,
-      top: y,
-      transform: `rotate(${rotate}deg)`,
+      transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
       zIndex,
     }),
     [height, rotate, width, x, y, zIndex]
@@ -1198,3 +1197,5 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
     type: "table" as const,
   };
 };
+
+export const TableButton = TableButtonComponent;

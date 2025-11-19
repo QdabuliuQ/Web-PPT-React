@@ -64,7 +64,7 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
       : {};
 
   return (
-    <div {...wrapperProps}>
+    <div {...wrapperProps} style={{ display: "inline-block", lineHeight: 1 }}>
       <Select {...selectProps} open={isOpen} onOpenChange={handleOpenChange} />
     </div>
   );

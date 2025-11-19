@@ -1,3 +1,4 @@
+import { GlobalContextMenu } from "@/components/GlobalContextMenu";
 import { displayStatusStore } from "@/store";
 import { observer } from "mobx-react-lite";
 import { Canvas } from "./Canvas";
@@ -13,6 +14,7 @@ const Index = observer(function Index() {
 
   return (
     <div className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] bg-[#eee] flex flex-col overflow-hidden">
+      <GlobalContextMenu />
       <Header />
       <Menu />
       {displayStatus === "default" && (

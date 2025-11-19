@@ -1,3 +1,4 @@
+import { IconPanel, IconPanelKey } from "@/element/Icon";
 import { TablePanel, TablePanelKey } from "@/element/Table";
 import { TextPanel, TextPanelKey } from "@/element/Text";
 import { Insert } from "./Insert";
@@ -8,4 +9,5 @@ export default {
   insert: Insert,
   [TextPanelKey]: TextPanel,
   [TablePanelKey]: TablePanel,
+  [IconPanelKey]: IconPanel,
 };
