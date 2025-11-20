@@ -7,14 +7,7 @@ import { globalEventBus } from "@/utils/eventBus";
 import { useMemoizedFn } from "ahooks";
 import { Modal } from "antd";
 import { observer } from "mobx-react-lite";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FC,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import Spreadsheet from "x-data-spreadsheet";
 import "x-data-spreadsheet/dist/locale/zh-cn";
 import "x-data-spreadsheet/dist/xspreadsheet.css";
@@ -104,6 +97,9 @@ const Component: FC<ITableProps> = (props) => {
     row: number;
     col: number;
   } | null>(null);
+
+  // 跟踪表格是否真正被拖拽移动过（用于防止误触发双击）
+  const hasDraggedRef = useRef(false);
 
   // 从DOM读取并更新列宽和行高的通用方法
   const updateColumnWidthsAndRowHeightsFromDOM = useMemoizedFn(() => {
@@ -233,7 +229,7 @@ const Component: FC<ITableProps> = (props) => {
   }, [tableData, columnWidths, rowHeights, id]);
 
   // 表格调整功能相关回调
-  const handleColumnResize = useCallback(
+  const handleColumnResize = useMemoizedFn(
     (colIndex: number, e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -249,11 +245,10 @@ const Component: FC<ITableProps> = (props) => {
         startPos: e.clientX,
         startSize: currentColumnWidths[colIndex],
       });
-    },
-    [currentColumnWidths, mode]
+    }
   );
 
-  const handleRowResize = useCallback(
+  const handleRowResize = useMemoizedFn(
     (rowIndex: number, e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -269,8 +264,7 @@ const Component: FC<ITableProps> = (props) => {
         startPos: e.clientY,
         startSize: currentRowHeights[rowIndex] || 25, // 默认25%
       });
-    },
-    [currentRowHeights, mode]
+    }
   );
 
   // 监听全局鼠标事件处理调整
@@ -364,7 +358,7 @@ const Component: FC<ITableProps> = (props) => {
   ]);
 
   // 计算矩形范围内所有单元格的工具函数
-  const getCellsInRange = useCallback(
+  const getCellsInRange = useMemoizedFn(
     (
       start: { row: number; col: number },
       end: { row: number; col: number }
@@ -384,8 +378,7 @@ const Component: FC<ITableProps> = (props) => {
         }
       }
       return cells;
-    },
-    [tableData]
+    }
   );
 
   // 监听拖拽选择的全局鼠标事件
@@ -467,9 +460,9 @@ const Component: FC<ITableProps> = (props) => {
 
   // 使用通用的可移动元素hook
   const {
-    handleDragStart,
-    handleDrag,
-    handleDragEnd,
+    handleDragStart: originalHandleDragStart,
+    handleDrag: originalHandleDrag,
+    handleDragEnd: originalHandleDragEnd,
     handleResizeStart,
     handleResize,
     handleResizeEnd: originalHandleResizeEnd,
@@ -485,6 +478,32 @@ const Component: FC<ITableProps> = (props) => {
         moveableRef.current.updateRect();
       }
     },
+  });
+
+  // 包装 handleDragStart，重置拖拽标记
+  const handleDragStart = useMemoizedFn(() => {
+    hasDraggedRef.current = false;
+    originalHandleDragStart();
+  });
+
+  // 包装 handleDrag，检测是否真正发生了移动
+  const handleDrag = useMemoizedFn(
+    (params: { x: number; y: number; transform: string }) => {
+      // 只要有移动超过阈值，就标记为真正的拖拽
+      if (Math.abs(params.x) > 1 || Math.abs(params.y) > 1) {
+        hasDraggedRef.current = true;
+      }
+      originalHandleDrag(params);
+    }
+  );
+
+  // 包装 handleDragEnd，延迟重置拖拽标记
+  const handleDragEnd = useMemoizedFn(() => {
+    originalHandleDragEnd();
+    // 延迟重置，确保 doubleClick 事件可以检查到拖拽状态
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 300);
   });
 
   // 包装 handleResizeEnd，在 resize 结束后更新列宽和行高
@@ -546,7 +565,7 @@ const Component: FC<ITableProps> = (props) => {
   }, [isSelected, id]);
 
   // 处理单元格操作
-  const handleCellOperationInternal = useCallback(
+  const handleCellOperationInternal = useMemoizedFn(
     (
       operation: "bold" | "italic" | "underline" | "strikethrough",
       selectedCells: Set<string>
@@ -576,8 +595,7 @@ const Component: FC<ITableProps> = (props) => {
         ...props,
         dataSource: newDataSource,
       } as any);
-    },
-    [tableData, props, id]
+    }
   );
 
   // 监听来自panel的单元格操作事件
@@ -606,22 +624,19 @@ const Component: FC<ITableProps> = (props) => {
   // columnWidths 和 rowHeights 已经是百分比数组
 
   // 处理点击事件，激活movable
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation(); // 阻止事件冒泡到Canvas
+  const handleClick = useMemoizedFn((e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡到Canvas
 
-      // 预览模式下不允许激活表格
-      if (mode === "preview") {
-        return;
-      }
+    // 预览模式下不允许激活表格
+    if (mode === "preview") {
+      return;
+    }
 
-      onSelect?.();
-    },
-    [onSelect, mode]
-  );
+    onSelect?.();
+  });
 
   // 处理单元格点击事件
-  const handleCellClick = useCallback(
+  const handleCellClick = useMemoizedFn(
     (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
       e.stopPropagation(); // 阻止事件冒泡
 
@@ -668,12 +683,11 @@ const Component: FC<ITableProps> = (props) => {
         // 如果表格未被选中，正常激活表格
         onSelect?.();
       }
-    },
-    [isSelected, isShiftPressed, onSelect, id, mode]
+    }
   );
 
   // 处理单元格鼠标按下事件
-  const handleCellMouseDown = useCallback(
+  const handleCellMouseDown = useMemoizedFn(
     (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
       // 预览模式下不允许拖拽选择
       if (mode === "preview") {
@@ -691,12 +705,11 @@ const Component: FC<ITableProps> = (props) => {
         // 开始拖拽时先选中起始单元格
         setSelectedCells(new Set([`${rowIndex}-${colIndex}`]));
       }
-    },
-    [isSelected, isShiftPressed, mode]
+    }
   );
 
   // 数据格式转换函数
-  const convertToXSpreadsheetData = useCallback(() => {
+  const convertToXSpreadsheetData = useMemoizedFn(() => {
     const data = {
       name: "sheet1",
       rows: {} as any,
@@ -714,30 +727,32 @@ const Component: FC<ITableProps> = (props) => {
     });
 
     return data;
-  }, [tableData]);
+  });
 
   // 处理双击事件，打开弹窗
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation(); // 阻止事件冒泡
+  const handleDoubleClick = useMemoizedFn((e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡
 
-      // 预览模式下不允许打开编辑弹窗
-      if (mode === "preview") {
-        return;
-      }
+    // 预览模式下不允许打开编辑弹窗
+    if (mode === "preview") {
+      return;
+    }
 
-      // 如果按住shift键，则不打开编辑窗口
-      if (isShiftPressed) {
-        return;
-      }
+    // 如果按住shift键，则不打开编辑窗口
+    if (isShiftPressed) {
+      return;
+    }
 
-      // 双击时就准备Excel数据
-      preparedDataRef.current = convertToXSpreadsheetData();
+    // 如果刚刚进行过拖拽，则不打开编辑窗口
+    if (hasDraggedRef.current) {
+      return;
+    }
 
-      setIsModalOpen(true);
-    },
-    [convertToXSpreadsheetData, isShiftPressed, mode]
-  );
+    // 双击时就准备Excel数据
+    preparedDataRef.current = convertToXSpreadsheetData();
+
+    setIsModalOpen(true);
+  });
 
   // 关闭弹窗
   const saveExcelData = useMemoizedFn(() => {
@@ -770,16 +785,16 @@ const Component: FC<ITableProps> = (props) => {
     }
   });
 
-  const handleSaveAndClose = useCallback(() => {
+  const handleSaveAndClose = useMemoizedFn(() => {
     saveExcelData();
     setIsModalOpen(false);
     preparedDataRef.current = null;
-  }, [saveExcelData]);
+  });
 
-  const handleCloseModal = useCallback(() => {
+  const handleCloseModal = useMemoizedFn(() => {
     setIsModalOpen(false);
     preparedDataRef.current = null;
-  }, []);
+  });
 
   // SpreadsheetEditor组件引用
   const spreadsheetContainerRef = useRef<HTMLDivElement>(null);
@@ -787,7 +802,7 @@ const Component: FC<ITableProps> = (props) => {
   const preparedDataRef = useRef<any>(null);
 
   // 清理Spreadsheet
-  const cleanupSpreadsheet = useCallback(() => {
+  const cleanupSpreadsheet = useMemoizedFn(() => {
     if (spreadsheetInstanceRef.current) {
       // 清理DOM内容
       if (spreadsheetContainerRef.current) {
@@ -798,7 +813,7 @@ const Component: FC<ITableProps> = (props) => {
     }
     // 清理预准备的数据
     preparedDataRef.current = null;
-  }, []);
+  });
 
   // 监听Modal打开状态，初始化Spreadsheet
   useEffect(() => {
@@ -874,100 +889,109 @@ const Component: FC<ITableProps> = (props) => {
   );
 
   const Table = useMemoizedFn(
-    ({ onContextMenu }: { onContextMenu?: (e: React.MouseEvent) => void }) => (
-      <div
-        onContextMenu={onContextMenu || (() => {})}
-        className={styles.tableContainer}
-        id={mode === "preview" ? `preview_${id}` : id}
-        style={dynamicStyle}
-        onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
-      >
-        <table
-          ref={tableRef}
-          className={styles.table}
-          style={{
-            fontSize: `${fontSize}px`,
-            fontFamily: fontFamily,
-          }}
+    ({ onContextMenu }: { onContextMenu?: (e: React.MouseEvent) => void }) => {
+      const className = [
+        styles.tableContainer,
+        isSelected ? "element-selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return (
+        <div
+          onContextMenu={onContextMenu || (() => {})}
+          className={className}
+          id={mode === "preview" ? `preview_${id}` : id}
+          style={dynamicStyle}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
         >
-          <tbody>
-            {tableData.map((row, rowIndex) => (
-              <tr
-                key={rowIndex}
-                className={rowIndex === 0 ? styles.headerRow : styles.dataRow}
-              >
-                {row.map((cell, colIndex) => {
-                  return (
-                    <td
-                      key={`${rowIndex}-${colIndex}`}
-                      data-cell-key={`${rowIndex}-${colIndex}`}
-                      className={`${
-                        rowIndex === 0 ? styles.headerCell : styles.dataCell
-                      } ${styles.cellBase}`}
-                      style={{
-                        width: `${currentColumnWidths[colIndex]}%`, // 应用列宽比例
-                        height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
-                        border: `${borderWidth}px ${borderStyle} ${borderColor}`,
-                      }}
-                      onClick={(e) => handleCellClick(rowIndex, colIndex, e)}
-                      onMouseDown={(e) =>
-                        handleCellMouseDown(rowIndex, colIndex, e)
-                      }
-                    >
-                      <div
-                        className={`${styles.cellContent} ${
-                          selectedCells.has(`${rowIndex}-${colIndex}`)
-                            ? styles.selectedCell
-                            : ""
-                        }`}
+          <table
+            ref={tableRef}
+            className={styles.table}
+            style={{
+              fontSize: `${fontSize}px`,
+              fontFamily: fontFamily,
+            }}
+          >
+            <tbody>
+              {tableData.map((row, rowIndex) => (
+                <tr
+                  key={rowIndex}
+                  className={rowIndex === 0 ? styles.headerRow : styles.dataRow}
+                >
+                  {row.map((cell, colIndex) => {
+                    return (
+                      <td
+                        key={`${rowIndex}-${colIndex}`}
+                        data-cell-key={`${rowIndex}-${colIndex}`}
+                        className={`${
+                          rowIndex === 0 ? styles.headerCell : styles.dataCell
+                        } ${styles.cellBase}`}
                         style={{
-                          fontSize: `${cell.fontSize}px`,
-                          color: cell.color,
-                          fontWeight: cell.bold ? "bold" : "normal",
-                          fontStyle: cell.italic ? "italic" : "normal",
-                          textDecoration: `${cell.underline ? "underline" : ""} ${cell.strikethrough ? "line-through" : ""}`,
-                          backgroundColor: cell.backgroundColor,
-                          ...placementConvey(cell.placement), // flex布局应用到wrapper
+                          width: `${currentColumnWidths[colIndex]}%`, // 应用列宽比例
+                          height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
+                          border: `${borderWidth}px ${borderStyle} ${borderColor}`,
                         }}
+                        onClick={(e) => handleCellClick(rowIndex, colIndex, e)}
+                        onMouseDown={(e) =>
+                          handleCellMouseDown(rowIndex, colIndex, e)
+                        }
                       >
-                        {cell.value || ""}
-                      </div>
-
-                      {/* 列调整句柄 - 只有在表格被选中且不在最后一列时显示 */}
-                      {isSelected && colIndex < row.length - 1 && (
                         <div
-                          className={`${styles.columnResizeHandle} ${
-                            resizing?.type === "column" &&
-                            resizing.index === colIndex
-                              ? styles.resizing
+                          className={`${styles.cellContent} ${
+                            selectedCells.has(`${rowIndex}-${colIndex}`)
+                              ? styles.selectedCell
                               : ""
                           }`}
-                          onMouseDown={(e) => handleColumnResize(colIndex, e)}
-                        />
-                      )}
+                          style={{
+                            fontSize: `${cell.fontSize}px`,
+                            color: cell.color,
+                            fontWeight: cell.bold ? "bold" : "normal",
+                            fontStyle: cell.italic ? "italic" : "normal",
+                            textDecoration: `${cell.underline ? "underline" : ""} ${cell.strikethrough ? "line-through" : ""}`,
+                            backgroundColor: cell.backgroundColor,
+                            ...placementConvey(cell.placement), // flex布局应用到wrapper
+                          }}
+                        >
+                          {cell.value || ""}
+                        </div>
 
-                      {/* 行调整句柄 - 只有在表格被选中且不在最后一行时显示 */}
-                      {isSelected && rowIndex < tableData.length - 1 && (
-                        <div
-                          className={`${styles.rowResizeHandle} ${
-                            resizing?.type === "row" &&
-                            resizing.index === rowIndex
-                              ? styles.resizing
-                              : ""
-                          }`}
-                          onMouseDown={(e) => handleRowResize(rowIndex, e)}
-                        />
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
+                        {/* 列调整句柄 - 只有在表格被选中且不在最后一列时显示 */}
+                        {isSelected && colIndex < row.length - 1 && (
+                          <div
+                            className={`${styles.columnResizeHandle} ${
+                              resizing?.type === "column" &&
+                              resizing.index === colIndex
+                                ? styles.resizing
+                                : ""
+                            }`}
+                            onMouseDown={(e) => handleColumnResize(colIndex, e)}
+                          />
+                        )}
+
+                        {/* 行调整句柄 - 只有在表格被选中且不在最后一行时显示 */}
+                        {isSelected && rowIndex < tableData.length - 1 && (
+                          <div
+                            className={`${styles.rowResizeHandle} ${
+                              resizing?.type === "row" &&
+                              resizing.index === rowIndex
+                                ? styles.resizing
+                                : ""
+                            }`}
+                            onMouseDown={(e) => handleRowResize(rowIndex, e)}
+                          />
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
   );
 
   return mode === "edit" ? (

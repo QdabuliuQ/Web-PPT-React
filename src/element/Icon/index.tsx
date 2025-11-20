@@ -141,7 +141,7 @@ const Component: FC<IIconProps> = observer((props) => {
   const className = [
     styles.iconElement,
     isDragging ? styles.dragging : "",
-    isSelected ? styles.selected : "",
+    isSelected ? "element-selected" : "",
   ]
     .filter(Boolean)
     .join(" ");

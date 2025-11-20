@@ -2,8 +2,9 @@ import { MovableWrapper } from "@/components";
 import { elementActiveStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
+import { Spin } from "antd";
 import { observer } from "mobx-react-lite";
-import { memo, useEffect, useMemo, useRef, type FC } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
 
@@ -14,10 +15,25 @@ export interface IImageProps extends ICommonElementProps {
   type: "image";
   src: string; // 图片地址
   opacity: number; // 透明度 0-1
+  border: boolean; // 是否显示边框
   borderRadius: number; // 圆角
   borderWidth: number; // 边框宽度
   borderColor: string; // 边框颜色
   borderStyle: "solid" | "dashed" | "dotted"; // 边框样式
+  keepRatio: boolean; // 是否保持比例
+  brightness: number; // 亮度
+  contrast: number; // 对比度
+  saturate: number; // 饱和度
+  grayscale: number; // 灰度
+  hueRotate: number; // 色相旋转
+  invert: number; // 反色/负片效果
+  sepia: number; // 怀旧效果
+  shadow: boolean; // 是否显示阴影
+  shadowOffsetX: number; // 阴影偏移X
+  shadowOffsetY: number; // 阴影偏移Y
+  shadowColor: string; // 阴影颜色
+  shadowBlur: number; // 阴影模糊半径
+  shadowSpread: number; // 阴影扩张半径
 }
 
 const Component: FC<IImageProps> = observer((props) => {
@@ -26,10 +42,25 @@ const Component: FC<IImageProps> = observer((props) => {
     id,
     src,
     opacity,
+    border,
     borderRadius,
     borderWidth,
     borderColor,
     borderStyle,
+    keepRatio,
+    brightness,
+    contrast,
+    saturate,
+    grayscale,
+    hueRotate,
+    invert,
+    sepia,
+    shadow,
+    shadowOffsetX,
+    shadowOffsetY,
+    shadowColor,
+    shadowBlur,
+    shadowSpread,
     x,
     y,
     width,
@@ -42,6 +73,26 @@ const Component: FC<IImageProps> = observer((props) => {
 
   const imageRef = useRef<HTMLDivElement>(null);
   const moveableRef = useRef<any>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  // 图片加载完成
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+    setImageError(false);
+  };
+
+  // 图片加载失败
+  const handleImageError = () => {
+    setImageLoaded(false);
+    setImageError(true);
+  };
+
+  // 当 src 改变时重置加载状态
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+  }, [src]);
 
   // 使用通用的可移动元素hook
   const {
@@ -112,19 +163,45 @@ const Component: FC<IImageProps> = observer((props) => {
       objectFit: "fill" as const,
       opacity,
       borderRadius: `${borderRadius}px`,
-      border: `${borderWidth}px ${borderStyle} ${borderColor}`,
+      border: border
+        ? `${borderWidth}px ${borderStyle} ${borderColor}`
+        : "none",
       boxSizing: "border-box" as const,
       userSelect: "none" as const,
       pointerEvents: "none" as const,
+      filter: `brightness(${brightness}) contrast(${contrast}) saturate(${saturate}) grayscale(${grayscale}) hue-rotate(${hueRotate}deg) invert(${invert}) sepia(${sepia})`,
+      boxShadow: shadow
+        ? `${shadowOffsetX}px ${shadowOffsetY}px ${shadowBlur}px ${shadowSpread}px ${shadowColor}`
+        : "none",
     }),
-    [opacity, borderRadius, borderWidth, borderStyle, borderColor]
+    [
+      opacity,
+      borderRadius,
+      border,
+      borderWidth,
+      borderStyle,
+      borderColor,
+      brightness,
+      contrast,
+      saturate,
+      grayscale,
+      hueRotate,
+      invert,
+      sepia,
+      shadow,
+      shadowOffsetX,
+      shadowOffsetY,
+      shadowBlur,
+      shadowSpread,
+      shadowColor,
+    ]
   );
 
   // 组合CSS类名
   const className = [
     styles.imageElement,
     isDragging ? styles.dragging : "",
-    isSelected ? styles.selected : "",
+    isSelected ? "element-selected" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -139,7 +216,25 @@ const Component: FC<IImageProps> = observer((props) => {
         onMouseDown={handleMouseDown}
         onClick={handleClick}
       >
-        <img src={src} alt="" style={imageStyle} draggable={false} />
+        {!imageLoaded && !imageError && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+            <Spin />
+          </div>
+        )}
+        {imageError && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
+            图片加载失败
+          </div>
+        )}
+        <img
+          src={src}
+          alt=""
+          className={imageLoaded ? "block" : "hidden"}
+          style={imageStyle}
+          draggable={false}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
       </div>
       <MovableWrapper
         ref={moveableRef}
@@ -150,6 +245,7 @@ const Component: FC<IImageProps> = observer((props) => {
         y={y}
         width={width}
         height={height}
+        keepRatio={keepRatio}
         rotate={rotate}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
@@ -164,7 +260,25 @@ const Component: FC<IImageProps> = observer((props) => {
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      <img src={src} alt="" style={imageStyle} draggable={false} />
+      {!imageLoaded && !imageError && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+          <Spin />
+        </div>
+      )}
+      {imageError && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
+          图片加载失败
+        </div>
+      )}
+      <img
+        src={src}
+        alt=""
+        className={imageLoaded ? "block" : "hidden"}
+        style={imageStyle}
+        draggable={false}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+      />
     </div>
   );
 });
@@ -177,15 +291,30 @@ export const CreateImage = (props: Partial<IImageProps> = {}) => {
     src: "https://via.placeholder.com/300x200",
     opacity: 1,
     borderRadius: 0,
+    border: false,
     borderWidth: 0,
     borderColor: "#000000",
     borderStyle: "solid",
+    keepRatio: true,
     x: 100,
     y: 100,
     width: 300,
     height: 200,
     rotate: 0,
     zIndex: 0,
+    brightness: 1,
+    contrast: 1,
+    saturate: 1,
+    grayscale: 0,
+    hueRotate: 0,
+    invert: 0,
+    sepia: 0,
+    shadow: false,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowColor: "#000000",
+    shadowBlur: 0,
+    shadowSpread: 0,
   };
   return {
     ...defaultProps,

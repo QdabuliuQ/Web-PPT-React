@@ -70,6 +70,7 @@ export interface MovableWrapperProps {
   width?: number;
   height?: number;
   rotate?: number;
+  keepRatio?: boolean;
 
   // 事件回调
   onDragStart?: () => void;
@@ -105,6 +106,7 @@ export const MovableWrapper = memo(
         width,
         height,
         rotate,
+        keepRatio = false,
         onDragStart,
         onDrag,
         onDragEnd,
@@ -292,7 +294,7 @@ export const MovableWrapper = memo(
           throttleDrag={0}
           throttleResize={0}
           throttleRotate={0}
-          keepRatio={false}
+          keepRatio={keepRatio}
           edge={true} // 启用边框线，但用CSS隐藏并重新绘制
           zoom={1}
           origin={false}

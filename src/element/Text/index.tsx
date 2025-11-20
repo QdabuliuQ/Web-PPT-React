@@ -94,12 +94,15 @@ const Component: FC<ITextProps> = observer((props) => {
   const textRef = useRef<HTMLDivElement>(null);
   const moveableRef = useRef<any>(null);
 
+  // 跟踪文本是否真正被拖拽移动过（用于防止误触发双击编辑）
+  const hasDraggedRef = useRef(false);
+
   // 使用通用的可移动元素hook
   const {
     isDragging,
-    handleDragStart,
-    handleDrag,
-    handleDragEnd,
+    handleDragStart: originalHandleDragStart,
+    handleDrag: originalHandleDrag,
+    handleDragEnd: originalHandleDragEnd,
     handleResizeStart,
     handleResize,
     handleResizeEnd,
@@ -119,6 +122,32 @@ const Component: FC<ITextProps> = observer((props) => {
         moveableRef.current.updateRect();
       }
     },
+  });
+
+  // 包装 handleDragStart，重置拖拽标记
+  const handleDragStart = useMemoizedFn(() => {
+    hasDraggedRef.current = false;
+    originalHandleDragStart();
+  });
+
+  // 包装 handleDrag，检测是否真正发生了移动
+  const handleDrag = useMemoizedFn(
+    (params: { x: number; y: number; transform: string }) => {
+      // 只要有移动超过阈值，就标记为真正的拖拽
+      if (Math.abs(params.x) > 1 || Math.abs(params.y) > 1) {
+        hasDraggedRef.current = true;
+      }
+      originalHandleDrag(params);
+    }
+  );
+
+  // 包装 handleDragEnd，延迟重置拖拽标记
+  const handleDragEnd = useMemoizedFn(() => {
+    originalHandleDragEnd();
+    // 延迟重置，确保 doubleClick 事件可以检查到拖拽状态
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 300);
   });
 
   const isSelected = elementActiveStore.isElementActive(id);
@@ -182,6 +211,11 @@ const Component: FC<ITextProps> = observer((props) => {
 
     // 防止在拖拽状态下误触发编辑
     if (isDragging) {
+      return;
+    }
+
+    // 如果刚刚进行过拖拽，则不进入编辑模式
+    if (hasDraggedRef.current) {
       return;
     }
 
@@ -332,7 +366,7 @@ const Component: FC<ITextProps> = observer((props) => {
     styles.textElement,
     isEditing ? styles.editing : "",
     isDragging ? styles.dragging : "",
-    isSelected && !isEditing ? styles.selected : "",
+    isSelected && !isEditing ? "element-selected" : "",
     !text && !isEditing ? styles.empty : "",
   ]
     .filter(Boolean)

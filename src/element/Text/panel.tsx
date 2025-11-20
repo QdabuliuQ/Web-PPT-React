@@ -1,8 +1,10 @@
 import {
   ColorPanel,
+  PanelBorderSetting,
   PanelLargeButton,
   PanelPreview,
   PanelSelect,
+  PanelShadowSetting,
   PanelSplitLine,
 } from "@/components";
 import { PanelCommonSetting } from "@/components/PanelCommonSetting";
@@ -16,9 +18,7 @@ import {
   AutoHeightOne,
   BackgroundColor,
   ColorCard,
-  DropShadowDown,
   Reduce,
-  Square,
   Strikethrough,
   TextBold,
   TextItalic,
@@ -26,18 +26,11 @@ import {
   TextUnderline,
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import {
-  Button,
-  ColorPicker,
-  InputNumber,
-  Popover,
-  Slider,
-  Tooltip,
-} from "antd";
+import { Button, ColorPicker, Popover, Slider, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo, useRef, useState, type FC } from "react";
 import type { ITextProps } from ".";
-import { Border, FontSize } from "./constant";
+import { FontSize } from "./constant";
 import styles from "./panel.module.less";
 interface ITextPanelProps {
   title?: string;
@@ -317,99 +310,40 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
         </div>
       </div>
       <PanelSplitLine />
-      <div className="h-full flex items-center gap-[8px] flex-shrink-0">
-        <PanelLargeButton
-          title="阴影"
-          active={currentElement?.shadow}
-          icon={<DropShadowDown theme="outline" size="18" fill="#333" />}
-          onClick={() => {
-            propertyChangeHandle("shadow", !currentElement?.shadow);
-          }}
-        />
-        <div className="flex flex-col justify-center gap-[10px]">
-          <div className="flex items-center gap-[6px]">
-            <span className="text-[12px] text-gray-500 min-w-[8px]">X</span>
-            <Slider
-              style={{ width: 90, margin: 0 }}
-              min={-100}
-              max={100}
-              defaultValue={currentElement?.shadowOffsetX}
-              value={currentElement?.shadowOffsetX}
-              onChange={(value) => {
-                propertyChangeHandle("shadowOffsetX", value);
-              }}
-              disabled={!currentElement?.shadow}
-            />
-          </div>
-          <div className="flex items-center gap-[6px]">
-            <span className="text-[12px] text-gray-500 min-w-[8px]">Y</span>
-            <Slider
-              style={{ width: 90, margin: 0 }}
-              min={-100}
-              max={100}
-              defaultValue={currentElement?.shadowOffsetY}
-              value={currentElement?.shadowOffsetY}
-              onChange={(value) => {
-                propertyChangeHandle("shadowOffsetY", value);
-              }}
-              disabled={!currentElement?.shadow}
-            />
-          </div>
-        </div>
-        <ColorPicker
-          className={styles.colorPicker}
-          value={currentElement?.shadowColor}
-          onChange={debouncedColorChange("shadowColor") as any}
-          disabled={!currentElement?.shadow}
-        />
-      </div>
+      <PanelShadowSetting
+        shadow={currentElement?.shadow || false}
+        shadowOffsetX={currentElement?.shadowOffsetX || 0}
+        shadowOffsetY={currentElement?.shadowOffsetY || 0}
+        shadowColor={currentElement?.shadowColor || "#000000"}
+        shadowType="text-shadow"
+        onShadowChange={(value) => propertyChangeHandle("shadow", value)}
+        onShadowOffsetXChange={(value) =>
+          propertyChangeHandle("shadowOffsetX", value)
+        }
+        onShadowOffsetYChange={(value) =>
+          propertyChangeHandle("shadowOffsetY", value)
+        }
+        onShadowColorChange={(color) =>
+          debouncedColorChange("shadowColor")(color)
+        }
+      />
       <PanelSplitLine />
-      <div className="h-full flex justify-center gap-[10px] flex-shrink-0">
-        <PanelLargeButton
-          title="边框"
-          active={currentElement?.border}
-          icon={<Square theme="outline" size="18" fill="#333" />}
-          onClick={() => {
-            propertyChangeHandle("border", !currentElement?.border);
-          }}
-        />
-        <div className="flex gap-[6px]">
-          <div className="flex h-full flex-col justify-between">
-            <Tooltip title="边框宽度" placement="top">
-              <InputNumber
-                value={currentElement?.borderWidth}
-                style={{ width: "85px" }}
-                size="small"
-                onChange={(value) => {
-                  propertyChangeHandle("borderWidth", value);
-                }}
-                disabled={!currentElement?.border}
-              />
-            </Tooltip>
-            <Tooltip title="边框样式" placement="top">
-              <PanelSelect
-                value={currentElement?.borderStyle}
-                style={{ width: "85px" }}
-                size="small"
-                options={Border}
-                onChange={(value) => {
-                  propertyChangeHandle("borderStyle", value);
-                }}
-                disabled={!currentElement?.border}
-              />
-            </Tooltip>
-          </div>
-          <Popover>
-            <ColorPicker
-              size="small"
-              className={styles.colorPicker}
-              value={currentElement?.borderColor}
-              disabled={!currentElement?.border}
-              onChange={debouncedColorChange("borderColor") as any}
-            />
-          </Popover>
-        </div>
-      </div>
+      <PanelBorderSetting
+        border={currentElement?.border || false}
+        borderWidth={currentElement?.borderWidth || 0}
+        borderStyle={currentElement?.borderStyle || "solid"}
+        borderColor={currentElement?.borderColor || "#000000"}
+        onBorderChange={(value) => propertyChangeHandle("border", value)}
+        onBorderWidthChange={(value) =>
+          propertyChangeHandle("borderWidth", value)
+        }
+        onBorderStyleChange={(value) =>
+          propertyChangeHandle("borderStyle", value)
+        }
+        onBorderColorChange={(color) =>
+          debouncedColorChange("borderColor")(color)
+        }
+      />
       <PanelSplitLine />
       <div className="h-full flex gap-[10px]">
         <PanelLargeButton

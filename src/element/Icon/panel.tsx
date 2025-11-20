@@ -6,7 +6,7 @@ import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { Redo, Switch, Undo } from "@icon-park/react";
-import { useMemoizedFn } from "ahooks";
+import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { ColorPicker, InputNumber, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { type FC } from "react";
@@ -59,6 +59,17 @@ const IconPanelComponent: FC = observer(() => {
       [key]: value,
     });
   };
+
+  // 防抖的颜色变更处理
+  const { run: debouncedColorChange } = useDebounceFn(
+    (index: number, color: string) => {
+      if (!pageId || !elementId || !iconInfo) return;
+      const newFill = [...(iconInfo.fill || [])];
+      newFill[index] = color;
+      handleChange("fill", newFill);
+    },
+    { wait: 100 }
+  );
 
   // 旋转处理函数
   const handleRotate = (degree: number) => {
@@ -137,9 +148,7 @@ const IconPanelComponent: FC = observer(() => {
           <ColorPicker
             value={iconInfo.fill?.[0] || "#333333"}
             onChange={(value) => {
-              const newFill = [...(iconInfo.fill || [])];
-              newFill[0] = value.toHexString();
-              handleChange("fill", newFill);
+              debouncedColorChange(0, value.toHexString());
             }}
             size="small"
             trigger="hover"
@@ -150,9 +159,7 @@ const IconPanelComponent: FC = observer(() => {
           <ColorPicker
             value={iconInfo.fill?.[1] || "#2F88FF"}
             onChange={(value) => {
-              const newFill = [...(iconInfo.fill || [])];
-              newFill[1] = value.toHexString();
-              handleChange("fill", newFill);
+              debouncedColorChange(1, value.toHexString());
             }}
             size="small"
             trigger="hover"
@@ -166,9 +173,7 @@ const IconPanelComponent: FC = observer(() => {
           <ColorPicker
             value={iconInfo.fill?.[2] || "#ffffff"}
             onChange={(value) => {
-              const newFill = [...(iconInfo.fill || [])];
-              newFill[2] = value.toHexString();
-              handleChange("fill", newFill);
+              debouncedColorChange(2, value.toHexString());
             }}
             size="small"
             trigger="hover"
@@ -179,9 +184,7 @@ const IconPanelComponent: FC = observer(() => {
           <ColorPicker
             value={iconInfo.fill?.[3] || "#43CCF8"}
             onChange={(value) => {
-              const newFill = [...(iconInfo.fill || [])];
-              newFill[3] = value.toHexString();
-              handleChange("fill", newFill);
+              debouncedColorChange(3, value.toHexString());
             }}
             size="small"
             trigger="hover"
