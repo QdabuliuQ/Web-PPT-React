@@ -189,6 +189,12 @@ export default {
           borderStyle: "solid",
         },
       ],
+      toggleIn: "",
+      toggleOut: "",
+      toggleInDuration: "default",
+      toggleOutDuration: 0,
+      toggleInDelay: 0,
+      toggleOutDelay: 0,
     },
     {
       id: getRandomId(),

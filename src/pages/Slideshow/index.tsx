@@ -1,0 +1,164 @@
+import { fullscreenStore, pageActiveStore, pptStore } from "@/store";
+import { useMemoizedFn } from "ahooks";
+import { observer } from "mobx-react-lite";
+import { useEffect, useRef, useState, type FC } from "react";
+import screenfull from "screenfull";
+import { Canvas } from "../Canvas";
+
+/**
+ * 全屏幻灯片组件
+ * 用于演示模式的全屏播放，与 Preview 组件完全独立
+ */
+const SlideshowComponent: FC = () => {
+  const pages = pptStore.getPages();
+  const currentPageId = fullscreenStore.currentSlidePageId;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreenReady, setIsFullscreenReady] = useState(false);
+
+  // 获取当前页面索引
+  const currentPageIndex = pages.findIndex((page) => page.id === currentPageId);
+  const currentPage = pages[currentPageIndex];
+
+  // 上一页
+  const handlePrevPage = useMemoizedFn(() => {
+    if (currentPageIndex > 0) {
+      fullscreenStore.setCurrentSlidePageId(pages[currentPageIndex - 1].id);
+    }
+  });
+
+  // 下一页
+  const handleNextPage = useMemoizedFn(() => {
+    if (currentPageIndex < pages.length - 1) {
+      fullscreenStore.setCurrentSlidePageId(pages[currentPageIndex + 1].id);
+    }
+  });
+
+  // 退出全屏
+  const handleExitFullscreen = useMemoizedFn(() => {
+    // 先退出浏览器全屏
+    if (screenfull.isEnabled && screenfull.isFullscreen) {
+      screenfull.exit();
+    }
+
+    // 退出我们的全屏模式
+    fullscreenStore.exitFullscreen();
+
+    // 退出时同步更新编辑模式的当前页
+    if (currentPageId) {
+      pageActiveStore.setPageActive(currentPageId);
+    }
+  });
+
+  // 进入浏览器全屏
+  useEffect(() => {
+    if (!screenfull.isEnabled || !containerRef.current) {
+      // 如果不支持全屏，直接显示（降级方案）
+      setIsFullscreenReady(true);
+      return;
+    }
+
+    // 请求浏览器全屏
+    const requestFullscreen = async () => {
+      try {
+        await screenfull.request(containerRef.current!);
+        // 全屏成功后再显示内容
+        setIsFullscreenReady(true);
+      } catch (error) {
+        console.error("进入全屏失败:", error);
+        // 失败也显示内容（降级方案）
+        setIsFullscreenReady(true);
+      }
+    };
+
+    requestFullscreen();
+
+    return () => {
+      // 组件卸载时退出浏览器全屏
+      if (screenfull.isEnabled && screenfull.isFullscreen) {
+        screenfull.exit();
+      }
+    };
+  }, []);
+
+  // 键盘导航
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowLeft":
+        case "ArrowUp":
+        case "PageUp":
+          handlePrevPage();
+          break;
+        case "ArrowRight":
+        case "ArrowDown":
+        case "PageDown":
+        case " ": // 空格键
+          e.preventDefault(); // 防止空格键滚动页面
+          handleNextPage();
+          break;
+        case "Escape":
+          handleExitFullscreen();
+          break;
+        case "Home":
+          // 回到第一页
+          if (pages.length > 0) {
+            fullscreenStore.setCurrentSlidePageId(pages[0].id);
+          }
+          break;
+        case "End":
+          // 跳到最后一页
+          if (pages.length > 0) {
+            fullscreenStore.setCurrentSlidePageId(pages[pages.length - 1].id);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handlePrevPage, handleNextPage, handleExitFullscreen, pages]);
+
+  // 监听浏览器全屏状态变化（用户按 F11 或 ESC）
+  useEffect(() => {
+    if (!screenfull.isEnabled) return;
+
+    const handleFullscreenChange = () => {
+      // 如果用户退出了浏览器全屏，也退出我们的全屏模式
+      if (!screenfull.isFullscreen) {
+        fullscreenStore.exitFullscreen();
+        // 同步更新编辑模式的当前页
+        if (currentPageId) {
+          pageActiveStore.setPageActive(currentPageId);
+        }
+      }
+    };
+
+    screenfull.on("change", handleFullscreenChange);
+
+    return () => {
+      screenfull.off("change", handleFullscreenChange);
+    };
+  }, [currentPageId]);
+
+  if (!currentPage) {
+    return null;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 bg-black z-[9999] flex items-center justify-center"
+      style={{
+        // 在全屏准备好之前，将元素移到视图外避免闪烁
+        transform: isFullscreenReady ? "none" : "translateY(-200vh)",
+        opacity: isFullscreenReady ? 1 : 0,
+        transition: isFullscreenReady ? "opacity 0.3s ease-in" : "none",
+      }}
+    >
+      {/* Canvas 画布 - 使用 play 模式 */}
+      <Canvas mode="play" page={currentPage} />
+    </div>
+  );
+};
+
+export const Slideshow: FC = observer(SlideshowComponent);

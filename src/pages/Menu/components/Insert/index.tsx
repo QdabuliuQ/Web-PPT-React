@@ -1,4 +1,5 @@
 import { IconButton } from "@/element/Icon";
+import { ImageButton } from "@/element/Image";
 import { TableButton } from "@/element/Table";
 import { TextButton } from "@/element/Text";
 import { type FC } from "react";
@@ -9,6 +10,7 @@ export const Insert: FC = () => {
       <TextButton />
       <TableButton />
       <IconButton />
+      <ImageButton />
     </div>
   );
 };

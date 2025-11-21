@@ -4,10 +4,12 @@ import { TablePanel, TablePanelKey } from "@/element/Table";
 import { TextPanel, TextPanelKey } from "@/element/Text";
 import { Insert } from "./Insert";
 import { Start } from "./Start";
+import { Toggle } from "./Toggle";
 
 export default {
   start: Start,
   insert: Insert,
+  toggle: Toggle,
   [TextPanelKey]: TextPanel,
   [TablePanelKey]: TablePanel,
   [IconPanelKey]: IconPanel,

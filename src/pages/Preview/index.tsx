@@ -12,13 +12,13 @@ import styles from "./index.module.less";
 
 const PreviewComponent: FC = () => {
   const pages = pptStore.getPages();
-  console.log(pages, "pagespages");
 
   const pageActive = pageActiveStore.getPageActive();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const addButtonRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<any>(null);
+  const pageItemRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [scrollHeight, setScrollHeight] = useState(0);
 
@@ -92,17 +92,28 @@ const PreviewComponent: FC = () => {
   // 计算缩放比例
   useEffect(() => {
     const calculateScale = () => {
-      if (!containerRef.current) return;
-      const containerWidth = containerRef.current.offsetWidth;
-      const canvasWidth = 1000; // Canvas 的固定宽度
-      const padding = 16; // p-2 = 8px * 2 = 16px
-      const availableWidth = containerWidth - padding;
-      const newScale = Math.min(availableWidth / canvasWidth, 1);
+      if (!pageItemRef.current) return;
+      // 获取页面项容器的实际宽度
+      const itemWidth = pageItemRef.current.offsetWidth;
+      const canvasWidth = 1000; // Canvas 的原始宽度
+      // 计算 scale：实际宽度 / 原始宽度
+      const newScale = itemWidth / canvasWidth;
       const finalScale = Math.max(newScale, 0.1);
       setScale(finalScale);
     };
 
-    calculateScale();
+    // 延迟计算，确保 DOM 已渲染
+    setTimeout(calculateScale, 0);
+
+    // 使用 ResizeObserver 监听容器大小变化
+    const resizeObserver = new ResizeObserver(calculateScale);
+    if (pageItemRef.current) {
+      resizeObserver.observe(pageItemRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
   return (
@@ -133,24 +144,21 @@ const PreviewComponent: FC = () => {
           <div
             className={`${styles.pageItem} relative mr-[15px] cursor-pointer text-center`}
             key={page.id}
+            ref={index === 0 ? pageItemRef : null}
           >
             <div
-              className={`relative w-[1000px] h-[700px] ${pageActive === page.id ? "border-8 border-solid border-primary box-border" : ""} rounded-[40px] overflow-hidden`}
+              className={`relative w-full ${pageActive === page.id ? "border-2 border-solid border-primary box-border" : ""} rounded-[8px] overflow-hidden`}
               style={{
-                zoom: scale,
+                aspectRatio: "10 / 7", // 1000:700 的宽高比
               }}
               onClick={() => handlePageClick(page.id)}
               onContextMenu={(e) => handleContextMenu(e, page.id)}
             >
-              <Canvas mode="preview" page={page} />
+              <Canvas mode="preview" page={page} previewZoom={scale} />
             </div>
             {page.visible === false && (
               <div
-                className="absolute top-0 left-0 flex items-center justify-center bg-black/10 rounded-[8px]"
-                style={{
-                  width: `${1000 * scale}px`,
-                  height: `${700 * scale}px`,
-                }}
+                className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/10 rounded-[8px]"
                 onClick={() => handlePageClick(page.id)}
                 onContextMenu={(e) => handleContextMenu(e, page.id)}
               >

@@ -1,4 +1,5 @@
 import Index from "@/pages/index";
+import "animate.css";
 import { ConfigProvider } from "antd";
 import "react-contexify/dist/ReactContexify.css";
 import "./App.css";

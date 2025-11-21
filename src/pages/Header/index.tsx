@@ -43,6 +43,10 @@ export const Header: FC = observer(() => {
         label: "插入",
         key: "insert",
       },
+      {
+        label: "切换",
+        key: "toggle",
+      },
     ],
     []
   );
