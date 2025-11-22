@@ -8,6 +8,7 @@ interface IPanelLargeButtonProps {
   active?: boolean;
   disabled?: boolean;
   type?: ButtonProps["type"];
+  aspectRatio?: boolean;
 }
 
 export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
@@ -17,6 +18,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
   active = false,
   disabled = false,
   type = "text",
+  aspectRatio = true,
 }) => {
   const clickHandle = useMemoizedFn(() => {
     if (!disabled) {
@@ -25,19 +27,24 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
   });
 
   const styles = useMemo(() => {
-    const baseStyles = {
+    const baseStyles: React.CSSProperties = {
       width: "auto",
       height: "100%",
       display: "flex",
-      flexDirection: "column" as const,
+      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      aspectRatio: "1/1",
       fontSize: "12px",
       gap: "0px",
       lineHeight: "1",
       padding: "0px",
     };
+
+    if (aspectRatio) {
+      baseStyles.aspectRatio = "1/1";
+    } else {
+      baseStyles.padding = "0 8px";
+    }
 
     if (active) {
       return {
@@ -53,7 +60,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
       ...baseStyles,
       borderRadius: "6px",
     };
-  }, [active]);
+  }, [active, aspectRatio]);
 
   // 处理禁用状态下的icon颜色
   const renderIcon = useMemo(() => {

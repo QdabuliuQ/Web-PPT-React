@@ -1,10 +1,11 @@
-import { PanelSelect } from "@/components";
+import { PanelLargeButton, PanelSelect, PanelSplitLine } from "@/components";
 import { pageActiveStore, pptStore } from "@/store";
-import { Down } from "@icon-park/react";
+import { Down, FullSelection } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { Popover, Tooltip } from "antd";
+import { Checkbox, InputNumber, Popover } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState, type FC } from "react";
+import styles from "./index.module.less";
 
 const toggleInAnimationName = [
   {
@@ -124,6 +125,29 @@ const toggleInDurationOptions = [
   },
 ];
 
+const toggleInDelayOptions = [
+  {
+    value: "0",
+    label: "默认",
+  },
+  {
+    value: "2",
+    label: "2秒",
+  },
+  {
+    value: "3",
+    label: "3秒",
+  },
+  {
+    value: "4",
+    label: "4秒",
+  },
+  {
+    value: "5",
+    label: "5秒",
+  },
+];
+
 const ToggleComponent: FC = () => {
   const [animationName, setAnimationName] = useState<string>("");
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -134,6 +158,10 @@ const ToggleComponent: FC = () => {
   const currentPage = pageActive ? pptStore.getActivePage(pageActive) : null;
   const currentToggleIn = (currentPage as any)?.toggleIn || "";
   const currentToggleInDuration = (currentPage as any)?.toggleInDuration || 0;
+  const currentToggleInDelay = (currentPage as any)?.toggleInDelay || 0;
+  const currentClickToNext = (currentPage as any)?.clickToNext || true;
+  const currentAutoToggle = (currentPage as any)?.autoToggle || false;
+  const currentAutoToggleTime = (currentPage as any)?.autoToggleTime || 5;
 
   // 前6个动画
   const displayAnimations = toggleInAnimationName.slice(0, 6);
@@ -146,22 +174,79 @@ const ToggleComponent: FC = () => {
 
   const mouseLeaveHandle = useMemoizedFn(() => setAnimationName(""));
 
-  // 处理动画选择
-  const handleAnimationSelect = useMemoizedFn((type: string) => {
+  // 更新页面属性的通用函数
+  const updatePageProperty = useMemoizedFn((property: string, value: any) => {
     if (!pageActive) return;
     const page = pptStore.getActivePage(pageActive);
     if (!page) return;
 
-    // 更新页面的 toggleIn（直接修改，MobX 会自动追踪）
     const pageIndex = pptStore.getPages().findIndex((p) => p.id === pageActive);
     if (pageIndex === -1) return;
 
-    // 创建新的 pages 数组，触发响应式更新
     const newPages = [...pptStore.getPages()];
     newPages[pageIndex] = {
       ...newPages[pageIndex],
-      toggleIn: type,
+      [property]: value,
     } as any;
+    pptStore.setPages(newPages);
+  });
+
+  // 处理动画选择
+  const handleAnimationSelect = useMemoizedFn((type: string) => {
+    updatePageProperty("toggleIn", type);
+  });
+
+  // 处理过渡时间变化
+  const handleToggleInDurationChange = useMemoizedFn((value: string) => {
+    updatePageProperty("toggleInDuration", value);
+  });
+
+  // 处理延迟时间变化
+  const handleToggleInDelayChange = useMemoizedFn((value: string) => {
+    updatePageProperty("toggleInDelay", value);
+  });
+
+  // 处理单击换片变化
+  const handleClickToNextChange = useMemoizedFn(
+    (e: { target: { checked: boolean } }) => {
+      updatePageProperty("clickToNext", e.target.checked);
+    }
+  );
+
+  // 处理自动换片变化
+  const handleAutoToggleChange = useMemoizedFn(
+    (e: { target: { checked: boolean } }) => {
+      updatePageProperty("autoToggle", e.target.checked);
+    }
+  );
+
+  // 处理自动换片时间变化
+  const handleAutoToggleTimeChange = useMemoizedFn((value: number | null) => {
+    if (value !== null) {
+      updatePageProperty("autoToggleTime", value);
+    }
+  });
+
+  // 应用全部：将当前页面的切换动画设置应用到所有页面
+  const handleApplyToAll = useMemoizedFn(() => {
+    if (!pageActive || !currentPage) return;
+
+    // 获取当前页面的切换动画相关属性
+    const toggleSettings = {
+      toggleIn: currentToggleIn,
+      toggleInDuration: currentToggleInDuration,
+      toggleInDelay: currentToggleInDelay,
+      clickToNext: currentClickToNext,
+      autoToggle: currentAutoToggle,
+      autoToggleTime: currentAutoToggleTime,
+    };
+
+    // 更新所有页面
+    const newPages = pptStore.getPages().map((page) => ({
+      ...page,
+      ...toggleSettings,
+    })) as any;
+
     pptStore.setPages(newPages);
   });
 
@@ -249,17 +334,7 @@ const ToggleComponent: FC = () => {
   );
 
   return (
-    <div className="flex gap-[10px]">
-      <div className="flex flex-col">
-        <Tooltip title="动画过渡时间" placement="top">
-          <PanelSelect
-            value={currentToggleInDuration}
-            options={toggleInDurationOptions}
-            size="small"
-            style={{ width: 70 }}
-          />
-        </Tooltip>
-      </div>
+    <div className="flex gap-[10px] h-[53px]">
       <Popover
         open={popoverOpen}
         onOpenChange={setPopoverOpen}
@@ -290,6 +365,63 @@ const ToggleComponent: FC = () => {
           </div>
         </div>
       </Popover>
+      <PanelSplitLine />
+      <div className="flex flex-col justify-between gap-[4px] mr-[5px]">
+        <div className="flex items-center gap-[4px]">
+          <span className="text-[12px] text-[#666] mr-[5px]">过渡时间</span>
+          <PanelSelect
+            value={currentToggleInDuration}
+            options={toggleInDurationOptions}
+            size="small"
+            style={{ width: 70 }}
+            onChange={handleToggleInDurationChange}
+          />
+        </div>
+        <div className="flex items-center gap-[4px]">
+          <span className="text-[12px] text-[#666] mr-[5px]">延迟时间</span>
+          <PanelSelect
+            value={currentToggleInDelay}
+            options={toggleInDelayOptions}
+            size="small"
+            style={{ width: 70 }}
+            onChange={handleToggleInDelayChange}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col justify-between gap-[4px]">
+        <div className="flex items-center gap-[4px] text-[12px] h-[24px]">
+          <Checkbox
+            checked={currentClickToNext}
+            onChange={handleClickToNextChange}
+            style={{ fontSize: "12px" }}
+          >
+            单击鼠标时换片
+          </Checkbox>
+        </div>
+        <div className={`flex items-center gap-[4px] ${styles.checkboxCustom}`}>
+          <Checkbox
+            checked={currentAutoToggle}
+            onChange={handleAutoToggleChange}
+            style={{ fontSize: "12px" }}
+          >
+            自动换片：
+            <InputNumber
+              disabled={!currentAutoToggle}
+              size="small"
+              value={currentAutoToggleTime}
+              style={{ width: 70 }}
+              onChange={handleAutoToggleTimeChange}
+            />
+          </Checkbox>
+        </div>
+      </div>
+      <PanelSplitLine />
+      <PanelLargeButton
+        title="应用全部"
+        aspectRatio={false}
+        icon={<FullSelection theme="outline" size="18" fill="#333" />}
+        onClick={handleApplyToAll}
+      />
     </div>
   );
 };
