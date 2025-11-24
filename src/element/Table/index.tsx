@@ -620,18 +620,8 @@ const Component: FC<ITableProps> = (props) => {
     };
   }, [id, handleCellOperationInternal]);
 
-  // 直接使用百分比，无需计算
-  // columnWidths 和 rowHeights 已经是百分比数组
-
-  // 处理点击事件，激活movable
   const handleClick = useMemoizedFn((e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡到Canvas
-
-    // 预览模式下不允许激活表格
-    if (mode === "preview") {
-      return;
-    }
-
     onSelect?.();
   });
 
@@ -641,7 +631,7 @@ const Component: FC<ITableProps> = (props) => {
       e.stopPropagation(); // 阻止事件冒泡
 
       // 预览模式下不允许单元格操作
-      if (mode === "preview") {
+      if (mode === "preview" || mode === "play") {
         return;
       }
 
@@ -732,11 +722,6 @@ const Component: FC<ITableProps> = (props) => {
   // 处理双击事件，打开弹窗
   const handleDoubleClick = useMemoizedFn((e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
-
-    // 预览模式下不允许打开编辑弹窗
-    if (mode === "preview") {
-      return;
-    }
 
     // 如果按住shift键，则不打开编辑窗口
     if (isShiftPressed) {
@@ -892,7 +877,7 @@ const Component: FC<ITableProps> = (props) => {
     ({ onContextMenu }: { onContextMenu?: (e: React.MouseEvent) => void }) => {
       const className = [
         styles.tableContainer,
-        isSelected ? "element-selected" : "",
+        mode !== "preview" && isSelected ? "element-selected" : "",
       ]
         .filter(Boolean)
         .join(" ");
@@ -903,8 +888,8 @@ const Component: FC<ITableProps> = (props) => {
           className={className}
           id={mode === "preview" ? `preview_${id}` : id}
           style={dynamicStyle}
-          onClick={handleClick}
-          onDoubleClick={handleDoubleClick}
+          onClick={mode === "edit" ? handleClick : undefined}
+          onDoubleClick={mode === "edit" ? handleDoubleClick : undefined}
         >
           <table
             ref={tableRef}
@@ -933,9 +918,15 @@ const Component: FC<ITableProps> = (props) => {
                           height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
                           border: `${borderWidth}px ${borderStyle} ${borderColor}`,
                         }}
-                        onClick={(e) => handleCellClick(rowIndex, colIndex, e)}
-                        onMouseDown={(e) =>
-                          handleCellMouseDown(rowIndex, colIndex, e)
+                        onClick={
+                          mode === "edit"
+                            ? (e) => handleCellClick(rowIndex, colIndex, e)
+                            : undefined
+                        }
+                        onMouseDown={
+                          mode === "edit"
+                            ? (e) => handleCellMouseDown(rowIndex, colIndex, e)
+                            : undefined
                         }
                       >
                         <div
@@ -966,7 +957,11 @@ const Component: FC<ITableProps> = (props) => {
                                 ? styles.resizing
                                 : ""
                             }`}
-                            onMouseDown={(e) => handleColumnResize(colIndex, e)}
+                            onMouseDown={
+                              mode === "edit"
+                                ? (e) => handleColumnResize(colIndex, e)
+                                : undefined
+                            }
                           />
                         )}
 
@@ -979,7 +974,11 @@ const Component: FC<ITableProps> = (props) => {
                                 ? styles.resizing
                                 : ""
                             }`}
-                            onMouseDown={(e) => handleRowResize(rowIndex, e)}
+                            onMouseDown={
+                              mode === "edit"
+                                ? (e) => handleRowResize(rowIndex, e)
+                                : undefined
+                            }
                           />
                         )}
                       </td>

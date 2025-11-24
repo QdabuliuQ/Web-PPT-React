@@ -365,8 +365,8 @@ const Component: FC<ITextProps> = observer((props) => {
   const className = [
     styles.textElement,
     isEditing ? styles.editing : "",
-    isDragging ? styles.dragging : "",
-    isSelected && !isEditing ? "element-selected" : "",
+    mode !== "preview" && isDragging ? styles.dragging : "",
+    mode !== "preview" && isSelected && !isEditing ? "element-selected" : "",
     !text && !isEditing ? styles.empty : "",
   ]
     .filter(Boolean)

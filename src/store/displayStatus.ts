@@ -1,4 +1,6 @@
 import { makeAutoObservable } from "mobx";
+import { elementActiveStore } from "./elementActive";
+import { menuActiveStore } from "./menuActive";
 
 export type DisplayStatus = "default" | "grid";
 
@@ -11,6 +13,8 @@ class DisplayStatusStore {
 
   setDisplayStatus = (status: DisplayStatus) => {
     this.displayStatus = status;
+    elementActiveStore.setElementActive("");
+    menuActiveStore.setActiveMenu("start");
   };
 
   getDisplayStatus = () => {

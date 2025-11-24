@@ -19,7 +19,11 @@ export type MenuItem = {
 };
 export type Menu = Array<MenuItem>;
 
-export const useContextMenu = (menu: Menu, menuId: string) => {
+export const useContextMenu = (
+  menu: Menu,
+  menuId: string,
+  parentSelector?: string
+) => {
   const { show, hideAll } = useContextMenuReact({ id: menuId });
 
   const contextMenu = useMemo(() => {
@@ -82,9 +86,11 @@ export const useContextMenu = (menu: Menu, menuId: string) => {
         <Menu animation="none" id={menuId}>
           {contextMenu}
         </Menu>,
-        document.body
+        parentSelector && document.querySelector(parentSelector)
+          ? (document.querySelector(parentSelector) as Element)
+          : document.body
       );
-  }, [contextMenu, menuId]);
+  }, [contextMenu, menuId, parentSelector]);
 
   return {
     ContextMenu,

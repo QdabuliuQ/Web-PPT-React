@@ -98,6 +98,18 @@ export const Header: FC = observer(() => {
             {item.label}
           </div>
         ))}
+        {elementActive && (
+          <div
+            className={`text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${
+              menuActiveStore.isActive("animation")
+                ? `text-[var(--primary-color)] font-bold ${styles.activeItem}`
+                : "text-gray-600 hover:text-[var(--primary-color)]"
+            }`}
+            onClick={() => menuActiveStore.setActiveMenu("animation")}
+          >
+            动画
+          </div>
+        )}
         {elementPanel && (
           <div
             className={`text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${

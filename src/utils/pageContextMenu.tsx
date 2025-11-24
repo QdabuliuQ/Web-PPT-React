@@ -2,6 +2,7 @@ import type { MenuItem } from "@/hooks/useContextMenu";
 import {
   contextMenuStore,
   elementActiveStore,
+  fullscreenStore,
   pageActiveStore,
   pptStore,
 } from "@/store";
@@ -12,6 +13,7 @@ import {
   BringForward,
   Copy,
   Delete,
+  Play,
   PreviewCloseOne,
   PreviewOpen,
   SendBackward,
@@ -97,6 +99,15 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
       ),
       onClick: () => {
         pptStore.togglePageVisible(pageId);
+        contextMenuStore.hideMenu();
+      },
+    },
+    {
+      type: "item" as const,
+      label: "播放幻灯片",
+      icon: <Play theme="outline" size="13" fill="#333" />,
+      onClick: () => {
+        fullscreenStore.enterFullscreen(pageId);
         contextMenuStore.hideMenu();
       },
     },

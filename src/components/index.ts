@@ -1,6 +1,7 @@
 export { ColorPanel } from "./ColorPanel";
 export { GlobalContextMenu } from "./GlobalContextMenu";
 export { MovableWrapper, type MovableWrapperProps } from "./MovableWrapper";
+export { PanelAnimationSelect } from "./PanelAnimationSelect";
 export { PanelBorderSetting } from "./PanelBorderSetting";
 export { PanelButton } from "./PanelButton";
 export { PanelLargeButton } from "./PanelLargeButton";

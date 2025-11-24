@@ -1,3 +1,4 @@
+import { pptStore } from "@/store";
 import {
   AlignBottom,
   AlignLeft,
@@ -11,10 +12,12 @@ import {
   CuttingOne,
   Delete,
   Layers,
+  Redo,
   SendBackward,
   SentToBack,
+  Undo,
 } from "@icon-park/react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { Menu } from "./useContextMenu";
 import useOperationElement from "./useOperationElement";
 import { usePositionElement } from "./usePositionElement";
@@ -31,6 +34,34 @@ export default function useCommonContextMenu(
     pageActive,
     elementActive
   );
+
+  // 左旋转处理函数
+  const rotateLeftHandle = useCallback(() => {
+    const element = pptStore.getElementInfo(pageActive, elementActive);
+    if (!element) return;
+
+    // 旋转 -90 度
+    const newRotate = (element.rotate - 90 + 360) % 360;
+
+    pptStore.setElementInfo(pageActive, elementActive, {
+      ...element,
+      rotate: newRotate,
+    });
+  }, [pageActive, elementActive]);
+
+  // 右旋转处理函数
+  const rotateRightHandle = useCallback(() => {
+    const element = pptStore.getElementInfo(pageActive, elementActive);
+    if (!element) return;
+
+    // 旋转 90 度
+    const newRotate = (element.rotate + 90) % 360;
+
+    pptStore.setElementInfo(pageActive, elementActive, {
+      ...element,
+      rotate: newRotate,
+    });
+  }, [pageActive, elementActive]);
 
   const commonMenu = useMemo<Menu>(
     () => [
@@ -51,6 +82,21 @@ export default function useCommonContextMenu(
         label: "删除",
         icon: <Delete theme="outline" size="13" fill="#333" />,
         onClick: deleteHandle,
+      },
+      {
+        type: "separator",
+      },
+      {
+        type: "item",
+        label: "左旋转",
+        icon: <Undo theme="outline" size="13" fill="#333" />,
+        onClick: rotateLeftHandle,
+      },
+      {
+        type: "item",
+        label: "右旋转",
+        icon: <Redo theme="outline" size="13" fill="#333" />,
+        onClick: rotateRightHandle,
       },
       {
         type: "separator",
@@ -129,6 +175,8 @@ export default function useCommonContextMenu(
       cutHandle,
       deleteHandle,
       positionHandle,
+      rotateLeftHandle,
+      rotateRightHandle,
       sendBackwardHandle,
       sendForwardHandle,
       toBackHandle,

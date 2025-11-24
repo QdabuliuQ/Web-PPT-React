@@ -1,5 +1,14 @@
 .pageItem {
+  &:first-child {
+    margin-top: 2px;
+  }
   &:not(:last-child) {
-    margin-bottom: 10px;
+    margin-bottom: 17px;
+  }
+
+  &:hover {
+    :global(.floatButton) {
+      opacity: 1;
+    }
   }
 }

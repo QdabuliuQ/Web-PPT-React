@@ -21,15 +21,17 @@ const SlideshowComponent: FC = () => {
 
   // 上一页
   const handlePrevPage = useMemoizedFn(() => {
-    if (currentPageIndex > 0) {
-      fullscreenStore.setCurrentSlidePageId(pages[currentPageIndex - 1].id);
+    const prevPageId = pageActiveStore.goToPrevPage();
+    if (prevPageId) {
+      fullscreenStore.setCurrentSlidePageId(prevPageId);
     }
   });
 
   // 下一页
   const handleNextPage = useMemoizedFn(() => {
-    if (currentPageIndex < pages.length - 1) {
-      fullscreenStore.setCurrentSlidePageId(pages[currentPageIndex + 1].id);
+    const nextPageId = pageActiveStore.goToNextPage();
+    if (nextPageId) {
+      fullscreenStore.setCurrentSlidePageId(nextPageId);
     }
   });
 
@@ -48,6 +50,13 @@ const SlideshowComponent: FC = () => {
       pageActiveStore.setPageActive(currentPageId);
     }
   });
+
+  // 同步 pageActiveStore 到当前全屏页面的 id
+  useEffect(() => {
+    if (currentPageId) {
+      pageActiveStore.setPageActive(currentPageId);
+    }
+  }, [currentPageId]);
 
   // 进入浏览器全屏
   useEffect(() => {
@@ -98,18 +107,6 @@ const SlideshowComponent: FC = () => {
           break;
         case "Escape":
           handleExitFullscreen();
-          break;
-        case "Home":
-          // 回到第一页
-          if (pages.length > 0) {
-            fullscreenStore.setCurrentSlidePageId(pages[0].id);
-          }
-          break;
-        case "End":
-          // 跳到最后一页
-          if (pages.length > 0) {
-            fullscreenStore.setCurrentSlidePageId(pages[pages.length - 1].id);
-          }
           break;
       }
     };

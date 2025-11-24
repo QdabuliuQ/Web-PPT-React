@@ -1,7 +1,12 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  elementActiveStore,
+  fullscreenStore,
+  pageActiveStore,
+  pptStore,
+} from "@/store";
 import type { Page } from "@/store/ppt";
 import { showPageContextMenu } from "@/utils/pageContextMenu";
-import { Add, PreviewCloseOne } from "@icon-park/react";
+import { Add, PlayOne, Plus, PreviewCloseOne } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
@@ -69,6 +74,29 @@ const PreviewComponent: FC = () => {
     // 滚动到底部
     scrollToBottom();
   });
+
+  // 处理播放按钮点击 - 全屏放映当前页面
+  const handlePlayPage = useMemoizedFn(
+    (pageId: string, e: React.MouseEvent) => {
+      e.stopPropagation(); // 阻止事件冒泡，避免触发页面点击
+      fullscreenStore.enterFullscreen(pageId);
+    }
+  );
+
+  // 处理添加页面按钮点击 - 在当前页面下面新建页面
+  const handleAddPageAfter = useMemoizedFn(
+    (pageId: string, e: React.MouseEvent) => {
+      e.stopPropagation(); // 阻止事件冒泡，避免触发页面点击
+      // 在当前页面后面添加新页面
+      const newPageId = pptStore.addPage(pageId);
+      // 清空选中的元素
+      elementActiveStore.resetElementActive();
+      // 切换到新建的页面
+      pageActiveStore.setPageActive(newPageId);
+      // 滚动到底部
+      scrollToBottom();
+    }
+  );
 
   // 计算滚动区域高度
   useEffect(() => {
@@ -142,34 +170,53 @@ const PreviewComponent: FC = () => {
       >
         {pages.map((page: Page, index: number) => (
           <div
-            className={`${styles.pageItem} relative mr-[15px] cursor-pointer text-center`}
+            className={`${styles.pageItem} relative mr-[15px] cursor-pointer flex gap-[8px]`}
             key={page.id}
-            ref={index === 0 ? pageItemRef : null}
           >
+            {/* 页码索引 - 左边 */}
+            <span
+              className={`text-[13px] mt-[5px] font-bold ${
+                pageActive === page.id ? "text-primary" : "text-[#9b9b9b]"
+              }`}
+            >
+              {index + 1}
+            </span>
             <div
-              className={`relative w-full ${pageActive === page.id ? "border-2 border-solid border-primary box-border" : ""} rounded-[8px] overflow-hidden`}
+              ref={index === 0 ? pageItemRef : null}
+              className="previewCanvas relative flex-1 rounded-[8px] overflow-hidden"
               style={{
                 aspectRatio: "10 / 7", // 1000:700 的宽高比
+                boxShadow:
+                  pageActive === page.id ? "0 0 0 2px #f25f00" : "none",
               }}
               onClick={() => handlePageClick(page.id)}
               onContextMenu={(e) => handleContextMenu(e, page.id)}
             >
+              {page.visible === false && (
+                <div
+                  className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/10 rounded-[8px] z-10"
+                  onClick={() => handlePageClick(page.id)}
+                  onContextMenu={(e) => handleContextMenu(e, page.id)}
+                >
+                  <PreviewCloseOne theme="outline" size="24" fill="#333" />
+                </div>
+              )}
               <Canvas mode="preview" page={page} previewZoom={scale} />
             </div>
-            {page.visible === false && (
+            <div className="floatButton absolute bottom-[-12px] right-[13px] z-10 w-[80%] flex items-center justify-between opacity-0 transition-opacity">
               <div
-                className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/10 rounded-[8px]"
-                onClick={() => handlePageClick(page.id)}
-                onContextMenu={(e) => handleContextMenu(e, page.id)}
+                className="flex items-center justify-center w-[26px] h-[26px] bg-[#fff] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                onClick={(e) => handlePlayPage(page.id, e)}
               >
-                <PreviewCloseOne theme="outline" size="24" fill="#333" />
+                <PlayOne theme="filled" size="18" fill="#f25f00" />
               </div>
-            )}
-            <span
-              className={`${pageActive === page.id ? "text-primary font-bold" : ""}`}
-            >
-              {index}
-            </span>
+              <div
+                className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                onClick={(e) => handleAddPageAfter(page.id, e)}
+              >
+                <Plus theme="outline" size="18" fill="#fff" />
+              </div>
+            </div>
           </div>
         ))}
       </OverlayScrollbarsComponent>

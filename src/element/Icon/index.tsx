@@ -140,8 +140,8 @@ const Component: FC<IIconProps> = observer((props) => {
   // 组合CSS类名
   const className = [
     styles.iconElement,
-    isDragging ? styles.dragging : "",
-    isSelected ? "element-selected" : "",
+    mode !== "preview" && isDragging ? styles.dragging : "",
+    mode !== "preview" && isSelected ? "element-selected" : "",
   ]
     .filter(Boolean)
     .join(" ");

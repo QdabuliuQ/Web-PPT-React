@@ -7,6 +7,11 @@ export interface ICommonElementProps {
   rotate: number;
   zIndex: number;
   mode: "preview" | "play" | "edit";
+  animationName?: string;
+  animationDuration?: string;
+  animationDelay?: string;
+  animationTrigger?: "click" | "default";
+  animationIndex?: number;
   onSelect?: () => void;
   onUnSelect?: () => void;
 }

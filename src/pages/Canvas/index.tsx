@@ -1,3 +1,4 @@
+import { GlobalContextMenu } from "@/components";
 import { Icon } from "@/element/Icon";
 import { Image } from "@/element/Image";
 import { Table } from "@/element/Table";
@@ -15,7 +16,14 @@ import {
 } from "@/store";
 import type { Elements } from "@/store/ppt";
 import { getRandomId } from "@/utils";
-import { Clipboard } from "@icon-park/react";
+import {
+  Clipboard,
+  CloseOne,
+  GoEnd,
+  GoStart,
+  Left,
+  Right,
+} from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useRef, useState, type FC } from "react";
@@ -34,6 +42,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const [scale, setScale] = useState(1);
   const [, forceUpdate] = useState(0); // 用于 play 模式强制重新渲染
   const lastContainerSizeRef = useRef({ width: 0, height: 0 });
+  const [showEndMessage, setShowEndMessage] = useState(false); // 是否显示结束提示
 
   // Canvas 固定尺寸 - 使用常量避免重复声明
   const CANVAS_WIDTH = useMemo(() => 1000, []);
@@ -94,6 +103,13 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     setTimeout(calculateScale, 0);
   }, [calculateScale]);
 
+  // 监听页面变化，重置结束提示状态
+  useEffect(() => {
+    if (mode === "play") {
+      setShowEndMessage(false);
+    }
+  }, [page?.id, mode]);
+
   // 监听窗口大小变化 - 性能优化版本
   useEffect(() => {
     // preview 模式下不需要监听（已经有固定的 zoom）
@@ -141,7 +157,6 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
   // 处理画布点击事件 - 优化版本
   const handleCanvasClick = useMemoizedFn((e: React.MouseEvent) => {
-    // 预览和播放模式下不处理点击事件
     if (mode === "preview" || mode === "play") {
       return;
     }
@@ -242,8 +257,9 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     return {
       width: `${CANVAS_WIDTH}px`,
       height: `${CANVAS_HEIGHT}px`,
-      transform: `scale(${computedScale})`,
-      transformOrigin: "center center",
+      // transform: `scale(${computedScale})`,
+      // transformOrigin: "center center",
+      zoom: computedScale,
       left: "50%",
       top: "50%",
       marginLeft: `-${CANVAS_WIDTH / 2}px`,
@@ -316,6 +332,161 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       .filter(Boolean);
   });
 
+  // 播放模式右键菜单处理
+  const handlePlayContextMenu = useMemoizedFn((e: React.MouseEvent) => {
+    if (mode !== "play") return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const pages = pptStore.getPages();
+    const currentPageId = page?.id || pageActiveStore.getPageActive();
+    const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
+    const isFirstPage = currentPageIndex === 0;
+    const isLastPage = currentPageIndex === pages.length - 1;
+
+    const menuItems: MenuItem[] = [
+      {
+        type: "item",
+        label: "上一页",
+        icon: <Left theme="outline" size="13" fill="#333" />,
+        disabled: isFirstPage,
+        onClick: () => {
+          if (currentPageId) {
+            pageActiveStore.setPageActive(currentPageId);
+          }
+          const prevPageId = pageActiveStore.goToPrevPage();
+          if (prevPageId) {
+            fullscreenStore.enterFullscreen(prevPageId);
+            setShowEndMessage(false);
+          }
+        },
+      },
+      {
+        type: "item",
+        label: "下一页",
+        icon: <Right theme="outline" size="13" fill="#333" />,
+        disabled: isLastPage,
+        onClick: () => {
+          if (currentPageId) {
+            pageActiveStore.setPageActive(currentPageId);
+          }
+          const nextPageId = pageActiveStore.goToNextPage();
+          if (nextPageId) {
+            fullscreenStore.enterFullscreen(nextPageId);
+            setShowEndMessage(false);
+          } else {
+            // 如果无法切换，显示结束提示
+            setShowEndMessage(true);
+          }
+        },
+      },
+      {
+        type: "item",
+        label: "第一页",
+        icon: <GoStart theme="outline" size="13" fill="#333" />,
+        disabled: isFirstPage,
+        onClick: () => {
+          if (pages.length > 0) {
+            const firstPageId = pages[0].id;
+            pageActiveStore.setPageActive(firstPageId);
+            fullscreenStore.enterFullscreen(firstPageId);
+            setShowEndMessage(false);
+          }
+        },
+      },
+      {
+        type: "item",
+        label: "最后一页",
+        icon: <GoEnd theme="outline" size="13" fill="#333" />,
+        disabled: isLastPage,
+        onClick: () => {
+          if (pages.length > 0) {
+            const lastPageId = pages[pages.length - 1].id;
+            pageActiveStore.setPageActive(lastPageId);
+            fullscreenStore.enterFullscreen(lastPageId);
+            setShowEndMessage(false);
+          }
+        },
+      },
+      {
+        type: "separator",
+      },
+      {
+        type: "item",
+        label: "结束放映",
+        icon: (
+          <CloseOne
+            theme="multi-color"
+            size="13"
+            fill={["#ff8501", "#ff8501", "#FFF", "#43CCF8"]}
+          />
+        ),
+        onClick: () => {
+          // 关闭菜单
+          contextMenuStore.hideMenu();
+          // 退出全屏模式
+          fullscreenStore.exitFullscreen();
+          // 同步更新编辑模式的当前页
+          if (currentPageId) {
+            pageActiveStore.setPageActive(currentPageId);
+          }
+          setShowEndMessage(false);
+        },
+      },
+    ];
+
+    contextMenuStore.showMenu(menuItems, e);
+  });
+
+  const playCanvasClickHandle = useMemoizedFn(() => {
+    if (mode === "play") {
+      // 如果菜单显示，不触发切换
+      if (contextMenuStore.isVisible()) {
+        return;
+      }
+
+      // 如果已经显示了结束提示，点击退出全屏
+      if (showEndMessage) {
+        fullscreenStore.exitFullscreen();
+        setShowEndMessage(false);
+        return;
+      }
+
+      const pages = pptStore.getPages();
+      // 使用传入的 page prop 或从 pageActiveStore 获取当前页面
+      const currentPageId = page?.id || pageActiveStore.getPageActive();
+      const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
+      const isLastPage = currentPageIndex === pages.length - 1;
+
+      const currentPage =
+        page || pptStore.getActivePage(currentPageId as string);
+      const { clickToNext = true } = currentPage as any;
+      if (!clickToNext) {
+        return;
+      }
+
+      // 先同步 pageActiveStore 到当前页面
+      if (currentPageId) {
+        pageActiveStore.setPageActive(currentPageId);
+      }
+      const lastPageId = pageActiveStore.getPageActive();
+      const newPageId = pageActiveStore.goToNextPage();
+
+      // 如果无法切换到下一页（已经是最后一页），显示结束提示
+      if (isLastPage && lastPageId === newPageId) {
+        setShowEndMessage(true);
+        return;
+      }
+
+      // 如果可以切换，切换到下一页
+      if (lastPageId !== newPageId && newPageId) {
+        fullscreenStore.enterFullscreen(newPageId);
+        setShowEndMessage(false); // 切换页面时重置提示状态
+      }
+    }
+  });
+
   const CanvasContainer = useMemoizedFn(() => {
     // 编辑模式：支持交互、右键菜单等
     if (mode === "edit") {
@@ -376,18 +547,51 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       );
     }
 
+    // 在 play 模式下优先使用传入的 page prop，否则从 pageActiveStore 获取
+    const currentPage =
+      mode === "play" && page
+        ? page
+        : pptStore.getActivePage(pageActiveStore.getPageActive() as string);
+    const {
+      toggleInAnimation = "",
+      toggleInDelay = "0",
+      toggleInDuration = "default",
+    } = (currentPage as any) || {};
+
+    let animationClassName = "";
+
+    if (mode === "play" && toggleInAnimation !== "") {
+      animationClassName = `animate__animated animate__${toggleInAnimation}`;
+      if (toggleInDelay) {
+        animationClassName +=
+          toggleInDelay == "0s" ? "" : ` animate__delay-${toggleInDelay}`;
+      }
+      if (toggleInDuration) {
+        animationClassName +=
+          toggleInDuration == "default" ? "" : ` animate__${toggleInDuration}`;
+      }
+    }
+
     // 预览模式或播放模式：只读，不支持交互
     return (
       <div
         id={
           mode === "play" ? "play-canvas-container" : "preview-canvas-container"
         }
-        className="absolute bg-[#fff] overflow-hidden transition-transform duration-200 ease-in-out"
+        className={`${animationClassName} absolute overflow-hidden transition-transform duration-200 ease-in-out`}
         style={{
           ...canvasStyle,
+          backgroundColor: showEndMessage ? "#000" : "#fff",
         }}
+        onClick={playCanvasClickHandle}
+        onContextMenu={mode === "play" ? handlePlayContextMenu : undefined}
       >
         {renderElements(false)}
+        {showEndMessage && (
+          <div className="absolute inset-0 flex items-center justify-center cursor-pointer text-[15px] bg-[#000] text-[#fff] z-[9999]">
+            放映结束，单击鼠标退出
+          </div>
+        )}
       </div>
     );
   });
@@ -443,6 +647,11 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       className={containerClassName}
       style={containerStyle}
     >
+      {mode === "play" && (
+        <GlobalContextMenu
+          parentSelector={`#parent-canvas-container-${pageId}`}
+        />
+      )}
       <CanvasContainer />
     </div>
   );

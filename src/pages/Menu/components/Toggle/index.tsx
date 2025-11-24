@@ -1,10 +1,16 @@
-import { PanelLargeButton, PanelSelect, PanelSplitLine } from "@/components";
+/* eslint-disable react-refresh/only-export-components */
+import {
+  PanelAnimationSelect,
+  PanelLargeButton,
+  PanelSelect,
+  PanelSplitLine,
+} from "@/components";
 import { pageActiveStore, pptStore } from "@/store";
-import { Down, FullSelection } from "@icon-park/react";
+import { FullSelection } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { Checkbox, InputNumber, Popover } from "antd";
+import { Checkbox, InputNumber } from "antd";
 import { observer } from "mobx-react-lite";
-import { useEffect, useRef, useState, type FC } from "react";
+import { useState, type FC } from "react";
 import styles from "./index.module.less";
 
 const toggleInAnimationName = [
@@ -100,9 +106,69 @@ const toggleInAnimationName = [
     type: "fadeInBottomRight",
     name: "淡入右下",
   },
+  {
+    type: "flipInX",
+    name: "翻转X",
+  },
+  {
+    type: "flipInY",
+    name: "翻转Y",
+  },
+  {
+    type: "lightSpeedInRight",
+    name: "光速右",
+  },
+  {
+    type: "lightSpeedInLeft",
+    name: "光速左",
+  },
+  {
+    type: "rotateInDownLeft",
+    name: "旋转左下",
+  },
+  {
+    type: "rotateInDownRight",
+    name: "旋转右下",
+  },
+  {
+    type: "zoomIn",
+    name: "缩放",
+  },
+  {
+    type: "zoomInDown",
+    name: "缩放下",
+  },
+  {
+    type: "zoomInLeft",
+    name: "缩放左",
+  },
+  {
+    type: "zoomInRight",
+    name: "缩放右",
+  },
+  {
+    type: "zoomInUp",
+    name: "缩放上",
+  },
+  {
+    type: "slideInDown",
+    name: "滑入下",
+  },
+  {
+    type: "slideInLeft",
+    name: "滑入左",
+  },
+  {
+    type: "slideInRight",
+    name: "滑入右",
+  },
+  {
+    type: "slideInUp",
+    name: "滑入上",
+  },
 ];
 
-const toggleInDurationOptions = [
+export const toggleInDurationOptions = [
   {
     value: "faster",
     label: "0.5秒",
@@ -125,38 +191,36 @@ const toggleInDurationOptions = [
   },
 ];
 
-const toggleInDelayOptions = [
+export const toggleInDelayOptions = [
   {
-    value: "0",
+    value: "0s",
     label: "默认",
   },
   {
-    value: "2",
+    value: "2s",
     label: "2秒",
   },
   {
-    value: "3",
+    value: "3s",
     label: "3秒",
   },
   {
-    value: "4",
+    value: "4s",
     label: "4秒",
   },
   {
-    value: "5",
+    value: "5s",
     label: "5秒",
   },
 ];
 
 const ToggleComponent: FC = () => {
   const [animationName, setAnimationName] = useState<string>("");
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 获取当前页面
   const pageActive = pageActiveStore.getPageActive();
   const currentPage = pageActive ? pptStore.getActivePage(pageActive) : null;
-  const currentToggleIn = (currentPage as any)?.toggleIn || "";
+  const currentToggleIn = (currentPage as any)?.toggleInAnimation || "";
   const currentToggleInDuration = (currentPage as any)?.toggleInDuration || 0;
   const currentToggleInDelay = (currentPage as any)?.toggleInDelay || 0;
   const currentClickToNext = (currentPage as any)?.clickToNext || true;
@@ -193,7 +257,7 @@ const ToggleComponent: FC = () => {
 
   // 处理动画选择
   const handleAnimationSelect = useMemoizedFn((type: string) => {
-    updatePageProperty("toggleIn", type);
+    updatePageProperty("toggleInAnimation", type);
   });
 
   // 处理过渡时间变化
@@ -233,7 +297,7 @@ const ToggleComponent: FC = () => {
 
     // 获取当前页面的切换动画相关属性
     const toggleSettings = {
-      toggleIn: currentToggleIn,
+      toggleInAnimation: currentToggleIn,
       toggleInDuration: currentToggleInDuration,
       toggleInDelay: currentToggleInDelay,
       clickToNext: currentClickToNext,
@@ -250,121 +314,17 @@ const ToggleComponent: FC = () => {
     pptStore.setPages(newPages);
   });
 
-  // 清除关闭定时器
-  const clearCloseTimer = useMemoizedFn(() => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-  });
-
-  // 延迟关闭 Popover
-  const handleClosePopover = useMemoizedFn(() => {
-    clearCloseTimer();
-    closeTimerRef.current = setTimeout(() => {
-      setPopoverOpen(false);
-    }, 200); // 200ms 延迟，给用户时间移动到 Popover
-  });
-
-  // 保持 Popover 打开
-  const handleKeepPopoverOpen = useMemoizedFn(() => {
-    clearCloseTimer();
-    setPopoverOpen(true);
-  });
-
-  // 渲染动画项
-  const renderAnimationItem = (
-    item: { type: string; name: string },
-    inPopover = false
-  ) => {
-    const isSelected = currentToggleIn === item.type;
-
-    return (
-      <div
-        className={`${
-          inPopover ? "h-[42px]" : "h-full"
-        } w-[80px] relative text-[12px] cursor-pointer rounded-[6px] overflow-hidden bg-[#fff] border ${
-          isSelected ? "border-primary" : "border-[#dfdfdf]"
-        } border-dashed flex items-center justify-center flex-shrink-0`}
-        key={item.type}
-        onMouseEnter={() => mouseEnterHandle(item.type)}
-        onMouseLeave={mouseLeaveHandle}
-        onClick={() => handleAnimationSelect(item.type)}
-      >
-        <div className="flex flex-col items-center justify-center">
-          <div
-            className={`font-bold ${
-              isSelected ? "text-primary" : "text-[#999]"
-            }`}
-          >
-            {item.name}
-          </div>
-        </div>
-        {item.type !== "" && (
-          <div
-            className={`animate__animated ${
-              animationName === item.type ? `animate__${item.type}` : ""
-            } ${
-              animationName === item.type ? "opacity-100" : "opacity-0"
-            } absolute w-full h-full bg-primary flex items-center justify-center text-[12px] text-white font-bold`}
-          >
-            Web PPT
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // 组件卸载时清理定时器
-  useEffect(() => {
-    return () => {
-      clearCloseTimer();
-    };
-  }, [clearCloseTimer]);
-
-  // Popover 内容
-  const popoverContent = (
-    <div
-      className="flex flex-wrap gap-[4px] w-[500px] max-h-[300px] overflow-y-auto"
-      onMouseEnter={handleKeepPopoverOpen}
-      onMouseLeave={handleClosePopover}
-    >
-      {moreAnimations.map((item) => renderAnimationItem(item, true))}
-    </div>
-  );
-
   return (
     <div className="flex gap-[10px] h-[53px]">
-      <Popover
-        open={popoverOpen}
-        onOpenChange={setPopoverOpen}
-        placement="bottom"
-        content={popoverContent}
-        trigger={[]}
-        overlayClassName="animation-popover"
-      >
-        <div className="h-[53px] px-[5px] box-border border border-[#dfdfdf] rounded-[6px] flex items-center gap-[4px]">
-          <div className="h-[51px] flex items-center">
-            <div className="h-[42px] flex items-center gap-[4px]">
-              {displayAnimations.map((item) => renderAnimationItem(item))}
-              <div
-                className="h-[42px] w-[15px] flex items-center justify-center cursor-pointer rounded-[6px] border border-[#dfdfdf] bg-[#f5f5f5] transition-colors hover:bg-[#e8e8e8]"
-                onMouseEnter={handleKeepPopoverOpen}
-                onMouseLeave={handleClosePopover}
-              >
-                <Down
-                  theme="outline"
-                  size="13"
-                  fill="#666"
-                  className={`transition-transform duration-200 ${
-                    popoverOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Popover>
+      <PanelAnimationSelect
+        displayAnimations={displayAnimations}
+        moreAnimations={moreAnimations}
+        selectedAnimation={currentToggleIn}
+        onSelect={handleAnimationSelect}
+        onAnimationHover={mouseEnterHandle}
+        onAnimationLeave={mouseLeaveHandle}
+        hoverAnimation={animationName}
+      />
       <PanelSplitLine />
       <div className="flex flex-col justify-between gap-[4px] mr-[5px]">
         <div className="flex items-center gap-[4px]">

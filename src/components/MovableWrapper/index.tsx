@@ -234,6 +234,7 @@ export const MovableWrapper = memo(
           // 提取旋转角度信息
           const matrix = new DOMMatrix(transform);
           const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
+
           onRotate({ rotate: angle, transform });
         }
       };

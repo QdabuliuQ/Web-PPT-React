@@ -1,5 +1,6 @@
 import { MovableWrapper } from "@/components";
-import { elementActiveStore } from "@/store";
+import useCommonContextMenu from "@/hooks/useCommonContextMenu";
+import { contextMenuStore, elementActiveStore, pageActiveStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { Spin } from "antd";
@@ -122,6 +123,12 @@ const Component: FC<IImageProps> = observer((props) => {
 
   const isSelected = elementActiveStore.isElementActive(id);
 
+  // 获取当前页面ID
+  const currentPageId = pageActiveStore.getPageActive() || "";
+
+  // 获取通用菜单
+  const { commonMenu } = useCommonContextMenu(currentPageId, id);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -135,6 +142,20 @@ const Component: FC<IImageProps> = observer((props) => {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect?.();
+  };
+
+  // 处理右键菜单
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 如果未选中，先选中
+    if (!isSelected) {
+      onSelect?.();
+    }
+
+    // 显示右键菜单（旋转功能已在通用菜单中）
+    contextMenuStore.showMenu(commonMenu, e);
   };
 
   useEffect(() => {
@@ -200,8 +221,8 @@ const Component: FC<IImageProps> = observer((props) => {
   // 组合CSS类名
   const className = [
     styles.imageElement,
-    isDragging ? styles.dragging : "",
-    isSelected ? "element-selected" : "",
+    mode !== "preview" && isDragging ? styles.dragging : "",
+    mode !== "preview" && isSelected ? "element-selected" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -215,6 +236,7 @@ const Component: FC<IImageProps> = observer((props) => {
         style={dynamicStyle}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
       >
         {!imageLoaded && !imageError && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
