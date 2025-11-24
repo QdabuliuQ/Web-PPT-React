@@ -1,4 +1,4 @@
-import { MovableWrapper } from "@/components";
+import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import { contextMenuStore, elementActiveStore, pageActiveStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
@@ -37,6 +37,10 @@ const Component: FC<IIconProps> = observer((props) => {
     height,
     rotate,
     zIndex,
+    animationName,
+    animationDuration,
+    animationDelay,
+    animationTrigger,
     onSelect,
     onUnSelect,
   } = props;
@@ -140,8 +144,8 @@ const Component: FC<IIconProps> = observer((props) => {
   // 组合CSS类名
   const className = [
     styles.iconElement,
-    mode !== "preview" && isDragging ? styles.dragging : "",
-    mode !== "preview" && isSelected ? "element-selected" : "",
+    mode === "edit" && isDragging ? styles.dragging : "",
+    mode === "edit" && isSelected ? "element-selected" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -157,12 +161,22 @@ const Component: FC<IIconProps> = observer((props) => {
         onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
-        <IconComponent
-          theme={theme}
-          size={Math.min(width, height)}
-          fill={fill}
-          strokeWidth={strokeWidth}
-        />
+        <AnimationWrapper
+          mode={mode}
+          elementId={id}
+          animationName={animationName}
+          animationDuration={animationDuration}
+          animationDelay={animationDelay}
+          animationTrigger={animationTrigger}
+          className="w-full h-full flex items-center justify-center"
+        >
+          <IconComponent
+            theme={theme}
+            size={Math.min(width, height)}
+            fill={fill}
+            strokeWidth={strokeWidth}
+          />
+        </AnimationWrapper>
       </div>
       <MovableWrapper
         ref={moveableRef}
@@ -187,12 +201,22 @@ const Component: FC<IIconProps> = observer((props) => {
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      <IconComponent
-        theme={theme}
-        size={Math.min(width, height)}
-        fill={fill}
-        strokeWidth={strokeWidth}
-      />
+      <AnimationWrapper
+        mode={mode}
+        elementId={id}
+        animationName={animationName}
+        animationDuration={animationDuration}
+        animationDelay={animationDelay}
+        animationTrigger={animationTrigger}
+        className="w-full h-full flex items-center justify-center"
+      >
+        <IconComponent
+          theme={theme}
+          size={Math.min(width, height)}
+          fill={fill}
+          strokeWidth={strokeWidth}
+        />
+      </AnimationWrapper>
     </div>
   );
 });

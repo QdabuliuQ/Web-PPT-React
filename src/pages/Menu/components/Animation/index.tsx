@@ -6,6 +6,7 @@ import {
 } from "@/components";
 import { PanelDropdownButton } from "@/components/PanelDropdownButton";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import { globalEventBus } from "@/utils/eventBus";
 import type { DragEndEvent } from "@dnd-kit/core";
 import {
   closestCenter,
@@ -19,15 +20,12 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
   CloseOne,
   DeleteFive,
   DeleteFour,
-  Drag,
   Play,
   SortAmountDown,
 } from "@icon-park/react";
@@ -36,6 +34,7 @@ import { Button, Popover, Select } from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, useState, type FC } from "react";
 import { toggleInDelayOptions, toggleInDurationOptions } from "../Toggle";
+import { SortableItem } from "./SortableItem";
 
 // 元素动画列表
 const elementAnimationName = [
@@ -200,85 +199,6 @@ const animationTriggerOptions = [
   },
 ];
 
-// 可拖拽的列表项组件
-interface SortableItemProps {
-  element: any;
-  index: number;
-  elementActive: string | null;
-  getElementTypeName: (type: string) => string;
-  getAnimationDisplayName: (animationName: string) => string;
-  onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
-}
-
-const SortableItem: FC<SortableItemProps> = ({
-  element,
-  index,
-  elementActive,
-  getElementTypeName,
-  getAnimationDisplayName,
-  onSelect,
-  onDelete,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: element.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className={`flex items-center gap-[8px] text-[12px] text-[#666] hover:bg-white px-[10px] py-[5px] rounded ${
-        elementActive === element.id
-          ? "border border-primary bg-white"
-          : "border border-transparent"
-      }`}
-      onClick={() => {
-        onSelect(element.id);
-      }}
-    >
-      <div
-        {...listeners}
-        className="cursor-move select-none flex items-center"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        <Drag theme="outline" size="13" fill="#333" />
-      </div>
-      <span className="text-[#999] font-semibold">{index + 1}</span>
-      <span className="flex-1 line-clamp-1 cursor-pointer">
-        {getElementTypeName(element.type)} -{" "}
-        {getAnimationDisplayName(element.animationName || "")}
-      </span>
-      {elementActive === element.id && (
-        <CloseOne
-          className="cursor-pointer"
-          theme="outline"
-          size="12"
-          fill="#333"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(element.id);
-          }}
-        />
-      )}
-    </div>
-  );
-};
-
 const AnimationComponent: FC = () => {
   const [animationName, setAnimationName] = useState<string>("");
   // 动画列表中选中的元素ID（独立状态）
@@ -302,12 +222,13 @@ const AnimationComponent: FC = () => {
       : null;
 
   // 回显选中元素的动画属性
+  // 如果选中了动画列表中的元素，显示那个元素的属性；否则显示当前激活元素的属性
+  const targetElementForDisplay = selectedAnimationElement || currentElement;
   const currentAnimationDuration =
-    selectedAnimationElement?.animationDuration || "default";
-  const currentAnimationDelay =
-    selectedAnimationElement?.animationDelay || "0s";
+    targetElementForDisplay?.animationDuration || "default";
+  const currentAnimationDelay = targetElementForDisplay?.animationDelay || "0s";
   const currentAnimationTrigger =
-    selectedAnimationElement?.animationTrigger || "click";
+    targetElementForDisplay?.animationTrigger || "default";
 
   // 前6个动画
   const displayAnimations = elementAnimationName.slice(0, 6);
@@ -377,20 +298,47 @@ const AnimationComponent: FC = () => {
     }
   });
 
-  // 获取当前页面所有设置了动画的元素，并按 animationIndex 排序
+  // 获取当前页面所有设置了动画的元素，并按 animationTrigger 分组
+  // default 元素放在前面，click 元素放在后面
   // 不使用 useMemo，让 observer 自动响应 MobX store 的变化
-  const animatedElements = (() => {
-    if (!pageActive) return [];
+  const { defaultElements, clickElements, animatedElements } = (() => {
+    if (!pageActive) {
+      return {
+        defaultElements: [],
+        clickElements: [],
+        animatedElements: [],
+      };
+    }
     const allElements = pptStore.getAllElementInfo(pageActive);
     const filtered = allElements.filter(
       (element) => element.animationName && element.animationName !== ""
     );
-    // 按 animationIndex 排序
-    return filtered.sort((a, b) => {
+
+    // 分为两组
+    const defaultEls = filtered.filter(
+      (element) =>
+        element.animationTrigger === "default" || !element.animationTrigger
+    );
+    const clickEls = filtered.filter(
+      (element) => element.animationTrigger === "click"
+    );
+
+    // default 元素不需要排序（按原始顺序）
+    // click 元素按 animationIndex 排序
+    const sortedClickEls = [...clickEls].sort((a, b) => {
       const indexA = a.animationIndex ?? 0;
       const indexB = b.animationIndex ?? 0;
       return indexA - indexB;
     });
+
+    // 合并后的元素列表（用于显示索引）
+    const animatedEls = [...defaultEls, ...sortedClickEls];
+
+    return {
+      defaultElements: defaultEls,
+      clickElements: sortedClickEls,
+      animatedElements: animatedEls,
+    };
   })();
 
   // 获取元素类型的中文名称
@@ -420,24 +368,29 @@ const AnimationComponent: FC = () => {
     })
   );
 
-  // 处理拖拽结束事件
+  // 处理拖拽结束事件（只处理 click 元素的排序）
   const handleDragEnd = useMemoizedFn((event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || !pageActive) return;
 
-    const oldIndex = animatedElements.findIndex((el) => el.id === active.id);
-    const newIndex = animatedElements.findIndex((el) => el.id === over.id);
+    // 检查拖拽的元素是否是 click 元素
+    const draggedElement = clickElements.find((el) => el.id === active.id);
+    const targetElement = clickElements.find((el) => el.id === over.id);
+
+    // 如果拖拽的不是 click 元素，或者目标不是 click 元素，不处理
+    if (!draggedElement || !targetElement) return;
+
+    const oldIndex = clickElements.findIndex((el) => el.id === active.id);
+    const newIndex = clickElements.findIndex((el) => el.id === over.id);
 
     if (oldIndex !== newIndex) {
-      const newOrderedElements = arrayMove(
-        animatedElements,
+      const newOrderedClickElements = arrayMove(
+        clickElements,
         oldIndex,
         newIndex
       );
-      console.log(newOrderedElements, "newOrderedElements");
-
-      // 更新所有元素的 animationIndex
-      newOrderedElements.forEach((element, index) => {
+      // 只更新 click 元素的 animationIndex
+      newOrderedClickElements.forEach((element, index) => {
         pptStore.setElementInfo(pageActive, element.id, {
           ...element,
           animationIndex: index,
@@ -461,6 +414,17 @@ const AnimationComponent: FC = () => {
     if (selectedAnimationElementId === elementId) {
       setSelectedAnimationElementId(null);
     }
+  });
+
+  // 处理预览动画
+  const handlePreviewAnimation = useMemoizedFn(() => {
+    if (!elementActive || !currentElement || !currentElement.animationName) {
+      return;
+    }
+
+    // 通过事件总线发送预览动画事件，事件名称为 animation-play-元素id
+    const eventName = `animation-play-${elementActive}`;
+    globalEventBus.emit(eventName);
   });
 
   const orderContent = useMemo(() => {
@@ -549,11 +513,12 @@ const AnimationComponent: FC = () => {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={animatedElements.map((el) => el.id)}
+                items={clickElements.map((el) => el.id)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="flex flex-col gap-[5px] min-h-[250px] max-h-[250px] overflow-y-auto">
-                  {animatedElements.map((element, index) => (
+                  {/* 渲染 default 元素（不可拖拽） */}
+                  {defaultElements.map((element, index) => (
                     <SortableItem
                       key={element.id}
                       element={element}
@@ -563,6 +528,21 @@ const AnimationComponent: FC = () => {
                       getAnimationDisplayName={getAnimationDisplayName}
                       onSelect={handleSelectAnimationElement}
                       onDelete={handleDeleteElementAnimation}
+                      disabled={true}
+                    />
+                  ))}
+                  {/* 渲染 click 元素（可拖拽） */}
+                  {clickElements.map((element, index) => (
+                    <SortableItem
+                      key={element.id}
+                      element={element}
+                      index={defaultElements.length + index}
+                      elementActive={selectedAnimationElementId}
+                      getElementTypeName={getElementTypeName}
+                      getAnimationDisplayName={getAnimationDisplayName}
+                      onSelect={handleSelectAnimationElement}
+                      onDelete={handleDeleteElementAnimation}
+                      disabled={false}
                     />
                   ))}
                 </div>
@@ -576,6 +556,8 @@ const AnimationComponent: FC = () => {
     pageActive,
     selectedAnimationElementId,
     handleAnimationPropertyChange,
+    defaultElements,
+    clickElements,
     animatedElements,
     getElementTypeName,
     getAnimationDisplayName,
@@ -606,9 +588,12 @@ const AnimationComponent: FC = () => {
             size="small"
             style={{ width: 70 }}
             onChange={(value) => {
-              if (elementActive) {
+              // 如果选中了动画列表中的元素，更新那个元素；否则更新当前激活的元素
+              const targetElementId =
+                selectedAnimationElementId || elementActive;
+              if (targetElementId) {
                 handleAnimationPropertyChange(
-                  elementActive,
+                  targetElementId,
                   "animationDuration",
                   value
                 );
@@ -624,9 +609,12 @@ const AnimationComponent: FC = () => {
             size="small"
             style={{ width: 70 }}
             onChange={(value) => {
-              if (elementActive) {
+              // 如果选中了动画列表中的元素，更新那个元素；否则更新当前激活的元素
+              const targetElementId =
+                selectedAnimationElementId || elementActive;
+              if (targetElementId) {
                 handleAnimationPropertyChange(
-                  elementActive,
+                  targetElementId,
                   "animationDelay",
                   value
                 );
@@ -644,9 +632,12 @@ const AnimationComponent: FC = () => {
             size="small"
             style={{ width: 70 }}
             onChange={(value) => {
-              if (elementActive) {
+              // 如果选中了动画列表中的元素，更新那个元素；否则更新当前激活的元素
+              const targetElementId =
+                selectedAnimationElementId || elementActive;
+              if (targetElementId) {
                 handleAnimationPropertyChange(
-                  elementActive,
+                  targetElementId,
                   "animationTrigger",
                   value
                 );
@@ -660,6 +651,8 @@ const AnimationComponent: FC = () => {
           variant="outlined"
           icon={<Play theme="outline" size="14" fill="#333" />}
           className="bg-gray-100 text-[12px]"
+          onClick={handlePreviewAnimation}
+          disabled={!elementActive || !currentAnimationName}
         >
           预览动画
         </Button>

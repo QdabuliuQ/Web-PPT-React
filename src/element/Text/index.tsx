@@ -1,4 +1,4 @@
-import { MovableWrapper } from "@/components";
+import { AnimationWrapper, MovableWrapper } from "@/components";
 import { PanelButton } from "@/components/PanelButton";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
@@ -86,6 +86,10 @@ const Component: FC<ITextProps> = observer((props) => {
     placement,
     rotate,
     zIndex,
+    animationName,
+    animationDuration,
+    animationDelay,
+    animationTrigger,
     onSelect,
     onUnSelect,
   } = props;
@@ -365,8 +369,8 @@ const Component: FC<ITextProps> = observer((props) => {
   const className = [
     styles.textElement,
     isEditing ? styles.editing : "",
-    mode !== "preview" && isDragging ? styles.dragging : "",
-    mode !== "preview" && isSelected && !isEditing ? "element-selected" : "",
+    mode === "edit" && isDragging ? styles.dragging : "",
+    mode === "edit" && isSelected && !isEditing ? "element-selected" : "",
     !text && !isEditing ? styles.empty : "",
   ]
     .filter(Boolean)
@@ -388,7 +392,17 @@ const Component: FC<ITextProps> = observer((props) => {
         onKeyDown={isEditing ? handleKeyDown : undefined}
         onBlur={isEditing ? handleBlur : undefined}
       >
-        <span>{text || (isEditing ? "" : "")}</span>
+        <AnimationWrapper
+          mode={mode}
+          elementId={id}
+          animationName={animationName}
+          animationDuration={animationDuration}
+          animationDelay={animationDelay}
+          animationTrigger={animationTrigger}
+          className="w-full h-full"
+        >
+          <span>{text || (isEditing ? "" : "")}</span>
+        </AnimationWrapper>
       </div>
       {!isEditing && (
         <MovableWrapper
@@ -415,7 +429,17 @@ const Component: FC<ITextProps> = observer((props) => {
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      <span>{text || (isEditing ? "" : "")}</span>
+      <AnimationWrapper
+        mode={mode}
+        elementId={id}
+        animationName={animationName}
+        animationDuration={animationDuration}
+        animationDelay={animationDelay}
+        animationTrigger={animationTrigger}
+        className="w-full h-full"
+      >
+        <span>{text || (isEditing ? "" : "")}</span>
+      </AnimationWrapper>
     </div>
   );
 });

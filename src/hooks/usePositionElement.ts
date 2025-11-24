@@ -9,8 +9,6 @@ const CANVAS_HEIGHT = 700;
 
 export const usePositionElement = (pageId: string, elementId: string) => {
   const positionHandle = useMemoizedFn((position: Position) => {
-    console.log("position", position);
-
     const element = pptStore.getElementInfo(pageId, elementId);
     if (!element) return;
 

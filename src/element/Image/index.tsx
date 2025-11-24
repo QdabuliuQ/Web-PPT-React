@@ -1,4 +1,4 @@
-import { MovableWrapper } from "@/components";
+import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import { contextMenuStore, elementActiveStore, pageActiveStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
@@ -68,11 +68,16 @@ const Component: FC<IImageProps> = observer((props) => {
     height,
     rotate,
     zIndex,
+    animationName,
+    animationDuration,
+    animationDelay,
+    animationTrigger,
     onSelect,
     onUnSelect,
   } = props;
 
   const imageRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const moveableRef = useRef<any>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -218,11 +223,11 @@ const Component: FC<IImageProps> = observer((props) => {
     ]
   );
 
-  // 组合CSS类名
+  // 组合CSS类名（外层 div）
   const className = [
     styles.imageElement,
-    mode !== "preview" && isDragging ? styles.dragging : "",
-    mode !== "preview" && isSelected ? "element-selected" : "",
+    mode === "edit" && isDragging ? styles.dragging : "",
+    mode === "edit" && isSelected ? "element-selected" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -238,25 +243,36 @@ const Component: FC<IImageProps> = observer((props) => {
         onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
-        {!imageLoaded && !imageError && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
-            <Spin />
-          </div>
-        )}
-        {imageError && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
-            图片加载失败
-          </div>
-        )}
-        <img
-          src={src}
-          alt=""
-          className={imageLoaded ? "block" : "hidden"}
-          style={imageStyle}
-          draggable={false}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
+        <AnimationWrapper
+          mode={mode}
+          elementId={id}
+          animationName={animationName}
+          animationDuration={animationDuration}
+          animationDelay={animationDelay}
+          animationTrigger={animationTrigger}
+          className="w-full h-full"
+        >
+          {!imageLoaded && !imageError && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+              <Spin />
+            </div>
+          )}
+          {imageError && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
+              图片加载失败
+            </div>
+          )}
+          <img
+            ref={imgRef}
+            src={src}
+            alt=""
+            className={imageLoaded ? "block" : "hidden"}
+            style={imageStyle}
+            draggable={false}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        </AnimationWrapper>
       </div>
       <MovableWrapper
         ref={moveableRef}
@@ -282,25 +298,35 @@ const Component: FC<IImageProps> = observer((props) => {
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      {!imageLoaded && !imageError && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
-          <Spin />
-        </div>
-      )}
-      {imageError && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
-          图片加载失败
-        </div>
-      )}
-      <img
-        src={src}
-        alt=""
-        className={imageLoaded ? "block" : "hidden"}
-        style={imageStyle}
-        draggable={false}
-        onLoad={handleImageLoad}
-        onError={handleImageError}
-      />
+      <AnimationWrapper
+        mode={mode}
+        elementId={id}
+        animationName={animationName}
+        animationDuration={animationDuration}
+        animationDelay={animationDelay}
+        animationTrigger={animationTrigger}
+        className="w-full h-full"
+      >
+        {!imageLoaded && !imageError && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+            <Spin />
+          </div>
+        )}
+        {imageError && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
+            图片加载失败
+          </div>
+        )}
+        <img
+          src={src}
+          alt=""
+          className={imageLoaded ? "block" : "hidden"}
+          style={imageStyle}
+          draggable={false}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
+      </AnimationWrapper>
     </div>
   );
 });

@@ -1,4 +1,4 @@
-import { MovableWrapper } from "@/components";
+import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
@@ -65,6 +65,10 @@ const Component: FC<ITableProps> = (props) => {
     height,
     rotate,
     zIndex,
+    animationName,
+    animationDuration,
+    animationDelay,
+    animationTrigger,
     borderColor = "#d0d7de",
     borderWidth = 1,
     borderStyle = "solid",
@@ -877,7 +881,7 @@ const Component: FC<ITableProps> = (props) => {
     ({ onContextMenu }: { onContextMenu?: (e: React.MouseEvent) => void }) => {
       const className = [
         styles.tableContainer,
-        mode !== "preview" && isSelected ? "element-selected" : "",
+        mode === "edit" && isSelected ? "element-selected" : "",
       ]
         .filter(Boolean)
         .join(" ");
@@ -891,103 +895,116 @@ const Component: FC<ITableProps> = (props) => {
           onClick={mode === "edit" ? handleClick : undefined}
           onDoubleClick={mode === "edit" ? handleDoubleClick : undefined}
         >
-          <table
-            ref={tableRef}
-            className={styles.table}
-            style={{
-              fontSize: `${fontSize}px`,
-              fontFamily: fontFamily,
-            }}
+          <AnimationWrapper
+            mode={mode}
+            elementId={id}
+            animationName={animationName}
+            animationDuration={animationDuration}
+            animationDelay={animationDelay}
+            animationTrigger={animationTrigger}
+            className="w-full h-full"
           >
-            <tbody>
-              {tableData.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className={rowIndex === 0 ? styles.headerRow : styles.dataRow}
-                >
-                  {row.map((cell, colIndex) => {
-                    return (
-                      <td
-                        key={`${rowIndex}-${colIndex}`}
-                        data-cell-key={`${rowIndex}-${colIndex}`}
-                        className={`${
-                          rowIndex === 0 ? styles.headerCell : styles.dataCell
-                        } ${styles.cellBase}`}
-                        style={{
-                          width: `${currentColumnWidths[colIndex]}%`, // 应用列宽比例
-                          height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
-                          border: `${borderWidth}px ${borderStyle} ${borderColor}`,
-                        }}
-                        onClick={
-                          mode === "edit"
-                            ? (e) => handleCellClick(rowIndex, colIndex, e)
-                            : undefined
-                        }
-                        onMouseDown={
-                          mode === "edit"
-                            ? (e) => handleCellMouseDown(rowIndex, colIndex, e)
-                            : undefined
-                        }
-                      >
-                        <div
-                          className={`${styles.cellContent} ${
-                            selectedCells.has(`${rowIndex}-${colIndex}`)
-                              ? styles.selectedCell
-                              : ""
-                          }`}
+            <table
+              ref={tableRef}
+              className={styles.table}
+              style={{
+                fontSize: `${fontSize}px`,
+                fontFamily: fontFamily,
+              }}
+            >
+              <tbody>
+                {tableData.map((row, rowIndex) => (
+                  <tr
+                    key={rowIndex}
+                    className={
+                      rowIndex === 0 ? styles.headerRow : styles.dataRow
+                    }
+                  >
+                    {row.map((cell, colIndex) => {
+                      return (
+                        <td
+                          key={`${rowIndex}-${colIndex}`}
+                          data-cell-key={`${rowIndex}-${colIndex}`}
+                          className={`${
+                            rowIndex === 0 ? styles.headerCell : styles.dataCell
+                          } ${styles.cellBase}`}
                           style={{
-                            fontSize: `${cell.fontSize}px`,
-                            color: cell.color,
-                            fontWeight: cell.bold ? "bold" : "normal",
-                            fontStyle: cell.italic ? "italic" : "normal",
-                            textDecoration: `${cell.underline ? "underline" : ""} ${cell.strikethrough ? "line-through" : ""}`,
-                            backgroundColor: cell.backgroundColor,
-                            ...placementConvey(cell.placement), // flex布局应用到wrapper
+                            width: `${currentColumnWidths[colIndex]}%`, // 应用列宽比例
+                            height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
+                            border: `${borderWidth}px ${borderStyle} ${borderColor}`,
                           }}
+                          onClick={
+                            mode === "edit"
+                              ? (e) => handleCellClick(rowIndex, colIndex, e)
+                              : undefined
+                          }
+                          onMouseDown={
+                            mode === "edit"
+                              ? (e) =>
+                                  handleCellMouseDown(rowIndex, colIndex, e)
+                              : undefined
+                          }
                         >
-                          {cell.value || ""}
-                        </div>
-
-                        {/* 列调整句柄 - 只有在表格被选中且不在最后一列时显示 */}
-                        {isSelected && colIndex < row.length - 1 && (
                           <div
-                            className={`${styles.columnResizeHandle} ${
-                              resizing?.type === "column" &&
-                              resizing.index === colIndex
-                                ? styles.resizing
+                            className={`${styles.cellContent} ${
+                              selectedCells.has(`${rowIndex}-${colIndex}`)
+                                ? styles.selectedCell
                                 : ""
                             }`}
-                            onMouseDown={
-                              mode === "edit"
-                                ? (e) => handleColumnResize(colIndex, e)
-                                : undefined
-                            }
-                          />
-                        )}
+                            style={{
+                              fontSize: `${cell.fontSize}px`,
+                              color: cell.color,
+                              fontWeight: cell.bold ? "bold" : "normal",
+                              fontStyle: cell.italic ? "italic" : "normal",
+                              textDecoration: `${cell.underline ? "underline" : ""} ${cell.strikethrough ? "line-through" : ""}`,
+                              backgroundColor: cell.backgroundColor,
+                              ...placementConvey(cell.placement), // flex布局应用到wrapper
+                            }}
+                          >
+                            {cell.value || ""}
+                          </div>
 
-                        {/* 行调整句柄 - 只有在表格被选中且不在最后一行时显示 */}
-                        {isSelected && rowIndex < tableData.length - 1 && (
-                          <div
-                            className={`${styles.rowResizeHandle} ${
-                              resizing?.type === "row" &&
-                              resizing.index === rowIndex
-                                ? styles.resizing
-                                : ""
-                            }`}
-                            onMouseDown={
-                              mode === "edit"
-                                ? (e) => handleRowResize(rowIndex, e)
-                                : undefined
-                            }
-                          />
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                          {/* 列调整句柄 - 只有在表格被选中且不在最后一列时显示 */}
+                          {isSelected && colIndex < row.length - 1 && (
+                            <div
+                              className={`${styles.columnResizeHandle} ${
+                                resizing?.type === "column" &&
+                                resizing.index === colIndex
+                                  ? styles.resizing
+                                  : ""
+                              }`}
+                              onMouseDown={
+                                mode === "edit"
+                                  ? (e) => handleColumnResize(colIndex, e)
+                                  : undefined
+                              }
+                            />
+                          )}
+
+                          {/* 行调整句柄 - 只有在表格被选中且不在最后一行时显示 */}
+                          {isSelected && rowIndex < tableData.length - 1 && (
+                            <div
+                              className={`${styles.rowResizeHandle} ${
+                                resizing?.type === "row" &&
+                                resizing.index === rowIndex
+                                  ? styles.resizing
+                                  : ""
+                              }`}
+                              onMouseDown={
+                                mode === "edit"
+                                  ? (e) => handleRowResize(rowIndex, e)
+                                  : undefined
+                              }
+                            />
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </AnimationWrapper>
         </div>
       );
     }

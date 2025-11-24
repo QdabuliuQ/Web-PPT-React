@@ -1,3 +1,4 @@
+export { AnimationWrapper, type AnimationWrapperProps } from "./AnimationWrapper";
 export { ColorPanel } from "./ColorPanel";
 export { GlobalContextMenu } from "./GlobalContextMenu";
 export { MovableWrapper, type MovableWrapperProps } from "./MovableWrapper";

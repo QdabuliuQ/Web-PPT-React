@@ -32,8 +32,6 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
         ...(value ? { selectedKeys: [value] } : {}),
         // 总是设置onClick处理函数
         onClick: (info: any) => {
-          console.log(info, "info");
-
           onSelect?.(info.key);
           menu.onClick?.(info); // 保持原有的onClick逻辑
         },

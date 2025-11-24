@@ -16,6 +16,7 @@ import {
 } from "@/store";
 import type { Elements } from "@/store/ppt";
 import { getRandomId } from "@/utils";
+import { globalEventBus } from "@/utils/eventBus";
 import {
   Clipboard,
   CloseOne,
@@ -103,10 +104,22 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     setTimeout(calculateScale, 0);
   }, [calculateScale]);
 
-  // 监听页面变化，重置结束提示状态
+  // 用于跟踪点击触发的动画状态
+  const clickAnimationIndexRef = useRef<number>(0);
+  const clickAnimationElementsRef = useRef<Array<Elements>>([]);
+  const completedClickAnimationsRef = useRef<Set<string>>(new Set());
+  const currentPageIdForClickAnimationRef = useRef<string>("");
+
+  // 监听页面变化，重置结束提示状态和动画结束标志
   useEffect(() => {
     if (mode === "play") {
       setShowEndMessage(false);
+      animationEndHandledRef.current = false;
+      // 重置点击动画相关状态
+      clickAnimationIndexRef.current = 0;
+      clickAnimationElementsRef.current = [];
+      completedClickAnimationsRef.current = new Set();
+      currentPageIdForClickAnimationRef.current = "";
     }
   }, [page?.id, mode]);
 
@@ -456,36 +469,206 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       const pages = pptStore.getPages();
       // 使用传入的 page prop 或从 pageActiveStore 获取当前页面
       const currentPageId = page?.id || pageActiveStore.getPageActive();
-      const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
-      const isLastPage = currentPageIndex === pages.length - 1;
-
       const currentPage =
         page || pptStore.getActivePage(currentPageId as string);
-      const { clickToNext = true } = currentPage as any;
-      if (!clickToNext) {
+
+      if (!currentPage) return;
+
+      // 获取当前页面的所有元素
+      const allElements = pptStore.getAllElementInfo(currentPage.id);
+
+      // 筛选出有 animationName 且 animationTrigger 为 "click" 的元素
+      const clickAnimationElements = allElements.filter(
+        (element) =>
+          element.animationName &&
+          element.animationName !== "" &&
+          element.animationTrigger === "click"
+      );
+
+      // 如果当前页面没有点击动画元素，直接允许切换
+      if (clickAnimationElements.length === 0) {
+        const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
+        const isLastPage = currentPageIndex === pages.length - 1;
+
+        const { clickToNext = true } = currentPage as any;
+        if (!clickToNext) {
+          return;
+        }
+
+        // 先同步 pageActiveStore 到当前页面
+        if (currentPageId) {
+          pageActiveStore.setPageActive(currentPageId);
+        }
+        const lastPageId = pageActiveStore.getPageActive();
+        const newPageId = pageActiveStore.goToNextPage();
+
+        // 如果无法切换到下一页（已经是最后一页），显示结束提示
+        if (isLastPage && lastPageId === newPageId) {
+          setShowEndMessage(true);
+          return;
+        }
+
+        // 如果可以切换，切换到下一页
+        if (lastPageId !== newPageId && newPageId) {
+          fullscreenStore.enterFullscreen(newPageId);
+          setShowEndMessage(false);
+        }
         return;
       }
 
-      // 先同步 pageActiveStore 到当前页面
-      if (currentPageId) {
-        pageActiveStore.setPageActive(currentPageId);
-      }
-      const lastPageId = pageActiveStore.getPageActive();
-      const newPageId = pageActiveStore.goToNextPage();
+      // 按照 animationIndex 进行排序
+      const sortedClickElements = [...clickAnimationElements].sort((a, b) => {
+        const indexA = a.animationIndex ?? 0;
+        const indexB = b.animationIndex ?? 0;
+        return indexA - indexB;
+      });
 
-      // 如果无法切换到下一页（已经是最后一页），显示结束提示
-      if (isLastPage && lastPageId === newPageId) {
-        setShowEndMessage(true);
-        return;
+      // 检查是否需要重新初始化（页面切换或首次点击）
+      const needsReinit =
+        clickAnimationElementsRef.current.length === 0 ||
+        currentPageIdForClickAnimationRef.current !== currentPageId;
+
+      if (needsReinit) {
+        clickAnimationElementsRef.current = sortedClickElements;
+        clickAnimationIndexRef.current = 0;
+        completedClickAnimationsRef.current = new Set();
+        currentPageIdForClickAnimationRef.current = currentPageId || "";
       }
 
-      // 如果可以切换，切换到下一页
-      if (lastPageId !== newPageId && newPageId) {
-        fullscreenStore.enterFullscreen(newPageId);
-        setShowEndMessage(false); // 切换页面时重置提示状态
+      // 如果还有未触发的动画，触发下一个动画
+      if (
+        clickAnimationIndexRef.current <
+        clickAnimationElementsRef.current.length
+      ) {
+        const currentElement =
+          clickAnimationElementsRef.current[clickAnimationIndexRef.current];
+        if (currentElement) {
+          // 触发当前元素的动画
+          globalEventBus.emit(`animation-play-${currentElement.id}`);
+          // 移动到下一个索引
+          clickAnimationIndexRef.current += 1;
+        }
+      } else {
+        // 所有动画都已触发，检查是否都已完成
+        const allCompleted =
+          completedClickAnimationsRef.current.size ===
+          clickAnimationElementsRef.current.length;
+
+        if (allCompleted) {
+          // 所有动画都已完成，切换到下一页
+          const currentPageIndex = pages.findIndex(
+            (p) => p.id === currentPageId
+          );
+          const isLastPage = currentPageIndex === pages.length - 1;
+
+          const { clickToNext = true } = currentPage as any;
+          if (!clickToNext) {
+            return;
+          }
+
+          // 先同步 pageActiveStore 到当前页面
+          if (currentPageId) {
+            pageActiveStore.setPageActive(currentPageId);
+          }
+          const lastPageId = pageActiveStore.getPageActive();
+          const newPageId = pageActiveStore.goToNextPage();
+
+          // 如果无法切换到下一页（已经是最后一页），显示结束提示
+          if (isLastPage && lastPageId === newPageId) {
+            setShowEndMessage(true);
+            return;
+          }
+
+          // 如果可以切换，切换到下一页
+          if (lastPageId !== newPageId && newPageId) {
+            fullscreenStore.enterFullscreen(newPageId);
+            setShowEndMessage(false); // 切换页面时重置提示状态
+          }
+        }
+        // 如果还有动画未完成，等待动画完成事件
       }
     }
   });
+
+  // 监听点击动画的结束事件，更新完成状态
+  useEffect(() => {
+    if (mode !== "play") return;
+
+    const currentPageId = page?.id || pageActiveStore.getPageActive() || "";
+    if (!currentPageId) return;
+
+    const allElements = pptStore.getAllElementInfo(currentPageId);
+    const clickAnimationElements = allElements.filter(
+      (element) =>
+        element.animationName &&
+        element.animationName !== "" &&
+        element.animationTrigger === "click"
+    );
+
+    // 为每个点击动画元素注册动画结束监听
+    const handlers: Array<() => void> = [];
+
+    clickAnimationElements.forEach((element) => {
+      const eventName = `animation-end-${element.id}`;
+      const handler = () => {
+        // 标记该动画已完成
+        completedClickAnimationsRef.current.add(element.id);
+      };
+      globalEventBus.on(eventName, handler);
+      handlers.push(() => {
+        globalEventBus.off(eventName, handler);
+      });
+    });
+
+    return () => {
+      handlers.forEach((cleanup) => cleanup());
+    };
+  }, [mode, page?.id]);
+
+  // 用于防止重复执行的标志
+  const animationEndHandledRef = useRef(false);
+
+  // 处理页面切换动画结束事件
+  const handleAnimationEnd = useMemoizedFn(
+    (e: React.AnimationEvent<HTMLDivElement>) => {
+      if (mode !== "play") return;
+
+      // 只处理页面容器本身的动画结束事件，忽略子元素的动画事件
+      const target = e.target as HTMLElement;
+      const containerId =
+        mode === "play" ? "play-canvas-container" : "preview-canvas-container";
+
+      if (target.id !== containerId) return;
+
+      // 防止重复执行
+      if (animationEndHandledRef.current) return;
+      animationEndHandledRef.current = true;
+
+      // 获取当前页面
+      const currentPage =
+        page ||
+        pptStore.getActivePage(pageActiveStore.getPageActive() as string);
+
+      if (!currentPage) {
+        animationEndHandledRef.current = false;
+        return;
+      }
+
+      const allElements = pptStore.getAllElementInfo(currentPage.id);
+      allElements.forEach((element) => {
+        if (element.animationName && element.animationName !== "") {
+          if (element.animationTrigger === "default") {
+            globalEventBus.emit(`animation-play-${element.id}`);
+          }
+        }
+      });
+
+      // 延迟重置标志，确保只执行一次
+      setTimeout(() => {
+        animationEndHandledRef.current = false;
+      }, 100);
+    }
+  );
 
   const CanvasContainer = useMemoizedFn(() => {
     // 编辑模式：支持交互、右键菜单等
@@ -585,6 +768,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         }}
         onClick={playCanvasClickHandle}
         onContextMenu={mode === "play" ? handlePlayContextMenu : undefined}
+        onAnimationEnd={handleAnimationEnd}
       >
         {renderElements(false)}
         {showEndMessage && (

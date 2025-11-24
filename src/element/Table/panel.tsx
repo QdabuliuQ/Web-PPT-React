@@ -104,8 +104,6 @@ export const TablePanel: FC<ITablePanelProps> = observer(() => {
   // 处理单元格操作按钮点击
   const handleCellOperation = useMemoizedFn(
     (operation: keyof ITableProps["dataSource"][0][0], value?: any) => {
-      console.log("handleCellOperation", operation, value);
-
       if (!activeElementId || selectedCells.size === 0) return;
 
       // 使用 pptStore 的 updateTableCells 方法来处理更新
