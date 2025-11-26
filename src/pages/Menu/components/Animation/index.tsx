@@ -1,5 +1,5 @@
 import {
-  PanelAnimationSelect,
+  PanelItemSelect,
   PanelLargeButton,
   PanelSelect,
   PanelSplitLine,
@@ -569,14 +569,14 @@ const AnimationComponent: FC = () => {
 
   return (
     <div className="flex gap-[10px] h-[53px]">
-      <PanelAnimationSelect
-        displayAnimations={displayAnimations}
-        moreAnimations={moreAnimations}
-        selectedAnimation={currentAnimationName}
+      <PanelItemSelect
+        displayItems={displayAnimations}
+        moreItems={moreAnimations}
+        selectedValue={currentAnimationName}
         onSelect={handleAnimationSelect}
-        onAnimationHover={mouseEnterHandle}
-        onAnimationLeave={mouseLeaveHandle}
-        hoverAnimation={animationName}
+        onItemHover={mouseEnterHandle}
+        onItemLeave={mouseLeaveHandle}
+        hoveredValue={animationName}
       />
       <PanelSplitLine />
       <div className="flex flex-col justify-between mr-[5px]">

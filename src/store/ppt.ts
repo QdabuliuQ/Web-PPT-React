@@ -3,10 +3,16 @@ import type { IImageProps } from "@/element/Image";
 import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
 import type { PlacementMapped } from "@/element/Text/constant";
+import type { IMindMapProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { makeAutoObservable } from "mobx";
 
-export type Elements = ITextProps | ITableProps | IIconProps | IImageProps;
+export type Elements =
+  | ITextProps
+  | ITableProps
+  | IIconProps
+  | IImageProps
+  | IMindMapProps;
 export type Page = {
   id: string;
   elements: Array<Elements>;
@@ -143,7 +149,12 @@ class PPTStore {
   setElementInfo(
     pageId: string,
     elementId: string,
-    elementInfo: ITextProps | ITableProps | IIconProps | IImageProps
+    elementInfo:
+      | ITextProps
+      | ITableProps
+      | IIconProps
+      | IImageProps
+      | IMindMapProps
   ) {
     // 找到页面
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
@@ -168,7 +179,12 @@ class PPTStore {
 
   addElementInfo(
     pageId: string,
-    elementInfo: ITextProps | ITableProps | IIconProps | IImageProps
+    elementInfo:
+      | ITextProps
+      | ITableProps
+      | IIconProps
+      | IImageProps
+      | IMindMapProps
   ) {
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return;

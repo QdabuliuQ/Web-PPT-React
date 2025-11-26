@@ -41,8 +41,17 @@ export const useContextMenu = (
               <Item
                 key={key}
                 onClick={(args) => {
-                  item.onClick?.(args);
-                  hideAll();
+                  if (item.onClick) {
+                    try {
+                      item.onClick(args);
+                    } catch (error) {
+                      console.error("Menu item onClick error:", error);
+                    }
+                  }
+                  // 延迟关闭菜单，确保 onClick 回调能够完整执行
+                  setTimeout(() => {
+                    hideAll();
+                  }, 0);
                 }}
                 disabled={item.disabled}
               >

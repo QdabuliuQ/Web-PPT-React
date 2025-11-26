@@ -38,18 +38,6 @@ export const GlobalContextMenu: FC<{ parentSelector?: string }> = observer(
       }
     }, [visible, position, show]);
 
-    // 监听全局点击事件，关闭菜单
-    useEffect(() => {
-      const handleGlobalClick = () => {
-        contextMenuStore.hideMenu();
-      };
-
-      document.addEventListener("click", handleGlobalClick);
-      return () => {
-        document.removeEventListener("click", handleGlobalClick);
-      };
-    }, []);
-
     return <ContextMenu />;
   }
 );

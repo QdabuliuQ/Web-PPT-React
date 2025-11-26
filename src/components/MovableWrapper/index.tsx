@@ -1,3 +1,4 @@
+import { menuActiveStore } from "@/store";
 import {
   forwardRef,
   memo,
@@ -88,6 +89,8 @@ export interface MovableWrapperProps {
   onRotateStart?: () => void;
   onRotate?: (params: { rotate: number; transform: string }) => void;
   onRotateEnd?: () => void;
+  onSelect?: () => void; // 选中时触发
+  onDeselect?: () => void; // 取消选中时触发
 }
 
 export const MovableWrapper = memo(
@@ -116,6 +119,8 @@ export const MovableWrapper = memo(
         onRotateStart,
         onRotate,
         onRotateEnd,
+        onSelect,
+        onDeselect,
       },
       ref
     ) => {
@@ -154,6 +159,21 @@ export const MovableWrapper = memo(
           setDragHandle(null);
         }
       }, [dragOnlyButton, active, id]);
+
+      // 监听选中/取消选中状态
+      const prevActiveRef = useRef<boolean | undefined>(active);
+      useEffect(() => {
+        const prevActive = prevActiveRef.current;
+        if (active && !prevActive) {
+          // 从非激活变为激活，触发选中事件
+          onSelect?.();
+        } else if (!active && prevActive) {
+          // 从激活变为非激活，触发取消选中事件
+          onDeselect?.();
+          menuActiveStore.resetMenu();
+        }
+        prevActiveRef.current = active;
+      }, [active, onSelect, onDeselect]);
 
       // 监听位置变化和激活状态，更新 Moveable
       useEffect(() => {

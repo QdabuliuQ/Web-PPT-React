@@ -33,3 +33,9 @@ export interface IImageProps extends ICommonElementProps {
   borderColor: string;
   borderStyle: "solid" | "dashed" | "dotted";
 }
+
+export interface IMindMapProps extends ICommonElementProps {
+  type: "mindmap";
+  data?: any; // X6 数据格式 { nodes: [], edges: [] }
+  readonly?: boolean; // 是否只读
+}

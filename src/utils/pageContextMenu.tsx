@@ -3,6 +3,7 @@ import {
   contextMenuStore,
   elementActiveStore,
   fullscreenStore,
+  menuActiveStore,
   pageActiveStore,
   pptStore,
 } from "@/store";
@@ -11,6 +12,7 @@ import {
   ArrowDown,
   ArrowUp,
   BringForward,
+  Clear,
   Copy,
   Delete,
   Play,
@@ -103,11 +105,33 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
       },
     },
     {
+      type: "separator",
+    },
+    {
       type: "item" as const,
       label: "播放幻灯片",
       icon: <Play theme="outline" size="13" fill="#333" />,
       onClick: () => {
         fullscreenStore.enterFullscreen(pageId);
+        contextMenuStore.hideMenu();
+      },
+    },
+    {
+      type: "item" as const,
+      label: "重置幻灯片",
+      icon: <Clear theme="outline" size="13" fill="#333" />,
+      onClick: () => {
+        const pageIndex = pptStore.getPages().findIndex((p) => p.id === pageId);
+        if (pageIndex !== -1) {
+          const pages = [...pptStore.getPages()];
+          pages[pageIndex] = {
+            ...pages[pageIndex],
+            elements: [],
+          };
+          pptStore.setPages(pages);
+          elementActiveStore.resetElementActive();
+          menuActiveStore.resetMenu();
+        }
         contextMenuStore.hideMenu();
       },
     },

@@ -205,6 +205,11 @@ export default {
       clickToNext: true,
       autoToggle: false,
       autoToggleTime: 5,
+      backgroundType: "solidColor",
+      background: "#fff",
+      bgColor: "#e4e4e4",
+      fgColor: "#9C92AC",
+      bgOpacity: 0.4,
     },
     {
       id: getRandomId(),
@@ -322,6 +327,11 @@ export default {
       clickToNext: true,
       autoToggle: false,
       autoToggleTime: 5,
+      backgroundType: "solidColor",
+      background: "#fff",
+      bgColor: "#9C92AC",
+      fgColor: "#9C92AC",
+      bgOpacity: 0.4,
     },
   ],
 };

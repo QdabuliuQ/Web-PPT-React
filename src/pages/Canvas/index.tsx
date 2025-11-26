@@ -1,10 +1,12 @@
 import { GlobalContextMenu } from "@/components";
 import { Icon } from "@/element/Icon";
 import { Image } from "@/element/Image";
+import { MindMap } from "@/element/MindMap";
 import { Table } from "@/element/Table";
 import { Text } from "@/element/Text";
 import type { MenuItem } from "@/hooks/useContextMenu";
 import MockData from "@/mock";
+import { textureItems } from "@/pages/Menu/components/Start/texture";
 import {
   contextMenuStore,
   copyElementStore,
@@ -191,10 +193,9 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
     const currentActiveElement = elementActiveStore.getElementActive();
 
-    // 如果选中的是不同的元素，或者没有选中任何元素，则进行切换
     if (currentActiveElement !== elementId) {
       elementActiveStore.setElementActive(elementId);
-      // Header组件会自动处理菜单激活，这里不需要重复设置
+      contextMenuStore.hideMenu();
     }
   });
 
@@ -232,6 +233,60 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     mode === "edit"
       ? pptStore.getActivePage(pageActiveStore.getPageActive() as string)
       : page;
+
+  // 获取页面背景属性
+  const backgroundType = (currentPage as any)?.backgroundType || "solidColor";
+  const background = (currentPage as any)?.background || "#fff";
+  const bgColor = (currentPage as any)?.bgColor || "#9C92AC";
+  const fgColor = (currentPage as any)?.fgColor || "#9C92AC";
+  const bgOpacity = (currentPage as any)?.bgOpacity ?? 0.4;
+  const selectedTexture = (currentPage as any)?.selectedTexture || "";
+
+  // 生成背景样式
+  const getBackgroundStyle = useMemoizedFn(() => {
+    if (backgroundType === "solidColor") {
+      return {
+        backgroundColor: background,
+        backgroundImage: "none",
+      };
+    } else if (backgroundType === "texture" && selectedTexture) {
+      // 从 textureItems 中查找对应的纹理项
+      const textureItem = textureItems.find(
+        (item) => item.type === selectedTexture
+      );
+      let textureBackgroundImage = textureItem?.style.backgroundImage || "";
+
+      // 替换 SVG 中的 fill 和 fill-opacity
+      if (textureBackgroundImage) {
+        // 将 fgColor 转换为 URL 编码格式（去掉 #，添加 %23）
+        const encodedFgColor = fgColor.replace("#", "%23");
+
+        // 替换 fill='%23------' 为 fill='%23' + fgColor（去掉#）
+        textureBackgroundImage = textureBackgroundImage.replace(
+          /fill='%23[0-9A-Fa-f]{6}'/g,
+          `fill='${encodedFgColor}'`
+        );
+
+        // 替换 fill-opacity='----' 为 fill-opacity='' + bgOpacity
+        textureBackgroundImage = textureBackgroundImage.replace(
+          /fill-opacity='[^']*'/g,
+          `fill-opacity='${bgOpacity}'`
+        );
+      }
+
+      // 对于纹理背景，使用 bgColor 作为背景色，backgroundImage 从 textureItems 获取并替换颜色
+      return {
+        backgroundColor: bgColor,
+        backgroundImage: textureBackgroundImage,
+      };
+    }
+    return {
+      backgroundColor: "#fff",
+      backgroundImage: "none",
+    };
+  });
+
+  const backgroundStyle = getBackgroundStyle();
 
   // 获取全屏状态（直接访问属性，确保 MobX 能追踪依赖）
   const isFullscreen = fullscreenStore.isFullscreen;
@@ -339,6 +394,18 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
               })}
             />
           );
+        } else if (element.type === "mindmap") {
+          return (
+            <MindMap
+              key={element.id}
+              {...element}
+              type="mindmap"
+              mode={mode}
+              {...(isEditMode && {
+                onSelect: () => handleElementSelect(element.id),
+              })}
+            />
+          );
         }
         return null;
       })
@@ -436,8 +503,11 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
           />
         ),
         onClick: () => {
+          console.log("hide");
+
           // 关闭菜单
           contextMenuStore.hideMenu();
+
           // 退出全屏模式
           fullscreenStore.exitFullscreen();
           // 同步更新编辑模式的当前页
@@ -676,9 +746,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       return (
         <div
           id="canvas-container"
-          className="absolute bg-[#fff] overflow-hidden transition-transform duration-200 ease-in-out"
+          className="absolute overflow-hidden transition-transform duration-200 ease-in-out"
           style={{
             ...canvasStyle,
+            ...backgroundStyle,
           }}
           onClick={handleCanvasClick}
           onContextMenu={(e) => {
@@ -719,6 +790,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                 disabled: !copyElementStore.hasCopiedElement(),
               });
               elementActiveStore.resetElementActive();
+              menuActiveStore.resetMenu();
             }
 
             // 显示全局右键菜单
@@ -764,7 +836,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         className={`${animationClassName} absolute overflow-hidden transition-transform duration-200 ease-in-out`}
         style={{
           ...canvasStyle,
-          backgroundColor: showEndMessage ? "#000" : "#fff",
+          ...(showEndMessage ? { backgroundColor: "#000" } : backgroundStyle),
         }}
         onClick={playCanvasClickHandle}
         onContextMenu={mode === "play" ? handlePlayContextMenu : undefined}

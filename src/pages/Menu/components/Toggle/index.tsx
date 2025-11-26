@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import {
-  PanelAnimationSelect,
+  PanelItemSelect,
   PanelLargeButton,
   PanelSelect,
   PanelSplitLine,
@@ -316,14 +316,14 @@ const ToggleComponent: FC = () => {
 
   return (
     <div className="flex gap-[10px] h-[53px]">
-      <PanelAnimationSelect
-        displayAnimations={displayAnimations}
-        moreAnimations={moreAnimations}
-        selectedAnimation={currentToggleIn}
+      <PanelItemSelect
+        displayItems={displayAnimations}
+        moreItems={moreAnimations}
+        selectedValue={currentToggleIn}
         onSelect={handleAnimationSelect}
-        onAnimationHover={mouseEnterHandle}
-        onAnimationLeave={mouseLeaveHandle}
-        hoverAnimation={animationName}
+        onItemHover={mouseEnterHandle}
+        onItemLeave={mouseLeaveHandle}
+        hoveredValue={animationName}
       />
       <PanelSplitLine />
       <div className="flex flex-col justify-between gap-[4px] mr-[5px]">

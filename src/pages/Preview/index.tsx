@@ -1,6 +1,8 @@
 import {
+  contextMenuStore,
   elementActiveStore,
   fullscreenStore,
+  menuActiveStore,
   pageActiveStore,
   pptStore,
 } from "@/store";
@@ -56,10 +58,10 @@ const PreviewComponent: FC = () => {
 
   // 处理点击页面切换
   const handlePageClick = useMemoizedFn((pageId: string) => {
-    // 清空选中的元素
+    menuActiveStore.resetMenu();
     elementActiveStore.resetElementActive();
-    // 切换到点击的页面
     pageActiveStore.setPageActive(pageId);
+    contextMenuStore.hideMenu();
   });
 
   // 处理添加页面
@@ -173,7 +175,6 @@ const PreviewComponent: FC = () => {
             className={`${styles.pageItem} relative mr-[15px] cursor-pointer flex gap-[8px]`}
             key={page.id}
           >
-            {/* 页码索引 - 左边 */}
             <span
               className={`text-[13px] mt-[5px] font-bold ${
                 pageActive === page.id ? "text-primary" : "text-[#9b9b9b]"

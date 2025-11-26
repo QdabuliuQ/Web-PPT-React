@@ -1,6 +1,6 @@
 /* 自定义 OverlayScrollbars 样式 - 3px滚动条 */
 .os-scrollbar-horizontal .os-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05) !important;
+  background: #fff !important;
   height: 3px !important;
   border-radius: 1.5px !important;
 }

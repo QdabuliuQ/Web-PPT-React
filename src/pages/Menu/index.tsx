@@ -54,7 +54,7 @@ export const Menu: FC = observer(() => {
   return (
     <div
       ref={containerRef}
-      className="w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px] max-h-[70px] min-h-[70px]"
+      className="overflow-hidden w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px] max-h-[70px] min-h-[70px]"
     >
       <OverlayScrollbarsComponent
         className="custom-scrollbar"
@@ -68,20 +68,24 @@ export const Menu: FC = observer(() => {
             y: "hidden",
           },
         }}
-        style={{ width: "100%", height: "100%", position: "relative" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+        }}
       >
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: needsScroll ? "flex-start" : "center",
-            height: "100%",
-            minWidth: "100%",
-          }}
+          className={`h-full flex items-center ${needsScroll ? "justify-start" : "justify-center"}`}
         >
-          <div ref={contentRef} style={{ flexShrink: 0 }}>
+          <span className="inline-block h-full w-[20px] min-w-[20px]"></span>
+          <div
+            ref={contentRef}
+            style={{ flexShrink: 0 }}
+            className="flex items-center"
+          >
             {ActivePanelComponent ? <ActivePanelComponent /> : null}
           </div>
+          <span className="inline-block h-full w-[20px] min-w-[20px]"></span>
         </div>
       </OverlayScrollbarsComponent>
     </div>
