@@ -8,21 +8,18 @@ import {
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
-import { Export, Graph, Node, Path, Shape } from "@antv/x6";
+import { Export, Graph, Path, Shape } from "@antv/x6";
 import { register } from "@antv/x6-react-shape";
 import { useMemoizedFn } from "ahooks";
-import { Modal, message } from "antd";
+import { Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
 import { getMindMapMenuItems } from "./menu";
+import { MindMapModal } from "./MindMapModal";
 import { MindMapNode } from "./MindMapNode";
-import {
-  createDefaultMindMapData,
-  getDataFromGraph,
-  type X6GraphData,
-} from "./utils";
+import { createDefaultMindMapData, type X6GraphData } from "./utils";
 
 export { MindMapButtonComponent as MindMapButton } from "./button";
 export { getMindMapMenuItems } from "./menu";
@@ -134,7 +131,7 @@ Shape.Edge.registry.register(
         targetMarker: null,
       },
     },
-    zIndex: 0,
+    zIndex: -1, // 边的 zIndex 设置为 -1，确保在节点下方
   },
   true
 );
@@ -166,11 +163,12 @@ const Component: FC<IMindMapProps> = observer((props) => {
       ? (pptStore.getElementInfo(currentPageId, id) as IMindMapProps | null)
       : null;
   const previewImage = (currentElement as any)?.previewImage;
+  const backgroundColor =
+    (currentElement as any)?.mindMapBackgroundColor || "#F2F7FA";
 
-  const modalContainerRef = useRef<HTMLDivElement>(null);
-  const graphRef = useRef<Graph | null>(null);
   const moveableRef = useRef<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 使用通用的可移动元素hook
   const {
@@ -251,7 +249,8 @@ const Component: FC<IMindMapProps> = observer((props) => {
   const exportGraphToSVG = useMemoizedFn(
     async (
       graph: Graph,
-      viewBox: { x: number; y: number; width: number; height: number }
+      viewBox: { x: number; y: number; width: number; height: number },
+      backgroundColor?: string
     ) => {
       return new Promise<string>((resolve) => {
         // 直接在 toSVG 选项中传入 viewBox，让 X6 自动处理
@@ -267,6 +266,25 @@ const Component: FC<IMindMapProps> = observer((props) => {
               const element = port as SVGElement;
               element.style.display = "none";
             });
+
+            // 如果有背景色，添加背景矩形
+            if (backgroundColor) {
+              const rect = svgDoc.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect"
+              );
+              rect.setAttribute("x", String(viewBox.x));
+              rect.setAttribute("y", String(viewBox.y));
+              rect.setAttribute("width", String(viewBox.width));
+              rect.setAttribute("height", String(viewBox.height));
+              rect.setAttribute("fill", backgroundColor);
+              // 将背景矩形插入到最前面
+              if (svgElement.firstChild) {
+                svgElement.insertBefore(rect, svgElement.firstChild);
+              } else {
+                svgElement.appendChild(rect);
+              }
+            }
 
             // 将修改后的 SVG 转换为字符串
             const serializer = new XMLSerializer();
@@ -287,6 +305,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
   const initPreviewImage = useMemoizedFn(async () => {
     if (!currentPageId || !id || previewImage) return;
 
+    setIsLoading(true);
     try {
       // 创建一个临时的隐藏容器
       const tempContainer = document.createElement("div");
@@ -302,6 +321,9 @@ const Component: FC<IMindMapProps> = observer((props) => {
         container: tempContainer,
         width: 800,
         height: 600,
+        background: {
+          color: "#F2F7FA", // 默认背景色
+        },
         grid: {
           visible: false, // 预览图不需要显示网格
           type: "dot",
@@ -343,8 +365,6 @@ const Component: FC<IMindMapProps> = observer((props) => {
 
       // 使用 Export 插件
       tempGraph.use(new Export());
-      console.log(data, "datadata");
-
       // 加载数据
       const graphData = data || createDefaultMindMapData();
       tempGraph.fromJSON(graphData);
@@ -352,43 +372,22 @@ const Component: FC<IMindMapProps> = observer((props) => {
       // 等待渲染完成（增加等待时间确保边完全渲染）
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // 计算所有节点的边界框
-      const nodes = tempGraph.getNodes();
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-
-      if (nodes.length > 0) {
-        nodes.forEach((node) => {
-          const bbox = node.getBBox();
-          minX = Math.min(minX, bbox.x);
-          minY = Math.min(minY, bbox.y);
-          maxX = Math.max(maxX, bbox.x + bbox.width);
-          maxY = Math.max(maxY, bbox.y + bbox.height);
-        });
-
-        const padding = 20;
-        minX -= padding;
-        minY -= padding;
-        maxX += padding;
-        maxY += padding;
-      } else {
-        minX = 0;
-        minY = 0;
-        maxX = 800;
-        maxY = 600;
-      }
-
+      // 计算 viewBox
+      const box = tempGraph.getContentBBox({ useCellGeometry: false });
+      const padding = 20;
       const viewBox = {
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY,
+        x: box.x - padding,
+        y: box.y - padding,
+        width: box.width + padding * 2,
+        height: box.height + padding * 2,
       };
 
-      // 使用公共函数导出 SVG
-      const modifiedSvgString = await exportGraphToSVG(tempGraph, viewBox);
+      // 使用公共函数导出 SVG（传入背景色）
+      const modifiedSvgString = await exportGraphToSVG(
+        tempGraph,
+        viewBox,
+        "#F2F7FA" // 默认背景色
+      );
       const svgBlob = new Blob([modifiedSvgString], {
         type: "image/svg+xml",
       });
@@ -413,6 +412,8 @@ const Component: FC<IMindMapProps> = observer((props) => {
       }, 1000);
     } catch (error) {
       console.error("初始化预览图片失败:", error);
+    } finally {
+      setIsLoading(false);
     }
   });
 
@@ -423,382 +424,55 @@ const Component: FC<IMindMapProps> = observer((props) => {
     }
   }, [previewImage, data, currentPageId, id, initPreviewImage]);
 
-  // 生成预览图片
-  const generatePreviewImage = useMemoizedFn(async () => {
-    if (!graphRef.current || !currentPageId || !id) return;
-
-    try {
-      const graph = graphRef.current;
-
-      // 获取当前元素
-      const currentElement = pptStore.getElementInfo(currentPageId, id);
-      if (!currentElement) return;
-
-      // 等待 React 节点渲染完成
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // 使用 getContentBBox() 获取内容边界框（参考 XFlow 的实现）
-      const box = graph.getContentBBox();
-      const padding = 20;
-      const viewBox = {
-        x: box.x - padding,
-        y: box.y - padding,
-        width: box.width + padding * 2,
-        height: box.height + padding * 2,
-      };
-
-      // 使用公共函数导出 SVG
-      const modifiedSvgString = await exportGraphToSVG(graph, viewBox);
-      const svgBlob = new Blob([modifiedSvgString], {
-        type: "image/svg+xml",
-      });
-
-      // 将 SVG 转换为图片
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageData = reader.result as string;
-        const updatedElement = pptStore.getElementInfo(currentPageId, id);
-        if (updatedElement) {
-          pptStore.setElementInfo(currentPageId, id, {
-            ...updatedElement,
-            previewImage: imageData,
-          } as any);
-        }
-      };
-      reader.readAsDataURL(svgBlob);
-    } catch (error) {
-      console.error("生成预览图片失败:", error);
-    }
-  });
-
-  // 初始化 X6 Graph
-  const initGraph = useMemoizedFn(() => {
-    if (!modalContainerRef.current) return;
-
-    // 如果已经初始化过，先销毁
-    if (graphRef.current) {
-      graphRef.current.dispose();
-      graphRef.current = null;
-    }
-
-    // 创建 Graph 实例
-    const graph = new Graph({
-      container: modalContainerRef.current,
-      width: modalContainerRef.current.clientWidth,
-      height: modalContainerRef.current.clientHeight,
-      grid: {
-        visible: true,
-        type: "dot",
-        args: {
-          color: "#e0e0e0",
-          thickness: 1,
-        },
-      },
-      panning: {
-        enabled: true,
-        eventTypes: ["leftMouseDown", "mouseWheel"],
-      },
-      mousewheel: {
-        enabled: true,
-        zoomAtMousePosition: true,
-        modifiers: "ctrl",
-        minScale: 0.5,
-        maxScale: 4,
-      },
-      connecting: {
-        router: "manhattan",
-        connector: {
-          name: "rounded",
-          args: {
-            radius: 8,
-          },
-        },
-        anchor: "center",
-        connectionPoint: "anchor",
-        allowBlank: false,
-        snap: {
-          radius: 20,
-        },
-        createEdge() {
-          return new Shape.Edge({
-            shape: "mindmap-edge",
-          });
-        },
-        validateConnection({ targetMagnet }) {
-          return !!targetMagnet;
-        },
-      },
-      highlighting: {
-        magnetAdsorbed: {
-          name: "stroke",
-          args: {
-            attrs: {
-              fill: "#fff",
-              stroke: "#31d0c6",
-              strokeWidth: 4,
-            },
-          },
-        },
-      },
-    });
-
-    // 使用 Export 插件
-    graph.use(new Export());
-
-    graphRef.current = graph;
-
-    // 加载数据或使用默认数据
-    const graphData = data || createDefaultMindMapData();
-    graph.fromJSON(graphData);
-
-    // 等待 React 节点渲染完成后居中画布
-    graph.centerContent();
-
-    // 编辑功能在 MindMapNode 组件内部完成，不需要 addTools
-
-    // 存储选中的节点
-    let selectedNode: Node | null = null;
-
-    // 监听节点点击事件 - 选中节点
-    graph.on("node:click", ({ node }) => {
-      // 取消之前的选中样式
-      if (selectedNode) {
-        selectedNode.setAttrs({
-          body: {
-            stroke: "#5F95FF",
-            strokeWidth: 1,
-          },
-        });
-      }
-      // 设置当前节点为选中状态
-      selectedNode = node;
-      node.setAttrs({
-        body: {
-          stroke: "#1890ff",
-          strokeWidth: 2,
-        },
-      });
-    });
-
-    // 监听空白区域点击 - 取消选中
-    graph.on("blank:click", () => {
-      if (selectedNode) {
-        selectedNode.setAttrs({
-          body: {
-            stroke: "#5F95FF",
-            strokeWidth: 1,
-          },
-        });
-        selectedNode = null;
-      }
-    });
-
-    // 监听节点添加子节点事件
-    graph.on("node:add-child", ({ node }) => {
-      if (readonly) return;
-      const parentNode = node;
-      const parentId = parentNode.id;
-      const childId = `node_${Date.now()}`;
-
-      // 获取父节点位置和大小
-      const parentPosition = parentNode.getPosition();
-      const parentSize = parentNode.getSize();
-
-      // 查找父节点的所有现有子节点
-      const existingEdges = graph
-        .getEdges()
-        .filter((edge) => edge.getSourceCellId() === parentId);
-      const existingChildNodes = existingEdges
-        .map((edge) => graph.getCellById(edge.getTargetCellId()))
-        .filter(
-          (cell): cell is Node => cell !== null && cell.isNode()
-        ) as Node[];
-
-      // 计算新节点的位置
-      // 默认间距
-      const spacing = 200;
-      let newX = parentPosition.x + parentSize.width + spacing;
-      let newY = parentPosition.y;
-
-      // 如果有现有子节点，计算合适的位置避免重叠
-      if (existingChildNodes.length > 0) {
-        // 找到最右侧的子节点
-        const rightmostChild = existingChildNodes.reduce((prev, curr) => {
-          const prevPos = prev.getPosition();
-          const currPos = curr.getPosition();
-          return currPos.x > prevPos.x ? curr : prev;
-        });
-
-        const rightmostPos = rightmostChild.getPosition();
-        const rightmostSize = rightmostChild.getSize();
-
-        // 新节点放在最右侧子节点的右侧
-        newX = rightmostPos.x + rightmostSize.width + spacing;
-        newY = rightmostPos.y;
-      }
-
-      // 创建子节点
-      const childNode = graph.addNode({
-        id: childId,
-        shape: "mindmap-node",
-        x: newX,
-        y: newY,
-        data: {
-          topic: "新节点",
-          level: (parentNode.getData()?.level || 0) + 1,
-        },
-        attrs: {
-          text: {
-            text: "新节点",
-          },
-        },
-      });
-
-      // 创建边
-      graph.addEdge({
-        source: parentId,
-        target: childId,
-        shape: "mindmap-edge",
-      });
-
-      // 选中新节点
-      childNode.setAttrs({
-        body: {
-          stroke: "#1890ff",
-          strokeWidth: 2,
-        },
-      });
-
-      // 居中显示内容
-      graph.centerContent();
-    });
-  });
-
-  // 销毁 X6 Graph
-  const destroyGraph = useMemoizedFn(() => {
-    if (graphRef.current) {
-      graphRef.current.dispose();
-      graphRef.current = null;
-    }
-  });
-
-  // Modal 打开时初始化 Graph
+  // Modal 打开处理
   const handleModalOpen = useMemoizedFn(() => {
     setModalOpen(true);
-    // 延迟初始化，确保 DOM 已渲染
-    setTimeout(() => {
-      initGraph();
-    }, 100);
   });
 
-  // Modal 关闭时销毁 Graph
+  // Modal 关闭处理
   const handleModalClose = useMemoizedFn(async () => {
-    // 更新 mobx store 和生成预览图片
-    if (graphRef.current && currentPageId && id) {
-      // 更新数据到 store
-      const updatedData = getDataFromGraph(graphRef.current);
+    setModalOpen(false);
+  });
+
+  // 处理数据变更
+  const handleDataChange = useMemoizedFn((updatedData: X6GraphData) => {
+    if (currentPageId && id) {
       const currentElement = pptStore.getElementInfo(currentPageId, id);
       if (currentElement) {
+        console.log(updatedData, "updatedData");
+
         pptStore.setElementInfo(currentPageId, id, {
           ...currentElement,
           data: updatedData,
         } as any);
       }
-
-      // 生成最终的预览图片
-      await generatePreviewImage();
     }
-    destroyGraph();
-    setModalOpen(false);
   });
 
-  // 添加子节点
-  const handleAddChild = useMemoizedFn(() => {
-    if (!graphRef.current || readonly) return;
-
-    const graph = graphRef.current;
-    // 获取所有节点，找到第一个节点作为父节点（简化实现）
-    const nodes = graph.getNodes();
-    if (nodes.length === 0) {
-      message.warning("请先创建根节点");
-      return;
+  // 处理预览图片变更
+  const handlePreviewImageChange = useMemoizedFn((imageData: string) => {
+    if (currentPageId && id) {
+      const updatedElement = pptStore.getElementInfo(currentPageId, id);
+      if (updatedElement) {
+        pptStore.setElementInfo(currentPageId, id, {
+          ...updatedElement,
+          previewImage: imageData,
+        } as any);
+      }
     }
-
-    // 使用最后一个节点作为父节点（实际应该使用选中的节点）
-    const parentNode = nodes[nodes.length - 1];
-    const parentId = parentNode.id;
-    const childId = `node_${Date.now()}`;
-
-    // 获取父节点位置
-    const parentPosition = parentNode.getPosition();
-    const parentSize = parentNode.getSize();
-
-    // 创建子节点
-    const childNode = graph.addNode({
-      id: childId,
-      shape: "mindmap-node",
-      x: parentPosition.x + parentSize.width + 200,
-      y: parentPosition.y,
-      data: {
-        topic: "新节点",
-        level: (parentNode.getData()?.level || 0) + 1,
-      },
-      attrs: {
-        text: {
-          text: "新节点",
-        },
-      },
-    });
-
-    // 创建边
-    graph.addEdge({
-      source: parentId,
-      target: childId,
-      shape: "mindmap-edge",
-    });
-
-    // 选中新节点
-    childNode.setAttrs({
-      body: {
-        stroke: "#1890ff",
-        strokeWidth: 2,
-      },
-    });
-    // 工具已在创建时添加，双击节点即可编辑
   });
 
-  // 删除节点
-  const handleDeleteNode = useMemoizedFn(() => {
-    if (!graphRef.current || readonly) return;
-
-    const graph = graphRef.current;
-    // 获取所有节点，删除最后一个（实际应该删除选中的节点）
-    const nodes = graph.getNodes();
-    if (nodes.length === 0) {
-      message.warning("没有可删除的节点");
-      return;
+  // 处理背景色变更
+  const handleBackgroundColorChange = useMemoizedFn((color: string) => {
+    if (currentPageId && id) {
+      const updatedElement = pptStore.getElementInfo(currentPageId, id);
+      if (updatedElement) {
+        pptStore.setElementInfo(currentPageId, id, {
+          ...updatedElement,
+          mindMapBackgroundColor: color,
+        } as any);
+      }
     }
-
-    const selectedNodes = [nodes[nodes.length - 1]];
-
-    selectedNodes.forEach((node) => {
-      // 删除节点及其所有子节点
-      const removeNodeAndChildren = (nodeId: string) => {
-        const edges = graph.getEdges();
-        const childEdges = edges.filter(
-          (edge) => edge.getSourceCellId() === nodeId
-        );
-        childEdges.forEach((edge) => {
-          removeNodeAndChildren(edge.getTargetCellId());
-          graph.removeEdge(edge);
-        });
-        graph.removeNode(nodeId);
-      };
-
-      removeNodeAndChildren(node.id);
-    });
-
-    message.success("删除成功");
   });
 
   // 动态样式（位置、大小等）
@@ -841,18 +515,24 @@ const Component: FC<IMindMapProps> = observer((props) => {
           animationDuration={animationDuration}
           animationDelay={animationDelay}
           animationTrigger={animationTrigger}
-          className="w-full h-full"
+          className="w-full h-full relative"
         >
-          {previewImage ? (
-            <img
-              src={previewImage}
-              alt="思维导图预览"
-              className="w-full h-full object-contain"
-              style={{ pointerEvents: "none" }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-              双击编辑思维导图
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+              <Spin size="large" />
+            </div>
+          )}
+          {previewImage && !isLoading && (
+            <div
+              className={`${styles.mindMapImageWrapper} w-full h-full`}
+              style={{ backgroundColor }}
+            >
+              <img
+                src={previewImage}
+                alt="思维导图预览"
+                className="w-full h-full object-contain"
+                style={{ pointerEvents: "none" }}
+              />
             </div>
           )}
         </AnimationWrapper>
@@ -877,59 +557,17 @@ const Component: FC<IMindMapProps> = observer((props) => {
         onRotate={handleRotate}
         onRotateEnd={handleRotateEnd}
       />
-      <Modal
-        title="编辑思维导图"
+      <MindMapModal
         open={modalOpen}
-        onCancel={handleModalClose}
-        onOk={handleModalClose}
-        width="90%"
-        style={{ top: 20 }}
-        styles={{
-          body: { height: "calc(100vh - 200px)", padding: 0 },
-        }}
-        okText="完成"
-        cancelText="取消"
-        footer={(_, { OkBtn, CancelBtn }) => (
-          <>
-            <div style={{ flex: 1 }}>
-              <button
-                onClick={handleAddChild}
-                style={{
-                  marginRight: 8,
-                  padding: "4px 12px",
-                  border: "1px solid #d9d9d9",
-                  borderRadius: 4,
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                添加子节点
-              </button>
-              <button
-                onClick={handleDeleteNode}
-                style={{
-                  marginRight: 8,
-                  padding: "4px 12px",
-                  border: "1px solid #d9d9d9",
-                  borderRadius: 4,
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                删除节点
-              </button>
-            </div>
-            <CancelBtn />
-            <OkBtn />
-          </>
-        )}
-      >
-        <div
-          ref={modalContainerRef}
-          className="w-full h-full"
-          style={{ height: "100%" }}
-        />
-      </Modal>
+        onClose={handleModalClose}
+        data={data}
+        readonly={readonly}
+        onDataChange={handleDataChange}
+        onPreviewImageChange={handlePreviewImageChange}
+        onBackgroundColorChange={handleBackgroundColorChange}
+        exportGraphToSVG={exportGraphToSVG}
+        initialBackgroundColor={backgroundColor}
+      />
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
@@ -940,18 +578,21 @@ const Component: FC<IMindMapProps> = observer((props) => {
         animationDuration={animationDuration}
         animationDelay={animationDelay}
         animationTrigger={animationTrigger}
-        className="w-full h-full"
+        className="w-full h-full relative"
       >
-        {previewImage ? (
-          <img
-            src={previewImage}
-            alt="思维导图预览"
-            className="w-full h-full object-contain"
-            style={{ pointerEvents: "none" }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-            思维导图预览
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+            <Spin size="large" />
+          </div>
+        )}
+        {previewImage && !isLoading && (
+          <div className="w-full h-full">
+            <img
+              src={previewImage}
+              alt="思维导图预览"
+              className="w-full h-full object-contain"
+              style={{ pointerEvents: "none" }}
+            />
           </div>
         )}
       </AnimationWrapper>

@@ -36,6 +36,7 @@
     "react-dom": "^18.3.1",
     "react-moveable": "^0.56.0",
     "screenfull": "^6.0.2",
+    "svgo": "^4.0.0",
     "x-data-spreadsheet": "^1.1.9"
   },
   "devDependencies": {

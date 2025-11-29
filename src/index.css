@@ -22,5 +22,4 @@ body {
 /* 全局元素选中样式 */
 .element-selected {
   outline: 2px solid var(--primary-color, #f25f00) !important;
-  outline-offset: -2px;
 }

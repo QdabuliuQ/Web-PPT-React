@@ -319,7 +319,7 @@ export const MovableWrapper = memo(
           edge={true} // 启用边框线，但用CSS隐藏并重新绘制
           zoom={1}
           origin={false}
-          padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
+          padding={{ left: 0, top: 0, right: 0, bottom: 0 }} // 添加 padding 避免遮挡节点边框
           // 自定义渲染方向，只显示控制点
           renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
         />

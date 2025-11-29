@@ -1,9 +1,9 @@
-import { Edge, Graph, Node } from "@antv/x6";
+import type { EdgeMetadata, Graph, NodeMetadata } from "@antv/x6";
 
 // X6 数据格式
 export interface X6GraphData {
-  nodes: Node.Metadata[];
-  edges: Edge.Metadata[];
+  nodes: NodeMetadata[];
+  edges: EdgeMetadata[];
 }
 
 // 创建默认的思维导图数据
@@ -15,8 +15,7 @@ export function createDefaultMindMapData(): X6GraphData {
         shape: "mindmap-node",
         x: 400,
         y: 300,
-        width: 120,
-        height: 40,
+        zIndex: 1,
         data: {
           topic: "中心主题",
           level: 0,
@@ -25,6 +24,15 @@ export function createDefaultMindMapData(): X6GraphData {
           text: {
             text: "中心主题",
           },
+          style: {
+            background: "#EFF4FF",
+            border: "#5F95FF",
+            borderWidth: 1,
+            borderType: "", // "" 实线, "5,5" 虚线, "2,2" 点线
+            fontSize: 14,
+            color: "#262626",
+            fontWeight: "normal",
+          },
         },
       },
       {
@@ -32,15 +40,23 @@ export function createDefaultMindMapData(): X6GraphData {
         shape: "mindmap-node",
         x: 600,
         y: 200,
-        width: 120,
-        height: 40,
+        zIndex: 1,
         data: {
-          topic: "分支1",
+          topic: "分支",
           level: 1,
         },
         attrs: {
           text: {
-            text: "分支1",
+            text: "分支",
+          },
+          style: {
+            background: "#EFF4FF",
+            border: "#5F95FF",
+            borderWidth: 1,
+            borderType: "", // "" 实线, "5,5" 虚线, "2,2" 点线
+            fontSize: 14,
+            color: "#262626",
+            fontWeight: "normal",
           },
         },
       },
@@ -49,8 +65,7 @@ export function createDefaultMindMapData(): X6GraphData {
         shape: "mindmap-node",
         x: 600,
         y: 400,
-        width: 120,
-        height: 40,
+        zIndex: 1,
         data: {
           topic: "分支2",
           level: 1,
@@ -58,6 +73,15 @@ export function createDefaultMindMapData(): X6GraphData {
         attrs: {
           text: {
             text: "分支2",
+          },
+          style: {
+            background: "#EFF4FF",
+            border: "#5F95FF",
+            borderWidth: 1,
+            borderType: "", // "" 实线, "5,5" 虚线, "2,2" 点线
+            fontSize: 14,
+            color: "#262626",
+            fontWeight: "normal",
           },
         },
       },
@@ -88,6 +112,7 @@ export function getDataFromGraph(graph: Graph): X6GraphData {
     y: node.getPosition().y,
     width: node.getSize().width,
     height: node.getSize().height,
+    zIndex: node.zIndex || 1, // 保存 zIndex，默认值为 1
     data: node.getData(),
     attrs: node.getAttrs(),
   }));
@@ -97,6 +122,9 @@ export function getDataFromGraph(graph: Graph): X6GraphData {
     source: edge.getSourceCellId(),
     target: edge.getTargetCellId(),
     shape: edge.shape,
+    router: edge.getRouter()?.name || "manhattan",
+    connector: edge.getConnector()?.name || "mindmap",
+    attrs: edge.getAttrs(),
   }));
 
   return { nodes, edges };

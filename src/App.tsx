@@ -55,6 +55,9 @@ function App() {
             itemSelectedColor: "#f25f00", // 选中项文字颜色 - 主题色
             itemActiveBg: "#fff2e6", // 激活项背景色
           },
+          Modal: {
+            colorPrimary: "#f25f00",
+          },
         },
       }}
     >

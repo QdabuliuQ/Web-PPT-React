@@ -6,6 +6,9 @@ interface MindMapNodeProps {
   node: Node;
 }
 
+const padding = { left: 10, right: 10, top: 10, bottom: 10 };
+const safetyMargin = 3; // 安全边距，防止数字被截断
+
 export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -14,13 +17,53 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // 获取节点数据
-  const data = node.getData<{ topic?: string }>();
+  const data = node.getData<{ topic?: string; _editing?: boolean }>();
   const text = data?.topic || "";
   const attrs = node.getAttrs();
+  const styleAttrs = attrs.style || {};
   const textAttrs = attrs.text || {};
 
   // 检查节点是否只读
   const readonly = node.getData()?.readonly || false;
+
+  // 监听 attrs 变化，触发重新渲染
+  const [, forceUpdate] = useState({});
+  useEffect(() => {
+    const handleAttrsChange = () => {
+      forceUpdate({});
+    };
+    node.on("change:attrs", handleAttrsChange);
+    return () => {
+      node.off("change:attrs", handleAttrsChange);
+    };
+  }, [node]);
+
+  // 监听节点数据变化，用于响应 X6 事件触发的编辑状态
+  useEffect(() => {
+    const checkEditing = () => {
+      const editingFlag = node.getData()?._editing;
+      if (editingFlag && !readonly && !isEditing) {
+        setIsEditing(true);
+        // 清除标志，避免重复触发
+        const currentData = node.getData() || {};
+        node.setData({ ...currentData, _editing: false });
+      }
+    };
+
+    // 立即检查一次
+    checkEditing();
+
+    // 监听节点数据变化
+    const handleChange = () => {
+      checkEditing();
+    };
+
+    node.on("change:data", handleChange);
+
+    return () => {
+      node.off("change:data", handleChange);
+    };
+  }, [node, readonly, isEditing]);
 
   // 根据文本内容自适应调整节点大小
   useEffect(() => {
@@ -29,41 +72,14 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
     const updateSize = () => {
       if (!textRef.current) return;
 
-      const padding = { left: 8, right: 8, top: 6, bottom: 6 };
-      const fontSize =
-        typeof textAttrs.fontSize === "number"
-          ? textAttrs.fontSize
-          : parseInt(String(textAttrs.fontSize || "14"), 10);
+      // 使用 getBoundingClientRect 获取更精确的尺寸
+      const rect = textRef.current.getBoundingClientRect();
+      const textWidth = Math.ceil(rect.width); // 向上取整，确保包含所有内容
+      const textHeight = Math.ceil(rect.height);
 
-      // 测量文本的实际宽度和高度（支持多行）
-      // 创建一个临时元素来测量文本尺寸
-      const measureElement = document.createElement("div");
-      measureElement.style.position = "absolute";
-      measureElement.style.visibility = "hidden";
-      measureElement.style.whiteSpace = "pre";
-      // 不设置固定宽度，让文本自然换行来计算最大宽度
-      measureElement.style.fontSize = `${fontSize}px`;
-      measureElement.style.fontFamily = (
-        typeof textAttrs.fontFamily === "string"
-          ? textAttrs.fontFamily
-          : "Arial, sans-serif"
-      ) as string;
-      measureElement.style.fontWeight = (
-        typeof textAttrs.fontWeight === "string" ||
-        typeof textAttrs.fontWeight === "number"
-          ? String(textAttrs.fontWeight)
-          : "normal"
-      ) as string;
-      measureElement.textContent = text || "";
-      document.body.appendChild(measureElement);
-
-      const textWidth = measureElement.scrollWidth;
-      const textHeight = Math.max(measureElement.scrollHeight, fontSize * 1.2);
-      document.body.removeChild(measureElement);
-
-      // 计算新的宽度和高度，加上 padding
-      const newWidth = Math.max(60, textWidth + padding.left + padding.right);
-      const newHeight = Math.max(30, textHeight + padding.top + padding.bottom);
+      // 计算新的宽度和高度，加上 padding 和安全边距
+      const newWidth = textWidth + padding.left + padding.right + safetyMargin;
+      const newHeight = textHeight + padding.top + padding.bottom;
 
       // 更新节点大小
       node.resize(newWidth, newHeight);
@@ -72,7 +88,7 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
     // 延迟执行，确保 DOM 已渲染
     const timer = setTimeout(() => {
       updateSize();
-    }, 0);
+    }, 100);
 
     return () => {
       clearTimeout(timer);
@@ -80,15 +96,16 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
   }, [
     text,
     node,
-    textAttrs.fontSize,
+    styleAttrs.fontSize,
     textAttrs.fontFamily,
-    textAttrs.fontWeight,
+    styleAttrs.fontWeight,
   ]);
 
   // 处理双击开始编辑
   const handleDoubleClick = (e: React.MouseEvent) => {
     if (readonly) return;
     e.stopPropagation();
+    e.preventDefault(); // 阻止默认行为
     setIsEditing(true);
   };
 
@@ -98,13 +115,13 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
     const newText = textRef.current.textContent || "";
 
     if (newText.trim() !== text) {
-      // 根据 textRef 的 DOM 尺寸更新节点大小
-      const padding = { left: 8, right: 8, top: 6, bottom: 6 };
-      const textWidth = textRef.current.scrollWidth;
-      const textHeight = textRef.current.scrollHeight;
+      // 使用 getBoundingClientRect 获取更精确的尺寸
+      const rect = textRef.current.getBoundingClientRect();
+      const textWidth = Math.ceil(rect.width); // 向上取整，确保包含所有内容
+      const textHeight = Math.ceil(rect.height);
 
-      const newWidth = Math.max(60, textWidth + padding.left + padding.right);
-      const newHeight = Math.max(30, textHeight + padding.top + padding.bottom);
+      const newWidth = textWidth + padding.left + padding.right + safetyMargin;
+      const newHeight = textHeight + padding.top + padding.bottom;
 
       // 更新节点大小
       node.resize(newWidth, newHeight);
@@ -140,18 +157,14 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
   // 处理输入事件，实时更新节点大小
   const handleInput = () => {
     if (!textRef.current) return;
-    const padding = { left: 8, right: 8, top: 6, bottom: 6 };
-    const fontSize =
-      typeof textAttrs.fontSize === "number"
-        ? textAttrs.fontSize
-        : parseInt(String(textAttrs.fontSize || "14"), 10);
 
-    // 测量多行文本的宽度和高度
-    const textWidth = textRef.current.scrollWidth;
-    const textHeight = Math.max(textRef.current.scrollHeight, fontSize * 1.2);
+    // 使用 getBoundingClientRect 获取更精确的尺寸
+    const rect = textRef.current.getBoundingClientRect();
+    const textWidth = Math.ceil(rect.width); // 向上取整，确保包含所有内容
+    const textHeight = Math.ceil(rect.height);
 
-    const newWidth = Math.max(60, textWidth + padding.left + padding.right);
-    const newHeight = Math.max(30, textHeight + padding.top + padding.bottom);
+    const newWidth = textWidth + padding.left + padding.right + safetyMargin;
+    const newHeight = textHeight + padding.top + padding.bottom;
 
     node.resize(newWidth, newHeight);
   };
@@ -207,12 +220,44 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
     };
   }, []);
 
+  // 从 attrs.style 中获取样式属性
+  const backgroundColor = styleAttrs.background || "#EFF4FF";
+  const borderColor = styleAttrs.border || "#5F95FF";
+  const borderWidth = styleAttrs.borderWidth || 1;
+  const borderType = String(styleAttrs.borderType || "");
+  const fontSize = styleAttrs.fontSize || 14;
+  const textColor = styleAttrs.color || "#262626";
+  const fontWeight = styleAttrs.fontWeight || "normal";
+
+  // 根据 borderType 设置边框样式
+  // borderType: "" 实线, "5,5" 虚线, "2,2" 点线
+  const borderStyle =
+    borderType === ""
+      ? "solid"
+      : borderType.includes(",")
+        ? "dashed"
+        : "dotted";
+
   return (
     <div
       ref={containerRef}
-      className={`w-full h-full flex items-center justify-start py-1.5 px-2 box-border rounded border border-[#5F95FF] bg-[#EFF4FF] ${
+      className={`w-full h-full flex items-center justify-start py-[5px] px-[10px] box-border rounded ${
         readonly ? "cursor-default" : "cursor-pointer"
       } relative`}
+      style={
+        {
+          backgroundColor: backgroundColor as string,
+          borderColor: borderColor as string,
+          borderWidth: `${borderWidth}px`,
+          borderStyle: borderStyle,
+          ...(borderType &&
+            borderType !== "" &&
+            {
+              // 对于虚线，使用 CSS border-image 或通过其他方式实现
+              // 注意：HTML div 不支持 strokeDasharray，这里使用 borderStyle 来控制
+            }),
+        } as React.CSSProperties
+      }
       onDoubleClick={handleDoubleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -221,7 +266,7 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
         <div
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`absolute right-[-35px] top-0 bottom-0 w-[30px] flex items-center justify-start pl-[5px] transition-opacity duration-200 ${
+          className={`custom-icon absolute right-[-35px] top-0 bottom-0 w-[30px] flex items-center gap-[3px] pl-[5px] transition-opacity duration-200 ${
             isHovered
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
@@ -242,20 +287,18 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
         onBlur={isEditing ? handleBlur : undefined}
         onKeyDown={isEditing ? handleKeyDown : undefined}
         onInput={isEditing ? handleInput : undefined}
-        className={`w-full min-w-[20px] whitespace-pre p-0 m-0 ${
+        className={`min-w-[20px] whitespace-pre p-0 m-0 leading-4 inline-block flex-shrink-0 ${
           isEditing ? "border-0 outline-none bg-transparent" : ""
         }`}
         style={{
-          fontSize: `${typeof textAttrs.fontSize === "number" ? textAttrs.fontSize : parseInt(String(textAttrs.fontSize || "14"), 10)}px`,
-          color: (typeof textAttrs.fill === "string"
-            ? textAttrs.fill
-            : "#262626") as string,
+          fontSize: `${typeof fontSize === "number" ? fontSize : parseInt(String(fontSize), 10)}px`,
+          color: textColor as string,
           fontFamily: (typeof textAttrs.fontFamily === "string"
             ? textAttrs.fontFamily
             : "Arial, sans-serif") as string,
-          fontWeight: (typeof textAttrs.fontWeight === "string" ||
-          typeof textAttrs.fontWeight === "number"
-            ? String(textAttrs.fontWeight)
+          fontWeight: (typeof fontWeight === "string" ||
+          typeof fontWeight === "number"
+            ? String(fontWeight)
             : "normal") as string,
         }}
       >

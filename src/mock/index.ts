@@ -1,3 +1,4 @@
+import { createDefaultMindMapData } from "@/element/MindMap/utils";
 import { getRandomId } from "@/utils";
 
 export default {
@@ -6,6 +7,23 @@ export default {
       id: getRandomId(),
       visible: true,
       elements: [
+        {
+          type: "mindmap",
+          id: "mindmap_" + getRandomId(),
+          data: createDefaultMindMapData(),
+          x: 100,
+          y: 100,
+          width: 300,
+          height: 200,
+          rotate: 0,
+          zIndex: 0,
+          mode: "edit",
+          animationName: "backInLeft",
+          animationDuration: "default",
+          animationDelay: "0s",
+          animationTrigger: "click",
+          animationIndex: 0,
+        },
         {
           type: "image",
           id: "image_" + getRandomId(),
