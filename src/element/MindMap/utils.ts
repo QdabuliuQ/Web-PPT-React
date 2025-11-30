@@ -28,7 +28,7 @@ export function createDefaultMindMapData(): X6GraphData {
             background: "#EFF4FF",
             border: "#5F95FF",
             borderWidth: 1,
-            borderType: "", // "" 实线, "5,5" 虚线, "2,2" 点线
+            borderStyle: "solid", // "" 实线, "5,5" 虚线, "2,2" 点线
             fontSize: 14,
             color: "#262626",
             fontWeight: "normal",
@@ -53,7 +53,7 @@ export function createDefaultMindMapData(): X6GraphData {
             background: "#EFF4FF",
             border: "#5F95FF",
             borderWidth: 1,
-            borderType: "", // "" 实线, "5,5" 虚线, "2,2" 点线
+            borderStyle: "solid", // "" 实线, "5,5" 虚线, "2,2" 点线
             fontSize: 14,
             color: "#262626",
             fontWeight: "normal",
@@ -78,7 +78,7 @@ export function createDefaultMindMapData(): X6GraphData {
             background: "#EFF4FF",
             border: "#5F95FF",
             borderWidth: 1,
-            borderType: "", // "" 实线, "5,5" 虚线, "2,2" 点线
+            borderStyle: "solid", // "" 实线, "5,5" 虚线, "2,2" 点线
             fontSize: 14,
             color: "#262626",
             fontWeight: "normal",

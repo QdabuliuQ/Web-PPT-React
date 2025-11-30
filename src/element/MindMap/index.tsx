@@ -170,12 +170,15 @@ const Component: FC<IMindMapProps> = observer((props) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 跟踪表格是否真正被拖拽移动过（用于防止误触发双击）
+  const hasDraggedRef = useRef(false);
+
   // 使用通用的可移动元素hook
   const {
     isDragging,
-    handleDragStart,
-    handleDrag,
-    handleDragEnd,
+    handleDragStart: originalHandleDragStart,
+    handleDrag: originalHandleDrag,
+    handleDragEnd: originalHandleDragEnd,
     handleResizeStart,
     handleResize,
     handleResizeEnd,
@@ -194,6 +197,32 @@ const Component: FC<IMindMapProps> = observer((props) => {
         moveableRef.current.updateRect();
       }
     },
+  });
+
+  // 包装 handleDragStart，重置拖拽标记
+  const handleDragStart = useMemoizedFn(() => {
+    hasDraggedRef.current = false;
+    originalHandleDragStart();
+  });
+
+  // 包装 handleDrag，检测是否真正发生了移动
+  const handleDrag = useMemoizedFn(
+    (params: { x: number; y: number; transform: string }) => {
+      // 只要有移动超过阈值，就标记为真正的拖拽
+      if (Math.abs(params.x) > 1 || Math.abs(params.y) > 1) {
+        hasDraggedRef.current = true;
+      }
+      originalHandleDrag(params);
+    }
+  );
+
+  // 包装 handleDragEnd，延迟重置拖拽标记
+  const handleDragEnd = useMemoizedFn(() => {
+    originalHandleDragEnd();
+    // 延迟重置，确保 doubleClick 事件可以检查到拖拽状态
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 300);
   });
 
   const isSelected = elementActiveStore.isElementActive(id);
@@ -219,6 +248,10 @@ const Component: FC<IMindMapProps> = observer((props) => {
   // 处理双击事件 - 打开编辑 Modal
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // 如果刚刚进行过拖拽，则不打开编辑窗口
+    if (hasDraggedRef.current) {
+      return;
+    }
     if (mode === "edit" && !readonly) {
       handleModalOpen();
     }

@@ -1,6 +1,6 @@
 import { Export, Graph, Node, Selection, Shape } from "@antv/x6";
 import { useMemoizedFn } from "ahooks";
-import { Modal, Spin, theme } from "antd";
+import { message, Modal, Spin, theme } from "antd";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import "overlayscrollbars/overlayscrollbars.css";
 import { useEffect, useRef, useState, type FC } from "react";
@@ -84,6 +84,10 @@ export const MindMapModal: FC<MindMapModalProps> = ({
   // 初始数据快照（用于比较是否有更改）
   const initialDataRef = useRef<X6GraphData | null>(null);
 
+  // 画布模式：'pan' 拖拽画布模式，'select' 选择元素模式
+  const [canvasMode, setCanvasMode] = useState<"pan" | "select">("pan");
+  const selectionPluginRef = useRef<Selection | null>(null);
+
   // 获取主题色
   const { token } = theme.useToken();
 
@@ -115,9 +119,9 @@ export const MindMapModal: FC<MindMapModalProps> = ({
 
   // 节点边框类型选项
   const nodeBorderTypeOptions: SelectMenuItemOption[] = [
-    { label: "实线", value: "" },
-    { label: "虚线", value: "5,5" },
-    { label: "点线", value: "2,2" },
+    { label: "实线", value: "solid" },
+    { label: "虚线", value: "dashed" },
+    { label: "点线", value: "dotted" },
   ];
 
   // 节点边框宽度选项
@@ -170,7 +174,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         },
       },
       panning: {
-        enabled: true,
+        enabled: true, // 默认启用拖拽模式
         eventTypes: ["leftMouseDown", "mouseWheel"],
       },
       mousewheel: {
@@ -246,14 +250,28 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     graph.use(new Export());
 
     // 使用 Selection 插件启用选择功能
-    graph.use(
-      new Selection({
-        enabled: true,
-        rubberband: true, // 启用框选功能
-        modifiers: "shift", // 按住 Shift 键进行框选
-        showNodeSelectionBox: true, // 显示节点的选择框
-      })
-    );
+    const selectionPlugin = new Selection({
+      enabled: false, // 默认禁用选择模式（默认是拖拽模式）
+      rubberband: true, // 启用框选功能
+      showNodeSelectionBox: true, // 显示节点的选择框
+    });
+    graph.use(selectionPlugin);
+    selectionPluginRef.current = selectionPlugin;
+
+    // 设置选择框的 pointer-events 为 none，让鼠标事件穿透
+    const updateSelectionBoxPointerEvents = () => {
+      const selectionBoxes = containerRef.current?.querySelectorAll(
+        ".x6-widget-selection-box"
+      );
+      selectionBoxes?.forEach((box) => {
+        (box as HTMLElement).style.pointerEvents = "none";
+      });
+    };
+
+    // 监听选择变化，更新选择框样式
+    graph.on("selection:changed", () => {
+      setTimeout(updateSelectionBoxPointerEvents, 0);
+    });
 
     graphRef.current = graph;
 
@@ -347,42 +365,18 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     graph.on("selection:changed", ({ added, removed }) => {
       console.log(added, removed);
 
-      // 移除选中样式
+      // 移除选中样式（不再需要恢复边框颜色，因为选中时没有改变）
       removed.forEach((cell) => {
         if (cell.isNode()) {
-          const currentStyle = cell.getAttrs().style || {};
-          // 恢复原始边框宽度（从节点数据中获取，如果没有则使用默认值 1）
-          const originalBorderWidth = cell.getData()?.originalBorderWidth || 1;
-          cell.setAttrs({
-            style: {
-              ...currentStyle,
-              border: "#5F95FF",
-              borderWidth: originalBorderWidth,
-            },
-          });
+          // 取消选中时不改变节点的样式，保持用户设置的样式
         }
       });
 
-      // 添加选中样式
+      // 添加选中样式（不再改变边框颜色，保持用户设置的样式）
       added.forEach((cell) => {
         if (cell.isNode()) {
-          const currentStyle = cell.getAttrs().style || {};
-          // 保存原始边框宽度
-          const currentBorderWidth = currentStyle.borderWidth || 1;
-          if (!cell.getData()?.originalBorderWidth) {
-            cell.setData({
-              ...cell.getData(),
-              originalBorderWidth: currentBorderWidth,
-            });
-          }
-          cell.setAttrs({
-            style: {
-              ...currentStyle,
-              border: "#1890ff",
-              // 保持原始边框宽度，不改变
-              borderWidth: currentBorderWidth,
-            },
-          });
+          // 选中时不改变节点的样式，保持用户设置的样式
+          // 选中状态由 X6 的 Selection 插件通过选择框来显示
         }
       });
 
@@ -428,13 +422,8 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         }
 
         if (currentStyle.border && typeof currentStyle.border === "string") {
-          // 如果是选中状态的蓝色，需要从原始数据中获取
-          const originalBorder =
-            selectedNode.getData()?.originalBorder || currentStyle.border;
-          const borderColor =
-            originalBorder === "#1890ff" ? "#5F95FF" : originalBorder;
-          setNodeBorderColor(borderColor);
-          nodeBorderColorRef.current = borderColor;
+          setNodeBorderColor(currentStyle.border);
+          nodeBorderColorRef.current = currentStyle.border;
         } else {
           setNodeBorderColor("");
           nodeBorderColorRef.current = "";
@@ -452,12 +441,12 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         }
 
         if (
-          currentStyle.borderType !== undefined &&
-          currentStyle.borderType !== null
+          currentStyle.borderStyle !== undefined &&
+          currentStyle.borderStyle !== null
         ) {
-          const borderType = String(currentStyle.borderType);
-          setNodeBorderType(borderType);
-          nodeBorderTypeRef.current = borderType;
+          const borderStyle = String(currentStyle.borderStyle);
+          setNodeBorderType(borderStyle);
+          nodeBorderTypeRef.current = borderStyle;
         } else {
           setNodeBorderType(null); // 使用 null 表示未设置
           nodeBorderTypeRef.current = "";
@@ -573,7 +562,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
       }
 
       // 创建子节点
-      const childNode = graph.addNode({
+      graph.addNode({
         id: childId,
         shape: "mindmap-node",
         x: newX,
@@ -591,7 +580,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
             background: "#EFF4FF",
             border: "#5F95FF",
             borderWidth: 1,
-            borderType: "",
+            borderStyle: "",
             fontSize: 14,
             color: "#262626",
             fontWeight: "normal",
@@ -630,15 +619,8 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         },
       });
 
-      // 选中新节点
-      const currentStyle = childNode.getAttrs().style || {};
-      childNode.setAttrs({
-        style: {
-          ...currentStyle,
-          border: "#1890ff",
-          borderWidth: 2,
-        },
-      });
+      // 不在这里选中，由 handleAddChild 统一选中所有新创建的节点
+      // graph.select(childNode);
 
       // 居中显示内容
       graph.centerContent();
@@ -654,12 +636,24 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         const selectedNodes = selectedCells.filter((cell) => cell.isNode());
         selectedNodes.forEach((node) => {
           const currentStyle = node.getAttrs().style || {};
+          const nodeData = node.getData() || {};
+          console.log(styleKey, value);
+
+          // 更新样式
           node.setAttrs({
             style: {
               ...currentStyle,
               [styleKey]: value,
             },
           });
+
+          // 如果修改的是边框宽度，同步更新原始边框宽度（用于记录）
+          if (styleKey === "borderWidth") {
+            node.setData({
+              ...nodeData,
+              originalBorderWidth: value,
+            });
+          }
         });
       }
     }
@@ -693,6 +687,28 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     if (graph) {
       graph.centerContent();
       graph.zoomTo(1);
+    }
+  });
+
+  // 切换画布模式
+  const handleToggleCanvasMode = useMemoizedFn(() => {
+    if (!graphRef.current) return;
+
+    const newMode = canvasMode === "pan" ? "select" : "pan";
+    setCanvasMode(newMode);
+
+    if (newMode === "pan") {
+      // 切换到拖拽画布模式：启用 panning，禁用 selection
+      graphRef.current.enablePanning();
+      if (selectionPluginRef.current) {
+        graphRef.current.disableSelection();
+      }
+    } else {
+      // 切换到选择元素模式：禁用 panning，启用 selection
+      graphRef.current.disablePanning();
+      if (selectionPluginRef.current) {
+        graphRef.current.enableSelection();
+      }
     }
   });
 
@@ -821,13 +837,185 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     }
   }, [open, initGraph, destroyGraph]);
 
+  const handleCopyNode = useMemoizedFn(() => {
+    const graph = graphRef.current;
+    if (!graph) return;
+
+    const selectedCells = graph.getSelectedCells();
+    const selectedNodes = selectedCells.filter((cell) =>
+      cell.isNode()
+    ) as Node[];
+
+    if (selectedNodes.length === 0) return;
+
+    // 用于存储所有新创建的节点ID，最后选中它们
+    const newCreatedNodeIds: string[] = [];
+
+    selectedNodes.forEach((node) => {
+      // 找到父节点（通过查找指向当前节点的边）
+      const incomingEdges = graph.getIncomingEdges(node);
+      const parentEdge = incomingEdges?.[0];
+
+      if (!parentEdge) {
+        message.error("根节点无法复制");
+        return;
+      }
+
+      const parentNodeId = parentEdge.getSourceCellId();
+      const parentNode = graph.getCellById(parentNodeId) as Node | null;
+
+      if (!parentNode) return;
+
+      // 获取父节点的所有子节点（同级节点）
+      const siblingEdges = graph
+        .getEdges()
+        .filter((edge) => edge.getSourceCellId() === parentNodeId);
+      const siblingNodes = siblingEdges
+        .map((edge) => graph.getCellById(edge.getTargetCellId()))
+        .filter((cell): cell is Node => cell !== null && cell.isNode());
+
+      // 找到最右侧的兄弟节点，用于计算新节点位置
+      let rightmostX = parentNode.getPosition().x + parentNode.getSize().width;
+      if (siblingNodes.length > 0) {
+        const rightmostSibling = siblingNodes.reduce((prev, curr) => {
+          const prevPos = prev.getPosition();
+          const currPos = curr.getPosition();
+          return currPos.x > prevPos.x ? curr : prev;
+        });
+        const rightmostPos = rightmostSibling.getPosition();
+        const rightmostSize = rightmostSibling.getSize();
+        rightmostX = rightmostPos.x + rightmostSize.width;
+      }
+
+      // 复制节点（不复制子节点）
+      const copyNode = (
+        sourceNode: Node,
+        newParentId: string,
+        offsetX: number
+      ): string => {
+        const nodeData = sourceNode.getData();
+        const nodeAttrs = sourceNode.getAttrs();
+        const nodePosition = sourceNode.getPosition();
+        const nodeSize = sourceNode.getSize();
+
+        // 生成新节点 ID
+        const newNodeId = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // 创建新节点
+        graph.addNode({
+          id: newNodeId,
+          shape: sourceNode.shape,
+          x: nodePosition.x + offsetX,
+          y: nodePosition.y,
+          width: nodeSize.width,
+          height: nodeSize.height,
+          zIndex: sourceNode.zIndex || 1,
+          data: {
+            ...nodeData,
+            topic: nodeData.topic || "新节点",
+          },
+          attrs: nodeAttrs,
+        });
+
+        newCreatedNodeIds.push(newNodeId); // 记录新创建的节点ID
+
+        // 创建连接到父节点的边
+        const currentEdgeType = edgeTypeRef.current;
+        const currentEdgeWidth = edgeWidthRef.current;
+        const currentEdgeColor = edgeColorRef.current;
+        const currentEdgeConnector = edgeConnectorRef.current;
+        const dashArray =
+          currentEdgeType === "none" ? undefined : currentEdgeType;
+
+        graph.addEdge({
+          source: newParentId,
+          target: newNodeId,
+          shape: "mindmap-edge",
+          zIndex: -1,
+          router: currentEdgeConnector === "jumpover" ? "er" : "manhattan",
+          connector: {
+            name: currentEdgeConnector,
+            args:
+              currentEdgeConnector === "rounded"
+                ? { radius: 8 }
+                : currentEdgeConnector === "jumpover"
+                  ? { size: 4, radius: 4 }
+                  : {},
+          },
+          attrs: {
+            line: {
+              stroke: currentEdgeColor,
+              strokeWidth: currentEdgeWidth,
+              strokeDasharray: dashArray,
+            },
+          },
+        });
+
+        return newNodeId;
+      };
+
+      // 计算偏移量（放在最右侧兄弟节点的右侧）
+      const spacing = 200;
+      const offsetX = rightmostX - node.getPosition().x + spacing;
+
+      // 复制节点（不复制子节点）
+      copyNode(node, parentNodeId, offsetX);
+    });
+
+    // 清除当前选中，然后只选中所有新创建的节点
+    graph.cleanSelection();
+    if (newCreatedNodeIds.length > 0) {
+      const newNodes = newCreatedNodeIds
+        .map((id) => graph.getCellById(id))
+        .filter((cell): cell is Node => cell !== null && cell.isNode());
+      if (newNodes.length > 0) {
+        graph.select(newNodes);
+      }
+    }
+
+    // 居中显示内容
+    graph.centerContent();
+  });
+
+  // 处理添加子节点（从 CanvasControls 调用）
+  const handleAddChild = useMemoizedFn(() => {
+    const graph = graphRef.current;
+    if (!graph) return;
+
+    const selectedCells = graph.getSelectedCells();
+    const selectedNodes = selectedCells.filter((cell) =>
+      cell.isNode()
+    ) as Node[];
+
+    if (selectedNodes.length === 0) return;
+
+    // 记录添加前的所有节点ID
+    const existingNodeIds = new Set(graph.getNodes().map((node) => node.id));
+
+    // 为每个选中的节点添加子节点
+    selectedNodes.forEach((node) => {
+      // 触发添加子节点事件
+      node.notify("add-child", {});
+    });
+
+    // 等待节点创建完成后，清除当前选中，然后只选中所有新创建的节点
+    setTimeout(() => {
+      const allNodes = graph.getNodes();
+      const newNodes = allNodes.filter((node) => !existingNodeIds.has(node.id));
+      if (newNodes.length > 0) {
+        graph.cleanSelection(); // 清除当前选中
+        graph.select(newNodes); // 只选中新创建的节点
+      }
+    }, 0);
+  });
+
   return (
     <Modal
       title="编辑思维导图"
       open={open}
       onCancel={handleCancel}
       onOk={handleSave}
-      width="90%"
+      width="1200px"
       style={{ top: 20 }}
       styles={{
         body: {
@@ -1035,22 +1223,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
               const newBorderWidth = value as number;
               setNodeBorderWidth(newBorderWidth);
               nodeBorderWidthRef.current = newBorderWidth;
-              const graph = graphRef.current;
-              if (graph) {
-                const selectedCells = graph.getSelectedCells();
-                const selectedNodes = selectedCells.filter((cell) =>
-                  cell.isNode()
-                );
-                selectedNodes.forEach((node) => {
-                  // 保存原始边框宽度
-                  if (!node.getData()?.originalBorderWidth) {
-                    node.setData({
-                      ...node.getData(),
-                      originalBorderWidth: newBorderWidth,
-                    });
-                  }
-                });
-              }
+              // updateSelectedNodesStyle 会自动更新 originalBorderWidth
               updateSelectedNodesStyle("borderWidth", newBorderWidth);
             }}
           />
@@ -1063,7 +1236,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
               const newBorderType = value as string;
               setNodeBorderType(newBorderType);
               nodeBorderTypeRef.current = newBorderType;
-              updateSelectedNodesStyle("borderType", newBorderType);
+              updateSelectedNodesStyle("borderStyle", newBorderType);
             }}
           />
           <SelectMenuIitem
@@ -1104,6 +1277,12 @@ export const MindMapModal: FC<MindMapModalProps> = ({
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             onCenter={handleCenter}
+            onToggleMode={handleToggleCanvasMode}
+            onCopy={handleCopyNode}
+            onAddChild={handleAddChild}
+            isDisabledCopy={selectedNodeCount !== 1}
+            isDisabledAddChild={selectedNodeCount === 0}
+            mode={canvasMode}
           />
         )}
       </div>

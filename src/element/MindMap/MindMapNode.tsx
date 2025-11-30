@@ -7,7 +7,7 @@ interface MindMapNodeProps {
 }
 
 const padding = { left: 10, right: 10, top: 10, bottom: 10 };
-const safetyMargin = 3; // 安全边距，防止数字被截断
+const safetyMargin = 0; // 安全边距，防止数字被截断
 
 export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,9 +77,24 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
       const textWidth = Math.ceil(rect.width); // 向上取整，确保包含所有内容
       const textHeight = Math.ceil(rect.height);
 
-      // 计算新的宽度和高度，加上 padding 和安全边距
-      const newWidth = textWidth + padding.left + padding.right + safetyMargin;
-      const newHeight = textHeight + padding.top + padding.bottom;
+      // 获取边框宽度
+      const borderWidth =
+        typeof styleAttrs.borderWidth === "number"
+          ? styleAttrs.borderWidth
+          : typeof styleAttrs.borderWidth === "string"
+            ? parseInt(String(styleAttrs.borderWidth), 10) || 1
+            : 1;
+      const borderWidthTotal = borderWidth * 2; // 左右或上下各有一条边框
+
+      // 计算新的宽度和高度，加上 padding、安全边距和边框宽度
+      const newWidth =
+        textWidth +
+        padding.left +
+        padding.right +
+        safetyMargin +
+        borderWidthTotal;
+      const newHeight =
+        textHeight + padding.top + padding.bottom + borderWidthTotal;
 
       // 更新节点大小
       node.resize(newWidth, newHeight);
@@ -97,6 +112,7 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
     text,
     node,
     styleAttrs.fontSize,
+    styleAttrs.borderWidth,
     textAttrs.fontFamily,
     styleAttrs.fontWeight,
   ]);
@@ -119,9 +135,25 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
       const rect = textRef.current.getBoundingClientRect();
       const textWidth = Math.ceil(rect.width); // 向上取整，确保包含所有内容
       const textHeight = Math.ceil(rect.height);
+      console.log(rect, "rect");
 
-      const newWidth = textWidth + padding.left + padding.right + safetyMargin;
-      const newHeight = textHeight + padding.top + padding.bottom;
+      // 获取边框宽度
+      const borderWidth =
+        typeof styleAttrs.borderWidth === "number"
+          ? styleAttrs.borderWidth
+          : typeof styleAttrs.borderWidth === "string"
+            ? parseInt(String(styleAttrs.borderWidth), 10) || 1
+            : 1;
+      const borderWidthTotal = borderWidth * 2; // 左右或上下各有一条边框
+
+      const newWidth =
+        textWidth +
+        padding.left +
+        padding.right +
+        safetyMargin +
+        borderWidthTotal;
+      const newHeight =
+        textHeight + padding.top + padding.bottom + borderWidthTotal;
 
       // 更新节点大小
       node.resize(newWidth, newHeight);
@@ -163,8 +195,23 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
     const textWidth = Math.ceil(rect.width); // 向上取整，确保包含所有内容
     const textHeight = Math.ceil(rect.height);
 
-    const newWidth = textWidth + padding.left + padding.right + safetyMargin;
-    const newHeight = textHeight + padding.top + padding.bottom;
+    // 获取边框宽度
+    const borderWidth =
+      typeof styleAttrs.borderWidth === "number"
+        ? styleAttrs.borderWidth
+        : typeof styleAttrs.borderWidth === "string"
+          ? parseInt(String(styleAttrs.borderWidth), 10) || 1
+          : 1;
+    const borderWidthTotal = borderWidth * 2; // 左右或上下各有一条边框
+
+    const newWidth =
+      textWidth +
+      padding.left +
+      padding.right +
+      safetyMargin +
+      borderWidthTotal;
+    const newHeight =
+      textHeight + padding.top + padding.bottom + borderWidthTotal;
 
     node.resize(newWidth, newHeight);
   };
@@ -224,19 +271,10 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
   const backgroundColor = styleAttrs.background || "#EFF4FF";
   const borderColor = styleAttrs.border || "#5F95FF";
   const borderWidth = styleAttrs.borderWidth || 1;
-  const borderType = String(styleAttrs.borderType || "");
+  const borderStyle = styleAttrs.borderStyle || "solid";
   const fontSize = styleAttrs.fontSize || 14;
   const textColor = styleAttrs.color || "#262626";
   const fontWeight = styleAttrs.fontWeight || "normal";
-
-  // 根据 borderType 设置边框样式
-  // borderType: "" 实线, "5,5" 虚线, "2,2" 点线
-  const borderStyle =
-    borderType === ""
-      ? "solid"
-      : borderType.includes(",")
-        ? "dashed"
-        : "dotted";
 
   return (
     <div
@@ -249,13 +287,7 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
           backgroundColor: backgroundColor as string,
           borderColor: borderColor as string,
           borderWidth: `${borderWidth}px`,
-          borderStyle: borderStyle,
-          ...(borderType &&
-            borderType !== "" &&
-            {
-              // 对于虚线，使用 CSS border-image 或通过其他方式实现
-              // 注意：HTML div 不支持 strokeDasharray，这里使用 borderStyle 来控制
-            }),
+          borderStyle,
         } as React.CSSProperties
       }
       onDoubleClick={handleDoubleClick}
