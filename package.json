@@ -14,6 +14,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@antv/hierarchy": "^0.6.14",
     "@antv/x6": "^3.0.1",
     "@antv/x6-react-shape": "^2.0.8",
     "@dnd-kit/core": "^6.3.1",
@@ -35,6 +36,7 @@
     "react-contexify": "^6.0.0",
     "react-dom": "^18.3.1",
     "react-moveable": "^0.56.0",
+    "react-photo-view": "^1.2.7",
     "screenfull": "^6.0.2",
     "svgo": "^4.0.0",
     "x-data-spreadsheet": "^1.1.9"

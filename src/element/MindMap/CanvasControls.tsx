@@ -1,7 +1,10 @@
 import {
+  AddSubset,
   Click,
   ConnectionPoint,
   Copy,
+  Delete,
+  FormatBrush,
   HorizontallyCentered,
   Minus,
   Move,
@@ -17,8 +20,13 @@ interface CanvasControlsProps {
   onToggleMode?: () => void;
   onCopy?: () => void;
   onAddChild?: () => void;
+  onDeleteNode?: () => void;
+  onToggleAutoLayout?: () => void;
+  onRefreshLayout?: () => void;
   isDisabledCopy?: boolean;
   isDisabledAddChild?: boolean;
+  isDisabledDeleteNode?: boolean;
+  isAutoLayoutActive?: boolean;
   mode?: "pan" | "select";
 }
 
@@ -29,8 +37,13 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
   onToggleMode,
   onCopy,
   onAddChild,
+  onDeleteNode,
+  onToggleAutoLayout,
+  onRefreshLayout,
   isDisabledCopy,
   isDisabledAddChild,
+  isDisabledDeleteNode,
+  isAutoLayoutActive = false,
   mode = "select",
 }) => {
   return (
@@ -89,7 +102,39 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
           onClick={onAddChild}
           disabled={isDisabledAddChild}
           className={`${isDisabledAddChild ? "opacity-30 cursor-not-allowed" : ""}`}
-          icon={<ConnectionPoint theme="outline" size="16" fill="#333" />}
+          icon={<AddSubset theme="outline" size="16" fill="#333" />}
+        />
+      </Tooltip>
+      <Tooltip title="自动排列" placement="top">
+        <Button
+          type="text"
+          onClick={onToggleAutoLayout}
+          className={isAutoLayoutActive ? "bg-blue-50" : ""}
+          icon={
+            <ConnectionPoint
+              theme="outline"
+              size="16"
+              fill={isAutoLayoutActive ? "#1890ff" : "#333"}
+            />
+          }
+        />
+      </Tooltip>
+      {onRefreshLayout && (
+        <Tooltip title="刷新排列" placement="top">
+          <Button
+            type="text"
+            onClick={onRefreshLayout}
+            icon={<FormatBrush theme="outline" size="16" fill="#333" />}
+          />
+        </Tooltip>
+      )}
+      <Tooltip title="删除元素" placement="top">
+        <Button
+          type="text"
+          onClick={onDeleteNode}
+          disabled={isDisabledDeleteNode}
+          className={`${isDisabledDeleteNode ? "opacity-30 cursor-not-allowed" : ""}`}
+          icon={<Delete theme="outline" size="16" fill="#333" />}
         />
       </Tooltip>
     </div>

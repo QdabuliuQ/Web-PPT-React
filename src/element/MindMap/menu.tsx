@@ -1,9 +1,17 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { Delete, Copy, Lock, Unlock } from "@icon-park/react";
 import type { MenuItem } from "@/hooks/useContextMenu";
+import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import { EditOne, PreviewOpen } from "@icon-park/react";
 import type { IMindMapProps } from "./index";
 
-export const getMindMapMenuItems = (): MenuItem[] => {
+export interface MindMapMenuProps {
+  onEdit: () => void;
+  onPreview: () => void;
+}
+
+export const getMindMapMenuItems = ({
+  onEdit,
+  onPreview,
+}: MindMapMenuProps): MenuItem[] => {
   const pageId = pageActiveStore.getPageActive();
   const elementId = elementActiveStore.getElementActive();
 
@@ -16,62 +24,21 @@ export const getMindMapMenuItems = (): MenuItem[] => {
 
   if (!mindMapInfo) return [];
 
-  const handleDelete = () => {
-    if (pageId && elementId) {
-      pptStore.removeElementInfo(pageId, elementId);
-      elementActiveStore.resetElementActive();
-    }
-  };
-
-  const handleCopy = () => {
-    if (pageId && elementId) {
-      const newElement = {
-        ...mindMapInfo,
-        id: `mindmap_${Date.now()}`,
-        x: mindMapInfo.x + 20,
-        y: mindMapInfo.y + 20,
-      };
-      pptStore.addElementInfo(pageId, newElement);
-      elementActiveStore.setElementActive(newElement.id);
-    }
-  };
-
-  const handleToggleReadonly = () => {
-    if (pageId && elementId) {
-      const updated = {
-        ...mindMapInfo,
-        readonly: !mindMapInfo.readonly,
-      };
-      pptStore.updateElementInfo(pageId, elementId, updated);
-    }
-  };
-
   return [
     {
       type: "item",
-      label: "复制",
-      icon: <Copy theme="outline" size="13" fill="#333" />,
-      onClick: handleCopy,
+      label: "编辑",
+      icon: <EditOne theme="outline" size="13" fill="#333" />,
+      onClick: onEdit,
     },
     {
       type: "item",
-      label: mindMapInfo.readonly ? "取消只读" : "设为只读",
-      icon: mindMapInfo.readonly ? (
-        <Unlock theme="outline" size="13" fill="#333" />
-      ) : (
-        <Lock theme="outline" size="13" fill="#333" />
-      ),
-      onClick: handleToggleReadonly,
+      label: "预览",
+      icon: <PreviewOpen theme="outline" size="13" fill="#333" />,
+      onClick: onPreview,
     },
     {
       type: "separator",
     },
-    {
-      type: "item",
-      label: "删除",
-      icon: <Delete theme="outline" size="13" fill="#333" />,
-      onClick: handleDelete,
-    },
   ];
 };
-

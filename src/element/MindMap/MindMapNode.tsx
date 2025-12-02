@@ -77,6 +77,14 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
       const textWidth = Math.ceil(rect.width); // 向上取整，确保包含所有内容
       const textHeight = Math.ceil(rect.height);
 
+      // 如果尺寸为0，说明DOM还未完全渲染，使用 requestAnimationFrame 等待
+      if (textWidth === 0 || textHeight === 0) {
+        requestAnimationFrame(() => {
+          updateSize();
+        });
+        return;
+      }
+
       // 获取边框宽度
       const borderWidth =
         typeof styleAttrs.borderWidth === "number"
@@ -86,7 +94,6 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
             : 1;
       const borderWidthTotal = borderWidth * 2; // 左右或上下各有一条边框
 
-      // 计算新的宽度和高度，加上 padding、安全边距和边框宽度
       const newWidth =
         textWidth +
         padding.left +
@@ -95,18 +102,14 @@ export const MindMapNode: React.FC<MindMapNodeProps> = ({ node }) => {
         borderWidthTotal;
       const newHeight =
         textHeight + padding.top + padding.bottom + borderWidthTotal;
-
-      // 更新节点大小
       node.resize(newWidth, newHeight);
     };
 
-    // 延迟执行，确保 DOM 已渲染
-    const timer = setTimeout(() => {
-      updateSize();
-    }, 100);
+    // 使用 requestAnimationFrame 确保 DOM 已渲染，减少闪烁
+    const timeoutId = setTimeout(updateSize, 100);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timeoutId);
     };
   }, [
     text,

@@ -1,5 +1,5 @@
 import { Export, Graph, Node, Selection, Shape } from "@antv/x6";
-import { useMemoizedFn } from "ahooks";
+import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { message, Modal, Spin, theme } from "antd";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import "overlayscrollbars/overlayscrollbars.css";
@@ -9,7 +9,10 @@ import { ColorPickerMenuItem } from "./ColorPickerMenuItem";
 import styles from "./MindMapModal.module.less";
 import { SelectMenuIitem, type SelectMenuItemOption } from "./SelectMenuIitem";
 import {
+  autoLayoutGraph,
+  calculateZoomAndCenter,
   createDefaultMindMapData,
+  createNewNodeConfig,
   getDataFromGraph,
   type X6GraphData,
 } from "./utils";
@@ -74,6 +77,16 @@ export const MindMapModal: FC<MindMapModalProps> = ({
 
   // 选中节点数量状态
   const [selectedNodeCount, setSelectedNodeCount] = useState<number>(0);
+  // 选中边数量状态
+  const [selectedEdgeCount, setSelectedEdgeCount] = useState<number>(0);
+  // 自动排列开关状态
+  const [isAutoLayoutActive, setIsAutoLayoutActive] = useState<boolean>(false);
+  const isAutoLayoutActiveRef = useRef<boolean>(false);
+
+  // 同步 ref 和 state
+  useEffect(() => {
+    isAutoLayoutActiveRef.current = isAutoLayoutActive;
+  }, [isAutoLayoutActive]);
 
   // Loading 状态
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -87,6 +100,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
   // 画布模式：'pan' 拖拽画布模式，'select' 选择元素模式
   const [canvasMode, setCanvasMode] = useState<"pan" | "select">("pan");
   const selectionPluginRef = useRef<Selection | null>(null);
+  const isAdjustingZoomRef = useRef(false); // 标记是否正在调整缩放
 
   // 获取主题色
   const { token } = theme.useToken();
@@ -184,6 +198,11 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         minScale: 0.5,
         maxScale: 4,
       },
+      interacting: {
+        // 禁用边的拖动功能，只支持选中
+        edgeMovable: false,
+        edgeLabelMovable: false,
+      },
       connecting: {
         router: "manhattan",
         connector: {
@@ -193,7 +212,9 @@ export const MindMapModal: FC<MindMapModalProps> = ({
           },
         },
         anchor: "center",
-        connectionPoint: "anchor",
+        connectionPoint: {
+          name: "boundary",
+        }, // 使用边界连接点，而不是中心点
         allowBlank: false,
         snap: {
           radius: 20,
@@ -224,6 +245,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
                 stroke: currentEdgeColor,
                 strokeWidth: currentEdgeWidth,
                 strokeDasharray: dashArray,
+                pointerEvents: "visibleStroke", // 使边可响应鼠标事件，支持选中和拖动端点
               },
             },
           });
@@ -250,10 +272,13 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     graph.use(new Export());
 
     // 使用 Selection 插件启用选择功能
+    // 注意：Selection 插件和 Panning 可以同时启用，它们不会冲突
+    // 我们通过控制 enabled 和 rubberband 来切换模式
     const selectionPlugin = new Selection({
-      enabled: false, // 默认禁用选择模式（默认是拖拽模式）
-      rubberband: true, // 启用框选功能
+      enabled: true, // 始终启用选择功能
+      rubberband: false, // 默认禁用框选（默认是拖拽模式）
       showNodeSelectionBox: true, // 显示节点的选择框
+      showEdgeSelectionBox: true, // 显示边的选择框
     });
     graph.use(selectionPlugin);
     selectionPluginRef.current = selectionPlugin;
@@ -271,6 +296,8 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     // 监听选择变化，更新选择框样式
     graph.on("selection:changed", () => {
       setTimeout(updateSelectionBoxPointerEvents, 0);
+
+      // 边不支持拖拽，只支持选中，不需要添加工具
     });
 
     graphRef.current = graph;
@@ -332,11 +359,6 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     }
 
     graph.fromJSON(graphData);
-
-    // 等待 React 节点渲染完成后居中画布
-    graph.centerContent();
-
-    // 监听内容变化，标记为有未保存的更改
     const handleContentChange = () => {
       if (graphRef.current && initialDataRef.current) {
         const currentData = getDataFromGraph(graphRef.current);
@@ -346,16 +368,33 @@ export const MindMapModal: FC<MindMapModalProps> = ({
       }
     };
 
-    // 监听节点和边的变化
     graph.on("node:added", handleContentChange);
     graph.on("node:removed", handleContentChange);
     graph.on("node:change:position", handleContentChange);
-    graph.on("node:change:size", handleContentChange);
+    // graph.on("node:change:size", (args) => {
+    //   handleContentChange();
+    //   // 当节点大小改变时，更新连接到该节点的所有边的位置
+    //   const node = args.node;
+    //   const edges = graph.getConnectedEdges(node);
+    //   // 使用 requestAnimationFrame 确保在 DOM 更新后重新计算边的位置
+    //   requestAnimationFrame(() => {
+    //     edges.forEach((edge) => {
+    //       // 重新设置 source 和 target，触发边的路径重新计算
+    //       const source = edge.getSource();
+    //       const target = edge.getTarget();
+    //       if (source && target) {
+    //         edge.setSource(source);
+    //         edge.setTarget(target);
+    //       }
+    //     });
+    //   });
+    // });
     graph.on("edge:added", handleContentChange);
     graph.on("edge:removed", handleContentChange);
     graph.on("cell:change:attrs", handleContentChange);
     graph.on("cell:change:data", handleContentChange);
 
+    adjustZoomAndCenter();
     // 初始化完成，隐藏 loading
     setTimeout(() => {
       setIsLoading(false);
@@ -363,8 +402,6 @@ export const MindMapModal: FC<MindMapModalProps> = ({
 
     // 监听选择变更事件
     graph.on("selection:changed", ({ added, removed }) => {
-      console.log(added, removed);
-
       // 移除选中样式（不再需要恢复边框颜色，因为选中时没有改变）
       removed.forEach((cell) => {
         if (cell.isNode()) {
@@ -380,12 +417,14 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         }
       });
 
-      // 检查选中的节点数量
+      // 检查选中的节点和边数量
       const selectedCells = graph.getSelectedCells();
       const selectedNodes = selectedCells.filter((cell) => cell.isNode());
+      const selectedEdges = selectedCells.filter((cell) => cell.isEdge());
 
-      // 更新选中节点数量
+      // 更新选中节点和边数量
       setSelectedNodeCount(selectedNodes.length);
+      setSelectedEdgeCount(selectedEdges.length);
 
       if (selectedNodes.length === 0) {
         // 没有选中任何节点，清空引用并重置节点样式状态
@@ -497,6 +536,14 @@ export const MindMapModal: FC<MindMapModalProps> = ({
       }
     });
 
+    // 监听边点击事件 - 确保点击时选中边
+    graph.on("edge:click", ({ edge }) => {
+      // 如果边未被选中，选中它
+      if (!graph.isSelected(edge)) {
+        graph.select(edge);
+      }
+    });
+
     // 监听节点双击事件 - 触发节点编辑
     graph.on("node:dblclick", ({ node, e }) => {
       e.preventDefault();
@@ -561,32 +608,15 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         newY = rightmostPos.y;
       }
 
-      // 创建子节点
-      graph.addNode({
+      // 创建子节点，使用工具函数计算尺寸
+      const newNodeConfig = createNewNodeConfig({
         id: childId,
-        shape: "mindmap-node",
         x: newX,
         y: newY,
-        zIndex: 1, // 确保节点在边的上方
-        data: {
-          topic: "新节点",
-          level: (parentNode.getData()?.level || 0) + 1,
-        },
-        attrs: {
-          text: {
-            text: "新节点",
-          },
-          style: {
-            background: "#EFF4FF",
-            border: "#5F95FF",
-            borderWidth: 1,
-            borderStyle: "",
-            fontSize: 14,
-            color: "#262626",
-            fontWeight: "normal",
-          },
-        },
+        topic: "新节点",
+        level: (parentNode.getData()?.level || 0) + 1,
       });
+      graph.addNode(newNodeConfig);
 
       // 创建边
       const currentEdgeType = edgeTypeRef.current;
@@ -615,12 +645,22 @@ export const MindMapModal: FC<MindMapModalProps> = ({
             stroke: currentEdgeColor,
             strokeWidth: currentEdgeWidth,
             strokeDasharray: dashArray,
+            pointerEvents: "visibleStroke", // 使边可响应鼠标事件，支持选中和拖动端点
           },
         },
       });
 
-      // 不在这里选中，由 handleAddChild 统一选中所有新创建的节点
-      // graph.select(childNode);
+      // 选中新创建的子节点，并清除其他选中
+      const childNode = graph.getCellById(childId);
+      if (childNode) {
+        graph.cleanSelection(); // 清除当前选中
+        graph.select(childNode); // 只选中新创建的子节点
+      }
+
+      // 如果开启了自动排列，则自动重新布局
+      if (isAutoLayoutActiveRef.current) {
+        autoLayoutGraph(graph, "root", { hGap: 40, vGap: 20 });
+      }
 
       // 居中显示内容
       graph.centerContent();
@@ -682,33 +722,89 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     }
   });
 
-  const handleCenter = useMemoizedFn(() => {
+  // 调整缩放和居中，确保所有内容都在画布中可见
+  const adjustZoomAndCenterInternal = useMemoizedFn(() => {
     const graph = graphRef.current;
-    if (graph) {
+    if (!graph) {
+      isAdjustingZoomRef.current = false;
+      return;
+    }
+    console.log(isAdjustingZoomRef, "isAdjustingZoomRef");
+
+    // 如果正在调整，直接返回
+    if (isAdjustingZoomRef.current) {
+      return;
+    }
+
+    isAdjustingZoomRef.current = true;
+
+    // 获取画布容器大小
+    const container = containerRef.current;
+    if (!container) {
+      isAdjustingZoomRef.current = false;
+      return;
+    }
+
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    // 使用工具函数计算缩放比例
+    const result = calculateZoomAndCenter({
+      graph,
+      containerWidth,
+      containerHeight,
+    });
+
+    if (result?.scale === result?.preScale) {
+      graph.centerContent();
+      isAdjustingZoomRef.current = false;
+      return;
+    }
+    if (result === null) {
       graph.centerContent();
       graph.zoomTo(1);
+      isAdjustingZoomRef.current = false;
+      return;
     }
+
+    // 应用缩放和居中
+    graph.zoomTo(result.scale);
+    graph.centerContent();
+
+    // 重置标记
+    setTimeout(() => {
+      isAdjustingZoomRef.current = false;
+    }, 100);
+  });
+
+  // 使用防抖包装，避免短时间内重复调用
+  const { run: adjustZoomAndCenter } = useDebounceFn(
+    adjustZoomAndCenterInternal,
+    { wait: 200 }
+  );
+
+  const handleCenter = useMemoizedFn(() => {
+    adjustZoomAndCenter();
   });
 
   // 切换画布模式
   const handleToggleCanvasMode = useMemoizedFn(() => {
-    if (!graphRef.current) return;
+    if (!graphRef.current || !selectionPluginRef.current) return;
 
     const newMode = canvasMode === "pan" ? "select" : "pan";
     setCanvasMode(newMode);
 
     if (newMode === "pan") {
-      // 切换到拖拽画布模式：启用 panning，禁用 selection
+      // 切换到拖拽画布模式：启用 panning，禁用框选但保留点击选择
       graphRef.current.enablePanning();
-      if (selectionPluginRef.current) {
-        graphRef.current.disableSelection();
-      }
+      // 禁用框选功能，但保留点击选择功能
+      selectionPluginRef.current.disableRubberband();
+      // Selection 插件保持启用，这样点击选择仍然可用
     } else {
-      // 切换到选择元素模式：禁用 panning，启用 selection
+      // 切换到选择元素模式：禁用 panning，启用框选和选择
       graphRef.current.disablePanning();
-      if (selectionPluginRef.current) {
-        graphRef.current.enableSelection();
-      }
+      // 启用框选功能
+      selectionPluginRef.current.enableRubberband();
     }
   });
 
@@ -947,6 +1043,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
               stroke: currentEdgeColor,
               strokeWidth: currentEdgeWidth,
               strokeDasharray: dashArray,
+              pointerEvents: "visibleStroke", // 使边可响应鼠标事件，支持选中和拖动端点
             },
           },
         });
@@ -973,8 +1070,29 @@ export const MindMapModal: FC<MindMapModalProps> = ({
       }
     }
 
+    // 如果开启了自动排列，则自动重新布局
+    if (isAutoLayoutActiveRef.current) {
+      autoLayoutGraph(graph, "root", { hGap: 40, vGap: 20 });
+    }
+
     // 居中显示内容
     graph.centerContent();
+  });
+
+  // 切换自动排列开关
+  const handleToggleAutoLayout = useMemoizedFn(() => {
+    setIsAutoLayoutActive((prev) => {
+      const newValue = !prev;
+      isAutoLayoutActiveRef.current = newValue;
+      return newValue;
+    });
+  });
+
+  // 刷新排列
+  const handleRefreshLayout = useMemoizedFn(() => {
+    const graph = graphRef.current;
+    if (!graph) return;
+    autoLayoutGraph(graph, "root", { hGap: 40, vGap: 20 });
   });
 
   // 处理添加子节点（从 CanvasControls 调用）
@@ -1007,6 +1125,50 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         graph.select(newNodes); // 只选中新创建的节点
       }
     }, 0);
+  });
+
+  const handleDeleteNode = useMemoizedFn(() => {
+    const graph = graphRef.current;
+    if (!graph) return;
+
+    const selectedCells = graph.getSelectedCells();
+    const selectedNodes = selectedCells.filter((cell) =>
+      cell.isNode()
+    ) as Node[];
+    const selectedEdges = selectedCells.filter((cell) => cell.isEdge());
+
+    if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+      message.warning("请先选择要删除的元素");
+      return;
+    }
+
+    // 删除选中的边
+    selectedEdges.forEach((edge) => {
+      graph.removeEdge(edge);
+    });
+
+    // 删除选中的节点及其相关的边
+    selectedNodes.forEach((node) => {
+      // 获取连接到该节点的所有边（作为源节点和目标节点）
+      const outgoingEdges = graph.getOutgoingEdges(node);
+      const incomingEdges = graph.getIncomingEdges(node);
+
+      // 删除所有相关的边
+      [...(outgoingEdges ?? []), ...(incomingEdges ?? [])].forEach((edge) => {
+        graph.removeEdge(edge);
+      });
+
+      // 删除节点
+      graph.removeNode(node);
+    });
+
+    // 清除选中状态
+    graph.cleanSelection();
+
+    // 如果开启了自动排列，则自动重新布局
+    if (isAutoLayoutActiveRef.current) {
+      autoLayoutGraph(graph, "root", { hGap: 40, vGap: 20 });
+    }
   });
 
   return (
@@ -1280,8 +1442,15 @@ export const MindMapModal: FC<MindMapModalProps> = ({
             onToggleMode={handleToggleCanvasMode}
             onCopy={handleCopyNode}
             onAddChild={handleAddChild}
+            onToggleAutoLayout={handleToggleAutoLayout}
+            onRefreshLayout={handleRefreshLayout}
             isDisabledCopy={selectedNodeCount !== 1}
             isDisabledAddChild={selectedNodeCount === 0}
+            isDisabledDeleteNode={
+              selectedNodeCount === 0 && selectedEdgeCount === 0
+            }
+            onDeleteNode={handleDeleteNode}
+            isAutoLayoutActive={isAutoLayoutActive}
             mode={canvasMode}
           />
         )}

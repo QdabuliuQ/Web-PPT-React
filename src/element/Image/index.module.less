@@ -8,3 +8,39 @@
     opacity: 0.8;
   }
 }
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  // hover 时显示"双击预览"提示（仅在 edit 模式）
+  .imageElement &::before {
+    content: "双击预览";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    z-index: 10;
+  }
+
+  .imageElement &:hover::before {
+    opacity: 1;
+  }
+}
+
+.imageVisible {
+  display: block;
+}
+
+.imageHidden {
+  display: none;
+}

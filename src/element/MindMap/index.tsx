@@ -14,6 +14,8 @@ import { useMemoizedFn } from "ahooks";
 import { Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
 import { getMindMapMenuItems } from "./menu";
@@ -128,7 +130,7 @@ Shape.Edge.registry.register(
       line: {
         stroke: "#A2B1C3",
         strokeWidth: 2,
-        targetMarker: null,
+        pointerEvents: "visibleStroke", // 使边可响应鼠标事件，支持选中和拖动端点
       },
     },
     zIndex: -1, // 边的 zIndex 设置为 -1，确保在节点下方
@@ -167,6 +169,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
     (currentElement as any)?.mindMapBackgroundColor || "#F2F7FA";
 
   const moveableRef = useRef<any>(null);
+  const photoViewRef = useRef<HTMLImageElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -268,7 +271,13 @@ const Component: FC<IMindMapProps> = observer((props) => {
     }
 
     // 显示右键菜单，合并思维导图菜单和通用菜单
-    const menuItems = [...getMindMapMenuItems(), ...commonMenu];
+    const menuItems = [
+      ...getMindMapMenuItems({
+        onEdit: handleModalOpen,
+        onPreview: openPreview,
+      }),
+      ...commonMenu,
+    ];
     contextMenuStore.showMenu(menuItems, e);
   };
 
@@ -457,6 +466,14 @@ const Component: FC<IMindMapProps> = observer((props) => {
     }
   }, [previewImage, data, currentPageId, id, initPreviewImage]);
 
+  // 打开预览
+  const openPreview = useMemoizedFn(() => {
+    if (previewImage && photoViewRef.current) {
+      // 触发 PhotoView 的预览
+      photoViewRef.current.click();
+    }
+  });
+
   // Modal 打开处理
   const handleModalOpen = useMemoizedFn(() => {
     setModalOpen(true);
@@ -556,17 +573,27 @@ const Component: FC<IMindMapProps> = observer((props) => {
             </div>
           )}
           {previewImage && !isLoading && (
-            <div
-              className={`${styles.mindMapImageWrapper} w-full h-full`}
-              style={{ backgroundColor }}
-            >
-              <img
-                src={previewImage}
-                alt="思维导图预览"
-                className="w-full h-full object-contain"
-                style={{ pointerEvents: "none" }}
-              />
-            </div>
+            <PhotoProvider>
+              <div
+                className={`${styles.mindMapImageWrapper} w-full h-full`}
+                style={{ backgroundColor }}
+              >
+                <PhotoView src={previewImage} overlay={<div />}>
+                  <img
+                    ref={photoViewRef}
+                    src={previewImage}
+                    alt="思维导图预览"
+                    className="w-full h-full object-contain"
+                    style={{ pointerEvents: "none" }}
+                    onClick={(e) => {
+                      // 阻止单击触发预览，只允许通过菜单或双击
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  />
+                </PhotoView>
+              </div>
+            </PhotoProvider>
           )}
         </AnimationWrapper>
       </div>
@@ -619,14 +646,18 @@ const Component: FC<IMindMapProps> = observer((props) => {
           </div>
         )}
         {previewImage && !isLoading && (
-          <div className="w-full h-full">
-            <img
-              src={previewImage}
-              alt="思维导图预览"
-              className="w-full h-full object-contain"
-              style={{ pointerEvents: "none" }}
-            />
-          </div>
+          <PhotoProvider>
+            <div className="w-full h-full" style={{ backgroundColor }}>
+              <PhotoView src={previewImage}>
+                <img
+                  src={previewImage}
+                  alt="思维导图预览"
+                  className="w-full h-full object-contain"
+                  style={{ pointerEvents: "none" }}
+                />
+              </PhotoView>
+            </div>
+          </PhotoProvider>
         )}
       </AnimationWrapper>
     </div>

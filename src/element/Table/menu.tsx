@@ -1,6 +1,12 @@
 import type { Menu } from "@/hooks/useContextMenu";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { BottomBar, LeftBar, RightBar, TopBar } from "@icon-park/react";
+import {
+  BottomBar,
+  EditOne,
+  LeftBar,
+  RightBar,
+  TopBar,
+} from "@icon-park/react";
 
 // 获取表格元素信息的函数
 const getTableElementInfo = () => {
@@ -20,7 +26,7 @@ const getTableElementInfo = () => {
 };
 
 // 导出表格菜单项获取函数
-export const getTableMenuItems = (): Menu => {
+export const getTableMenuItems = ({ onEdit }): Menu => {
   // 创建新的空单元格
   const createEmptyCell = () => ({
     fontSize: 14,
@@ -35,6 +41,15 @@ export const getTableMenuItems = (): Menu => {
   });
 
   return [
+    {
+      type: "item",
+      label: "编辑数据",
+      icon: <EditOne theme="outline" size="13" fill="#333" />,
+      onClick: onEdit,
+    },
+    {
+      type: "separator",
+    },
     {
       type: "item",
       label: "顶部插入一行",

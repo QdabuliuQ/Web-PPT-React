@@ -725,7 +725,7 @@ const Component: FC<ITableProps> = (props) => {
 
   // 处理双击事件，打开弹窗
   const handleDoubleClick = useMemoizedFn((e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止事件冒泡
+    e?.stopPropagation?.(); // 阻止事件冒泡
 
     // 如果按住shift键，则不打开编辑窗口
     if (isShiftPressed) {
@@ -1015,7 +1015,10 @@ const Component: FC<ITableProps> = (props) => {
       <Table
         onContextMenu={(e: any) => {
           onSelect?.();
-          const menuItems = [...getTableMenuItems(), ...commonMenu];
+          const menuItems = [
+            ...getTableMenuItems({ onEdit: handleDoubleClick }),
+            ...commonMenu,
+          ];
           (e as any).customData = {
             type: "element_table",
             menuItems,
