@@ -4,6 +4,7 @@ import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
   elementActiveStore,
+  elementHoverActiveStore,
   pageActiveStore,
   pptStore,
 } from "@/store";
@@ -155,6 +156,7 @@ const Component: FC<ITextProps> = observer((props) => {
   });
 
   const isSelected = elementActiveStore.isElementActive(id);
+  const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 获取当前页面ID
   const pageId = pageActiveStore.getPageActive() || "";
@@ -324,9 +326,12 @@ const Component: FC<ITextProps> = observer((props) => {
       textShadow: shadow
         ? `${shadowOffsetY}px ${shadowOffsetX}px 5px ${shadowColor}`
         : "none",
-      border: border
-        ? `${borderWidth}px ${borderStyle} ${borderColor}`
-        : "none",
+      border:
+        border && !isHoverActive
+          ? `${borderWidth}px ${borderStyle} ${borderColor}`
+          : isHoverActive && !isSelected
+            ? "1px solid var(--primary-color, #1890ff)"
+            : "none",
       WebkitTextStroke: stroke ? `${strokeWidth}px ${strokeColor}` : "",
       ...placementConvey(placement),
       cursor: isSelected ? "text" : "pointer",
@@ -361,6 +366,7 @@ const Component: FC<ITextProps> = observer((props) => {
       placementConvey,
       placement,
       isSelected,
+      isHoverActive,
       backgroundColor,
     ]
   );
@@ -507,3 +513,6 @@ export const TextButton = memo(
     );
   })
 );
+
+export const TextPanelIcon = TextIcon;
+export const Name = "文本";

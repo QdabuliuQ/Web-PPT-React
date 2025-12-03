@@ -74,12 +74,17 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
     const margin = 40; // 边距
     const availableWidth = currentSize.width - margin;
+    const availableHeight = currentSize.height - margin;
 
-    // 宽度撑满，基于宽度计算缩放比例
-    let newScale = availableWidth / CANVAS_WIDTH;
+    // 分别计算宽度和高度的缩放比例
+    const scaleX = availableWidth / CANVAS_WIDTH;
+    const scaleY = availableHeight / CANVAS_HEIGHT;
 
-    // 限制最大缩放不超过1
-    newScale = Math.min(Math.max(newScale, 0.1), 1); // 添加最小值限制
+    // 按照宽度/高度的最小值进行等比例缩放
+    let newScale = Math.min(scaleX, scaleY);
+
+    // 限制最大缩放不超过1，最小缩放不小于0.1
+    newScale = Math.min(Math.max(newScale, 0.1), 1);
 
     // 只在值真正变化时更新（提高精度）
     if (Math.abs(newScale - scale) > 0.005) {
@@ -106,13 +111,88 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     setTimeout(calculateScale, 0);
   }, [calculateScale]);
 
+  // 监听全局点击事件，关闭右键菜单
+  // 注意：react-contexify 已经内置了点击外部关闭菜单的功能
+  // 这里只需要同步 contextMenuStore 的状态
+  useEffect(() => {
+    if (mode === "preview") {
+      return;
+    }
+
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+
+      // 检查点击是否在菜单内部
+      const menuElement = document.querySelector(
+        '[data-contexify-root="true"]'
+      );
+      if (menuElement && menuElement.contains(target)) {
+        // 如果点击在菜单内部，不处理
+        // react-contexify 会自己处理菜单项的点击和关闭
+        return;
+      }
+
+      // 如果菜单显示且点击在菜单外部，同步关闭 contextMenuStore
+      // react-contexify 的 hideAll 会关闭菜单，但不会更新我们的 store
+      if (contextMenuStore.isVisible()) {
+        // 延迟执行，确保菜单项的 onClick 先执行
+        setTimeout(() => {
+          if (contextMenuStore.isVisible()) {
+            contextMenuStore.hideMenu();
+          }
+        }, 100);
+      }
+    };
+
+    // 使用较长的延迟，确保菜单项的 onClick 先执行
+    document.addEventListener("click", handleDocumentClick, false);
+
+    return () => {
+      document.removeEventListener("click", handleDocumentClick, false);
+    };
+  }, [mode]);
+
   // 用于跟踪点击触发的动画状态
   const clickAnimationIndexRef = useRef<number>(0);
   const clickAnimationElementsRef = useRef<Array<Elements>>([]);
   const completedClickAnimationsRef = useRef<Set<string>>(new Set());
   const currentPageIdForClickAnimationRef = useRef<string>("");
 
-  // 监听页面变化，重置结束提示状态和动画结束标志
+  // 自动切换定时器
+  const autoToggleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 切换到下一页的函数（供自动切换和点击切换共用）
+  const goToNextPage = useMemoizedFn(() => {
+    const pages = pptStore.getPages();
+    const currentPageId = page?.id || pageActiveStore.getPageActive();
+    const currentPage = page || pptStore.getActivePage(currentPageId as string);
+
+    if (!currentPage) return;
+
+    const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
+    const isLastPage = currentPageIndex === pages.length - 1;
+
+    // 先同步 pageActiveStore 到当前页面
+    if (currentPageId) {
+      pageActiveStore.setPageActive(currentPageId);
+    }
+    const lastPageId = pageActiveStore.getPageActive();
+    const newPageId = pageActiveStore.goToNextPage();
+
+    // 如果无法切换到下一页（已经是最后一页），显示结束提示
+    if (isLastPage && lastPageId === newPageId) {
+      setShowEndMessage(true);
+      return;
+    }
+
+    // 如果可以切换，切换到下一页
+    if (lastPageId !== newPageId && newPageId) {
+      fullscreenStore.enterFullscreen(newPageId);
+      setShowEndMessage(false);
+    }
+  });
+
+  // 监听页面变化，重置结束提示状态和动画结束标志，设置自动切换定时器
   useEffect(() => {
     if (mode === "play") {
       setShowEndMessage(false);
@@ -122,8 +202,38 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       clickAnimationElementsRef.current = [];
       completedClickAnimationsRef.current = new Set();
       currentPageIdForClickAnimationRef.current = "";
+
+      // 清除之前的自动切换定时器
+      if (autoToggleTimerRef.current) {
+        clearTimeout(autoToggleTimerRef.current);
+        autoToggleTimerRef.current = null;
+      }
+
+      // 检查是否开启自动切换
+      const currentPageId = page?.id || pageActiveStore.getPageActive();
+      const currentPage =
+        page || (currentPageId ? pptStore.getActivePage(currentPageId) : null);
+
+      if (currentPage) {
+        const { autoToggle = false, autoToggleTime = 5 } = currentPage as any;
+
+        if (autoToggle && autoToggleTime > 0) {
+          // 设置自动切换定时器（时间单位：秒）
+          autoToggleTimerRef.current = setTimeout(() => {
+            goToNextPage();
+          }, autoToggleTime * 1000);
+        }
+      }
     }
-  }, [page?.id, mode]);
+
+    // 清理函数：组件卸载或页面切换时清除定时器
+    return () => {
+      if (autoToggleTimerRef.current) {
+        clearTimeout(autoToggleTimerRef.current);
+        autoToggleTimerRef.current = null;
+      }
+    };
+  }, [page, mode, goToNextPage]);
 
   // 监听窗口大小变化 - 性能优化版本
   useEffect(() => {
@@ -181,6 +291,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       elementActiveStore.resetElementActive();
       // 取消选择时切换回开始页面
       menuActiveStore.setActiveMenu("start");
+      // 关闭右键菜单（如果菜单显示的话）
+      contextMenuStore.hideMenu();
     }
   });
 
@@ -322,20 +434,29 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       computedScale = scale;
     }
 
-    return {
+    const baseStyle = {
       width: `${CANVAS_WIDTH}px`,
       height: `${CANVAS_HEIGHT}px`,
-      // transform: `scale(${computedScale})`,
-      // transformOrigin: "center center",
-      zoom: computedScale,
       left: "50%",
       top: "50%",
       marginLeft: `-${CANVAS_WIDTH / 2}px`,
       marginTop: `-${CANVAS_HEIGHT / 2}px`,
-      // 开启硬件加速
-      willChange: "transform",
-      backfaceVisibility: "hidden" as const,
     };
+
+    if (mode === "play") {
+      // play 模式使用 zoom 进行缩放
+      return {
+        ...baseStyle,
+        zoom: computedScale,
+      };
+    } else {
+      // 其他模式使用 transform 进行缩放
+      return {
+        ...baseStyle,
+        transform: `scale(${computedScale})`,
+        transformOrigin: "center center",
+      };
+    }
   };
 
   const canvasStyle = getCanvasStyle();
@@ -420,7 +541,11 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     e.stopPropagation();
 
     const pages = pptStore.getPages();
-    const currentPageId = page?.id || pageActiveStore.getPageActive();
+    // 在 play 模式下，优先使用 page?.id，如果没有则使用 fullscreenStore 的 currentSlidePageId
+    const currentPageId =
+      page?.id ||
+      fullscreenStore.getCurrentSlidePageId() ||
+      pageActiveStore.getPageActive();
     const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
     const isFirstPage = currentPageIndex === 0;
     const isLastPage = currentPageIndex === pages.length - 1;
@@ -432,11 +557,14 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         icon: <Left theme="outline" size="13" fill="#333" />,
         disabled: isFirstPage,
         onClick: () => {
-          if (currentPageId) {
-            pageActiveStore.setPageActive(currentPageId);
-          }
-          const prevPageId = pageActiveStore.goToPrevPage();
-          if (prevPageId) {
+          if (currentPageIndex > 0) {
+            console.log(currentPageIndex, "currentPageIndex");
+
+            // 直接计算上一页的ID，不依赖 pageActiveStore
+            const prevPageId =
+              pages[showEndMessage ? currentPageIndex : currentPageIndex - 1]
+                .id;
+            pageActiveStore.setPageActive(prevPageId);
             fullscreenStore.enterFullscreen(prevPageId);
             setShowEndMessage(false);
           }
@@ -448,11 +576,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         icon: <Right theme="outline" size="13" fill="#333" />,
         disabled: isLastPage,
         onClick: () => {
-          if (currentPageId) {
-            pageActiveStore.setPageActive(currentPageId);
-          }
-          const nextPageId = pageActiveStore.goToNextPage();
-          if (nextPageId) {
+          if (currentPageIndex < pages.length - 1) {
+            // 直接计算下一页的ID，不依赖 pageActiveStore
+            const nextPageId = pages[currentPageIndex + 1].id;
+            pageActiveStore.setPageActive(nextPageId);
             fullscreenStore.enterFullscreen(nextPageId);
             setShowEndMessage(false);
           } else {
@@ -626,34 +753,18 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
         if (allCompleted) {
           // 所有动画都已完成，切换到下一页
-          const currentPageIndex = pages.findIndex(
-            (p) => p.id === currentPageId
-          );
-          const isLastPage = currentPageIndex === pages.length - 1;
-
           const { clickToNext = true } = currentPage as any;
           if (!clickToNext) {
             return;
           }
 
-          // 先同步 pageActiveStore 到当前页面
-          if (currentPageId) {
-            pageActiveStore.setPageActive(currentPageId);
-          }
-          const lastPageId = pageActiveStore.getPageActive();
-          const newPageId = pageActiveStore.goToNextPage();
-
-          // 如果无法切换到下一页（已经是最后一页），显示结束提示
-          if (isLastPage && lastPageId === newPageId) {
-            setShowEndMessage(true);
-            return;
+          // 清除自动切换定时器（因为手动点击切换）
+          if (autoToggleTimerRef.current) {
+            clearTimeout(autoToggleTimerRef.current);
+            autoToggleTimerRef.current = null;
           }
 
-          // 如果可以切换，切换到下一页
-          if (lastPageId !== newPageId && newPageId) {
-            fullscreenStore.enterFullscreen(newPageId);
-            setShowEndMessage(false); // 切换页面时重置提示状态
-          }
+          goToNextPage();
         }
         // 如果还有动画未完成，等待动画完成事件
       }
@@ -838,12 +949,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
           ...canvasStyle,
           ...(showEndMessage ? { backgroundColor: "#000" } : backgroundStyle),
         }}
-        onClick={playCanvasClickHandle}
+        onClick={mode === "play" ? playCanvasClickHandle : undefined}
         onContextMenu={mode === "play" ? handlePlayContextMenu : undefined}
-        onAnimationEnd={handleAnimationEnd}
+        onAnimationEnd={mode === "play" ? handleAnimationEnd : undefined}
       >
         {renderElements(false)}
-        {showEndMessage && (
+        {mode === "play" && showEndMessage && (
           <div className="absolute inset-0 flex items-center justify-center cursor-pointer text-[15px] bg-[#000] text-[#fff] z-[9999]">
             放映结束，单击鼠标退出
           </div>

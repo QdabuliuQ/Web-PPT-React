@@ -1,9 +1,15 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  elementActiveStore,
+  elementHoverActiveStore,
+  pageActiveStore,
+  pptStore,
+} from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId, placementConvey } from "@/utils";
 import { globalEventBus } from "@/utils/eventBus";
+import { TableFile } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Modal } from "antd";
 import { observer } from "mobx-react-lite";
@@ -519,6 +525,7 @@ const Component: FC<ITableProps> = (props) => {
 
   // 从 MobX store 中获取选中状态
   const isSelected = elementActiveStore.isElementActive(id);
+  const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 监听shift键状态
   useEffect(() => {
@@ -726,6 +733,7 @@ const Component: FC<ITableProps> = (props) => {
   // 处理双击事件，打开弹窗
   const handleDoubleClick = useMemoizedFn((e: React.MouseEvent) => {
     e?.stopPropagation?.(); // 阻止事件冒泡
+    console.log(isShiftPressed, hasDraggedRef);
 
     // 如果按住shift键，则不打开编辑窗口
     if (isShiftPressed) {
@@ -867,8 +875,12 @@ const Component: FC<ITableProps> = (props) => {
       height,
       transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
       zIndex,
+      border:
+        mode === "edit" && isHoverActive && !isSelected
+          ? "1px solid var(--primary-color, #f25f00)"
+          : "none",
     }),
-    [height, rotate, width, x, y, zIndex]
+    [height, rotate, width, x, y, zIndex, mode, isHoverActive, isSelected]
   );
 
   // 获取通用菜单
@@ -1242,3 +1254,5 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
 };
 
 export const TableButton = TableButtonComponent;
+export const Name = "表格";
+export const TablePanelIcon = TableFile;

@@ -4,13 +4,14 @@ import {
   ConnectionPoint,
   Copy,
   Delete,
+  DownPicture,
   FormatBrush,
   HorizontallyCentered,
   Minus,
   Move,
   Plus,
 } from "@icon-park/react";
-import { Button, Tooltip } from "antd";
+import { Button, Dropdown, Tooltip, type MenuProps } from "antd";
 import { type FC } from "react";
 
 interface CanvasControlsProps {
@@ -23,6 +24,9 @@ interface CanvasControlsProps {
   onDeleteNode?: () => void;
   onToggleAutoLayout?: () => void;
   onRefreshLayout?: () => void;
+  onExportSvg?: () => void;
+  onExportPng?: () => void;
+  onExportJpg?: () => void;
   isDisabledCopy?: boolean;
   isDisabledAddChild?: boolean;
   isDisabledDeleteNode?: boolean;
@@ -40,12 +44,33 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
   onDeleteNode,
   onToggleAutoLayout,
   onRefreshLayout,
+  onExportSvg,
+  onExportPng,
+  onExportJpg,
   isDisabledCopy,
   isDisabledAddChild,
   isDisabledDeleteNode,
   isAutoLayoutActive = false,
   mode = "select",
 }) => {
+  // 导出菜单项
+  const exportMenuItems: MenuProps["items"] = [
+    {
+      key: "svg",
+      label: "导出 SVG",
+      onClick: onExportSvg,
+    },
+    {
+      key: "png",
+      label: "导出 PNG",
+      onClick: onExportPng,
+    },
+    {
+      key: "jpg",
+      label: "导出 JPG",
+      onClick: onExportJpg,
+    },
+  ];
   return (
     <div className="absolute bottom-[10px] left-1/2 transform -translate-x-1/2 flex gap-[8px] items-center bg-white rounded-[8px] shadow-lg px-[8px] py-[6px]">
       {onToggleMode && (
@@ -109,12 +134,12 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
         <Button
           type="text"
           onClick={onToggleAutoLayout}
-          className={isAutoLayoutActive ? "bg-blue-50" : ""}
+          className={isAutoLayoutActive ? "bg-orange-50" : ""}
           icon={
             <ConnectionPoint
               theme="outline"
               size="16"
-              fill={isAutoLayoutActive ? "#1890ff" : "#333"}
+              fill={isAutoLayoutActive ? "#f25f00" : "#333"}
             />
           }
         />
@@ -137,6 +162,14 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
           icon={<Delete theme="outline" size="16" fill="#333" />}
         />
       </Tooltip>
+      {(onExportSvg || onExportPng || onExportJpg) && (
+        <Dropdown menu={{ items: exportMenuItems }} placement="top">
+          <Button
+            type="text"
+            icon={<DownPicture theme="outline" size="16" fill="#333" />}
+          />
+        </Dropdown>
+      )}
     </div>
   );
 };

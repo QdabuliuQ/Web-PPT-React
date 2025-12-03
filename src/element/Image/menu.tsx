@@ -13,7 +13,11 @@ export const getImageMenuItems = ({
       type: "item",
       label: "预览",
       icon: <PreviewOpen theme="outline" size="13" fill="#333" />,
-      onClick: onPreview,
+      onClick: () => {
+        console.log("123123");
+
+        onPreview();
+      },
     },
     {
       type: "separator",

@@ -1,13 +1,10 @@
 import { Export, Graph, Node, Selection, Shape } from "@antv/x6";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { message, Modal, Spin, theme } from "antd";
-import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import "overlayscrollbars/overlayscrollbars.css";
 import { useEffect, useRef, useState, type FC } from "react";
 import { CanvasControls } from "./CanvasControls";
-import { ColorPickerMenuItem } from "./ColorPickerMenuItem";
-import styles from "./MindMapModal.module.less";
-import { SelectMenuIitem, type SelectMenuItemOption } from "./SelectMenuIitem";
+import { MindMapToolbar } from "./MindMapToolbar";
 import {
   autoLayoutGraph,
   calculateZoomAndCenter,
@@ -80,8 +77,8 @@ export const MindMapModal: FC<MindMapModalProps> = ({
   // 选中边数量状态
   const [selectedEdgeCount, setSelectedEdgeCount] = useState<number>(0);
   // 自动排列开关状态
-  const [isAutoLayoutActive, setIsAutoLayoutActive] = useState<boolean>(false);
-  const isAutoLayoutActiveRef = useRef<boolean>(false);
+  const [isAutoLayoutActive, setIsAutoLayoutActive] = useState<boolean>(true);
+  const isAutoLayoutActiveRef = useRef<boolean>(true);
 
   // 同步 ref 和 state
   useEffect(() => {
@@ -104,59 +101,6 @@ export const MindMapModal: FC<MindMapModalProps> = ({
 
   // 获取主题色
   const { token } = theme.useToken();
-
-  // 线段类型选项
-  const edgeTypeOptions: SelectMenuItemOption[] = [
-    { label: "实线", value: "none" },
-    { label: "虚线", value: "5,5" },
-    { label: "点线", value: "2,2" },
-    { label: "点划线", value: "5,2,2,2" },
-  ];
-
-  // 线段宽度选项
-  const edgeWidthOptions: SelectMenuItemOption[] = [
-    { label: "1px", value: 1 },
-    { label: "2px", value: 2 },
-    { label: "3px", value: 3 },
-    { label: "4px", value: 4 },
-    { label: "5px", value: 5 },
-  ];
-
-  // 线段连接器类型选项
-  const edgeConnectorOptions: SelectMenuItemOption[] = [
-    { label: "思维导图", value: "mindmap" },
-    { label: "圆角", value: "rounded" },
-    { label: "平滑", value: "smooth" },
-    { label: "直线", value: "normal" },
-    { label: "跳线", value: "jumpover" },
-  ];
-
-  // 节点边框类型选项
-  const nodeBorderTypeOptions: SelectMenuItemOption[] = [
-    { label: "实线", value: "solid" },
-    { label: "虚线", value: "dashed" },
-    { label: "点线", value: "dotted" },
-  ];
-
-  // 节点边框宽度选项
-  const nodeBorderWidthOptions: SelectMenuItemOption[] = [
-    { label: "1px", value: 1 },
-    { label: "2px", value: 2 },
-    { label: "3px", value: 3 },
-    { label: "4px", value: 4 },
-    { label: "5px", value: 5 },
-  ];
-
-  // 节点字体大小选项
-  const nodeFontSizeOptions: SelectMenuItemOption[] = [
-    { label: "10px", value: 10 },
-    { label: "12px", value: 12 },
-    { label: "14px", value: 14 },
-    { label: "16px", value: 16 },
-    { label: "18px", value: 18 },
-    { label: "20px", value: 20 },
-    { label: "24px", value: 24 },
-  ];
 
   // 初始化 X6 Graph
   const initGraph = useMemoizedFn(async () => {
@@ -1095,6 +1039,166 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     autoLayoutGraph(graph, "root", { hGap: 40, vGap: 20 });
   });
 
+  // 导出 SVG
+  const handleExportSvg = useMemoizedFn(async () => {
+    const graph = graphRef.current;
+    if (!graph) {
+      message.warning("无法导出 SVG");
+      return;
+    }
+
+    try {
+      // 计算 viewBox
+      const box = graph.getContentBBox({
+        useCellGeometry: false,
+      });
+      const padding = 20;
+      const viewBox = {
+        x: box.x - padding,
+        y: box.y - padding,
+        width: box.width + padding * 2,
+        height: box.height + padding * 2,
+      };
+
+      // 获取背景色
+      const bgColor = backgroundColorRef.current;
+
+      // 使用 X6 的 exportSVG 方法
+      graph.exportSVG(`思维导图_${Date.now()}.svg`, {
+        preserveDimensions: true,
+        viewBox: viewBox,
+        copyStyles: true,
+        beforeSerialize: (svg: SVGSVGElement) => {
+          // 隐藏所有连接点
+          const ports = svg.querySelectorAll(".x6-port, [data-port]");
+          ports.forEach((port) => {
+            const element = port as SVGElement;
+            element.style.display = "none";
+          });
+
+          // 如果有背景色，添加背景矩形
+          if (bgColor) {
+            const rect = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "rect"
+            );
+            rect.setAttribute("x", String(viewBox.x));
+            rect.setAttribute("y", String(viewBox.y));
+            rect.setAttribute("width", String(viewBox.width));
+            rect.setAttribute("height", String(viewBox.height));
+            rect.setAttribute("fill", bgColor);
+            // 将背景矩形插入到最前面
+            if (svg.firstChild) {
+              svg.insertBefore(rect, svg.firstChild);
+            } else {
+              svg.appendChild(rect);
+            }
+          }
+        },
+      });
+
+      message.success("SVG 导出成功");
+    } catch (error) {
+      console.error("导出 SVG 失败:", error);
+      message.error("导出 SVG 失败");
+    }
+  });
+
+  // 导出 PNG
+  const handleExportPng = useMemoizedFn(async () => {
+    const graph = graphRef.current;
+    if (!graph) {
+      message.warning("无法导出 PNG");
+      return;
+    }
+
+    try {
+      // 计算 viewBox
+      const box = graph.getContentBBox({
+        useCellGeometry: false,
+      });
+      const padding = 20;
+      const viewBox = {
+        x: box.x - padding,
+        y: box.y - padding,
+        width: box.width + padding * 2,
+        height: box.height + padding * 2,
+      };
+
+      // 获取背景色
+      const bgColor = backgroundColorRef.current;
+
+      // 使用 X6 的 exportPNG 方法
+      graph.exportPNG(`思维导图_${Date.now()}.png`, {
+        preserveDimensions: true,
+        viewBox: viewBox,
+        copyStyles: true,
+        backgroundColor: bgColor || "#ffffff",
+        beforeSerialize: (svg: SVGSVGElement) => {
+          // 隐藏所有连接点
+          const ports = svg.querySelectorAll(".x6-port, [data-port]");
+          ports.forEach((port) => {
+            const element = port as SVGElement;
+            element.style.display = "none";
+          });
+        },
+      });
+
+      message.success("PNG 导出成功");
+    } catch (error) {
+      console.error("导出 PNG 失败:", error);
+      message.error("导出 PNG 失败");
+    }
+  });
+
+  // 导出 JPG
+  const handleExportJpg = useMemoizedFn(async () => {
+    const graph = graphRef.current;
+    if (!graph) {
+      message.warning("无法导出 JPG");
+      return;
+    }
+
+    try {
+      // 计算 viewBox
+      const box = graph.getContentBBox({
+        useCellGeometry: false,
+      });
+      const padding = 20;
+      const viewBox = {
+        x: box.x - padding,
+        y: box.y - padding,
+        width: box.width + padding * 2,
+        height: box.height + padding * 2,
+      };
+
+      // 获取背景色（JPG 不支持透明，使用背景色或白色）
+      const bgColor = backgroundColorRef.current || "#ffffff";
+
+      // 使用 X6 的 exportJPEG 方法
+      graph.exportJPEG(`思维导图_${Date.now()}.jpg`, {
+        preserveDimensions: true,
+        viewBox: viewBox,
+        copyStyles: true,
+        backgroundColor: bgColor,
+        quality: 0.95,
+        beforeSerialize: (svg: SVGSVGElement) => {
+          // 隐藏所有连接点
+          const ports = svg.querySelectorAll(".x6-port, [data-port]");
+          ports.forEach((port) => {
+            const element = port as SVGElement;
+            element.style.display = "none";
+          });
+        },
+      });
+
+      message.success("JPG 导出成功");
+    } catch (error) {
+      console.error("导出 JPG 失败:", error);
+      message.error("导出 JPG 失败");
+    }
+  });
+
   // 处理添加子节点（从 CanvasControls 调用）
   const handleAddChild = useMemoizedFn(() => {
     const graph = graphRef.current;
@@ -1198,233 +1302,45 @@ export const MindMapModal: FC<MindMapModalProps> = ({
           <Spin size="large" tip="加载中..." />
         </div>
       )}
-      <OverlayScrollbarsComponent
-        className={`${styles.modalHeader} mt-[10px] mb-[10px]`}
-        options={{
-          scrollbars: {
-            autoHide: "scroll",
-            autoHideDelay: 1000,
-          },
-          overflow: {
-            x: "scroll",
-            y: "hidden",
-          },
-        }}
-        style={{
-          width: "100%",
-          height: "45px",
-        }}
-      >
-        <div className="inline-flex gap-[10px] items-center h-full box-border rounded-lg px-[20px]">
-          <SelectMenuIitem
-            title="线段类型"
-            options={edgeTypeOptions}
-            value={edgeType}
-            onSelect={(value) => {
-              const newEdgeType = value as string;
-              setEdgeType(newEdgeType);
-              edgeTypeRef.current = newEdgeType;
-              const graph = graphRef.current;
-              if (graph) {
-                const isSolid = value === "none";
-                graph.getEdges().forEach((edge) => {
-                  if (isSolid) {
-                    // 实线：移除 strokeDasharray 属性
-                    // 先获取当前属性，移除 strokeDasharray，然后重新设置
-                    const currentAttrs = edge.getAttrs();
-                    const lineAttrs = currentAttrs.line || {};
-                    const { strokeDasharray: _, ...restLineAttrs } = lineAttrs;
-                    edge.setAttrs({
-                      ...currentAttrs,
-                      line: restLineAttrs,
-                    });
-                    // 使用 prop 方法显式移除属性
-                    edge.prop("attrs/line/strokeDasharray", undefined);
-                  } else {
-                    // 虚线/点线：设置 strokeDasharray
-                    edge.setAttrs({
-                      line: {
-                        ...edge.getAttrs().line,
-                        strokeDasharray: value as string,
-                      },
-                    });
-                  }
-                });
-              }
-            }}
-          />
-          <SelectMenuIitem
-            title="线段宽度"
-            options={edgeWidthOptions}
-            value={edgeWidth}
-            onSelect={(value) => {
-              const newEdgeWidth = value as number;
-              setEdgeWidth(newEdgeWidth);
-              edgeWidthRef.current = newEdgeWidth;
-              const graph = graphRef.current;
-              if (graph) {
-                graph.getEdges().forEach((edge) => {
-                  edge.setAttrs({
-                    line: {
-                      ...edge.getAttrs().line,
-                      strokeWidth: newEdgeWidth,
-                    },
-                  });
-                });
-              }
-            }}
-          />
-          <ColorPickerMenuItem
-            title="线段颜色"
-            value={edgeColor}
-            onChange={(color) => {
-              setEdgeColor(color);
-              edgeColorRef.current = color;
-              const graph = graphRef.current;
-              if (graph) {
-                graph.getEdges().forEach((edge) => {
-                  edge.setAttrs({
-                    line: {
-                      ...edge.getAttrs().line,
-                      stroke: color,
-                    },
-                  });
-                });
-              }
-            }}
-          />
-          <SelectMenuIitem
-            title="线段类型"
-            options={edgeConnectorOptions}
-            value={edgeConnector}
-            onSelect={(value) => {
-              const newEdgeConnector = value as string;
-              setEdgeConnector(newEdgeConnector);
-              edgeConnectorRef.current = newEdgeConnector;
-              const graph = graphRef.current;
-              if (graph) {
-                graph.getEdges().forEach((edge) => {
-                  // 设置 router（跳线需要 er router）
-                  edge.setRouter(
-                    newEdgeConnector === "jumpover" ? "er" : "manhattan"
-                  );
-                  // 设置 connector
-                  edge.setConnector(
-                    newEdgeConnector,
-                    newEdgeConnector === "rounded"
-                      ? { radius: 8 }
-                      : newEdgeConnector === "jumpover"
-                        ? { size: 4, radius: 4 }
-                        : {}
-                  );
-                });
-              }
-            }}
-          />
-          <ColorPickerMenuItem
-            title="背景颜色"
-            value={backgroundColor}
-            onChange={(color) => {
-              setBackgroundColor(color);
-              backgroundColorRef.current = color;
-              const graph = graphRef.current;
-              if (graph) {
-                // 使用 drawBackground 方法设置背景颜色
-                graph.drawBackground({
-                  color,
-                });
-              }
-              // 通知父组件保存背景色
-              onBackgroundColorChange?.(color);
-            }}
-          />
-          <div className="h-[20px] w-[1px] bg-gray-300 inline" />
-          {/* 节点样式编辑 */}
-          <ColorPickerMenuItem
-            title="节点背景颜色"
-            value={nodeBackgroundColor}
-            disabled={selectedNodeCount === 0}
-            onChange={(color) => {
-              setNodeBackgroundColor(color);
-              nodeBackgroundColorRef.current = color;
-              updateSelectedNodesStyle("background", color);
-            }}
-          />
-          <ColorPickerMenuItem
-            title="节点边框颜色"
-            value={nodeBorderColor}
-            disabled={selectedNodeCount === 0}
-            onChange={(color) => {
-              setNodeBorderColor(color);
-              nodeBorderColorRef.current = color;
-              const graph = graphRef.current;
-              if (graph) {
-                const selectedCells = graph.getSelectedCells();
-                const selectedNodes = selectedCells.filter((cell) =>
-                  cell.isNode()
-                );
-                selectedNodes.forEach((node) => {
-                  // 保存原始边框颜色
-                  if (!node.getData()?.originalBorder) {
-                    node.setData({
-                      ...node.getData(),
-                      originalBorder: color,
-                    });
-                  }
-                });
-              }
-              updateSelectedNodesStyle("border", color);
-            }}
-          />
-          <SelectMenuIitem
-            title="节点边框宽度"
-            options={nodeBorderWidthOptions}
-            value={nodeBorderWidth}
-            disabled={selectedNodeCount === 0}
-            onSelect={(value) => {
-              const newBorderWidth = value as number;
-              setNodeBorderWidth(newBorderWidth);
-              nodeBorderWidthRef.current = newBorderWidth;
-              // updateSelectedNodesStyle 会自动更新 originalBorderWidth
-              updateSelectedNodesStyle("borderWidth", newBorderWidth);
-            }}
-          />
-          <SelectMenuIitem
-            title="节点边框类型"
-            options={nodeBorderTypeOptions}
-            value={nodeBorderType}
-            disabled={selectedNodeCount === 0}
-            onSelect={(value) => {
-              const newBorderType = value as string;
-              setNodeBorderType(newBorderType);
-              nodeBorderTypeRef.current = newBorderType;
-              updateSelectedNodesStyle("borderStyle", newBorderType);
-            }}
-          />
-          <SelectMenuIitem
-            title="节点字体大小"
-            options={nodeFontSizeOptions}
-            value={nodeFontSize}
-            disabled={selectedNodeCount === 0}
-            onSelect={(value) => {
-              const newFontSize = value as number;
-              setNodeFontSize(newFontSize);
-              nodeFontSizeRef.current = newFontSize;
-              updateSelectedNodesStyle("fontSize", newFontSize);
-            }}
-          />
-          <ColorPickerMenuItem
-            title="字体颜色"
-            value={nodeFontColor}
-            disabled={selectedNodeCount === 0}
-            onChange={(color) => {
-              setNodeFontColor(color);
-              nodeFontColorRef.current = color;
-              updateSelectedNodesStyle("color", color);
-            }}
-          />
-        </div>
-      </OverlayScrollbarsComponent>
+      <MindMapToolbar
+        graphRef={graphRef}
+        selectedNodeCount={selectedNodeCount}
+        onBackgroundColorChange={onBackgroundColorChange}
+        updateSelectedNodesStyle={updateSelectedNodesStyle}
+        edgeType={edgeType}
+        setEdgeType={setEdgeType}
+        edgeTypeRef={edgeTypeRef}
+        edgeWidth={edgeWidth}
+        setEdgeWidth={setEdgeWidth}
+        edgeWidthRef={edgeWidthRef}
+        edgeColor={edgeColor}
+        setEdgeColor={setEdgeColor}
+        edgeColorRef={edgeColorRef}
+        edgeConnector={edgeConnector}
+        setEdgeConnector={setEdgeConnector}
+        edgeConnectorRef={edgeConnectorRef}
+        backgroundColor={backgroundColor}
+        setBackgroundColor={setBackgroundColor}
+        backgroundColorRef={backgroundColorRef}
+        nodeBackgroundColor={nodeBackgroundColor}
+        setNodeBackgroundColor={setNodeBackgroundColor}
+        nodeBackgroundColorRef={nodeBackgroundColorRef}
+        nodeBorderColor={nodeBorderColor}
+        setNodeBorderColor={setNodeBorderColor}
+        nodeBorderColorRef={nodeBorderColorRef}
+        nodeBorderWidth={nodeBorderWidth}
+        setNodeBorderWidth={setNodeBorderWidth}
+        nodeBorderWidthRef={nodeBorderWidthRef}
+        nodeBorderType={nodeBorderType}
+        setNodeBorderType={setNodeBorderType}
+        nodeBorderTypeRef={nodeBorderTypeRef}
+        nodeFontSize={nodeFontSize}
+        setNodeFontSize={setNodeFontSize}
+        nodeFontSizeRef={nodeFontSizeRef}
+        nodeFontColor={nodeFontColor}
+        setNodeFontColor={setNodeFontColor}
+        nodeFontColorRef={nodeFontColorRef}
+      />
       <div className="relative w-full h-[calc(100%-65px)]">
         <div
           ref={containerRef}
@@ -1444,6 +1360,9 @@ export const MindMapModal: FC<MindMapModalProps> = ({
             onAddChild={handleAddChild}
             onToggleAutoLayout={handleToggleAutoLayout}
             onRefreshLayout={handleRefreshLayout}
+            onExportSvg={handleExportSvg}
+            onExportPng={handleExportPng}
+            onExportJpg={handleExportJpg}
             isDisabledCopy={selectedNodeCount !== 1}
             isDisabledAddChild={selectedNodeCount === 0}
             isDisabledDeleteNode={

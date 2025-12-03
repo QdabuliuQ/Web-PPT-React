@@ -1,9 +1,15 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
-import { contextMenuStore, elementActiveStore, pageActiveStore } from "@/store";
+import {
+  contextMenuStore,
+  elementActiveStore,
+  elementHoverActiveStore,
+  pageActiveStore,
+} from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import * as IconPark from "@icon-park/react";
+import { DiamondThree } from "@icon-park/react";
 import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
@@ -76,6 +82,7 @@ const Component: FC<IIconProps> = observer((props) => {
   });
 
   const isSelected = elementActiveStore.isElementActive(id);
+  const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 获取当前页面ID，确保不为空
   const currentPageId = pageActiveStore.getPageActive() || "";
@@ -130,8 +137,12 @@ const Component: FC<IIconProps> = observer((props) => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      border:
+        mode === "edit" && isHoverActive && !isSelected
+          ? "1px solid var(--primary-color, #f25f00)"
+          : "none",
     }),
-    [x, y, width, height, rotate, zIndex, isSelected]
+    [x, y, width, height, rotate, zIndex, isSelected, mode, isHoverActive]
   );
 
   // 动态获取图标组件
@@ -222,6 +233,8 @@ const Component: FC<IIconProps> = observer((props) => {
 });
 
 export const Icon = memo(Component);
+export const Name = "图标";
+export const IconPanelIcon = DiamondThree;
 
 export const CreateIcon = (props: Partial<IIconProps> = {}) => {
   const defaultProps: Omit<IIconProps, "type" | "id"> = {

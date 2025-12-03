@@ -8,7 +8,7 @@ import {
 import { pageActiveStore, pptStore } from "@/store";
 import { FullSelection } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { Checkbox, InputNumber } from "antd";
+import { Checkbox, InputNumber, message } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState, type FC } from "react";
 import styles from "./index.module.less";
@@ -252,6 +252,7 @@ const ToggleComponent: FC = () => {
       ...newPages[pageIndex],
       [property]: value,
     } as any;
+
     pptStore.setPages(newPages);
   });
 
@@ -287,6 +288,7 @@ const ToggleComponent: FC = () => {
   // 处理自动换片时间变化
   const handleAutoToggleTimeChange = useMemoizedFn((value: number | null) => {
     if (value !== null) {
+      if (value === currentAutoToggle) return;
       updatePageProperty("autoToggleTime", value);
     }
   });
@@ -312,6 +314,7 @@ const ToggleComponent: FC = () => {
     })) as any;
 
     pptStore.setPages(newPages);
+    message.success("修改成功");
   });
 
   return (
@@ -360,19 +363,19 @@ const ToggleComponent: FC = () => {
         </div>
         <div className={`flex items-center gap-[4px] ${styles.checkboxCustom}`}>
           <Checkbox
-            checked={currentAutoToggle}
+            value={currentAutoToggle}
             onChange={handleAutoToggleChange}
             style={{ fontSize: "12px" }}
           >
             自动换片：
-            <InputNumber
-              disabled={!currentAutoToggle}
-              size="small"
-              value={currentAutoToggleTime}
-              style={{ width: 70 }}
-              onChange={handleAutoToggleTimeChange}
-            />
           </Checkbox>
+          <InputNumber
+            disabled={!currentAutoToggle}
+            size="small"
+            value={currentAutoToggleTime}
+            style={{ width: 70 }}
+            onChange={handleAutoToggleTimeChange}
+          />
         </div>
       </div>
       <PanelSplitLine />

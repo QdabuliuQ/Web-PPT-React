@@ -1,8 +1,14 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
-import { contextMenuStore, elementActiveStore, pageActiveStore } from "@/store";
+import {
+  contextMenuStore,
+  elementActiveStore,
+  elementHoverActiveStore,
+  pageActiveStore,
+} from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
+import { Pic } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Spin } from "antd";
 import { observer } from "mobx-react-lite";
@@ -167,6 +173,7 @@ const Component = observer(
     });
 
     const isSelected = elementActiveStore.isElementActive(id);
+    const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
     // 获取当前页面ID
     const currentPageId = pageActiveStore.getPageActive() || "";
@@ -185,6 +192,8 @@ const Component = observer(
 
     // 通过函数触发预览
     const openPreview = useMemoizedFn(() => {
+      console.log(photoViewRef);
+
       if (imageLoaded && !imageError && photoViewRef.current) {
         // 触发 PhotoView 的预览
         photoViewRef.current.click();
@@ -249,9 +258,12 @@ const Component = observer(
         objectFit: "fill" as const,
         opacity,
         borderRadius: `${borderRadius}px`,
-        border: border
-          ? `${borderWidth}px ${borderStyle} ${borderColor}`
-          : "none",
+        border:
+          border && !isHoverActive
+            ? `${borderWidth}px ${borderStyle} ${borderColor}`
+            : isHoverActive && !isSelected
+              ? "1px solid var(--primary-color, #f25f00)"
+              : "none",
         boxSizing: "border-box" as const,
         userSelect: "none" as const,
         pointerEvents: "none" as const,
@@ -267,6 +279,8 @@ const Component = observer(
         borderWidth,
         borderStyle,
         borderColor,
+        isHoverActive,
+        isSelected,
         brightness,
         contrast,
         saturate,
@@ -391,21 +405,19 @@ const Component = observer(
             </div>
           )}
           <PhotoProvider>
-            <div className={styles.imageWrapper}>
-              <PhotoView src={src}>
-                <img
-                  src={src}
-                  alt=""
-                  className={
-                    imageLoaded ? styles.imageVisible : styles.imageHidden
-                  }
-                  style={imageStyle}
-                  draggable={false}
-                  onLoad={handleImageLoad}
-                  onError={handleImageError}
-                />
-              </PhotoView>
-            </div>
+            <PhotoView src={src}>
+              <img
+                src={src}
+                alt=""
+                className={
+                  imageLoaded ? styles.imageVisible : styles.imageHidden
+                }
+                style={imageStyle}
+                draggable={false}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+              />
+            </PhotoView>
           </PhotoProvider>
         </AnimationWrapper>
       </div>
@@ -453,3 +465,6 @@ export const CreateImage = (props: Partial<IImageProps> = {}) => {
     type: "image" as const,
   };
 };
+
+export const Name = "图片";
+export const ImagePanelIcon = Pic;

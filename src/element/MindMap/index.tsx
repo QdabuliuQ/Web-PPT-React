@@ -3,6 +3,7 @@ import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
   elementActiveStore,
+  elementHoverActiveStore,
   pageActiveStore,
   pptStore,
 } from "@/store";
@@ -10,6 +11,7 @@ import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { Export, Graph, Path, Shape } from "@antv/x6";
 import { register } from "@antv/x6-react-shape";
+import { MindmapMap } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Spin } from "antd";
 import { observer } from "mobx-react-lite";
@@ -229,6 +231,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
   });
 
   const isSelected = elementActiveStore.isElementActive(id);
+  const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 获取通用菜单
   const { commonMenu } = useCommonContextMenu(currentPageId, id);
@@ -534,8 +537,12 @@ const Component: FC<IMindMapProps> = observer((props) => {
       zIndex,
       cursor: isSelected ? "move" : "pointer",
       overflow: "hidden",
+      border:
+        mode === "edit" && isHoverActive && !isSelected
+          ? "1px solid var(--primary-color, #f25f00)"
+          : "none",
     }),
-    [x, y, width, height, rotate, zIndex, isSelected]
+    [x, y, width, height, rotate, zIndex, isSelected, mode, isHoverActive]
   );
 
   // 组合CSS类名
@@ -685,3 +692,6 @@ export const CreateMindMap = (props: Partial<IMindMapProps> = {}) => {
     type: "mindmap" as const,
   };
 };
+
+export const Name = "思维导图";
+export const MindMapPanelIcon = MindmapMap;
