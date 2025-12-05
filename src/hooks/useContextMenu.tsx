@@ -92,7 +92,7 @@ export const useContextMenu = (
   const ContextMenu = useMemo(() => {
     return () =>
       createPortal(
-        <Menu animation="none" id={menuId}>
+        <Menu animation="none" id={menuId} style={{ zIndex: 10000 }}>
           {contextMenu}
         </Menu>,
         parentSelector && document.querySelector(parentSelector)

@@ -1,7 +1,10 @@
+import { elementHoverActiveStore } from "@/store";
+import { getAllElementPanelInfo } from "@/utils/tool";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CloseOne, Drag } from "@icon-park/react";
-import { type FC } from "react";
+import type { ComponentType } from "react";
+import { useMemo, type FC } from "react";
 
 export interface SortableItemProps {
   element: any;
@@ -18,12 +21,44 @@ export const SortableItem: FC<SortableItemProps> = ({
   element,
   index,
   elementActive,
-  getElementTypeName,
+  getElementTypeName: _getElementTypeName,
   getAnimationDisplayName,
   onSelect,
   onDelete,
   disabled = false,
 }) => {
+  // 动态获取所有元素面板信息并创建映射（包含名称和图标）
+  const elementInfoMap = useMemo(() => {
+    const panels = getAllElementPanelInfo();
+    const map = new Map<
+      string,
+      { name: string; icon?: ComponentType<unknown> }
+    >();
+    panels.forEach((panel) => {
+      map.set(panel.key, { name: panel.name, icon: panel.icon });
+    });
+    return map;
+  }, []);
+
+  // 根据 element.type 获取元素信息
+  const getElementInfo = (type: string) => {
+    const info = elementInfoMap.get(type);
+    return {
+      name: info?.name || type,
+      icon: info?.icon,
+    };
+  };
+
+  const elementInfo = getElementInfo(element.type);
+  const ElementIcon = elementInfo.icon as
+    | React.ComponentType<{
+        theme?: string;
+        size?: string | number;
+        fill?: string;
+        className?: string;
+      }>
+    | undefined;
+
   const {
     attributes,
     listeners,
@@ -31,7 +66,7 @@ export const SortableItem: FC<SortableItemProps> = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ 
+  } = useSortable({
     id: element.id,
     disabled: disabled,
   });
@@ -55,6 +90,12 @@ export const SortableItem: FC<SortableItemProps> = ({
       onClick={() => {
         onSelect(element.id);
       }}
+      onMouseEnter={() => {
+        elementHoverActiveStore.setElementHoverActive(element.id);
+      }}
+      onMouseLeave={() => {
+        elementHoverActiveStore.resetElementHoverActive();
+      }}
     >
       {!disabled && (
         <div
@@ -73,8 +114,16 @@ export const SortableItem: FC<SortableItemProps> = ({
         </div>
       )}
       <span className="text-[#999] font-semibold">{index + 1}</span>
+      {ElementIcon && (
+        <ElementIcon
+          theme="outline"
+          size="14"
+          fill="#666"
+          className="flex-shrink-0"
+        />
+      )}
       <span className="flex-1 line-clamp-1 cursor-pointer">
-        {getElementTypeName(element.type)} -{" "}
+        {elementInfo.name} -{" "}
         {getAnimationDisplayName(element.animationName || "")}
       </span>
       {elementActive === element.id && (
@@ -92,4 +141,3 @@ export const SortableItem: FC<SortableItemProps> = ({
     </div>
   );
 };
-

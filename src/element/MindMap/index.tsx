@@ -161,14 +161,24 @@ const Component: FC<IMindMapProps> = observer((props) => {
   } = props;
 
   // 从 store 中获取最新的 previewImage，确保响应式更新
+  // 预览模式下使用 props 中的数据，编辑模式下从 store 获取
   const currentPageId = pageActiveStore.getPageActive() || "";
   const currentElement =
-    currentPageId && id
+    currentPageId && id && mode === "edit"
       ? (pptStore.getElementInfo(currentPageId, id) as IMindMapProps | null)
       : null;
-  const previewImage = (currentElement as any)?.previewImage;
+
+  // 预览模式下使用 props 中的数据，编辑模式下从 store 获取
+  // 直接访问，让 observer 自动追踪变化
+  const previewImage =
+    mode === "edit"
+      ? (currentElement as any)?.previewImage
+      : (props as any)?.previewImage;
+
   const backgroundColor =
-    (currentElement as any)?.mindMapBackgroundColor || "#F2F7FA";
+    mode === "edit"
+      ? (currentElement as any)?.mindMapBackgroundColor || "#F2F7FA"
+      : (props as any)?.mindMapBackgroundColor || "#F2F7FA";
 
   const moveableRef = useRef<any>(null);
   const photoViewRef = useRef<HTMLImageElement>(null);

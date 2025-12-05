@@ -15,6 +15,7 @@ import {
   menuActiveStore,
   pageActiveStore,
   pptStore,
+  remarkEditActiveStore,
 } from "@/store";
 import type { Elements } from "@/store/ppt";
 import { getRandomId } from "@/utils";
@@ -29,7 +30,15 @@ import {
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useRef, useState, type FC } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from "react";
+import { RemarkEdit } from "./RemarkEdit";
 
 interface CanvasProps {
   mode?: "preview" | "play" | "edit";
@@ -969,6 +978,80 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       ? pageActiveStore.getPageActive() || "default"
       : page?.id || "default";
 
+  const remarkEditActive = remarkEditActiveStore.getRemarkEditActive();
+
+  // 获取当前页面的 remark 属性
+  // 直接访问 store 属性，observer 会自动追踪变化
+  const currentPageRemark = (() => {
+    if (mode === "edit") {
+      const pageActive = pageActiveStore.pageActive;
+      if (!pageActive) return "";
+      const activePage = pptStore.getActivePage(pageActive);
+      return (activePage as any)?.remark || "";
+    }
+    return (page as any)?.remark || "";
+  })();
+
+  // 本地 state 存储 remark 值，用于即时更新 UI
+  const [localRemark, setLocalRemark] = useState(currentPageRemark);
+
+  // 当页面切换或 store 中的 remark 变化时，同步更新本地 state
+  useEffect(() => {
+    setLocalRemark(currentPageRemark);
+  }, [currentPageRemark]);
+
+  // 更新页面 remark 属性的函数
+  const updatePageRemark = useMemoizedFn((remark: string) => {
+    if (mode !== "edit") return;
+
+    const pageActive = pageActiveStore.getPageActive();
+    if (!pageActive) return;
+
+    const page = pptStore.getActivePage(pageActive);
+    if (!page) return;
+
+    const pageIndex = pptStore.getPages().findIndex((p) => p.id === pageActive);
+    if (pageIndex === -1) return;
+
+    const newPages = [...pptStore.getPages()];
+    newPages[pageIndex] = {
+      ...newPages[pageIndex],
+      remark,
+    } as any;
+    pptStore.setPages(newPages);
+  });
+
+  // 防抖定时器引用
+  const remarkDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 防抖处理备注变更：先更新本地 state，再通过防抖更新 MobX store
+  const handleRemarkChange = useCallback(
+    (value: string) => {
+      // 先更新本地 state，立即反映到 UI
+      setLocalRemark(value);
+
+      // 清除之前的定时器
+      if (remarkDebounceTimerRef.current) {
+        clearTimeout(remarkDebounceTimerRef.current);
+      }
+
+      // 防抖更新 MobX store
+      remarkDebounceTimerRef.current = setTimeout(() => {
+        updatePageRemark(value);
+      }, 300);
+    },
+    [updatePageRemark]
+  );
+
+  // 清理防抖定时器
+  useEffect(() => {
+    return () => {
+      if (remarkDebounceTimerRef.current) {
+        clearTimeout(remarkDebounceTimerRef.current);
+      }
+    };
+  }, []);
+
   // 动态生成 className（全屏优先）- 不使用 useMemo，让 MobX observer 自动追踪
   const getContainerClassName = () => {
     // 如果全屏，优先使用全屏样式
@@ -978,7 +1061,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
     // 非全屏时根据 mode 使用不同样式
     if (mode === "edit") {
-      return "w-[calc(100%-230px)] h-[100%] relative overflow-hidden";
+      return (
+        "w-full relative overflow-hidden" +
+        (remarkEditActive ? " h-[calc(100%-30px)]" : " h-full")
+      );
     }
 
     // preview 和 play 模式
@@ -1008,18 +1094,23 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const containerStyle = getContainerStyle();
 
   return (
-    <div
-      ref={containerRef}
-      id={`parent-canvas-container-${pageId}`}
-      className={containerClassName}
-      style={containerStyle}
-    >
-      {mode === "play" && (
-        <GlobalContextMenu
-          parentSelector={`#parent-canvas-container-${pageId}`}
-        />
+    <div className="h-full w-full">
+      <div
+        ref={containerRef}
+        id={`parent-canvas-container-${pageId}`}
+        className={containerClassName}
+        style={containerStyle}
+      >
+        {mode === "play" && (
+          <GlobalContextMenu
+            parentSelector={`#parent-canvas-container-${pageId}`}
+          />
+        )}
+        <CanvasContainer />
+      </div>
+      {mode === "edit" && remarkEditActive && (
+        <RemarkEdit value={localRemark} onChange={handleRemarkChange} />
       )}
-      <CanvasContainer />
     </div>
   );
 };

@@ -1,10 +1,17 @@
 import type { IIconProps } from "@/element/Icon";
 import type { IImageProps } from "@/element/Image";
+import type { IMindMapProps } from "@/element/MindMap";
 import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
 import { makeAutoObservable } from "mobx";
 
-type CopiedElement = ITextProps | ITableProps | IIconProps | IImageProps | null;
+type CopiedElement =
+  | ITextProps
+  | ITableProps
+  | IIconProps
+  | IImageProps
+  | IMindMapProps
+  | null;
 
 class CopyElementStore {
   copiedElement: CopiedElement = null;

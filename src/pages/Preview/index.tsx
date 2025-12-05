@@ -8,8 +8,15 @@ import {
 } from "@/store";
 import type { Page } from "@/store/ppt";
 import { showPageContextMenu } from "@/utils/pageContextMenu";
-import { Add, PlayOne, Plus, PreviewCloseOne } from "@icon-park/react";
-import { useMemoizedFn } from "ahooks";
+import {
+  Add,
+  Down,
+  PlayOne,
+  Plus,
+  PreviewCloseOne,
+  Up,
+} from "@icon-park/react";
+import { useKeyPress, useMemoizedFn } from "ahooks";
 import { Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
@@ -100,6 +107,76 @@ const PreviewComponent: FC = () => {
     }
   );
 
+  // 处理向上移动画布
+  const handleMovePageUp = useMemoizedFn(
+    (pageId: string, e: React.MouseEvent) => {
+      e.stopPropagation(); // 阻止事件冒泡，避免触发页面点击
+      pptStore.movePage(pageId, "up");
+    }
+  );
+
+  // 处理向下移动画布
+  const handleMovePageDown = useMemoizedFn(
+    (pageId: string, e: React.MouseEvent) => {
+      e.stopPropagation(); // 阻止事件冒泡，避免触发页面点击
+      pptStore.movePage(pageId, "down");
+    }
+  );
+
+  // 处理复制画布
+  const handleDuplicatePage = useMemoizedFn(() => {
+    if (!pageActive) return;
+    const newPageId = pptStore.duplicatePage(pageActive);
+    if (newPageId) {
+      elementActiveStore.resetElementActive();
+      menuActiveStore.resetMenu();
+      pageActiveStore.setPageActive(newPageId);
+      scrollToBottom();
+    }
+  });
+
+  // 处理删除画布
+  const handleDeletePage = useMemoizedFn(() => {
+    if (!pageActive) return;
+    const success = pptStore.deletePage(pageActive);
+    if (success) {
+      elementActiveStore.resetElementActive();
+      menuActiveStore.resetMenu();
+      const remainingPages = pptStore.getPages();
+      if (remainingPages.length > 0) {
+        // 切换到第一个页面
+        pageActiveStore.setPageActive(remainingPages[0].id);
+      }
+    }
+  });
+
+  // 检查是否在输入框中
+  const isInputElement = (target: HTMLElement) => {
+    return (
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable
+    );
+  };
+
+  // 监听 Ctrl+C (Windows) 或 Cmd+C (Mac) 复制画布
+  useKeyPress(["ctrl.c", "meta.c"], (e) => {
+    const target = e.target as HTMLElement;
+    if (!isInputElement(target)) {
+      e.preventDefault();
+      handleDuplicatePage();
+    }
+  });
+
+  // 监听 Ctrl+D (Windows) 或 Cmd+D (Mac) 删除画布
+  useKeyPress(["ctrl.d", "meta.d"], (e) => {
+    const target = e.target as HTMLElement;
+    if (!isInputElement(target)) {
+      e.preventDefault();
+      handleDeletePage();
+    }
+  });
+
   // 计算滚动区域高度
   useEffect(() => {
     const calculateHeight = () => {
@@ -149,7 +226,7 @@ const PreviewComponent: FC = () => {
   return (
     <div
       ref={containerRef}
-      className="w-[230px] min-w-[230px] box-border border-r border-[#d5d5d5] flex flex-col"
+      className="w-[230px] min-w-[230px] box-border border-r border-[#e0e0e0] flex flex-col pb-[15px]"
     >
       <OverlayScrollbarsComponent
         ref={scrollContainerRef}
@@ -211,11 +288,32 @@ const PreviewComponent: FC = () => {
               >
                 <PlayOne theme="filled" size="18" fill="#f25f00" />
               </div>
-              <div
-                className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-                onClick={(e) => handleAddPageAfter(page.id, e)}
-              >
-                <Plus theme="outline" size="18" fill="#fff" />
+              <div className="flex items-center gap-[10px]">
+                {/* 向上移动按钮 - 第一个画布不显示 */}
+                {index > 0 && (
+                  <div
+                    className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                    onClick={(e) => handleMovePageUp(page.id, e)}
+                  >
+                    <Up theme="outline" size="18" fill="#fff" />
+                  </div>
+                )}
+                {/* 向下移动按钮 - 最后一个画布不显示 */}
+                {index < pages.length - 1 && (
+                  <div
+                    className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                    onClick={(e) => handleMovePageDown(page.id, e)}
+                  >
+                    <Down theme="outline" size="18" fill="#fff" />
+                  </div>
+                )}
+                {/* 添加页面按钮 */}
+                <div
+                  className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                  onClick={(e) => handleAddPageAfter(page.id, e)}
+                >
+                  <Plus theme="outline" size="18" fill="#fff" />
+                </div>
               </div>
             </div>
           </div>
@@ -226,7 +324,7 @@ const PreviewComponent: FC = () => {
       <div ref={addButtonRef} className="pr-[15px]">
         <Tooltip placement="top" title="添加页面">
           <div
-            className="flex items-center justify-center cursor-pointer py-[8px] hover:bg-[#e4e4e4] rounded-[3px] transition-colors duration-200"
+            className="flex items-center justify-center cursor-pointer py-[8px] bg-[#e4e4e4] opacity-[0.7] hover:opacity-[1] rounded-[3px] transition-colors duration-200"
             onClick={handleAddPage}
           >
             <Add />

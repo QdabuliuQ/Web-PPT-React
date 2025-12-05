@@ -228,6 +228,7 @@ export default {
       bgColor: "#e4e4e4",
       fgColor: "#9C92AC",
       bgOpacity: 0.4,
+      remark: "",
     },
     {
       id: getRandomId(),

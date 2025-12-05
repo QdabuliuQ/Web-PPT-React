@@ -47,7 +47,7 @@ function App() {
             fontSize: 14,
           },
           Dropdown: {
-            fontSize: 13,
+            fontSize: 12,
           },
           Menu: {
             colorPrimary: "#f25f00",

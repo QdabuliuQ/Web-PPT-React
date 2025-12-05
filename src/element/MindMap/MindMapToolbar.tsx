@@ -2,7 +2,7 @@ import { Graph } from "@antv/x6";
 import { useMemoizedFn } from "ahooks";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import "overlayscrollbars/overlayscrollbars.css";
-import { useRef, type FC } from "react";
+import { type FC } from "react";
 import { ColorPickerMenuItem } from "./ColorPickerMenuItem";
 import styles from "./MindMapModal.module.less";
 import { SelectMenuIitem, type SelectMenuItemOption } from "./SelectMenuIitem";
@@ -219,9 +219,7 @@ export const MindMapToolbar: FC<MindMapToolbarProps> = ({
     if (graph) {
       graph.getEdges().forEach((edge) => {
         // 设置 router（跳线需要 er router）
-        edge.setRouter(
-          newEdgeConnector === "jumpover" ? "er" : "manhattan"
-        );
+        edge.setRouter(newEdgeConnector === "jumpover" ? "er" : "manhattan");
         // 设置 connector
         edge.setConnector(
           newEdgeConnector,
@@ -294,13 +292,13 @@ export const MindMapToolbar: FC<MindMapToolbarProps> = ({
           title="线段类型"
           options={edgeTypeOptions}
           value={edgeType}
-          onSelect={handleEdgeTypeChange}
+          onSelect={(value) => handleEdgeTypeChange(value as string)}
         />
         <SelectMenuIitem
           title="线段宽度"
           options={edgeWidthOptions}
           value={edgeWidth}
-          onSelect={handleEdgeWidthChange}
+          onSelect={(value) => handleEdgeWidthChange(value as number)}
         />
         <ColorPickerMenuItem
           title="线段颜色"
@@ -311,7 +309,7 @@ export const MindMapToolbar: FC<MindMapToolbarProps> = ({
           title="线段类型"
           options={edgeConnectorOptions}
           value={edgeConnector}
-          onSelect={handleEdgeConnectorChange}
+          onSelect={(value) => handleEdgeConnectorChange(value as string)}
         />
         <ColorPickerMenuItem
           title="背景颜色"
@@ -387,4 +385,3 @@ export const MindMapToolbar: FC<MindMapToolbarProps> = ({
     </OverlayScrollbarsComponent>
   );
 };
-

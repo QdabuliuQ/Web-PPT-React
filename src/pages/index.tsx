@@ -28,7 +28,7 @@ const Index = observer(function Index() {
           {displayStatus === "default" && (
             <div
               id="main-container"
-              className={`${styles.mainContainerClass} flex w-[calc(100%-20px)] ml-[20px] my-[15px]`}
+              className={`${styles.mainContainerClass} flex w-[calc(100%-20px)] ml-[20px] mt-[15px]`}
             >
               <Preview />
               <Canvas />
