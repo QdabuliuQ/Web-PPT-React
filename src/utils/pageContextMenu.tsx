@@ -1,12 +1,12 @@
+import KeyboardIcon from "@/components/KeyboardIcon";
 import type { MenuItem } from "@/hooks/useContextMenu";
+import { contextMenuStore, fullscreenStore, pptStore } from "@/store";
 import {
-  contextMenuStore,
-  elementActiveStore,
-  fullscreenStore,
-  menuActiveStore,
-  pageActiveStore,
-  pptStore,
-} from "@/store";
+  addPageAndActivate,
+  deletePageAndFallback,
+  duplicatePageAndActivate,
+  resetPageElements,
+} from "@/utils/operate";
 import {
   Add,
   ArrowDown,
@@ -20,6 +20,7 @@ import {
   PreviewOpen,
   SendBackward,
 } from "@icon-park/react";
+import { formatKeysForDevice } from "./tool";
 
 interface ShowPageContextMenuOptions {
   pageId: string;
@@ -38,7 +39,6 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
   event.stopPropagation();
 
   const pages = pptStore.getPages();
-  const pageActive = pageActiveStore.getPageActive();
   const pageIndex = pages.findIndex((p) => p.id === pageId);
   const currentPage = pages[pageIndex];
   const isFirstPage = pageIndex === 0;
@@ -51,9 +51,7 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
       label: "新建幻灯片",
       icon: <Add theme="outline" size="13" fill="#333" />,
       onClick: () => {
-        const newPageId = pptStore.addPage(pageId);
-        elementActiveStore.resetElementActive();
-        pageActiveStore.setPageActive(newPageId);
+        addPageAndActivate(pageId);
         contextMenuStore.hideMenu();
         onScrollToBottom?.();
       },
@@ -63,33 +61,22 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
       label: "复制幻灯片",
       icon: <Copy theme="outline" size="13" fill="#333" />,
       onClick: () => {
-        const newPageId = pptStore.duplicatePage(pageId);
-        if (newPageId) {
-          elementActiveStore.resetElementActive();
-          pageActiveStore.setPageActive(newPageId);
-        }
+        duplicatePageAndActivate(pageId);
         contextMenuStore.hideMenu();
         onScrollToBottom?.();
       },
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "C"])} />,
     },
     {
       type: "item" as const,
       label: "删除幻灯片",
       icon: <Delete theme="outline" size="13" fill="#333" />,
       onClick: () => {
-        const success = pptStore.deletePage(pageId);
-        if (success) {
-          elementActiveStore.resetElementActive();
-          if (pageActive === pageId) {
-            const remainingPages = pptStore.getPages();
-            if (remainingPages.length > 0) {
-              pageActiveStore.setPageActive(remainingPages[0].id);
-            }
-          }
-        }
+        deletePageAndFallback(pageId);
         contextMenuStore.hideMenu();
       },
       disabled: pages.length <= 1,
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "D"])} />,
     },
     {
       type: "item" as const,
@@ -103,6 +90,7 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         pptStore.togglePageVisible(pageId);
         contextMenuStore.hideMenu();
       },
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "H"])} />,
     },
     {
       type: "separator",
@@ -115,25 +103,17 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         fullscreenStore.enterFullscreen(pageId);
         contextMenuStore.hideMenu();
       },
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "P"])} />,
     },
     {
       type: "item" as const,
       label: "重置幻灯片",
       icon: <Clear theme="outline" size="13" fill="#333" />,
       onClick: () => {
-        const pageIndex = pptStore.getPages().findIndex((p) => p.id === pageId);
-        if (pageIndex !== -1) {
-          const pages = [...pptStore.getPages()];
-          pages[pageIndex] = {
-            ...pages[pageIndex],
-            elements: [],
-          };
-          pptStore.setPages(pages);
-          elementActiveStore.resetElementActive();
-          menuActiveStore.resetMenu();
-        }
+        resetPageElements(pageId);
         contextMenuStore.hideMenu();
       },
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "R"])} />,
     },
     {
       type: "separator",

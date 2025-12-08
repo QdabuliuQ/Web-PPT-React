@@ -20,11 +20,6 @@ const IconPanelComponent: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
   const pageId = pageActiveStore.getPageActive();
 
-  // 确保 hooks 总是被调用，避免 hooks 数量不一致的错误
-  const { positionHandle } = usePositionElement(pageId || "", elementId || "");
-  const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
-    useZIndexElement(pageId || "", elementId || "");
-
   // 提前返回必须在所有 hooks 调用之后
   if (!pageId || !elementId) return null;
 
@@ -34,6 +29,11 @@ const IconPanelComponent: FC = observer(() => {
   ) as IIconProps | null;
 
   if (!iconInfo) return null;
+
+  // 确保 hooks 总是被调用，避免 hooks 数量不一致的错误
+  const { positionHandle } = usePositionElement(pageId || "", elementId || "");
+  const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
+    useZIndexElement(pageId || "", elementId || "");
 
   const onZIndexChange = (key: string) => {
     switch (key) {

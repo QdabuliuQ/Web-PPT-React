@@ -17,3 +17,7 @@
 .contexify_itemContent {
   font-size: 12px;
 }
+
+.scena-guides-guide {
+  background: var(--primary-color) !important;
+}

@@ -28,6 +28,7 @@ import {
   Left,
   Right,
 } from "@icon-park/react";
+import Guides from "@scena/react-guides";
 import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import {
@@ -106,6 +107,17 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     // 只在没有数据时初始化
     if (pptStore.getPages().length === 0) {
       pptStore.setPages(JSON.parse(JSON.stringify(MockData)).pages);
+      pptStore.setGridLine(MockData.gridLine);
+      pptStore.setGridSize(MockData.gridSize);
+      if ((MockData as any).gridType) {
+        pptStore.setGridType((MockData as any).gridType);
+      } else {
+        // 兼容老数据
+        pptStore.setShowLine(MockData.showLine);
+      }
+      pptStore.setVerticalLine(MockData.verticalLine);
+      pptStore.setHorizontalLine(MockData.horizontalLine);
+      pptStore.setRule(MockData.rule);
 
       const pages = pptStore.getPages();
 
@@ -411,6 +423,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
   // 获取全屏状态（直接访问属性，确保 MobX 能追踪依赖）
   const isFullscreen = fullscreenStore.isFullscreen;
+  const gridType = pptStore.getGridType();
+  const gridSize = pptStore.getGridSize();
+
+  const showLine = mode === "edit" && gridType === "line";
+  const guideSnapStep = gridSize;
+  const guideSnapThreshold = Math.max(1, Math.floor(guideSnapStep / 2));
 
   // Canvas 样式对象 - 不使用 useMemo，让 MobX observer 自动追踪 isFullscreen 的变化
   const getCanvasStyle = () => {
@@ -917,6 +935,15 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             contextMenuStore.showMenu(menuItems, e);
           }}
         >
+          {gridType === "grid" && (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent ${gridSize - 1}px, #e5e5e5 ${gridSize}px), repeating-linear-gradient(90deg, transparent, transparent ${gridSize - 1}px, #e5e5e5 ${gridSize}px)`,
+                backgroundSize: `${gridSize}px ${gridSize}px`,
+              }}
+            />
+          )}
           {renderElements(true)}
         </div>
       );
@@ -1101,6 +1128,75 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         className={containerClassName}
         style={containerStyle}
       >
+        {gridType === "line" && (
+          <>
+            <Guides
+              showGuides={showLine}
+              useResizeObserver={true}
+              type="horizontal"
+              width={CANVAS_WIDTH - 23}
+              height={23}
+              unit={50}
+              zoom={1}
+              displayDragPos={false}
+              backgroundColor="#fafafa"
+              lineColor="#d9d9d9"
+              textColor="#999"
+              font="12px"
+              textOffset={[0, 9]}
+              snapThreshold={guideSnapThreshold}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 23,
+                zIndex: 2,
+                height: 23,
+                width: "calc(100% - 23px)",
+                pointerEvents: "auto",
+              }}
+              guides={pptStore.getHorizontalLine().map(Number)}
+              onChangeGuides={(v) => {
+                console.log(v);
+
+                pptStore.setHorizontalLine([...v.guides]);
+                console.log(pptStore.getHorizontalLine());
+              }}
+            />
+            <Guides
+              showGuides={showLine}
+              useResizeObserver={true}
+              type="vertical"
+              width={23}
+              height={CANVAS_HEIGHT - 23}
+              unit={50}
+              zoom={1}
+              displayDragPos={false}
+              backgroundColor="#fafafa"
+              lineColor="#d9d9d9"
+              textColor="#999"
+              font="12px"
+              textOffset={[9, 0]}
+              snapThreshold={guideSnapThreshold}
+              style={{
+                position: "absolute",
+                top: "23px",
+                left: 0,
+                zIndex: 2,
+                width: "23px",
+                height: "calc(100% - 23px)",
+                pointerEvents: "auto",
+              }}
+              guides={pptStore.getVerticalLine().map(Number)}
+              onChangeGuides={(v) => pptStore.setVerticalLine(v.guides)}
+            />
+            <div
+              onClick={() => pptStore.setShowLine(!showLine)}
+              className="w-[23px] text-[11px] text-[#ccc] h-[23px] bg-[#fafafa] absolute top-0 left-0 flex items-center justify-center cursor-pointer"
+            >
+              px
+            </div>
+          </>
+        )}
         {mode === "play" && (
           <GlobalContextMenu
             parentSelector={`#parent-canvas-container-${pageId}`}

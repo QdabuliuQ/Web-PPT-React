@@ -11,6 +11,11 @@ import {
   pageActiveStore,
   pptStore,
 } from "@/store";
+import {
+  addPageAndActivate,
+  duplicatePageAndActivate,
+  resetPageElements,
+} from "@/utils/operate";
 import { getAllElementPanelInfo } from "@/utils/tool";
 import type { DragEndEvent } from "@dnd-kit/core";
 import {
@@ -122,21 +127,13 @@ export const Start: FC = observer(() => {
   // 新建画布（在当前页面后添加新页面）
   const handleAddPage = useMemoizedFn(() => {
     if (!pageActive) return;
-    const newPageId = pptStore.addPage(pageActive);
-    elementActiveStore.resetElementActive();
-    menuActiveStore.resetMenu();
-    pageActiveStore.setPageActive(newPageId);
+    addPageAndActivate(pageActive);
   });
 
   // 复制画布（复制当前页面）
   const handleDuplicatePage = useMemoizedFn(() => {
     if (!pageActive) return;
-    const newPageId = pptStore.duplicatePage(pageActive);
-    if (newPageId) {
-      elementActiveStore.resetElementActive();
-      menuActiveStore.resetMenu();
-      pageActiveStore.setPageActive(newPageId);
-    }
+    duplicatePageAndActivate(pageActive);
   });
 
   // 删除画布（删除当前页面）
@@ -163,17 +160,7 @@ export const Start: FC = observer(() => {
   // 重置幻灯片（清空当前页面的所有元素）
   const handleResetPage = useMemoizedFn(() => {
     if (!pageActive) return;
-    const pageIndex = pptStore.getPages().findIndex((p) => p.id === pageActive);
-    if (pageIndex !== -1) {
-      const pages = [...pptStore.getPages()];
-      pages[pageIndex] = {
-        ...pages[pageIndex],
-        elements: [],
-      };
-      pptStore.setPages(pages);
-      elementActiveStore.resetElementActive();
-      menuActiveStore.resetMenu();
-    }
+    resetPageElements(pageActive);
   });
 
   // 获取当前页面的可见性状态

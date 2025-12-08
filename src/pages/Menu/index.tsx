@@ -54,7 +54,8 @@ export const Menu: FC = observer(() => {
   return (
     <div
       ref={containerRef}
-      className="overflow-hidden w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px] max-h-[70px] min-h-[70px]"
+      style={{ boxShadow: "0 0 5px 0 rgba(0,0,0,.1)" }}
+      className="overflow-hidden w-[calc(100%-40px)] bg-[#fff] rounded-[10px] h-[70px] mx-[20px] max-h-[70px] min-h-[70px] z-[3] relative"
     >
       <OverlayScrollbarsComponent
         className="custom-scrollbar"

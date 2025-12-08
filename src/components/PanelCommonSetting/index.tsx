@@ -1,5 +1,8 @@
-import useOperationElement from "@/hooks/useOperationElement";
-import { elementActiveStore, pageActiveStore } from "@/store";
+import {
+  copyActiveElement,
+  cutActiveElement,
+  deleteActiveElement,
+} from "@/utils/operate";
 import {
   AlignBottom,
   AlignLeft,
@@ -28,26 +31,19 @@ interface IPanelCommonSettingProps {
 export const PanelCommonSetting: FC<IPanelCommonSettingProps> = observer(
   (props) => {
     // 如果没有传入 onOperationChange，则使用 hook
-    const pageId = pageActiveStore.getPageActive() || "";
-    const elementId = elementActiveStore.getElementActive() || "";
-    const { copyHandle, cutHandle, deleteHandle } = useOperationElement(
-      pageId,
-      elementId
-    );
-
     const handleOperation = (key: string) => {
       if (props.onOperationChange) {
         props.onOperationChange(key);
       } else {
         switch (key) {
           case "copy":
-            copyHandle();
+            copyActiveElement();
             break;
           case "cut":
-            cutHandle();
+            cutActiveElement();
             break;
           case "delete":
-            deleteHandle();
+            deleteActiveElement();
             break;
         }
       }

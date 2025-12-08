@@ -91,4 +91,21 @@
   :global(.moveable-direction) {
     z-index: 999 !important;
   }
+
+  /* 显示吸附线条（主题色），但不显示数值 */
+  :global(.moveable-guideline) {
+    display: block !important;
+    opacity: 1 !important;
+    background: #f25f00 !important;
+  }
+  :global(.moveable-guideline[data-value]::after),
+  :global(.moveable-guideline[data-value]::before),
+  :global(.moveable-gap),
+  :global(.moveable-gap-line),
+  :global(.moveable-gap-value),
+  :global(.moveable-distance),
+  :global(.moveable-guideline-value) {
+    display: none !important;
+    content: "" !important;
+  }
 }

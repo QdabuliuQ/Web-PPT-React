@@ -1,4 +1,11 @@
+import KeyboardIcon from "@/components/KeyboardIcon";
 import { pptStore } from "@/store";
+import { formatKeysForDevice } from "@/utils";
+import {
+  copyActiveElement,
+  cutActiveElement,
+  deleteActiveElement,
+} from "@/utils/operate";
 import {
   AlignBottom,
   AlignLeft,
@@ -19,7 +26,6 @@ import {
 } from "@icon-park/react";
 import { useCallback, useMemo } from "react";
 import type { Menu } from "./useContextMenu";
-import useOperationElement from "./useOperationElement";
 import { usePositionElement } from "./usePositionElement";
 import { useZIndexElement } from "./useZIndexElement";
 
@@ -30,11 +36,6 @@ export default function useCommonContextMenu(
   const { positionHandle } = usePositionElement(pageActive, elementActive);
   const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
     useZIndexElement(pageActive, elementActive);
-  const { copyHandle, cutHandle, deleteHandle } = useOperationElement(
-    pageActive,
-    elementActive
-  );
-
   // 左旋转处理函数
   const rotateLeftHandle = useCallback(() => {
     const element = pptStore.getElementInfo(pageActive, elementActive);
@@ -69,19 +70,31 @@ export default function useCommonContextMenu(
         type: "item",
         label: "复制",
         icon: <Copy theme="outline" size="13" fill="#333" />,
-        onClick: copyHandle,
+        onClick: () => {
+          if (!elementActive) return;
+          copyActiveElement();
+        },
+        tip: <KeyboardIcon keys={formatKeysForDevice(["Shift", "C"])} />,
       },
       {
         type: "item",
         label: "剪切",
         icon: <CuttingOne theme="outline" size="13" fill="#333" />,
-        onClick: cutHandle,
+        onClick: () => {
+          if (!elementActive) return;
+          cutActiveElement();
+        },
+        tip: <KeyboardIcon keys={formatKeysForDevice(["Shift", "X"])} />,
       },
       {
         type: "item",
         label: "删除",
         icon: <Delete theme="outline" size="13" fill="#333" />,
-        onClick: deleteHandle,
+        onClick: () => {
+          if (!elementActive) return;
+          deleteActiveElement();
+        },
+        tip: <KeyboardIcon keys={formatKeysForDevice(["Shift", "D"])} />,
       },
       {
         type: "separator",
@@ -171,9 +184,6 @@ export default function useCommonContextMenu(
       },
     ],
     [
-      copyHandle,
-      cutHandle,
-      deleteHandle,
       positionHandle,
       rotateLeftHandle,
       rotateRightHandle,
@@ -181,6 +191,7 @@ export default function useCommonContextMenu(
       sendForwardHandle,
       toBackHandle,
       toFrontHandle,
+      elementActive,
     ]
   );
 

@@ -7,12 +7,14 @@ import { Animation } from "./Animation";
 import { Insert } from "./Insert";
 import { Start } from "./Start";
 import { Toggle } from "./Toggle";
+import { View } from "./View";
 
 export default {
   start: Start,
   insert: Insert,
   toggle: Toggle,
   animation: Animation,
+  view: View,
   [TextPanelKey]: TextPanel,
   [TablePanelKey]: TablePanel,
   [IconPanelKey]: IconPanel,

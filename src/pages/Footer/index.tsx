@@ -76,7 +76,7 @@ const FooterComponent: FC = () => {
   );
 
   return (
-    <div className="mx-[20px] h-[30px] flex items-center justify-between box-border border-t border-[#e0e0e0] text-[12px]">
+    <div className="mx-[20px] h-[30px] min-h-[30px] flex items-center justify-between box-border border-t border-[#e0e0e0] text-[12px]">
       <div className="text-[#9b9b9b]">
         <span className="mr-[10px]">幻灯片</span>
         {pageIndex + 1} / {pages.length}
@@ -92,7 +92,7 @@ const FooterComponent: FC = () => {
               ? "#ddd"
               : "transparent",
           }}
-          icon={<Notes theme="outline" size="11" fill="#333" />}
+          icon={<Notes theme="outline" size="13" fill="#333" />}
           onClick={() =>
             remarkEditActiveStore.setRemarkEditActive(
               !remarkEditActiveStore.getRemarkEditActive()

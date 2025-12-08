@@ -11,10 +11,12 @@ class DisplayStatusStore {
     makeAutoObservable(this);
   }
 
-  setDisplayStatus = (status: DisplayStatus) => {
+  setDisplayStatus = (status: DisplayStatus, isResetMenuActive = true) => {
     this.displayStatus = status;
-    elementActiveStore.setElementActive("");
-    menuActiveStore.setActiveMenu("start");
+    if (isResetMenuActive) {
+      elementActiveStore.resetElementActive();
+      menuActiveStore.setActiveMenu("start");
+    }
   };
 
   getDisplayStatus = () => {

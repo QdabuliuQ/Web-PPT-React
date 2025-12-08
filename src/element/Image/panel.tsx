@@ -78,8 +78,8 @@ const filterProperty = [
 ];
 
 const ImagePanelComponent: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+  const elementId = elementActiveStore.getElementActive() as string;
+  const pageId = pageActiveStore.getPageActive() as string;
 
   if (!pageId || !elementId) return null;
 

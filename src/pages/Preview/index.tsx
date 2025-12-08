@@ -7,6 +7,15 @@ import {
   pptStore,
 } from "@/store";
 import type { Page } from "@/store/ppt";
+import {
+  addPageAndActivate,
+  copyActiveElement,
+  cutActiveElement,
+  deleteActiveElement,
+  deletePageAndFallback,
+  duplicatePageAndActivate,
+  resetPageElements,
+} from "@/utils/operate";
 import { showPageContextMenu } from "@/utils/pageContextMenu";
 import {
   Add,
@@ -73,15 +82,10 @@ const PreviewComponent: FC = () => {
 
   // 处理添加页面
   const handleAddPage = useMemoizedFn(() => {
-    // 在最后一个页面后面添加新页面
     const lastPage = pages[pages.length - 1];
-    const newPageId = pptStore.addPage(lastPage?.id);
-    // 清空选中的元素
-    elementActiveStore.resetElementActive();
-    // 切换到新建的页面
-    pageActiveStore.setPageActive(newPageId);
-    // 滚动到底部
-    scrollToBottom();
+    addPageAndActivate(lastPage?.id, () => {
+      scrollToBottom();
+    });
   });
 
   // 处理播放按钮点击 - 全屏放映当前页面
@@ -96,14 +100,9 @@ const PreviewComponent: FC = () => {
   const handleAddPageAfter = useMemoizedFn(
     (pageId: string, e: React.MouseEvent) => {
       e.stopPropagation(); // 阻止事件冒泡，避免触发页面点击
-      // 在当前页面后面添加新页面
-      const newPageId = pptStore.addPage(pageId);
-      // 清空选中的元素
-      elementActiveStore.resetElementActive();
-      // 切换到新建的页面
-      pageActiveStore.setPageActive(newPageId);
-      // 滚动到底部
-      scrollToBottom();
+      addPageAndActivate(pageId, () => {
+        scrollToBottom();
+      });
     }
   );
 
@@ -125,29 +124,31 @@ const PreviewComponent: FC = () => {
 
   // 处理复制画布
   const handleDuplicatePage = useMemoizedFn(() => {
-    if (!pageActive) return;
-    const newPageId = pptStore.duplicatePage(pageActive);
-    if (newPageId) {
-      elementActiveStore.resetElementActive();
-      menuActiveStore.resetMenu();
-      pageActiveStore.setPageActive(newPageId);
+    duplicatePageAndActivate(pageActive, () => {
       scrollToBottom();
-    }
+    });
   });
 
   // 处理删除画布
   const handleDeletePage = useMemoizedFn(() => {
+    deletePageAndFallback(pageActive);
+  });
+
+  // 处理隐藏/显示画布
+  const handleTogglePageVisible = useMemoizedFn(() => {
     if (!pageActive) return;
-    const success = pptStore.deletePage(pageActive);
-    if (success) {
-      elementActiveStore.resetElementActive();
-      menuActiveStore.resetMenu();
-      const remainingPages = pptStore.getPages();
-      if (remainingPages.length > 0) {
-        // 切换到第一个页面
-        pageActiveStore.setPageActive(remainingPages[0].id);
-      }
-    }
+    pptStore.togglePageVisible(pageActive);
+  });
+
+  // 处理播放当前画布
+  const handlePlayActivePage = useMemoizedFn(() => {
+    if (!pageActive) return;
+    fullscreenStore.enterFullscreen(pageActive);
+  });
+
+  // 处理重置当前画布（清空元素）
+  const handleResetPage = useMemoizedFn(() => {
+    resetPageElements(pageActive);
   });
 
   // 检查是否在输入框中
@@ -174,6 +175,55 @@ const PreviewComponent: FC = () => {
     if (!isInputElement(target)) {
       e.preventDefault();
       handleDeletePage();
+    }
+  });
+
+  // 全局元素快捷键（Shift 组合）复制/剪切/删除选中元素
+  useKeyPress(["shift.c"], (e) => {
+    const target = e.target as HTMLElement;
+    if (isInputElement(target)) return;
+    e.preventDefault();
+    copyActiveElement();
+  });
+
+  useKeyPress(["shift.x"], (e) => {
+    const target = e.target as HTMLElement;
+    if (isInputElement(target)) return;
+    e.preventDefault();
+    cutActiveElement();
+  });
+
+  useKeyPress(["shift.d"], (e) => {
+    const target = e.target as HTMLElement;
+    if (isInputElement(target)) return;
+    e.preventDefault();
+    deleteActiveElement();
+  });
+
+  // 监听 Ctrl+H / Cmd+H 隐藏/显示画布
+  useKeyPress(["ctrl.h", "meta.h"], (e) => {
+    const target = e.target as HTMLElement;
+    if (!isInputElement(target)) {
+      e.preventDefault();
+      handleTogglePageVisible();
+    }
+  });
+
+  // 监听 Ctrl+P / Cmd+P 播放画布
+  useKeyPress(["ctrl.p", "meta.p"], (e) => {
+    const target = e.target as HTMLElement;
+    if (!isInputElement(target)) {
+      e.preventDefault();
+      handlePlayActivePage();
+    }
+  });
+
+  // 监听 Ctrl+R / Cmd+R 重置画布
+  useKeyPress(["ctrl.r", "meta.r"], (e) => {
+    const target = e.target as HTMLElement;
+    if (!isInputElement(target)) {
+      e.preventDefault();
+      handleResetPage();
     }
   });
 
@@ -226,7 +276,7 @@ const PreviewComponent: FC = () => {
   return (
     <div
       ref={containerRef}
-      className="w-[230px] min-w-[230px] box-border border-r border-[#e0e0e0] flex flex-col pb-[15px]"
+      className="w-[230px] min-w-[230px] box-border border-r border-[#e0e0e0] flex flex-col pb-[15px] pt-[15px]"
     >
       <OverlayScrollbarsComponent
         ref={scrollContainerRef}

@@ -22,11 +22,72 @@ export type Page = {
 type IPage = Array<Page>;
 
 class PPTStore {
+  gridSize: number = 20;
+  gridType: "grid" | "line" | "none" = "grid";
+  verticalLine: Array<number> = [];
+  horizontalLine: Array<number> = [];
+  rule: boolean = true;
   pages: IPage = [];
 
   constructor() {
     makeAutoObservable(this);
   }
+
+  // gridType（互斥控制网格/参考线）
+  setGridType = (type: "grid" | "line" | "none") => {
+    this.gridType = type;
+  };
+  getGridType = () => {
+    return this.gridType;
+  };
+
+  // showLine
+  setShowLine = (value: boolean) => {
+    this.setGridType(value ? "line" : "none");
+  };
+  getShowLine = () => {
+    return this.gridType === "line";
+  };
+
+  // gridSize
+  setGridSize = (value: number) => {
+    this.gridSize = value;
+  };
+  getGridSize = () => {
+    return this.gridSize;
+  };
+
+  // gridLine
+  setGridLine = (value: boolean) => {
+    this.setGridType(value ? "grid" : "none");
+  };
+  getGridLine = () => {
+    return this.gridType === "grid";
+  };
+
+  // verticalLine
+  setVerticalLine = (lines: Array<number>) => {
+    this.verticalLine = lines;
+  };
+  getVerticalLine = () => {
+    return this.verticalLine;
+  };
+
+  // horizontalLine
+  setHorizontalLine = (lines: Array<number>) => {
+    this.horizontalLine = lines;
+  };
+  getHorizontalLine = () => {
+    return this.horizontalLine;
+  };
+
+  // rule
+  setRule = (value: boolean) => {
+    this.rule = value;
+  };
+  getRule = () => {
+    return this.rule;
+  };
 
   setPages = (pages: IPage) => {
     this.pages = pages;

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   Item,
   Menu,
@@ -15,6 +15,7 @@ export type MenuItem = {
   label?: string;
   icon?: React.ReactNode;
   disabled?: boolean;
+  tip?: ReactNode; // 右侧提示信息（支持 React 节点）
   children?: Menu;
 };
 export type Menu = Array<MenuItem>;
@@ -55,10 +56,27 @@ export const useContextMenu = (
                 }}
                 disabled={item.disabled}
               >
-                {item.icon && (
-                  <span style={{ marginRight: 8 }}>{item.icon}</span>
-                )}
-                {item.label}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    width: "100%",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    {item.icon && <span>{item.icon}</span>}
+                    {item.label}
+                  </span>
+                  {item.tip}
+                </div>
               </Item>
             );
 

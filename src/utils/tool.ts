@@ -94,3 +94,63 @@ export function getAllElementPanelInfo(): ElementPanelInfo[] {
   // 按 key 排序，确保返回顺序一致
   return elementPanels.sort((a, b) => a.key.localeCompare(b.key));
 }
+
+/**
+ * 判断当前设备是否为 macOS（含 iOS/iPadOS）
+ */
+export function isMacDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  return /Mac|iPod|iPhone|iPad/i.test(platform) || /Mac|iPhone|iPad/i.test(ua);
+}
+
+/**
+ * 判断当前设备是否为 Windows
+ */
+export function isWindowsDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  return /Win/i.test(platform) || /Windows/i.test(ua);
+}
+
+/**
+ * 根据设备类型格式化按键名称：
+ * - macOS：Ctrl/Control -> ⌘，Alt/Option -> ⌥，Shift -> ⇧，Enter/Return -> ⏎
+ * - Windows：保持常用键名（Command/Meta -> Ctrl）
+ */
+export function formatKeyForDevice(key: string): string {
+  const normalized = key.trim().toLowerCase();
+
+  if (isMacDevice()) {
+    const macMap: Record<string, string> = {
+      ctrl: "⌘",
+      control: "⌘",
+      cmd: "⌘",
+      command: "⌘",
+      meta: "⌘",
+      alt: "⌥",
+      option: "⌥",
+      enter: "⏎",
+      return: "⏎",
+      backspace: "⌫",
+      delete: "⌦",
+    };
+    return macMap[normalized] ?? key;
+  }
+
+  const winMap: Record<string, string> = {
+    command: "Ctrl",
+    cmd: "Ctrl",
+    meta: "Ctrl",
+  };
+  return winMap[normalized] ?? key;
+}
+
+/**
+ * 批量格式化快捷键数组，返回适配当前设备的键名
+ */
+export function formatKeysForDevice(keys: string[]): string[] {
+  return keys.map((k) => formatKeyForDevice(k));
+}

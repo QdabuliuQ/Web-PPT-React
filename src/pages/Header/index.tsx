@@ -8,7 +8,9 @@ import {
   pageActiveStore,
   pptStore,
 } from "@/store";
+import { FileJpg, FilePdf, FileSettings } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
+import { Button, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useState, type FC } from "react";
 import styles from "./index.module.less";
@@ -47,6 +49,10 @@ export const Header: FC = observer(() => {
         label: "切换",
         key: "toggle",
       },
+      {
+        label: "视图",
+        key: "view",
+      },
     ],
     []
   );
@@ -75,7 +81,15 @@ export const Header: FC = observer(() => {
 
     // 没有选中元素时，切换回开始页面
     setElementPanel(null);
-    menuActiveStore.setActiveMenu("start");
+    const menuActive = menuActiveStore.getMenuActive();
+    if (
+      menuActive !== "start" &&
+      menuActive !== "insert" &&
+      menuActive !== "toggle" &&
+      menuActive !== "view"
+    ) {
+      menuActiveStore.setActiveMenu("start");
+    }
   }, [elementActive, pageActive]);
 
   const otherPanelClick = useMemoizedFn(() => {
@@ -83,7 +97,30 @@ export const Header: FC = observer(() => {
   });
 
   return (
-    <div className="px-[20px] pt-[10px] pb-[15px] flex items-center justify-center">
+    <div className="px-[20px] pt-[10px] pb-[12px] flex items-center justify-between">
+      <div className="flex gap-[10px]">
+        <Tooltip placement="bottomLeft" title="导出配置文件">
+          <Button
+            size="small"
+            type="text"
+            icon={<FileSettings theme="outline" size="17" fill="#5e5e5e" />}
+          />
+        </Tooltip>
+        <Tooltip placement="bottom" title="导出PDF">
+          <Button
+            size="small"
+            type="text"
+            icon={<FilePdf theme="outline" size="17" fill="#5e5e5e" />}
+          />
+        </Tooltip>
+        <Tooltip placement="bottom" title="导出JPG图片">
+          <Button
+            size="small"
+            type="text"
+            icon={<FileJpg theme="outline" size="17" fill="#5e5e5e" />}
+          />
+        </Tooltip>
+      </div>
       <div className="flex items-center gap-[30px]">
         {menuItems.map((item) => (
           <div
@@ -123,6 +160,7 @@ export const Header: FC = observer(() => {
           </div>
         )}
       </div>
+      <div>12</div>
     </div>
   );
 });
