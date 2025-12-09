@@ -29,7 +29,7 @@ import {
   Right,
 } from "@icon-park/react";
 import Guides from "@scena/react-guides";
-import { useMemoizedFn } from "ahooks";
+import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import {
   useCallback,
@@ -427,6 +427,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const gridSize = pptStore.getGridSize();
 
   const showLine = mode === "edit" && gridType === "line";
+  // 标尺缩放跟随画布缩放（编辑模式使用 scale，播放/预览为 1）
+  const rulerZoom = mode === "edit" ? scale : 1;
   const guideSnapStep = gridSize;
   const guideSnapThreshold = Math.max(1, Math.floor(guideSnapStep / 2));
 
@@ -1088,6 +1090,9 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
     // 非全屏时根据 mode 使用不同样式
     if (mode === "edit") {
+      if (gridType === "line") {
+        return "relative overflow-hidden";
+      }
       return (
         "w-full relative overflow-hidden" +
         (remarkEditActive ? " h-[calc(100%-30px)]" : " h-full")
@@ -1115,88 +1120,206 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       return { zoom: previewZoom };
     }
 
+    if (mode === "edit" && gridType === "line") {
+      return {
+        width: "calc(100% - 23px)",
+        height: "calc(100% - 23px)",
+        marginLeft: "23px",
+        marginTop: "23px",
+      };
+    }
+
     return undefined;
   };
 
   const containerStyle = getContainerStyle();
 
+  // 标尺容器尺寸，需扣除 23px
+  const [rulerSize, setRulerSize] = useState({ width: 0, height: 0 });
+  // canvas-container 相对于 parent-canvas-container 的偏移
+  const [canvasOffset, setCanvasOffset] = useState({ left: 0, top: 0 });
+  // Guides 组件的 ref
+  const horizontalGuidesRef = useRef<any>(null);
+  const verticalGuidesRef = useRef<any>(null);
+
+  const updateRulerSize = useMemoizedFn(() => {
+    const container = document.getElementById(
+      `parent-canvas-container-${pageId}`
+    );
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const width = Math.max(0, rect.width - 23);
+    const height = Math.max(0, rect.height - 23);
+    setRulerSize((prev) => {
+      if (prev.width !== width || prev.height !== height) {
+        return { width, height };
+      }
+      return prev;
+    });
+  });
+
+  // 计算 canvas-container 的偏移
+  const updateCanvasOffset = useMemoizedFn(() => {
+    const parentContainer = document.getElementById(
+      `parent-canvas-container-${pageId}`
+    );
+    const canvasContainer = document.getElementById("canvas-container");
+    if (!parentContainer || !canvasContainer) return;
+
+    const parentRect = parentContainer.getBoundingClientRect();
+    const canvasRect = canvasContainer.getBoundingClientRect();
+
+    // 计算 canvas-container 相对于 parent-container 的偏移
+    const left = canvasRect.left - parentRect.left;
+    const top = canvasRect.top - parentRect.top;
+
+    setCanvasOffset((prev) => {
+      if (prev.left !== left || prev.top !== top) {
+        return { left, top };
+      }
+      return prev;
+    });
+  });
+
+  const { run: debouncedUpdateRulerSize } = useDebounceFn(updateRulerSize, {
+    wait: 100,
+  });
+
+  useEffect(() => {
+    // 只在 edit 模式下监听 resize
+    if (mode !== "edit" && gridType !== "line") {
+      return;
+    }
+
+    updateRulerSize();
+    updateCanvasOffset();
+    const resizeObserver = new ResizeObserver(() => {
+      debouncedUpdateRulerSize();
+      updateCanvasOffset();
+    });
+    const container = document.getElementById(
+      `parent-canvas-container-${pageId}`
+    );
+    if (container) {
+      resizeObserver.observe(container);
+    }
+    const canvasContainer = document.getElementById("canvas-container");
+    if (canvasContainer) {
+      resizeObserver.observe(canvasContainer);
+    }
+    window.addEventListener("resize", () => {
+      debouncedUpdateRulerSize();
+      updateCanvasOffset();
+    });
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", debouncedUpdateRulerSize);
+    };
+  }, [
+    pageId,
+    mode,
+    gridType,
+    updateRulerSize,
+    debouncedUpdateRulerSize,
+    updateCanvasOffset,
+  ]);
+
+  // 当 rulerZoom 或 canvasOffset 变化时，更新 Guides 的 scrollPos
+  // 如果组件不支持 scrollPos 属性的响应式更新，通过 ref 调用 scrollGuides
+  useEffect(() => {
+    if (
+      gridType === "line" &&
+      (horizontalGuidesRef.current || verticalGuidesRef.current)
+    ) {
+      if (horizontalGuidesRef.current) {
+        horizontalGuidesRef.current.scrollGuides(-canvasOffset.top, rulerZoom);
+      }
+      if (verticalGuidesRef.current) {
+        verticalGuidesRef.current.scrollGuides(-canvasOffset.left, rulerZoom);
+      }
+    }
+  }, [rulerZoom, canvasOffset.top, canvasOffset.left, gridType]);
+
   return (
-    <div className="h-full w-full">
+    <div className="h-full flex-1 relative" id="ruler-container">
+      {gridType === "line" && mode === "edit" && (
+        <>
+          <Guides
+            ref={horizontalGuidesRef}
+            showGuides={showLine}
+            useResizeObserver={true}
+            type="horizontal"
+            width={rulerSize.width}
+            height={23}
+            unit={50}
+            zoom={rulerZoom}
+            displayDragPos={false}
+            backgroundColor="#fafafa"
+            lineColor="#d9d9d9"
+            textColor="#999"
+            font="12px"
+            textOffset={[0, 9]}
+            snapThreshold={guideSnapThreshold}
+            scrollPos={-canvasOffset.left}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 23,
+              zIndex: 2,
+              height: 23,
+              width: "calc(100% - 23px)",
+              pointerEvents: "auto",
+            }}
+            guides={pptStore.getHorizontalLine().map(Number)}
+            onChangeGuides={(v) => {
+              pptStore.setHorizontalLine([...v.guides]);
+            }}
+          />
+          <Guides
+            ref={verticalGuidesRef}
+            showGuides={showLine}
+            useResizeObserver={true}
+            type="vertical"
+            width={23}
+            height={rulerSize.height}
+            unit={50}
+            zoom={rulerZoom}
+            displayDragPos={false}
+            backgroundColor="#fafafa"
+            lineColor="#d9d9d9"
+            textColor="#999"
+            font="12px"
+            textOffset={[9, 0]}
+            snapThreshold={guideSnapThreshold}
+            scrollPos={-canvasOffset.top}
+            style={{
+              position: "absolute",
+              top: "23px",
+              left: 0,
+              zIndex: 2,
+              width: "23px",
+              height: "calc(100% - 23px)",
+              pointerEvents: "auto",
+            }}
+            guides={pptStore.getVerticalLine().map(Number)}
+            onChangeGuides={(v) => pptStore.setVerticalLine(v.guides)}
+          />
+          <div
+            onClick={() => pptStore.setShowLine(!showLine)}
+            className="w-[23px] text-[11px] text-[#ccc] h-[23px] bg-[#fafafa] absolute top-0 left-0 flex items-center justify-center cursor-pointer"
+          >
+            px
+          </div>
+        </>
+      )}
       <div
         ref={containerRef}
-        id={`parent-canvas-container-${pageId}`}
+        id={
+          mode !== "preview" ? `parent-canvas-container-${pageId}` : undefined
+        }
         className={containerClassName}
         style={containerStyle}
       >
-        {gridType === "line" && (
-          <>
-            <Guides
-              showGuides={showLine}
-              useResizeObserver={true}
-              type="horizontal"
-              width={CANVAS_WIDTH - 23}
-              height={23}
-              unit={50}
-              zoom={1}
-              displayDragPos={false}
-              backgroundColor="#fafafa"
-              lineColor="#d9d9d9"
-              textColor="#999"
-              font="12px"
-              textOffset={[0, 9]}
-              snapThreshold={guideSnapThreshold}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 23,
-                zIndex: 2,
-                height: 23,
-                width: "calc(100% - 23px)",
-                pointerEvents: "auto",
-              }}
-              guides={pptStore.getHorizontalLine().map(Number)}
-              onChangeGuides={(v) => {
-                console.log(v);
-
-                pptStore.setHorizontalLine([...v.guides]);
-                console.log(pptStore.getHorizontalLine());
-              }}
-            />
-            <Guides
-              showGuides={showLine}
-              useResizeObserver={true}
-              type="vertical"
-              width={23}
-              height={CANVAS_HEIGHT - 23}
-              unit={50}
-              zoom={1}
-              displayDragPos={false}
-              backgroundColor="#fafafa"
-              lineColor="#d9d9d9"
-              textColor="#999"
-              font="12px"
-              textOffset={[9, 0]}
-              snapThreshold={guideSnapThreshold}
-              style={{
-                position: "absolute",
-                top: "23px",
-                left: 0,
-                zIndex: 2,
-                width: "23px",
-                height: "calc(100% - 23px)",
-                pointerEvents: "auto",
-              }}
-              guides={pptStore.getVerticalLine().map(Number)}
-              onChangeGuides={(v) => pptStore.setVerticalLine(v.guides)}
-            />
-            <div
-              onClick={() => pptStore.setShowLine(!showLine)}
-              className="w-[23px] text-[11px] text-[#ccc] h-[23px] bg-[#fafafa] absolute top-0 left-0 flex items-center justify-center cursor-pointer"
-            >
-              px
-            </div>
-          </>
-        )}
         {mode === "play" && (
           <GlobalContextMenu
             parentSelector={`#parent-canvas-container-${pageId}`}

@@ -21,9 +21,20 @@ declare module "@scena/react-guides" {
     snapThreshold?: number;
     useResizeObserver?: boolean;
     showGuides?: boolean;
+    defaultGuidesPos?: number;
+    scrollPos?: number;
     onChangeGuides?: ({ guides }: { guides: number[] }) => void;
   }
 
-  const Guides: React.FC<GuidesProps>;
+  export interface GuidesInterface {
+    scrollGuides(pos: number, zoom?: number): void;
+    getGuideScrollPos(): number;
+  }
+
+  class Guides extends React.Component<GuidesProps> implements GuidesInterface {
+    scrollGuides(pos: number, zoom?: number): void;
+    getGuideScrollPos(): number;
+  }
+
   export default Guides;
 }

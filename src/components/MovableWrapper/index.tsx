@@ -149,8 +149,84 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
       setElementGuidelines(siblings);
     }, [id, active, snapEnabled]);
 
+    // 拖拽时使用的参考线快照
+    const gridType = pptStore.getGridType();
+    const [isDragging, setIsDragging] = useState(false);
+    const [snapshotHorizontalLine, setSnapshotHorizontalLine] = useState<
+      number[]
+    >(() => (gridType === "line" ? pptStore.getHorizontalLine() : []));
+    const [snapshotVerticalLine, setSnapshotVerticalLine] = useState<number[]>(
+      () => (gridType === "line" ? pptStore.getVerticalLine() : [])
+    );
+    // 使用 ref 跟踪上一次的参考线值，用于检测变化
+    const prevHorizontalLineRef = useRef<string>(
+      JSON.stringify(pptStore.getHorizontalLine())
+    );
+    const prevVerticalLineRef = useRef<string>(
+      JSON.stringify(pptStore.getVerticalLine())
+    );
+
+    // 获取当前参考线的字符串表示（用于比较）
+    const currentHorizontalLineStr = JSON.stringify(
+      gridType === "line" ? pptStore.getHorizontalLine() : []
+    );
+    const currentVerticalLineStr = JSON.stringify(
+      gridType === "line" ? pptStore.getVerticalLine() : []
+    );
+
+    // 监听参考线变化，在拖拽过程中也更新快照值
+    useEffect(() => {
+      if (gridType === "line") {
+        const horizontalLine = pptStore.getHorizontalLine();
+        const verticalLine = pptStore.getVerticalLine();
+        const horizontalStr = JSON.stringify(horizontalLine);
+        const verticalStr = JSON.stringify(verticalLine);
+
+        // 检查是否有变化
+        const horizontalChanged =
+          prevHorizontalLineRef.current !== horizontalStr;
+        const verticalChanged = prevVerticalLineRef.current !== verticalStr;
+
+        if (horizontalChanged || verticalChanged) {
+          setSnapshotHorizontalLine([...horizontalLine]);
+          setSnapshotVerticalLine([...verticalLine]);
+          prevHorizontalLineRef.current = horizontalStr;
+          prevVerticalLineRef.current = verticalStr;
+
+          // 如果正在拖拽，使用 Moveable API 强制更新 guidelines
+          if (isDragging && moveableRef.current) {
+            // 使用 setState 更新 guidelines
+            moveableRef.current.setState({
+              horizontalGuidelines: horizontalLine,
+              verticalGuidelines: verticalLine,
+            });
+            // 同时调用 updateRect 确保更新生效
+            moveableRef.current.updateRect();
+          }
+        }
+      } else {
+        setSnapshotHorizontalLine([]);
+        setSnapshotVerticalLine([]);
+        prevHorizontalLineRef.current = "[]";
+        prevVerticalLineRef.current = "[]";
+      }
+    }, [
+      gridType,
+      isDragging,
+      currentHorizontalLineStr,
+      currentVerticalLineStr,
+    ]);
+
     // 拖拽事件处理
     const handleDragStart = () => {
+      // 在拖拽开始时获取参考线快照
+      if (gridType === "line") {
+        const horizontalLine = pptStore.getHorizontalLine();
+        const verticalLine = pptStore.getVerticalLine();
+        setSnapshotHorizontalLine([...horizontalLine]);
+        setSnapshotVerticalLine([...verticalLine]);
+      }
+      setIsDragging(true);
       onDragStart?.();
     };
 
@@ -177,6 +253,7 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
     };
 
     const handleDragEnd = () => {
+      setIsDragging(false);
       onDragEnd?.();
     };
 
@@ -230,6 +307,10 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
       onRotateEnd?.();
     };
 
+    const gridSize = pptStore.getGridSize();
+
+    const guideSnapThreshold = snapThreshold;
+
     // 如果未激活，不渲染 Moveable
     if (!active) {
       return null;
@@ -241,15 +322,7 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
       console.warn(`Target element with id "${id}" not found`);
       return null;
     }
-
-    // 直接读取 observable 字段，确保 observer 能追踪更新
-    const { gridType, gridSize, horizontalLine, verticalLine } = pptStore;
-    const horizontalGuidelines =
-      gridType === "line" ? horizontalLine : undefined;
-    const verticalGuidelines = gridType === "line" ? verticalLine : undefined;
-
-    const guideSnapThreshold = snapThreshold;
-    console.log(horizontalGuidelines, verticalGuidelines);
+    console.log("查询");
 
     return (
       <Moveable
@@ -283,8 +356,12 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
         snapThreshold={guideSnapThreshold}
         snapGridWidth={gridType === "grid" ? gridSize : undefined}
         snapGridHeight={gridType === "grid" ? gridSize : undefined}
-        horizontalGuidelines={horizontalGuidelines}
-        verticalGuidelines={verticalGuidelines}
+        horizontalGuidelines={
+          gridType === "line" ? snapshotHorizontalLine : undefined
+        }
+        verticalGuidelines={
+          gridType === "line" ? snapshotVerticalLine : undefined
+        }
         elementGuidelines={snapEnabled ? elementGuidelines : undefined}
         edge={true} // 启用边框线，但用CSS隐藏并重新绘制
         zoom={1}
