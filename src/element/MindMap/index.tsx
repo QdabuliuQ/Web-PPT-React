@@ -575,44 +575,34 @@ const Component: FC<IMindMapProps> = observer((props) => {
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
       >
-        <AnimationWrapper
-          mode={mode}
-          elementId={id}
-          animationName={animationName}
-          animationDuration={animationDuration}
-          animationDelay={animationDelay}
-          animationTrigger={animationTrigger}
-          className="w-full h-full relative"
-        >
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-              <Spin size="large" />
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+            <Spin size="large" />
+          </div>
+        )}
+        {previewImage && !isLoading && (
+          <PhotoProvider>
+            <div
+              className={`${styles.mindMapImageWrapper} w-full h-full`}
+              style={{ backgroundColor }}
+            >
+              <PhotoView src={previewImage} overlay={<div />}>
+                <img
+                  ref={photoViewRef}
+                  src={previewImage}
+                  alt="思维导图预览"
+                  className="w-full h-full object-contain"
+                  style={{ pointerEvents: "none" }}
+                  onClick={(e) => {
+                    // 阻止单击触发预览，只允许通过菜单或双击
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                />
+              </PhotoView>
             </div>
-          )}
-          {previewImage && !isLoading && (
-            <PhotoProvider>
-              <div
-                className={`${styles.mindMapImageWrapper} w-full h-full`}
-                style={{ backgroundColor }}
-              >
-                <PhotoView src={previewImage} overlay={<div />}>
-                  <img
-                    ref={photoViewRef}
-                    src={previewImage}
-                    alt="思维导图预览"
-                    className="w-full h-full object-contain"
-                    style={{ pointerEvents: "none" }}
-                    onClick={(e) => {
-                      // 阻止单击触发预览，只允许通过菜单或双击
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                  />
-                </PhotoView>
-              </div>
-            </PhotoProvider>
-          )}
-        </AnimationWrapper>
+          </PhotoProvider>
+        )}
       </div>
       <MovableWrapper
         ref={moveableRef}
@@ -648,31 +638,51 @@ const Component: FC<IMindMapProps> = observer((props) => {
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      <AnimationWrapper
-        mode={mode}
-        elementId={id}
-        animationName={animationName}
-        animationDuration={animationDuration}
-        animationDelay={animationDelay}
-        animationTrigger={animationTrigger}
-        className="w-full h-full relative"
-      >
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-            <Spin size="large" />
-          </div>
-        )}
-        {previewImage && !isLoading && (
-          <div className="w-full h-full" style={{ backgroundColor }}>
-            <img
-              src={previewImage}
-              alt="思维导图预览"
-              className="w-full h-full object-contain"
-              style={{ pointerEvents: "none" }}
-            />
-          </div>
-        )}
-      </AnimationWrapper>
+      {mode === "preview" ? (
+        <AnimationWrapper
+          mode={mode}
+          elementId={id}
+          animationName={animationName}
+          animationDuration={animationDuration}
+          animationDelay={animationDelay}
+          animationTrigger={animationTrigger}
+          className="w-full h-full relative"
+        >
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+              <Spin size="large" />
+            </div>
+          )}
+          {previewImage && !isLoading && (
+            <div className="w-full h-full" style={{ backgroundColor }}>
+              <img
+                src={previewImage}
+                alt="思维导图预览"
+                className="w-full h-full object-contain"
+                style={{ pointerEvents: "none" }}
+              />
+            </div>
+          )}
+        </AnimationWrapper>
+      ) : (
+        <>
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+              <Spin size="large" />
+            </div>
+          )}
+          {previewImage && !isLoading && (
+            <div className="w-full h-full" style={{ backgroundColor }}>
+              <img
+                src={previewImage}
+                alt="思维导图预览"
+                className="w-full h-full object-contain"
+                style={{ pointerEvents: "none" }}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 });

@@ -172,22 +172,12 @@ const Component: FC<IIconProps> = observer((props) => {
         onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
-        <AnimationWrapper
-          mode={mode}
-          elementId={id}
-          animationName={animationName}
-          animationDuration={animationDuration}
-          animationDelay={animationDelay}
-          animationTrigger={animationTrigger}
-          className="w-full h-full flex items-center justify-center"
-        >
-          <IconComponent
-            theme={theme}
-            size={Math.min(width, height)}
-            fill={fill}
-            strokeWidth={strokeWidth}
-          />
-        </AnimationWrapper>
+        <IconComponent
+          theme={theme}
+          size={Math.min(width, height)}
+          fill={fill}
+          strokeWidth={strokeWidth}
+        />
       </div>
       <MovableWrapper
         ref={moveableRef}
@@ -212,22 +202,31 @@ const Component: FC<IIconProps> = observer((props) => {
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      <AnimationWrapper
-        mode={mode}
-        elementId={id}
-        animationName={animationName}
-        animationDuration={animationDuration}
-        animationDelay={animationDelay}
-        animationTrigger={animationTrigger}
-        className="w-full h-full flex items-center justify-center"
-      >
+      {mode === "preview" ? (
+        <AnimationWrapper
+          mode={mode}
+          elementId={id}
+          animationName={animationName}
+          animationDuration={animationDuration}
+          animationDelay={animationDelay}
+          animationTrigger={animationTrigger}
+          className="w-full h-full flex items-center justify-center"
+        >
+          <IconComponent
+            theme={theme}
+            size={Math.min(width, height)}
+            fill={fill}
+            strokeWidth={strokeWidth}
+          />
+        </AnimationWrapper>
+      ) : (
         <IconComponent
           theme={theme}
           size={Math.min(width, height)}
           fill={fill}
           strokeWidth={strokeWidth}
         />
-      </AnimationWrapper>
+      )}
     </div>
   );
 });

@@ -907,15 +907,75 @@ const Component: FC<ITableProps> = (props) => {
           onClick={mode === "edit" ? handleClick : undefined}
           onDoubleClick={mode === "edit" ? handleDoubleClick : undefined}
         >
-          <AnimationWrapper
-            mode={mode}
-            elementId={id}
-            animationName={animationName}
-            animationDuration={animationDuration}
-            animationDelay={animationDelay}
-            animationTrigger={animationTrigger}
-            className="w-full h-full"
-          >
+          {mode === "preview" ? (
+            <AnimationWrapper
+              mode={mode}
+              elementId={id}
+              animationName={animationName}
+              animationDuration={animationDuration}
+              animationDelay={animationDelay}
+              animationTrigger={animationTrigger}
+              className="w-full h-full"
+            >
+              <table
+                ref={tableRef}
+                className={styles.table}
+                style={{
+                  fontSize: `${fontSize}px`,
+                  fontFamily: fontFamily,
+                }}
+              >
+                <tbody>
+                  {tableData.map((row, rowIndex) => (
+                    <tr
+                      key={rowIndex}
+                      className={
+                        rowIndex === 0 ? styles.headerRow : styles.dataRow
+                      }
+                    >
+                      {row.map((cell, colIndex) => {
+                        return (
+                          <td
+                            key={`${rowIndex}-${colIndex}`}
+                            data-cell-key={`${rowIndex}-${colIndex}`}
+                            className={`${
+                              rowIndex === 0
+                                ? styles.headerCell
+                                : styles.dataCell
+                            } ${styles.cellBase}`}
+                            style={{
+                              width: `${currentColumnWidths[colIndex]}%`, // 应用列宽比例
+                              height: `${currentRowHeights[rowIndex] || 25}%`, // 始终使用百分比行高，默认25%
+                              border: `${borderWidth}px ${borderStyle} ${borderColor}`,
+                            }}
+                          >
+                            <div
+                              className={`${styles.cellContent} ${
+                                selectedCells.has(`${rowIndex}-${colIndex}`)
+                                  ? styles.selectedCell
+                                  : ""
+                              }`}
+                              style={{
+                                fontSize: `${cell.fontSize}px`,
+                                color: cell.color,
+                                fontWeight: cell.bold ? "bold" : "normal",
+                                fontStyle: cell.italic ? "italic" : "normal",
+                                textDecoration: `${cell.underline ? "underline" : ""} ${cell.strikethrough ? "line-through" : ""}`,
+                                backgroundColor: cell.backgroundColor,
+                                ...placementConvey(cell.placement), // flex布局应用到wrapper
+                              }}
+                            >
+                              {cell.value || ""}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </AnimationWrapper>
+          ) : (
             <table
               ref={tableRef}
               className={styles.table}
@@ -1016,7 +1076,7 @@ const Component: FC<ITableProps> = (props) => {
                 ))}
               </tbody>
             </table>
-          </AnimationWrapper>
+          )}
         </div>
       );
     }
@@ -1082,6 +1142,18 @@ const Component: FC<ITableProps> = (props) => {
         </div>
       </Modal>
     </>
+  ) : mode === "preview" ? (
+    <AnimationWrapper
+      mode={mode}
+      elementId={id}
+      animationName={animationName}
+      animationDuration={animationDuration}
+      animationDelay={animationDelay}
+      animationTrigger={animationTrigger}
+      className="w-full h-full"
+    >
+      <Table />
+    </AnimationWrapper>
   ) : (
     <Table />
   );

@@ -385,41 +385,61 @@ const Component = observer(
       </>
     ) : (
       <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-        <AnimationWrapper
-          mode={mode}
-          elementId={id}
-          animationName={animationName}
-          animationDuration={animationDuration}
-          animationDelay={animationDelay}
-          animationTrigger={animationTrigger}
-          className="w-full h-full"
-        >
-          {!imageLoaded && !imageError && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
-              <Spin />
-            </div>
-          )}
-          {imageError && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
-              图片加载失败
-            </div>
-          )}
-          <PhotoProvider>
-            <PhotoView src={src}>
-              <img
-                src={src}
-                alt=""
-                className={
-                  imageLoaded ? styles.imageVisible : styles.imageHidden
-                }
-                style={imageStyle}
-                draggable={false}
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-              />
-            </PhotoView>
-          </PhotoProvider>
-        </AnimationWrapper>
+        {mode === "preview" ? (
+          <AnimationWrapper
+            mode={mode}
+            elementId={id}
+            animationName={animationName}
+            animationDuration={animationDuration}
+            animationDelay={animationDelay}
+            animationTrigger={animationTrigger}
+            className="w-full h-full"
+          >
+            {!imageLoaded && !imageError && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+                <Spin />
+              </div>
+            )}
+            {imageError && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
+                图片加载失败
+              </div>
+            )}
+
+            <img
+              src={src}
+              alt=""
+              className={imageLoaded ? styles.imageVisible : styles.imageHidden}
+              style={imageStyle}
+              draggable={false}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+          </AnimationWrapper>
+        ) : (
+          <>
+            {!imageLoaded && !imageError && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+                <Spin />
+              </div>
+            )}
+            {imageError && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
+                图片加载失败
+              </div>
+            )}
+
+            <img
+              src={src}
+              alt=""
+              className={imageLoaded ? styles.imageVisible : styles.imageHidden}
+              style={imageStyle}
+              draggable={false}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+          </>
+        )}
       </div>
     );
   })
