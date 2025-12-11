@@ -27,6 +27,7 @@ class PPTStore {
   verticalLine: Array<number> = [];
   horizontalLine: Array<number> = [];
   rule: boolean = true;
+  name: string = "";
   pages: IPage = [];
 
   constructor() {
@@ -87,6 +88,14 @@ class PPTStore {
   };
   getRule = () => {
     return this.rule;
+  };
+
+  // name
+  setName = (value: string) => {
+    this.name = value;
+  };
+  getName = () => {
+    return this.name;
   };
 
   setPages = (pages: IPage) => {

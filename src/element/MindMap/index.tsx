@@ -663,18 +663,14 @@ const Component: FC<IMindMapProps> = observer((props) => {
           </div>
         )}
         {previewImage && !isLoading && (
-          <PhotoProvider>
-            <div className="w-full h-full" style={{ backgroundColor }}>
-              <PhotoView src={previewImage}>
-                <img
-                  src={previewImage}
-                  alt="思维导图预览"
-                  className="w-full h-full object-contain"
-                  style={{ pointerEvents: "none" }}
-                />
-              </PhotoView>
-            </div>
-          </PhotoProvider>
+          <div className="w-full h-full" style={{ backgroundColor }}>
+            <img
+              src={previewImage}
+              alt="思维导图预览"
+              className="w-full h-full object-contain"
+              style={{ pointerEvents: "none" }}
+            />
+          </div>
         )}
       </AnimationWrapper>
     </div>

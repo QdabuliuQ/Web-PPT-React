@@ -2,6 +2,7 @@ import { createDefaultMindMapData } from "@/element/MindMap/utils";
 import { getRandomId } from "@/utils";
 
 export default {
+  name: "",
   gridLine: true,
   gridSize: 20,
   gridType: "grid", // grid: 网格; line: 参考线; none: 关闭

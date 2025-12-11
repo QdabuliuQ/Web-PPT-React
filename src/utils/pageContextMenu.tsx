@@ -15,12 +15,13 @@ import {
   Clear,
   Copy,
   Delete,
+  Export,
   Play,
   PreviewCloseOne,
   PreviewOpen,
   SendBackward,
 } from "@icon-park/react";
-import { formatKeysForDevice } from "./tool";
+import { downloadImage, exportPageAsImage, formatKeysForDevice } from "./tool";
 
 interface ShowPageContextMenuOptions {
   pageId: string;
@@ -114,6 +115,19 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         contextMenuStore.hideMenu();
       },
       tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "R"])} />,
+    },
+    {
+      type: "item" as const,
+      label: "导出图片",
+      icon: <Export theme="outline" size="13" fill="#333" />,
+      onClick: async () => {
+        const dataUrl = await exportPageAsImage(pageId);
+        if (dataUrl) {
+          const name = pptStore.getName();
+          downloadImage(dataUrl, `${name || "未命名"}_${pageId}.png`);
+        }
+        contextMenuStore.hideMenu();
+      },
     },
     {
       type: "separator",

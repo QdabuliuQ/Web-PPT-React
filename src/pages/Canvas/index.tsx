@@ -1,3 +1,4 @@
+import SearchSvg from "@/assets/images/search.svg";
 import { GlobalContextMenu } from "@/components";
 import { Icon } from "@/element/Icon";
 import { Image } from "@/element/Image";
@@ -109,6 +110,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       pptStore.setPages(JSON.parse(JSON.stringify(MockData)).pages);
       pptStore.setGridLine(MockData.gridLine);
       pptStore.setGridSize(MockData.gridSize);
+      pptStore.setName(MockData.name);
       if ((MockData as any).gridType) {
         pptStore.setGridType((MockData as any).gridType);
       } else {
@@ -587,9 +589,6 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         disabled: isFirstPage,
         onClick: () => {
           if (currentPageIndex > 0) {
-            console.log(currentPageIndex, "currentPageIndex");
-
-            // 直接计算上一页的ID，不依赖 pageActiveStore
             const prevPageId =
               pages[showEndMessage ? currentPageIndex : currentPageIndex - 1]
                 .id;
@@ -659,8 +658,6 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
           />
         ),
         onClick: () => {
-          console.log("hide");
-
           // 关闭菜单
           contextMenuStore.hideMenu();
 
@@ -846,7 +843,9 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       // 只处理页面容器本身的动画结束事件，忽略子元素的动画事件
       const target = e.target as HTMLElement;
       const containerId =
-        mode === "play" ? "play-canvas-container" : "preview-canvas-container";
+        mode === "play"
+          ? "play-canvas-container"
+          : "preview-canvas-container-" + page?.id;
 
       if (target.id !== containerId) return;
 
@@ -891,6 +890,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             ...canvasStyle,
             ...backgroundStyle,
           }}
+          onTransitionEnd={updateCanvasOffset}
           onClick={handleCanvasClick}
           onContextMenu={(e) => {
             e.preventDefault();
@@ -980,7 +980,9 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     return (
       <div
         id={
-          mode === "play" ? "play-canvas-container" : "preview-canvas-container"
+          mode === "play"
+            ? "play-canvas-container"
+            : "preview-canvas-container-" + page?.id
         }
         className={`${animationClassName} absolute overflow-hidden transition-transform duration-200 ease-in-out`}
         style={{
@@ -1138,6 +1140,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const [rulerSize, setRulerSize] = useState({ width: 0, height: 0 });
   // canvas-container 相对于 parent-canvas-container 的偏移
   const [canvasOffset, setCanvasOffset] = useState({ left: 0, top: 0 });
+  // 是否正在调整大小（用于显示蒙层）
+  const [showResizeOverlay, setShowResizeOverlay] = useState(false);
   // Guides 组件的 ref
   const horizontalGuidesRef = useRef<any>(null);
   const verticalGuidesRef = useRef<any>(null);
@@ -1150,77 +1154,95 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     const rect = container.getBoundingClientRect();
     const width = Math.max(0, rect.width - 23);
     const height = Math.max(0, rect.height - 23);
+
     setRulerSize((prev) => {
       if (prev.width !== width || prev.height !== height) {
         return { width, height };
       }
       return prev;
     });
+    // updateCanvasOffset();
   });
 
   // 计算 canvas-container 的偏移
   const updateCanvasOffset = useMemoizedFn(() => {
-    const parentContainer = document.getElementById(
-      `parent-canvas-container-${pageId}`
-    );
+    const rulerContainer = document.getElementById("ruler-container");
     const canvasContainer = document.getElementById("canvas-container");
-    if (!parentContainer || !canvasContainer) return;
+    if (!rulerContainer || !canvasContainer) return;
 
-    const parentRect = parentContainer.getBoundingClientRect();
+    const rulerRect = rulerContainer.getBoundingClientRect();
     const canvasRect = canvasContainer.getBoundingClientRect();
 
-    // 计算 canvas-container 相对于 parent-container 的偏移
-    const left = canvasRect.left - parentRect.left;
-    const top = canvasRect.top - parentRect.top;
+    // getBoundingClientRect() 返回的是缩放后的实际位置
+    // 画布的左上角实际位置（已考虑缩放）
+    const canvasTopLeftX = canvasRect.left;
+    const canvasTopLeftY = canvasRect.top;
+
+    // 获取画布的缩放比例
+    const computedStyle = window.getComputedStyle(canvasContainer);
+    const transform = computedStyle.transform;
+    let canvasScale = 1;
+
+    if (transform && transform !== "none") {
+      const matrix = new DOMMatrix(transform);
+      canvasScale = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
+    } else {
+      const zoom = computedStyle.zoom;
+      if (zoom && zoom !== "1") {
+        canvasScale = parseFloat(zoom);
+      }
+    }
+
+    // 将画布的实际位置转换为逻辑位置（缩放前）
+    // 画布的逻辑左上角位置 = (实际位置 - 标尺容器位置) / 缩放比例
+    const logicalLeft = (canvasTopLeftX - rulerRect.left - 23) / canvasScale;
+    const logicalTop = (canvasTopLeftY - rulerRect.top - 23) / canvasScale;
 
     setCanvasOffset((prev) => {
-      if (prev.left !== left || prev.top !== top) {
-        return { left, top };
+      if (prev.left !== logicalLeft || prev.top !== logicalTop) {
+        return { left: logicalLeft, top: logicalTop };
       }
       return prev;
     });
   });
 
-  const { run: debouncedUpdateRulerSize } = useDebounceFn(updateRulerSize, {
-    wait: 100,
-  });
+  const { run: debouncedHandleResizeEnd } = useDebounceFn(
+    () => {
+      updateRulerSize();
+      updateCanvasOffset();
+      setTimeout(() => {
+        setShowResizeOverlay(false);
+      }, 300);
+    },
+    {
+      wait: 150,
+    }
+  );
 
   useEffect(() => {
     // 只在 edit 模式下监听 resize
-    if (mode !== "edit" && gridType !== "line") {
+    if (mode !== "edit" || gridType !== "line") {
       return;
     }
 
     updateRulerSize();
     updateCanvasOffset();
-    const resizeObserver = new ResizeObserver(() => {
-      debouncedUpdateRulerSize();
-      updateCanvasOffset();
-    });
-    const container = document.getElementById(
-      `parent-canvas-container-${pageId}`
-    );
-    if (container) {
-      resizeObserver.observe(container);
-    }
-    const canvasContainer = document.getElementById("canvas-container");
-    if (canvasContainer) {
-      resizeObserver.observe(canvasContainer);
-    }
-    window.addEventListener("resize", () => {
-      debouncedUpdateRulerSize();
-      updateCanvasOffset();
-    });
+
+    const resizeHandle = () => {
+      setShowResizeOverlay(true);
+      debouncedHandleResizeEnd();
+    };
+
+    window.addEventListener("resize", resizeHandle);
     return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", debouncedUpdateRulerSize);
+      window.removeEventListener("resize", resizeHandle);
     };
   }, [
     pageId,
     mode,
     gridType,
     updateRulerSize,
-    debouncedUpdateRulerSize,
+    debouncedHandleResizeEnd,
     updateCanvasOffset,
   ]);
 
@@ -1241,7 +1263,29 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   }, [rulerZoom, canvasOffset.top, canvasOffset.left, gridType]);
 
   return (
-    <div className="h-full flex-1 relative" id="ruler-container">
+    <div
+      className="h-full flex-1 relative"
+      id={mode === "edit" ? "ruler-container" : undefined}
+    >
+      {/* resize 时的蒙层 */}
+      {mode === "edit" && (
+        <div
+          className="absolute inset-0 w-full h-full flex items-center justify-center"
+          style={{
+            pointerEvents: "none",
+            opacity: showResizeOverlay ? 1 : 0,
+            background: showResizeOverlay
+              ? "rgba(255, 255, 255, 0.5)"
+              : "transparent",
+            zIndex: showResizeOverlay ? 9999 : -1,
+            backdropFilter: showResizeOverlay ? "blur(20px)" : "none",
+            WebkitBackdropFilter: showResizeOverlay ? "blur(20px)" : "none",
+            transition: "opacity 0.2s ease-in-out",
+          }}
+        >
+          <img src={SearchSvg} alt="search" className="w-[100px] h-[100px]" />
+        </div>
+      )}
       {gridType === "line" && mode === "edit" && (
         <>
           <Guides
