@@ -22,17 +22,35 @@ export type Page = {
 type IPage = Array<Page>;
 
 class PPTStore {
+  name: string = "";
   gridSize: number = 20;
   gridType: "grid" | "line" | "none" = "grid";
   verticalLine: Array<number> = [];
   horizontalLine: Array<number> = [];
   rule: boolean = true;
-  name: string = "";
+  guideLineShow: boolean = true;
+  keyboardToggle: boolean = true;
   pages: IPage = [];
 
   constructor() {
     makeAutoObservable(this);
   }
+
+  // keyboardToggle
+  setKeyboardToggle = (value: boolean) => {
+    this.keyboardToggle = value;
+  };
+  getKeyboardToggle = () => {
+    return this.keyboardToggle;
+  };
+
+  // guideLineShow
+  setGuideLineShow = (value: boolean) => {
+    this.guideLineShow = value;
+  };
+  getGuideLineShow = () => {
+    return this.guideLineShow;
+  };
 
   // gridType（互斥控制网格/参考线）
   setGridType = (type: "grid" | "line" | "none") => {
@@ -42,28 +60,12 @@ class PPTStore {
     return this.gridType;
   };
 
-  // showLine
-  setShowLine = (value: boolean) => {
-    this.setGridType(value ? "line" : "none");
-  };
-  getShowLine = () => {
-    return this.gridType === "line";
-  };
-
   // gridSize
   setGridSize = (value: number) => {
     this.gridSize = value;
   };
   getGridSize = () => {
     return this.gridSize;
-  };
-
-  // gridLine
-  setGridLine = (value: boolean) => {
-    this.setGridType(value ? "grid" : "none");
-  };
-  getGridLine = () => {
-    return this.gridType === "grid";
   };
 
   // verticalLine

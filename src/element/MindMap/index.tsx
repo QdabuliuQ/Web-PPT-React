@@ -23,7 +23,12 @@ import styles from "./index.module.less";
 import { getMindMapMenuItems } from "./menu";
 import { MindMapModal } from "./MindMapModal";
 import { MindMapNode } from "./MindMapNode";
-import { createDefaultMindMapData, type X6GraphData } from "./utils";
+import { useMindMapModal } from "./useMindMapModal";
+import {
+  createDefaultMindMapData,
+  downloadMindMapImage,
+  type X6GraphData,
+} from "./utils";
 
 export { MindMapButtonComponent as MindMapButton } from "./button";
 export { getMindMapMenuItems } from "./menu";
@@ -182,7 +187,6 @@ const Component: FC<IMindMapProps> = observer((props) => {
 
   const moveableRef = useRef<any>(null);
   const photoViewRef = useRef<HTMLImageElement>(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // 跟踪表格是否真正被拖拽移动过（用于防止误触发双击）
@@ -288,6 +292,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
       ...getMindMapMenuItems({
         onEdit: handleModalOpen,
         onPreview: openPreview,
+        onDownload: handleDownloadImage,
       }),
       ...commonMenu,
     ];
@@ -300,61 +305,12 @@ const Component: FC<IMindMapProps> = observer((props) => {
     }
   }, [isSelected, mode, onUnSelect]);
 
-  // 导出 SVG 的公共函数
-  const exportGraphToSVG = useMemoizedFn(
-    async (
-      graph: Graph,
-      viewBox: { x: number; y: number; width: number; height: number },
-      backgroundColor?: string
-    ) => {
-      return new Promise<string>((resolve) => {
-        // 直接在 toSVG 选项中传入 viewBox，让 X6 自动处理
-        graph.toSVG(
-          (svgString) => {
-            const parser = new DOMParser();
-            const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
-            const svgElement = svgDoc.documentElement;
-
-            // 隐藏所有连接点
-            const ports = svgElement.querySelectorAll(".x6-port, [data-port]");
-            ports.forEach((port) => {
-              const element = port as SVGElement;
-              element.style.display = "none";
-            });
-
-            // 如果有背景色，添加背景矩形
-            if (backgroundColor) {
-              const rect = svgDoc.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "rect"
-              );
-              rect.setAttribute("x", String(viewBox.x));
-              rect.setAttribute("y", String(viewBox.y));
-              rect.setAttribute("width", String(viewBox.width));
-              rect.setAttribute("height", String(viewBox.height));
-              rect.setAttribute("fill", backgroundColor);
-              // 将背景矩形插入到最前面
-              if (svgElement.firstChild) {
-                svgElement.insertBefore(rect, svgElement.firstChild);
-              } else {
-                svgElement.appendChild(rect);
-              }
-            }
-
-            // 将修改后的 SVG 转换为字符串
-            const serializer = new XMLSerializer();
-            const modifiedSvgString = serializer.serializeToString(svgElement);
-            resolve(modifiedSvgString);
-          },
-          {
-            copyStyles: true,
-            preserveDimensions: true,
-            viewBox: viewBox,
-          }
-        );
-      });
-    }
-  );
+  // 使用 MindMapModal hook（提前声明，供 initPreviewImage 使用）
+  const { handleModalOpen, exportGraphToSVG, modalProps } = useMindMapModal({
+    pageId: currentPageId || "",
+    elementId: id,
+    readonly,
+  });
 
   // 初始化预览图片（用于刚创建时）
   const initPreviewImage = useMemoizedFn(async () => {
@@ -487,55 +443,12 @@ const Component: FC<IMindMapProps> = observer((props) => {
     }
   });
 
-  // Modal 打开处理
-  const handleModalOpen = useMemoizedFn(() => {
-    setModalOpen(true);
-  });
-
-  // Modal 关闭处理
-  const handleModalClose = useMemoizedFn(async () => {
-    setModalOpen(false);
-  });
-
-  // 处理数据变更
-  const handleDataChange = useMemoizedFn((updatedData: X6GraphData) => {
-    if (currentPageId && id) {
-      const currentElement = pptStore.getElementInfo(currentPageId, id);
-      if (currentElement) {
-        console.log(updatedData, "updatedData");
-
-        pptStore.setElementInfo(currentPageId, id, {
-          ...currentElement,
-          data: updatedData,
-        } as any);
-      }
+  // 下载图片
+  const handleDownloadImage = useMemoizedFn(async () => {
+    if (!previewImage) {
+      return;
     }
-  });
-
-  // 处理预览图片变更
-  const handlePreviewImageChange = useMemoizedFn((imageData: string) => {
-    if (currentPageId && id) {
-      const updatedElement = pptStore.getElementInfo(currentPageId, id);
-      if (updatedElement) {
-        pptStore.setElementInfo(currentPageId, id, {
-          ...updatedElement,
-          previewImage: imageData,
-        } as any);
-      }
-    }
-  });
-
-  // 处理背景色变更
-  const handleBackgroundColorChange = useMemoizedFn((color: string) => {
-    if (currentPageId && id) {
-      const updatedElement = pptStore.getElementInfo(currentPageId, id);
-      if (updatedElement) {
-        pptStore.setElementInfo(currentPageId, id, {
-          ...updatedElement,
-          mindMapBackgroundColor: color,
-        } as any);
-      }
-    }
+    await downloadMindMapImage(previewImage, id);
   });
 
   // 动态样式（位置、大小等）
@@ -545,8 +458,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
       height,
       transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
       zIndex,
-      cursor: isSelected ? "move" : "pointer",
-      overflow: "hidden",
+      cursor: mode === "edit" ? (isSelected ? "move" : "pointer") : "default",
       border:
         mode === "edit" && isHoverActive && !isSelected
           ? "1px solid var(--primary-color, #f25f00)"
@@ -558,6 +470,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
   // 组合CSS类名
   const className = [
     styles.mindMapElement,
+    mode === "edit" ? styles.editMode : "",
     mode === "edit" && isDragging ? styles.dragging : "",
     mode === "edit" && isSelected ? "element-selected" : "",
   ]
@@ -581,27 +494,37 @@ const Component: FC<IMindMapProps> = observer((props) => {
           </div>
         )}
         {previewImage && !isLoading && (
-          <PhotoProvider>
-            <div
-              className={`${styles.mindMapImageWrapper} w-full h-full`}
-              style={{ backgroundColor }}
-            >
-              <PhotoView src={previewImage} overlay={<div />}>
-                <img
-                  ref={photoViewRef}
-                  src={previewImage}
-                  alt="思维导图预览"
-                  className="w-full h-full object-contain"
-                  style={{ pointerEvents: "none" }}
-                  onClick={(e) => {
-                    // 阻止单击触发预览，只允许通过菜单或双击
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
-                />
-              </PhotoView>
-            </div>
-          </PhotoProvider>
+          <AnimationWrapper
+            mode={mode}
+            elementId={id}
+            animationName={animationName}
+            animationDuration={animationDuration}
+            animationDelay={animationDelay}
+            animationTrigger={animationTrigger}
+            className="w-full h-full relative"
+          >
+            <PhotoProvider>
+              <div
+                className={`${styles.mindMapImageWrapper} w-full h-full`}
+                style={{ backgroundColor }}
+              >
+                <PhotoView src={previewImage} overlay={<div />}>
+                  <img
+                    ref={photoViewRef}
+                    src={previewImage}
+                    alt="思维导图预览"
+                    className="w-full h-full object-contain"
+                    style={{ pointerEvents: "none" }}
+                    onClick={(e) => {
+                      // 阻止单击触发预览，只允许通过菜单或双击
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  />
+                </PhotoView>
+              </div>
+            </PhotoProvider>
+          </AnimationWrapper>
         )}
       </div>
       <MovableWrapper
@@ -624,21 +547,16 @@ const Component: FC<IMindMapProps> = observer((props) => {
         onRotate={handleRotate}
         onRotateEnd={handleRotateEnd}
       />
-      <MindMapModal
-        open={modalOpen}
-        onClose={handleModalClose}
-        data={data}
-        readonly={readonly}
-        onDataChange={handleDataChange}
-        onPreviewImageChange={handlePreviewImageChange}
-        onBackgroundColorChange={handleBackgroundColorChange}
-        exportGraphToSVG={exportGraphToSVG}
-        initialBackgroundColor={backgroundColor}
-      />
+      <MindMapModal {...modalProps} />
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      {mode === "preview" ? (
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+          <Spin size="large" />
+        </div>
+      )}
+      {previewImage && !isLoading && (
         <AnimationWrapper
           mode={mode}
           elementId={id}
@@ -648,40 +566,15 @@ const Component: FC<IMindMapProps> = observer((props) => {
           animationTrigger={animationTrigger}
           className="w-full h-full relative"
         >
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-              <Spin size="large" />
-            </div>
-          )}
-          {previewImage && !isLoading && (
-            <div className="w-full h-full" style={{ backgroundColor }}>
-              <img
-                src={previewImage}
-                alt="思维导图预览"
-                className="w-full h-full object-contain"
-                style={{ pointerEvents: "none" }}
-              />
-            </div>
-          )}
+          <div className="w-full h-full" style={{ backgroundColor }}>
+            <img
+              src={previewImage}
+              alt="思维导图预览"
+              className="w-full h-full object-contain"
+              style={{ pointerEvents: "none" }}
+            />
+          </div>
         </AnimationWrapper>
-      ) : (
-        <>
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-              <Spin size="large" />
-            </div>
-          )}
-          {previewImage && !isLoading && (
-            <div className="w-full h-full" style={{ backgroundColor }}>
-              <img
-                src={previewImage}
-                alt="思维导图预览"
-                className="w-full h-full object-contain"
-                style={{ pointerEvents: "none" }}
-              />
-            </div>
-          )}
-        </>
       )}
     </div>
   );

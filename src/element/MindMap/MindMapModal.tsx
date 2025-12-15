@@ -14,7 +14,7 @@ import {
   type X6GraphData,
 } from "./utils";
 
-interface MindMapModalProps {
+export interface MindMapModalProps {
   open: boolean;
   onClose: () => void;
   data?: X6GraphData;

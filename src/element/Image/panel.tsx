@@ -8,12 +8,14 @@ import { PanelSplitLine } from "@/components/PanelSplitLine";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { ColorFilter, Help, Scale } from "@icon-park/react";
+import { LoadingOutlined } from "@ant-design/icons";
+import { ColorFilter, Download, Help, Scale } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Popover, Slider, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
-import { useMemo, type FC } from "react";
+import { useMemo, useState, type FC } from "react";
 import type { IImageProps } from "./index";
+import { downloadImageFile } from "./utils";
 
 export const ImagePanelKey = "image";
 export const ImagePanelTitle = "图片";
@@ -121,6 +123,14 @@ const ImagePanelComponent: FC = observer(() => {
     });
   });
 
+  const [loading, setLoading] = useState(false);
+  const handleDownloadImage = useMemoizedFn(async () => {
+    if (!imageInfo.src || !elementId) return;
+    setLoading(true);
+    await downloadImageFile(imageInfo.src, elementId);
+    setLoading(false);
+  });
+
   const content = useMemo(
     () => (
       <div className="w-[200px]">
@@ -222,6 +232,19 @@ const ImagePanelComponent: FC = observer(() => {
         onShadowColorChange={(value) => handleChange("shadowColor", value)}
         onShadowBlurChange={(value) => handleChange("shadowBlur", value)}
         onShadowSpreadChange={(value) => handleChange("shadowSpread", value)}
+      />
+      <PanelLargeButton
+        title={loading ? "下载中" : "下载图片"}
+        icon={
+          loading ? (
+            <LoadingOutlined spin />
+          ) : (
+            <Download theme="outline" size="18" fill="#333" />
+          )
+        }
+        aspectRatio={false}
+        onClick={() => handleDownloadImage()}
+        disabled={loading}
       />
       <PanelSplitLine />
       <PanelCommonSetting

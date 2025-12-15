@@ -5,6 +5,7 @@ import { TablePanel, TablePanelKey } from "@/element/Table";
 import { TextPanel, TextPanelKey } from "@/element/Text";
 import { Animation } from "./Animation";
 import { Insert } from "./Insert";
+import { Play } from "./Play";
 import { Start } from "./Start";
 import { Toggle } from "./Toggle";
 import { View } from "./View";
@@ -15,6 +16,7 @@ export default {
   toggle: Toggle,
   animation: Animation,
   view: View,
+  play: Play,
   [TextPanelKey]: TextPanel,
   [TablePanelKey]: TablePanel,
   [IconPanelKey]: IconPanel,

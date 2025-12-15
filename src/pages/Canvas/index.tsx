@@ -108,18 +108,16 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     // 只在没有数据时初始化
     if (pptStore.getPages().length === 0) {
       pptStore.setPages(JSON.parse(JSON.stringify(MockData)).pages);
-      pptStore.setGridLine(MockData.gridLine);
       pptStore.setGridSize(MockData.gridSize);
+      pptStore.setKeyboardToggle(MockData.keyboardToggle);
       pptStore.setName(MockData.name);
       if ((MockData as any).gridType) {
         pptStore.setGridType((MockData as any).gridType);
-      } else {
-        // 兼容老数据
-        pptStore.setShowLine(MockData.showLine);
       }
       pptStore.setVerticalLine(MockData.verticalLine);
       pptStore.setHorizontalLine(MockData.horizontalLine);
       pptStore.setRule(MockData.rule);
+      pptStore.setGuideLineShow(MockData.guideLineShow);
 
       const pages = pptStore.getPages();
 
@@ -428,7 +426,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const gridType = pptStore.getGridType();
   const gridSize = pptStore.getGridSize();
 
-  const showLine = mode === "edit" && gridType === "line";
+  const showLine =
+    mode === "edit" && gridType === "line" && pptStore.getGuideLineShow();
   // 标尺缩放跟随画布缩放（编辑模式使用 scale，播放/预览为 1）
   const rulerZoom = mode === "edit" ? scale : 1;
   const guideSnapStep = gridSize;
@@ -675,126 +674,132 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     contextMenuStore.showMenu(menuItems, e);
   });
 
-  const playCanvasClickHandle = useMemoizedFn(() => {
-    if (mode === "play") {
-      // 如果菜单显示，不触发切换
-      if (contextMenuStore.isVisible()) {
+  // 处理前进（下一页）的逻辑，包含动画处理
+  const handlePlayNext = useMemoizedFn(() => {
+    if (mode !== "play") return;
+
+    // 如果菜单显示，不触发切换
+    if (contextMenuStore.isVisible()) {
+      return;
+    }
+
+    // 如果已经显示了结束提示，点击退出全屏
+    if (showEndMessage) {
+      fullscreenStore.exitFullscreen();
+      setShowEndMessage(false);
+      return;
+    }
+
+    const pages = pptStore.getPages();
+    // 使用传入的 page prop 或从 pageActiveStore 获取当前页面
+    const currentPageId = page?.id || pageActiveStore.getPageActive();
+    const currentPage = page || pptStore.getActivePage(currentPageId as string);
+
+    if (!currentPage) return;
+
+    // 获取当前页面的所有元素
+    const allElements = pptStore.getAllElementInfo(currentPage.id);
+
+    // 筛选出有 animationName 且 animationTrigger 为 "click" 的元素
+    const clickAnimationElements = allElements.filter(
+      (element) =>
+        element.animationName &&
+        element.animationName !== "" &&
+        element.animationTrigger === "click"
+    );
+
+    // 如果当前页面没有点击动画元素，直接允许切换
+    if (clickAnimationElements.length === 0) {
+      const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
+      const isLastPage = currentPageIndex === pages.length - 1;
+
+      const { clickToNext = true } = currentPage as any;
+      if (!clickToNext) {
         return;
       }
 
-      // 如果已经显示了结束提示，点击退出全屏
-      if (showEndMessage) {
-        fullscreenStore.exitFullscreen();
+      // 先同步 pageActiveStore 到当前页面
+      if (currentPageId) {
+        pageActiveStore.setPageActive(currentPageId);
+      }
+      const lastPageId = pageActiveStore.getPageActive();
+      const newPageId = pageActiveStore.goToNextPage();
+
+      // 如果无法切换到下一页（已经是最后一页），显示结束提示
+      if (isLastPage && lastPageId === newPageId) {
+        setShowEndMessage(true);
+        return;
+      }
+
+      // 如果可以切换，切换到下一页
+      if (lastPageId !== newPageId && newPageId) {
+        fullscreenStore.enterFullscreen(newPageId);
         setShowEndMessage(false);
-        return;
       }
+      return;
+    }
 
-      const pages = pptStore.getPages();
-      // 使用传入的 page prop 或从 pageActiveStore 获取当前页面
-      const currentPageId = page?.id || pageActiveStore.getPageActive();
-      const currentPage =
-        page || pptStore.getActivePage(currentPageId as string);
+    // 按照 animationIndex 进行排序
+    const sortedClickElements = [...clickAnimationElements].sort((a, b) => {
+      const indexA = a.animationIndex ?? 0;
+      const indexB = b.animationIndex ?? 0;
+      return indexA - indexB;
+    });
 
-      if (!currentPage) return;
+    // 检查是否需要重新初始化（页面切换或首次点击）
+    const needsReinit =
+      clickAnimationElementsRef.current.length === 0 ||
+      currentPageIdForClickAnimationRef.current !== currentPageId;
 
-      // 获取当前页面的所有元素
-      const allElements = pptStore.getAllElementInfo(currentPage.id);
+    if (needsReinit) {
+      clickAnimationElementsRef.current = sortedClickElements;
+      clickAnimationIndexRef.current = 0;
+      completedClickAnimationsRef.current = new Set();
+      currentPageIdForClickAnimationRef.current = currentPageId || "";
+    }
 
-      // 筛选出有 animationName 且 animationTrigger 为 "click" 的元素
-      const clickAnimationElements = allElements.filter(
-        (element) =>
-          element.animationName &&
-          element.animationName !== "" &&
-          element.animationTrigger === "click"
-      );
+    // 如果还有未触发的动画，触发下一个动画
+    if (
+      clickAnimationIndexRef.current < clickAnimationElementsRef.current.length
+    ) {
+      const currentElement =
+        clickAnimationElementsRef.current[clickAnimationIndexRef.current];
+      console.log(currentElement, "currentElement");
 
-      // 如果当前页面没有点击动画元素，直接允许切换
-      if (clickAnimationElements.length === 0) {
-        const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
-        const isLastPage = currentPageIndex === pages.length - 1;
+      if (currentElement) {
+        // 触发当前元素的动画
+        globalEventBus.emit(`animation-play-${currentElement.id}`);
+        // 移动到下一个索引
+        clickAnimationIndexRef.current += 1;
+      }
+    } else {
+      // 所有动画都已触发，检查是否都已完成
+      const allCompleted =
+        completedClickAnimationsRef.current.size ===
+        clickAnimationElementsRef.current.length;
 
+      if (allCompleted) {
+        // 所有动画都已完成，切换到下一页
         const { clickToNext = true } = currentPage as any;
         if (!clickToNext) {
           return;
         }
 
-        // 先同步 pageActiveStore 到当前页面
-        if (currentPageId) {
-          pageActiveStore.setPageActive(currentPageId);
-        }
-        const lastPageId = pageActiveStore.getPageActive();
-        const newPageId = pageActiveStore.goToNextPage();
-
-        // 如果无法切换到下一页（已经是最后一页），显示结束提示
-        if (isLastPage && lastPageId === newPageId) {
-          setShowEndMessage(true);
-          return;
+        // 清除自动切换定时器（因为手动点击切换）
+        if (autoToggleTimerRef.current) {
+          clearTimeout(autoToggleTimerRef.current);
+          autoToggleTimerRef.current = null;
         }
 
-        // 如果可以切换，切换到下一页
-        if (lastPageId !== newPageId && newPageId) {
-          fullscreenStore.enterFullscreen(newPageId);
-          setShowEndMessage(false);
-        }
-        return;
+        goToNextPage();
       }
-
-      // 按照 animationIndex 进行排序
-      const sortedClickElements = [...clickAnimationElements].sort((a, b) => {
-        const indexA = a.animationIndex ?? 0;
-        const indexB = b.animationIndex ?? 0;
-        return indexA - indexB;
-      });
-
-      // 检查是否需要重新初始化（页面切换或首次点击）
-      const needsReinit =
-        clickAnimationElementsRef.current.length === 0 ||
-        currentPageIdForClickAnimationRef.current !== currentPageId;
-
-      if (needsReinit) {
-        clickAnimationElementsRef.current = sortedClickElements;
-        clickAnimationIndexRef.current = 0;
-        completedClickAnimationsRef.current = new Set();
-        currentPageIdForClickAnimationRef.current = currentPageId || "";
-      }
-
-      // 如果还有未触发的动画，触发下一个动画
-      if (
-        clickAnimationIndexRef.current <
-        clickAnimationElementsRef.current.length
-      ) {
-        const currentElement =
-          clickAnimationElementsRef.current[clickAnimationIndexRef.current];
-        if (currentElement) {
-          // 触发当前元素的动画
-          globalEventBus.emit(`animation-play-${currentElement.id}`);
-          // 移动到下一个索引
-          clickAnimationIndexRef.current += 1;
-        }
-      } else {
-        // 所有动画都已触发，检查是否都已完成
-        const allCompleted =
-          completedClickAnimationsRef.current.size ===
-          clickAnimationElementsRef.current.length;
-
-        if (allCompleted) {
-          // 所有动画都已完成，切换到下一页
-          const { clickToNext = true } = currentPage as any;
-          if (!clickToNext) {
-            return;
-          }
-
-          // 清除自动切换定时器（因为手动点击切换）
-          if (autoToggleTimerRef.current) {
-            clearTimeout(autoToggleTimerRef.current);
-            autoToggleTimerRef.current = null;
-          }
-
-          goToNextPage();
-        }
-        // 如果还有动画未完成，等待动画完成事件
-      }
+      // 如果还有动画未完成，等待动画完成事件
     }
+  });
+
+  // 点击事件处理（复用前进逻辑）
+  const playCanvasClickHandle = useMemoizedFn(() => {
+    handlePlayNext();
   });
 
   // 监听点击动画的结束事件，更新完成状态
@@ -1093,7 +1098,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     // 非全屏时根据 mode 使用不同样式
     if (mode === "edit") {
       if (gridType === "line") {
-        return "relative overflow-hidden";
+        return `relative overflow-hidden ${remarkEditActive ? "h-[calc(100%-30px)]" : "h-full"}`;
       }
       return (
         "w-full relative overflow-hidden" +
@@ -1124,8 +1129,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
     if (mode === "edit" && gridType === "line") {
       return {
-        width: "calc(100% - 23px)",
-        height: "calc(100% - 23px)",
+        width: `calc(100% - 23px)`,
+        height: `calc(100% - 23px - ${remarkEditActive ? 30 : 0}px)`,
         marginLeft: "23px",
         marginTop: "23px",
       };
@@ -1244,6 +1249,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     updateRulerSize,
     debouncedHandleResizeEnd,
     updateCanvasOffset,
+    remarkEditActive,
   ]);
 
   // 当 rulerZoom 或 canvasOffset 变化时，更新 Guides 的 scrollPos
@@ -1261,6 +1267,49 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       }
     }
   }, [rulerZoom, canvasOffset.top, canvasOffset.left, gridType]);
+
+  // 获取参考线数据并转换为数字数组
+  const horizontalLine = pptStore.getHorizontalLine().map(Number);
+  const verticalLine = pptStore.getVerticalLine().map(Number);
+
+  // 监听参考线变化，通过 ref 调用 loadGuides 或 setState 更新 Guides 组件
+  useEffect(() => {
+    if (gridType !== "line" || mode !== "edit") {
+      return;
+    }
+
+    // 更新水平参考线
+    if (horizontalGuidesRef.current) {
+      // 尝试调用 loadGuides 方法
+      if (typeof horizontalGuidesRef.current.loadGuides === "function") {
+        horizontalGuidesRef.current.loadGuides(horizontalLine);
+      }
+      // 如果 loadGuides 不存在，尝试使用 setState
+      else if (typeof horizontalGuidesRef.current.setState === "function") {
+        horizontalGuidesRef.current.setState({ guides: horizontalLine });
+      }
+    }
+
+    // 更新垂直参考线
+    if (verticalGuidesRef.current) {
+      // 尝试调用 loadGuides 方法
+      if (typeof verticalGuidesRef.current.loadGuides === "function") {
+        verticalGuidesRef.current.loadGuides(verticalLine);
+      }
+      // 如果 loadGuides 不存在，尝试使用 setState
+      else if (typeof verticalGuidesRef.current.setState === "function") {
+        verticalGuidesRef.current.setState({ guides: verticalLine });
+      }
+    }
+  }, [horizontalLine, verticalLine, gridType, mode]);
+
+  const computedUnit = useMemo(() => {
+    if (scale > 1.5) return 25;
+    else if (scale > 0.75 && scale <= 1.5) return 50;
+    else if (scale > 0.4 && scale <= 0.75) return 100;
+    else if (scale > 0.2 && scale <= 0.4) return 200;
+    else return 400;
+  }, [scale]);
 
   return (
     <div
@@ -1295,7 +1344,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             type="horizontal"
             width={rulerSize.width}
             height={23}
-            unit={50}
+            unit={computedUnit}
             zoom={rulerZoom}
             displayDragPos={false}
             backgroundColor="#fafafa"
@@ -1314,7 +1363,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
               width: "calc(100% - 23px)",
               pointerEvents: "auto",
             }}
-            guides={pptStore.getHorizontalLine().map(Number)}
+            guides={horizontalLine}
             onChangeGuides={(v) => {
               pptStore.setHorizontalLine([...v.guides]);
             }}
@@ -1326,7 +1375,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             type="vertical"
             width={23}
             height={rulerSize.height}
-            unit={50}
+            unit={computedUnit}
             zoom={rulerZoom}
             displayDragPos={false}
             backgroundColor="#fafafa"
@@ -1342,16 +1391,13 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
               left: 0,
               zIndex: 2,
               width: "23px",
-              height: "calc(100% - 23px)",
+              height: `calc(100% - 23px - ${remarkEditActive ? 30 : 0}px)`,
               pointerEvents: "auto",
             }}
-            guides={pptStore.getVerticalLine().map(Number)}
+            guides={verticalLine}
             onChangeGuides={(v) => pptStore.setVerticalLine(v.guides)}
           />
-          <div
-            onClick={() => pptStore.setShowLine(!showLine)}
-            className="w-[23px] text-[11px] text-[#ccc] h-[23px] bg-[#fafafa] absolute top-0 left-0 flex items-center justify-center cursor-pointer"
-          >
+          <div className="w-[23px] text-[11px] text-[#ccc] h-[23px] bg-[#fafafa] absolute top-0 left-0 flex items-center justify-center">
             px
           </div>
         </>

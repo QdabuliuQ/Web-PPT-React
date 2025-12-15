@@ -84,14 +84,10 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
       type={type}
       disabled={disabled}
     >
-      <i
-        style={{
-          marginBottom: "6px",
-        }}
-      >
-        {renderIcon}
-      </i>
-      {title}
+      <i className="mb-[6px]">{renderIcon}</i>
+      <span className={`${disabled ? "text-gray-400" : ""} text-[12px]`}>
+        {title}
+      </span>
     </Button>
   );
 };

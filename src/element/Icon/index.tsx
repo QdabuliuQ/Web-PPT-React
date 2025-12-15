@@ -133,7 +133,7 @@ const Component: FC<IIconProps> = observer((props) => {
       height,
       transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
       zIndex,
-      cursor: isSelected ? "move" : "pointer",
+      cursor: mode === "edit" ? (isSelected ? "move" : "pointer") : "default",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -202,31 +202,22 @@ const Component: FC<IIconProps> = observer((props) => {
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-      {mode === "preview" ? (
-        <AnimationWrapper
-          mode={mode}
-          elementId={id}
-          animationName={animationName}
-          animationDuration={animationDuration}
-          animationDelay={animationDelay}
-          animationTrigger={animationTrigger}
-          className="w-full h-full flex items-center justify-center"
-        >
-          <IconComponent
-            theme={theme}
-            size={Math.min(width, height)}
-            fill={fill}
-            strokeWidth={strokeWidth}
-          />
-        </AnimationWrapper>
-      ) : (
+      <AnimationWrapper
+        mode={mode}
+        elementId={id}
+        animationName={animationName}
+        animationDuration={animationDuration}
+        animationDelay={animationDelay}
+        animationTrigger={animationTrigger}
+        className="w-full h-full flex items-center justify-center"
+      >
         <IconComponent
           theme={theme}
           size={Math.min(width, height)}
           fill={fill}
           strokeWidth={strokeWidth}
         />
-      )}
+      </AnimationWrapper>
     </div>
   );
 });

@@ -111,8 +111,8 @@ export const useMovableElement = <
         const translate = extractTranslateFromTransform(computedTransform);
 
         // translate 值就是最终的 x/y 位置
-        const finalX = translate.x || props.x;
-        const finalY = translate.y || props.y;
+        const finalX = translate.x !== undefined ? translate.x : props.x;
+        const finalY = translate.y !== undefined ? translate.y : props.y;
 
         // 更新store
         pptStore.setElementInfo(pageActiveStore.getPageActive() as string, id, {

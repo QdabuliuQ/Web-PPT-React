@@ -26,6 +26,7 @@ import "react-photo-view/dist/react-photo-view.css";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
 import { getImageMenuItems } from "./menu";
+import { downloadImageFile } from "./utils";
 
 export { ImageButtonComponent as ImageButton } from "./button";
 export { ImagePanel, ImagePanelKey, ImagePanelTitle } from "./panel";
@@ -106,16 +107,16 @@ const Component = observer(
     const [imageError, setImageError] = useState(false);
 
     // 图片加载完成
-    const handleImageLoad = () => {
+    const handleImageLoad = useMemoizedFn(() => {
       setImageLoaded(true);
       setImageError(false);
-    };
+    });
 
     // 图片加载失败
-    const handleImageError = () => {
+    const handleImageError = useMemoizedFn(() => {
       setImageLoaded(false);
       setImageError(true);
-    };
+    });
 
     // 当 src 改变时重置加载状态
     useEffect(() => {
@@ -181,23 +182,34 @@ const Component = observer(
     // 获取通用菜单
     const { commonMenu } = useCommonContextMenu(currentPageId, id);
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-      e.stopPropagation();
-
-      // 立即激活元素
+    const handleMouseDown = useMemoizedFn((_e: React.MouseEvent) => {
+      // 不要阻止事件传播，避免影响双击事件
+      // 只在确实需要时才激活元素
       if (!isSelected) {
-        onSelect?.();
+        // 使用 requestAnimationFrame 延迟激活，避免影响双击事件
+        requestAnimationFrame(() => {
+          if (!hasDraggedRef.current) {
+            onSelect?.();
+          }
+        });
       }
-    };
+    });
 
     // 通过函数触发预览
     const openPreview = useMemoizedFn(() => {
-      console.log(photoViewRef);
-
       if (imageLoaded && !imageError && photoViewRef.current) {
         // 触发 PhotoView 的预览
         photoViewRef.current.click();
       }
+    });
+
+    // 下载图片
+    const handleDownload = useMemoizedFn(async () => {
+      if (!imageLoaded || imageError || !src) {
+        return;
+      }
+
+      await downloadImageFile(src, id);
     });
 
     // 通过 ref 暴露预览函数
@@ -206,16 +218,18 @@ const Component = observer(
     }));
 
     // 处理双击事件 - 打开预览
-    const handleDoubleClick = (e: React.MouseEvent) => {
+    const handleDoubleClick = useMemoizedFn((e: React.MouseEvent) => {
       e.stopPropagation();
+      e.preventDefault();
+
       if (hasDraggedRef.current) {
         return;
       }
       openPreview();
-    };
+    });
 
     // 处理右键菜单
-    const handleContextMenu = (e: React.MouseEvent) => {
+    const handleContextMenu = useMemoizedFn((e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -227,10 +241,11 @@ const Component = observer(
       // 合并图片菜单和通用菜单
       const imageMenuItems = getImageMenuItems({
         onPreview: openPreview,
+        onDownload: handleDownload,
       });
       const menuItems = [...imageMenuItems, ...commonMenu];
       contextMenuStore.showMenu(menuItems, e);
-    };
+    });
 
     useEffect(() => {
       if (mode === "edit" && !isSelected) {
@@ -245,9 +260,9 @@ const Component = observer(
         height,
         transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
         zIndex,
-        cursor: isSelected ? "move" : "pointer",
+        cursor: isSelected ? "move" : mode === "edit" ? "pointer" : "default",
       }),
-      [x, y, width, height, rotate, zIndex, isSelected]
+      [x, y, width, height, rotate, zIndex, isSelected, mode]
     );
 
     // 图片样式
@@ -298,13 +313,114 @@ const Component = observer(
     );
 
     // 组合CSS类名（外层 div）
-    const className = [
-      styles.imageElement,
-      mode === "edit" && isDragging ? styles.dragging : "",
-      mode === "edit" && isSelected ? "element-selected" : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const className = useMemo(
+      () =>
+        [
+          styles.imageElement,
+          mode === "edit" ? styles.editMode : "",
+          mode === "edit" && isDragging ? styles.dragging : "",
+          mode === "edit" && isSelected ? "element-selected" : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      [isDragging, isSelected, mode]
+    );
+
+    // 图片内容组件 - 封装重复的渲染逻辑
+    const ImageContent = useMemo(() => {
+      // 加载状态和错误状态的通用渲染
+      const renderLoadingAndError = () => (
+        <>
+          {!imageLoaded && !imageError && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
+              <Spin />
+            </div>
+          )}
+          {imageError && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
+              图片加载失败
+            </div>
+          )}
+        </>
+      );
+
+      // 图片元素
+      const imageElement = (
+        <img
+          ref={photoViewRef}
+          src={src}
+          alt=""
+          className={imageLoaded ? styles.imageVisible : styles.imageHidden}
+          style={imageStyle}
+          draggable={false}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          onClick={
+            mode === "edit"
+              ? (e) => {
+                  // 阻止单击触发预览，只允许双击
+                  e.stopPropagation();
+                  e.preventDefault();
+                }
+              : undefined
+          }
+        />
+      );
+
+      // 根据 mode 决定是否使用 PhotoProvider 和 PhotoView
+      const imageWithProvider =
+        mode === "edit" ? (
+          <PhotoProvider>
+            <div className={styles.imageWrapper}>
+              <PhotoView src={src} overlay={<div />}>
+                {imageElement}
+              </PhotoView>
+            </div>
+          </PhotoProvider>
+        ) : (
+          <div className={styles.imageWrapper}>{imageElement}</div>
+        );
+
+      // 根据 mode 决定是否使用 AnimationWrapper
+      const needsAnimation = mode === "edit" || mode === "play";
+      const content = (
+        <>
+          {renderLoadingAndError()}
+          {imageWithProvider}
+        </>
+      );
+
+      if (needsAnimation) {
+        return (
+          <AnimationWrapper
+            mode={mode}
+            elementId={id}
+            animationName={animationName}
+            animationDuration={animationDuration}
+            animationDelay={animationDelay}
+            animationTrigger={animationTrigger}
+            className="w-full h-full"
+          >
+            {content}
+          </AnimationWrapper>
+        );
+      }
+
+      return content;
+    }, [
+      imageLoaded,
+      imageError,
+      src,
+      imageStyle,
+      mode,
+      id,
+      animationName,
+      animationDuration,
+      animationDelay,
+      animationTrigger,
+      handleImageLoad,
+      handleImageError,
+    ]);
 
     return mode === "edit" ? (
       <>
@@ -317,49 +433,7 @@ const Component = observer(
           onDoubleClick={handleDoubleClick}
           onContextMenu={handleContextMenu}
         >
-          <AnimationWrapper
-            mode={mode}
-            elementId={id}
-            animationName={animationName}
-            animationDuration={animationDuration}
-            animationDelay={animationDelay}
-            animationTrigger={animationTrigger}
-            className="w-full h-full"
-          >
-            {!imageLoaded && !imageError && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
-                <Spin />
-              </div>
-            )}
-            {imageError && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
-                图片加载失败
-              </div>
-            )}
-            <PhotoProvider>
-              <div className={styles.imageWrapper}>
-                <PhotoView src={src} overlay={<div />}>
-                  <img
-                    ref={photoViewRef}
-                    src={src}
-                    alt=""
-                    className={
-                      imageLoaded ? styles.imageVisible : styles.imageHidden
-                    }
-                    style={imageStyle}
-                    draggable={false}
-                    onLoad={handleImageLoad}
-                    onError={handleImageError}
-                    onClick={(e) => {
-                      // 阻止单击触发预览，只允许双击
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                  />
-                </PhotoView>
-              </div>
-            </PhotoProvider>
-          </AnimationWrapper>
+          {ImageContent}
         </div>
         <MovableWrapper
           ref={moveableRef}
@@ -385,61 +459,7 @@ const Component = observer(
       </>
     ) : (
       <div id={`preview_${id}`} className={className} style={dynamicStyle}>
-        {mode === "preview" ? (
-          <AnimationWrapper
-            mode={mode}
-            elementId={id}
-            animationName={animationName}
-            animationDuration={animationDuration}
-            animationDelay={animationDelay}
-            animationTrigger={animationTrigger}
-            className="w-full h-full"
-          >
-            {!imageLoaded && !imageError && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
-                <Spin />
-              </div>
-            )}
-            {imageError && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
-                图片加载失败
-              </div>
-            )}
-
-            <img
-              src={src}
-              alt=""
-              className={imageLoaded ? styles.imageVisible : styles.imageHidden}
-              style={imageStyle}
-              draggable={false}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-            />
-          </AnimationWrapper>
-        ) : (
-          <>
-            {!imageLoaded && !imageError && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
-                <Spin />
-              </div>
-            )}
-            {imageError && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
-                图片加载失败
-              </div>
-            )}
-
-            <img
-              src={src}
-              alt=""
-              className={imageLoaded ? styles.imageVisible : styles.imageHidden}
-              style={imageStyle}
-              draggable={false}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-            />
-          </>
-        )}
+        {ImageContent}
       </div>
     );
   })

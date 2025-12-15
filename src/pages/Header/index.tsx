@@ -1,5 +1,6 @@
 import { IconPanelKey, IconPanelTitle } from "@/element/Icon";
 import { ImagePanelKey, ImagePanelTitle } from "@/element/Image";
+import { MindMapPanelKey, MindMapPanelTitle } from "@/element/MindMap";
 import { TablePanelKey, TablePanelTitle } from "@/element/Table";
 import { TextPanelKey, TextPanelTitle } from "@/element/Text";
 import {
@@ -34,6 +35,10 @@ const MenuMapped = {
     key: ImagePanelKey,
     title: ImagePanelTitle,
   },
+  mindmap: {
+    key: MindMapPanelKey,
+    title: MindMapPanelTitle,
+  },
 };
 
 export const Header: FC = observer(() => {
@@ -50,6 +55,10 @@ export const Header: FC = observer(() => {
       {
         label: "切换",
         key: "toggle",
+      },
+      {
+        label: "放映",
+        key: "play",
       },
       {
         label: "视图",
@@ -69,15 +78,19 @@ export const Header: FC = observer(() => {
 
   useEffect(() => {
     if (pageActive && elementActive) {
-      // 使用store的getElementInfo方法来获取元素信息
+      // 重新获取元素信息，确保获取到最新的数据
       const element = pptStore.getElementInfo(pageActive, elementActive);
 
-      if (element && MenuMapped[element.type as keyof typeof MenuMapped]) {
-        const panel = MenuMapped[element.type as keyof typeof MenuMapped];
-        setElementPanel(panel);
-        // 自动切换到对应的panel
-        menuActiveStore.setActiveMenu(panel.key);
-        return;
+      if (element) {
+        // 检查元素类型是否在 MenuMapped 中
+        const elementType = element.type as keyof typeof MenuMapped;
+        if (MenuMapped[elementType]) {
+          const panel = MenuMapped[elementType];
+          setElementPanel(panel);
+          // 直接切换 panel，确保元素已经选中
+          menuActiveStore.setActiveMenu(panel.key);
+          return;
+        }
       }
     }
 

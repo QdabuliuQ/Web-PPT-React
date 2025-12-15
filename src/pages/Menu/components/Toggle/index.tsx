@@ -223,7 +223,7 @@ const ToggleComponent: FC = () => {
   const currentToggleIn = (currentPage as any)?.toggleInAnimation || "";
   const currentToggleInDuration = (currentPage as any)?.toggleInDuration || 0;
   const currentToggleInDelay = (currentPage as any)?.toggleInDelay || 0;
-  const currentClickToNext = (currentPage as any)?.clickToNext || true;
+  const currentKeyboardToggle = pptStore.getKeyboardToggle();
   const currentAutoToggle = (currentPage as any)?.autoToggle || false;
   const currentAutoToggleTime = (currentPage as any)?.autoToggleTime || 5;
 
@@ -272,9 +272,9 @@ const ToggleComponent: FC = () => {
   });
 
   // 处理单击换片变化
-  const handleClickToNextChange = useMemoizedFn(
+  const handleKeyboardToggleChange = useMemoizedFn(
     (e: { target: { checked: boolean } }) => {
-      updatePageProperty("clickToNext", e.target.checked);
+      pptStore.setKeyboardToggle(e.target.checked);
     }
   );
 
@@ -302,7 +302,6 @@ const ToggleComponent: FC = () => {
       toggleInAnimation: currentToggleIn,
       toggleInDuration: currentToggleInDuration,
       toggleInDelay: currentToggleInDelay,
-      clickToNext: currentClickToNext,
       autoToggle: currentAutoToggle,
       autoToggleTime: currentAutoToggleTime,
     };
@@ -354,11 +353,11 @@ const ToggleComponent: FC = () => {
       <div className="flex flex-col justify-between gap-[4px]">
         <div className="flex items-center gap-[4px] text-[12px] h-[24px]">
           <Checkbox
-            checked={currentClickToNext}
-            onChange={handleClickToNextChange}
+            checked={currentKeyboardToggle}
+            onChange={handleKeyboardToggleChange}
             style={{ fontSize: "12px" }}
           >
-            单击鼠标时换片
+            键盘切换幻灯片
           </Checkbox>
         </div>
         <div className={`flex items-center gap-[4px] ${styles.checkboxCustom}`}>

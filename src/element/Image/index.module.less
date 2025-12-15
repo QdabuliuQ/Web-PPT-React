@@ -9,6 +9,11 @@
   }
 }
 
+.editMode {
+  // 编辑模式标识，用于控制伪元素显示
+  display: inherit;
+}
+
 .imageWrapper {
   position: relative;
   width: 100%;
@@ -36,6 +41,30 @@
     opacity: 1;
   }
 }
+
+// .previewElement {
+//   // hover 时显示"双击预览"提示（仅在 edit 模式）
+//   .imageElement &::before {
+//     content: "双击预览";
+//     position: absolute;
+//     top: 50%;
+//     left: 50%;
+//     transform: translate(-50%, -50%);
+//     background: rgba(0, 0, 0, 0.6);
+//     color: white;
+//     padding: 8px 16px;
+//     border-radius: 4px;
+//     font-size: 14px;
+//     pointer-events: none;
+//     opacity: 0;
+//     transition: opacity 0.2s ease-in-out;
+//     z-index: 10;
+//   }
+
+//   .imageElement &:hover::before {
+//     opacity: 1;
+//   }
+// }
 
 .imageVisible {
   display: block;

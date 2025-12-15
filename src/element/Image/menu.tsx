@@ -1,12 +1,14 @@
 import type { MenuItem } from "@/hooks/useContextMenu";
-import { PreviewOpen } from "@icon-park/react";
+import { Download, PreviewOpen } from "@icon-park/react";
 
 export interface ImageMenuProps {
   onPreview: () => void;
+  onDownload: () => void;
 }
 
 export const getImageMenuItems = ({
   onPreview,
+  onDownload,
 }: ImageMenuProps): MenuItem[] => {
   return [
     {
@@ -14,9 +16,15 @@ export const getImageMenuItems = ({
       label: "预览",
       icon: <PreviewOpen theme="outline" size="13" fill="#333" />,
       onClick: () => {
-        console.log("123123");
-
         onPreview();
+      },
+    },
+    {
+      type: "item",
+      label: "下载图片",
+      icon: <Download theme="outline" size="13" fill="#333" />,
+      onClick: () => {
+        onDownload();
       },
     },
     {

@@ -29,6 +29,8 @@ declare module "@scena/react-guides" {
   export interface GuidesInterface {
     scrollGuides(pos: number, zoom?: number): void;
     getGuideScrollPos(): number;
+    loadGuides?(guides: number[]): void;
+    setState?(state: { guides?: number[] }): void;
   }
 
   class Guides extends React.Component<GuidesProps> implements GuidesInterface {

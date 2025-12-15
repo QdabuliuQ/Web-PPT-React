@@ -89,19 +89,19 @@ const SlideshowComponent: FC = () => {
     };
   }, []);
 
+  const keyboardToggle = pptStore.getKeyboardToggle();
+
   // 键盘导航
   useEffect(() => {
+    if (!keyboardToggle) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case "ArrowLeft":
-        case "ArrowUp":
-        case "PageUp":
+          e.preventDefault(); // 防止空格键滚动页面
           handlePrevPage();
           break;
         case "ArrowRight":
-        case "ArrowDown":
-        case "PageDown":
-        case " ": // 空格键
           e.preventDefault(); // 防止空格键滚动页面
           handleNextPage();
           break;
@@ -113,7 +113,13 @@ const SlideshowComponent: FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handlePrevPage, handleNextPage, handleExitFullscreen, pages]);
+  }, [
+    handlePrevPage,
+    handleNextPage,
+    handleExitFullscreen,
+    pages,
+    keyboardToggle,
+  ]);
 
   // 监听浏览器全屏状态变化（用户按 F11 或 ESC）
   useEffect(() => {

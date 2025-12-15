@@ -10,6 +10,8 @@ export default {
   verticalLine: [],
   horizontalLine: [],
   rule: true,
+  guideLineShow: true,
+  keyboardToggle: true,
   pages: [
     {
       id: getRandomId(),
@@ -228,7 +230,6 @@ export default {
       toggleInAnimation: "backInLeft",
       toggleInDuration: "default",
       toggleInDelay: "0s",
-      clickToNext: true,
       autoToggle: false,
       autoToggleTime: 5,
       backgroundType: "solidColor",

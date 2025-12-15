@@ -4,12 +4,14 @@ import { PanelSplitLine } from "@/components/PanelSplitLine";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { Download, PreviewOpen } from "@icon-park/react";
+import { Download, Editor } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import html2canvas from "html2canvas";
 import { observer } from "mobx-react-lite";
 import { type FC } from "react";
 import type { IMindMapProps } from "./index";
+import { MindMapModal } from "./MindMapModal";
+import { useMindMapModal } from "./useMindMapModal";
+import { downloadMindMapImage } from "./utils";
 
 export const MindMapPanelKey = "mindmap";
 export const MindMapPanelTitle = "思维导图";
@@ -31,6 +33,13 @@ const MindMapPanelComponent: FC = observer(() => {
 
   if (!mindMapInfo) return null;
 
+  // 使用 MindMapModal hook
+  const { handleModalOpen, modalProps } = useMindMapModal({
+    pageId,
+    elementId,
+    readonly: false,
+  });
+
   const onZIndexChange = (key: string) => {
     switch (key) {
       case "toFront":
@@ -48,54 +57,43 @@ const MindMapPanelComponent: FC = observer(() => {
     }
   };
 
-  // 导出为 PNG
-  const handleExportPNG = useMemoizedFn(async () => {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-
-    try {
-      const canvas = await html2canvas(element, {
-        backgroundColor: "#fff",
-        scale: 2,
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.download = `mindmap_${elementId}.png`;
-      link.href = imgData;
-      link.click();
-    } catch (error) {
-      console.error("导出失败:", error);
-    }
+  // 打开编辑弹窗
+  const handleEdit = useMemoizedFn(() => {
+    handleModalOpen();
   });
 
-  // 预览（在新窗口打开）
-  const handlePreview = useMemoizedFn(() => {
-    const data = mindMapInfo.data;
-    const dataStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank");
+  // 下载图片
+  const handleDownloadImage = useMemoizedFn(async () => {
+    const previewImage = (mindMapInfo as any)?.previewImage;
+    if (!previewImage) {
+      console.warn("没有预览图片，无法下载");
+      return;
+    }
+    await downloadMindMapImage(previewImage, elementId);
   });
 
   return (
-    <div>
-      <PanelCommonSetting
-        onPositionChange={(key) => positionHandle(key as Position)}
-        onZIndexChange={onZIndexChange}
-      />
-      <PanelSplitLine />
-      <PanelLargeButton
-        icon={<Download theme="outline" size="16" fill="#333" />}
-        title="导出图片"
-        onClick={handleExportPNG}
-      />
-      <PanelLargeButton
-        icon={<PreviewOpen theme="outline" size="16" fill="#333" />}
-        title="预览数据"
-        onClick={handlePreview}
-      />
-    </div>
+    <>
+      <div className="h-[53px] flex gap-[10px] items-center">
+        <PanelLargeButton
+          icon={<Editor theme="outline" size="16" fill="#333" />}
+          title="编辑"
+          onClick={handleEdit}
+        />
+        <PanelLargeButton
+          icon={<Download theme="outline" size="16" fill="#333" />}
+          title="下载图片"
+          onClick={handleDownloadImage}
+          aspectRatio={false}
+        />
+        <PanelSplitLine />
+        <PanelCommonSetting
+          onPositionChange={(key) => positionHandle(key as Position)}
+          onZIndexChange={onZIndexChange}
+        />
+      </div>
+      <MindMapModal {...modalProps} />
+    </>
   );
 });
 

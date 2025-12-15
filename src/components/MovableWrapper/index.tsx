@@ -1,4 +1,4 @@
-import { menuActiveStore, pptStore } from "@/store";
+import { pptStore } from "@/store";
 import { observer } from "mobx-react-lite";
 import {
   forwardRef,
@@ -113,7 +113,6 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
       } else if (!active && prevActive) {
         // 从激活变为非激活，触发取消选中事件
         onDeselect?.();
-        menuActiveStore.resetMenu();
       }
       prevActiveRef.current = active;
     }, [active, onSelect, onDeselect]);
@@ -319,10 +318,8 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
     // 确保目标元素存在
     const targetElement = document.getElementById(id);
     if (!targetElement) {
-      console.warn(`Target element with id "${id}" not found`);
       return null;
     }
-    console.log("查询");
 
     return (
       <Moveable

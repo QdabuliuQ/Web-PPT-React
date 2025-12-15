@@ -1,6 +1,13 @@
 import { PanelLargeButton, PanelSplitLine } from "@/components";
 import { displayStatusStore, elementActiveStore, pptStore } from "@/store";
-import { Column, GridTwo, Ruler, ViewGridCard } from "@icon-park/react";
+import {
+  Clear,
+  Column,
+  DividingLineOne,
+  GridTwo,
+  Ruler,
+  ViewGridCard,
+} from "@icon-park/react";
 import { Dropdown, type MenuProps } from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
@@ -9,6 +16,7 @@ const ViewComponent: FC = () => {
   const displayStatus = displayStatusStore.getDisplayStatus();
   const gridType = pptStore.getGridType();
   const gridSize = pptStore.getGridSize();
+  const guideLineShow = pptStore.getGuideLineShow();
 
   const gridLineMenuItems: MenuProps["items"] = useMemo(
     () => [
@@ -88,6 +96,25 @@ const ViewComponent: FC = () => {
         active={gridType === "line"}
         icon={<Ruler theme="outline" size="18" fill="#333" />}
         title="标尺"
+      />
+      <PanelLargeButton
+        onClick={() => {
+          pptStore.setGuideLineShow(!guideLineShow);
+        }}
+        active={guideLineShow}
+        disabled={gridType !== "line"}
+        icon={<DividingLineOne theme="outline" size="18" fill="#333" />}
+        title="参考线"
+      />
+      <PanelLargeButton
+        onClick={() => {
+          pptStore.setHorizontalLine([]);
+          pptStore.setVerticalLine([]);
+        }}
+        aspectRatio={false}
+        disabled={gridType !== "line"}
+        icon={<Clear theme="outline" size="18" fill="#333" />}
+        title="清除参考线"
       />
     </div>
   );

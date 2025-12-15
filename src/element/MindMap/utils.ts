@@ -1,5 +1,6 @@
 import Hierarchy from "@antv/hierarchy";
 import type { EdgeMetadata, Graph, NodeMetadata } from "@antv/x6";
+import { downloadImage } from "@/utils";
 
 // X6 数据格式
 export interface X6GraphData {
@@ -463,4 +464,62 @@ export function autoLayoutGraph(
   graph.getEdges().forEach((edge) => {
     edge.setVertices([]); // 清除自定义顶点，让边自动重新计算路径
   });
+}
+
+// 下载思维导图预览图片
+export async function downloadMindMapImage(
+  previewImage: string,
+  id: string
+): Promise<void> {
+  if (!previewImage) {
+    return;
+  }
+
+  try {
+    // 检查是否是 SVG 格式的 base64
+    if (previewImage.startsWith("data:image/svg+xml")) {
+      // 将 SVG base64 转换为 PNG
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => {
+          try {
+            // 创建 canvas 并绘制图片
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              reject(new Error("无法创建 canvas 上下文"));
+              return;
+            }
+
+            // 绘制图片到 canvas
+            ctx.drawImage(img, 0, 0);
+
+            // 转换为 PNG base64
+            const pngDataUrl = canvas.toDataURL("image/png");
+            const filename = `${id}.png`;
+            downloadImage(pngDataUrl, filename);
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        img.onerror = () => {
+          reject(new Error("图片加载失败"));
+        };
+
+        img.src = previewImage;
+      });
+    } else {
+      // 如果是其他格式（如 PNG），直接下载
+      const filename = `${id}.png`;
+      downloadImage(previewImage, filename);
+    }
+  } catch (error) {
+    console.error("下载图片失败:", error);
+  }
 }
