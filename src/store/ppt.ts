@@ -1,3 +1,4 @@
+import type { IChartProps } from "@/element/Chart";
 import type { IIconProps } from "@/element/Icon";
 import type { IImageProps } from "@/element/Image";
 import type { ITableProps } from "@/element/Table";
@@ -12,7 +13,8 @@ export type Elements =
   | ITableProps
   | IIconProps
   | IImageProps
-  | IMindMapProps;
+  | IMindMapProps
+  | IChartProps;
 export type Page = {
   id: string;
   elements: Array<Elements>;
@@ -227,6 +229,7 @@ class PPTStore {
       | IIconProps
       | IImageProps
       | IMindMapProps
+      | IChartProps
   ) {
     // 找到页面
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
@@ -257,6 +260,7 @@ class PPTStore {
       | IIconProps
       | IImageProps
       | IMindMapProps
+      | IChartProps
   ) {
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return;

@@ -1,4 +1,4 @@
-import { pageActiveStore, pptStore } from "@/store";
+import { pptStore } from "@/store";
 import { Graph } from "@antv/x6";
 import { useMemoizedFn } from "ahooks";
 import { useMemo, useState } from "react";
@@ -197,4 +197,3 @@ export function useMindMapModal({
     modalProps,
   };
 }
-

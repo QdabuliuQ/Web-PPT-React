@@ -1,3 +1,4 @@
+import { ChartPanel, ChartPanelKey } from "@/element/Chart";
 import { IconPanel, IconPanelKey } from "@/element/Icon";
 import { ImagePanel, ImagePanelKey } from "@/element/Image";
 import { MindMapPanel, MindMapPanelKey } from "@/element/MindMap";
@@ -22,4 +23,5 @@ export default {
   [IconPanelKey]: IconPanel,
   [ImagePanelKey]: ImagePanel,
   [MindMapPanelKey]: MindMapPanel,
+  [ChartPanelKey]: ChartPanel,
 };

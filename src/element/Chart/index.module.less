@@ -1,0 +1,16 @@
+.chartElement {
+  position: absolute;
+  user-select: none;
+  overflow: hidden;
+
+  &.editMode {
+    &:hover {
+      cursor: pointer;
+    }
+
+    &.dragging {
+      opacity: 0.8;
+    }
+  }
+}
+

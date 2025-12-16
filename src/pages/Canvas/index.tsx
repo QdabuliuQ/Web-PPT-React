@@ -1,5 +1,6 @@
 import SearchSvg from "@/assets/images/search.svg";
 import { GlobalContextMenu } from "@/components";
+import { Chart } from "@/element/Chart";
 import { Icon } from "@/element/Icon";
 import { Image } from "@/element/Image";
 import { MindMap } from "@/element/MindMap";
@@ -551,6 +552,18 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
               key={element.id}
               {...element}
               type="mindmap"
+              mode={mode}
+              {...(isEditMode && {
+                onSelect: () => handleElementSelect(element.id),
+              })}
+            />
+          );
+        } else if (element.type === "chart") {
+          return (
+            <Chart
+              key={element.id}
+              {...element}
+              type="chart"
               mode={mode}
               {...(isEditMode && {
                 onSelect: () => handleElementSelect(element.id),

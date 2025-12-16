@@ -1,0 +1,61 @@
+import type { EChartsOption } from "echarts";
+
+export interface PieChartConfig {
+  data: Array<{ label: string; value: number }>;
+  color: string;
+  showLabels: boolean;
+}
+
+/**
+ * 生成饼图的 echarts 配置
+ */
+export function getPieChartOption(config: PieChartConfig): EChartsOption {
+  const { data, color, showLabels } = config;
+
+  return {
+    tooltip: {
+      trigger: "item",
+    },
+    series: [
+      {
+        type: "pie",
+        radius: "60%",
+        center: ["50%", "50%"],
+        data: data.map((d) => ({
+          name: d.label,
+          value: d.value,
+        })),
+        itemStyle: {
+          color: (params: any) => {
+            // 使用颜色数组，如果只有一个颜色则使用它
+            const colors = [
+              color,
+              "#91CC75",
+              "#FAC858",
+              "#EE6666",
+              "#73C0DE",
+              "#3BA272",
+              "#FC8452",
+              "#9A60B4",
+              "#EA7CCC",
+            ];
+            return colors[params.dataIndex % colors.length];
+          },
+        },
+        label: {
+          show: showLabels,
+          formatter: "{b}: {c}",
+          color: "#333",
+          fontSize: 12,
+        },
+        labelLine: {
+          show: showLabels,
+          lineStyle: {
+            color: "#666",
+          },
+        },
+      },
+    ],
+  };
+}
+

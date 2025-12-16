@@ -1,3 +1,4 @@
+import { ChartButton } from "@/element/Chart";
 import { IconButton } from "@/element/Icon";
 import { ImageButton } from "@/element/Image";
 import { MindMapButton } from "@/element/MindMap";
@@ -13,6 +14,7 @@ export const Insert: FC = () => {
       <IconButton />
       <ImageButton />
       <MindMapButton />
+      <ChartButton />
     </div>
   );
 };

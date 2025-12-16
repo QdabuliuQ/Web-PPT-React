@@ -1,3 +1,4 @@
+import { ChartPanelKey, ChartPanelTitle } from "@/element/Chart";
 import { IconPanelKey, IconPanelTitle } from "@/element/Icon";
 import { ImagePanelKey, ImagePanelTitle } from "@/element/Image";
 import { MindMapPanelKey, MindMapPanelTitle } from "@/element/MindMap";
@@ -38,6 +39,10 @@ const MenuMapped = {
   mindmap: {
     key: MindMapPanelKey,
     title: MindMapPanelTitle,
+  },
+  chart: {
+    key: ChartPanelKey,
+    title: ChartPanelTitle,
   },
 };
 

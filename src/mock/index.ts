@@ -18,6 +18,27 @@ export default {
       visible: true,
       elements: [
         {
+          type: "chart",
+          id: "chart_" + getRandomId(),
+          mode: "edit",
+          chartType: "bar1",
+          data: [
+            { label: "A", value: 30 },
+            { label: "B", value: 80 },
+            { label: "C", value: 45 },
+            { label: "D", value: 60 },
+          ],
+          color: "#5F95FF",
+          showGrid: true,
+          showLabels: true,
+          x: 100,
+          y: 200,
+          width: 500,
+          height: 300,
+          rotate: 0,
+          zIndex: 5,
+        },
+        {
           type: "mindmap",
           id: "mindmap_" + getRandomId(),
           data: createDefaultMindMapData(),
