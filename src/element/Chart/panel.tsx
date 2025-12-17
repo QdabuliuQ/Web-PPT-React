@@ -5,7 +5,11 @@ import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
+import { GridPanel } from "./components/gridPanel";
+import { LegendPanel } from "./components/legendPanel";
 import { TitlePanel } from "./components/titlePanel";
+import { XAxisPanel } from "./components/xAxisPanel";
+import { YAxisPanel } from "./components/yAxisPanel";
 import type { IChartProps } from "./index";
 import { BarChartPanel } from "./type/bar/panel";
 import { LineChartPanel } from "./type/line/panel";
@@ -79,9 +83,12 @@ const ChartPanelComponent: FC = observer(() => {
     <>
       <div className="h-[53px] flex gap-[10px] items-center">
         <TitlePanel />
+        <GridPanel />
+        <XAxisPanel />
+        <YAxisPanel />
+        <LegendPanel />
         <PanelSplitLine />
         {TypePanel}
-        <PanelSplitLine />
         <PanelCommonSetting
           onPositionChange={(key) => positionHandle(key as Position)}
           onZIndexChange={onZIndexChange}

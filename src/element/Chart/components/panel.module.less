@@ -1,0 +1,26 @@
+.colorPicker {
+  width: auto;
+  height: 100%;
+
+  :global(.ant-color-picker-clear) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  :global(.ant-color-picker-clear)::after {
+    width: 80px !important;
+  }
+
+  :global(.ant-color-picker-color-block) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.colorPickerRotate {
+  :global(.ant-color-picker-clear) {
+    &::after {
+      transform: rotate(348deg) !important;
+    }
+  }
+}

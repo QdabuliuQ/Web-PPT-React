@@ -17,61 +17,18 @@ import { getChartMenuItems } from "./menu";
 export { ChartButtonComponent as ChartButton } from "./button";
 export { ChartPanel, ChartPanelKey, ChartPanelTitle } from "./panel";
 
-// 基础数据格式（用于柱状图、折线图、饼图）
-export interface BaseChartData {
-  label: string;
-  value: number;
-}
-
-// 散点图数据格式
-export interface ScatterChartData {
-  x: number;
-  y: number;
-  label?: string;
-}
-
-// 雷达图数据格式
-export interface RadarChartData {
-  name: string;
-  value: number;
-}
-
 export interface IChartProps extends ICommonElementProps {
   type: "chart";
   chartType: string; // 图表类型，格式如 "bar1", "line1", "line2", "line3" 等
-  // 基础图表数据（柱状图、折线图、饼图）
-  data?: Array<BaseChartData>;
-  // 散点图数据
-  scatterData?: Array<ScatterChartData>;
-  // 雷达图数据
-  radarData?: Array<RadarChartData>;
-  color: string; // 图表颜色
-  showGrid: boolean; // 是否显示网格
-  showLabels: boolean; // 是否显示标签
-  title?: {
-    text?: string;
-    subtext?: string;
-    [key: string]: any;
-  }; // 图表标题配置
+  // ECharts 完整配置选项
+  option?: echarts.EChartsOption;
 }
 
 const Component: FC<IChartProps> = observer((props) => {
   const {
     mode = "edit",
     id,
-    chartType = "bar",
-    data = [
-      { label: "A", value: 30 },
-      { label: "B", value: 80 },
-      { label: "C", value: 45 },
-      { label: "D", value: 60 },
-    ],
-    scatterData,
-    radarData,
-    color = "#5F95FF",
-    showGrid = true,
-    showLabels = true,
-    title,
+    option,
     x,
     y,
     width,
@@ -166,121 +123,11 @@ const Component: FC<IChartProps> = observer((props) => {
 
   // 更新图表配置
   useEffect(() => {
-    if (!chartInstanceRef.current) return;
+    if (!chartInstanceRef.current || !option) return;
+    console.log(option, "option");
 
-    const updateChart = async () => {
-      try {
-        // 解析 chartType，例如 "bar1" -> { type: "bar", index: 1 }
-        const match = chartType.match(/^([a-z]+)(\d+)$/);
-        if (!match) {
-          console.error(`Invalid chartType format: ${chartType}`);
-          return;
-        }
-
-        const [, type, indexStr] = match;
-        const index = parseInt(indexStr, 10);
-
-        // 动态导入对应的文件
-        let getChartOption: ((config: any) => echarts.EChartsOption) | null =
-          null;
-
-        const module = await import(`./type/${type}/index${index}`);
-
-        // 根据类型获取对应的函数
-        switch (type) {
-          case "bar":
-            getChartOption = module.getBarChartOption;
-            if (!data || data.length === 0) return;
-            if (getChartOption && chartInstanceRef.current) {
-              const option = getChartOption({
-                title,
-                data,
-                color,
-                showGrid,
-                showLabels,
-              });
-              chartInstanceRef.current.setOption(option);
-            }
-            break;
-
-          case "line":
-            if (index === 1) getChartOption = module.getLineChartOption;
-            else if (index === 2)
-              getChartOption = module.getAreaLineChartOption;
-            else if (index === 3)
-              getChartOption = module.getSmoothLineChartOption;
-            if (!data || data.length === 0) return;
-            if (getChartOption && chartInstanceRef.current) {
-              const option = getChartOption({
-                data,
-                color,
-                showGrid,
-                showLabels,
-              });
-              chartInstanceRef.current.setOption(option);
-            }
-            break;
-
-          case "pie":
-            getChartOption = module.getPieChartOption;
-            if (!data || data.length === 0) return;
-            if (getChartOption && chartInstanceRef.current) {
-              const option = getChartOption({
-                data,
-                color,
-                showLabels,
-              });
-              chartInstanceRef.current.setOption(option);
-            }
-            break;
-
-          case "scatter":
-            getChartOption = module.getScatterChartOption;
-            if (!scatterData || scatterData.length === 0) return;
-            if (getChartOption && chartInstanceRef.current) {
-              const option = getChartOption({
-                data: scatterData,
-                color,
-                showGrid,
-                showLabels,
-              });
-              chartInstanceRef.current.setOption(option);
-            }
-            break;
-
-          case "radar":
-            getChartOption = module.getRadarChartOption;
-            if (!radarData || radarData.length === 0) return;
-            if (getChartOption && chartInstanceRef.current) {
-              const option = getChartOption({
-                data: radarData,
-                color,
-                showLabels,
-              });
-              chartInstanceRef.current.setOption(option);
-            }
-            break;
-
-          default:
-            console.error(`Unknown chart type: ${type}`);
-            return;
-        }
-      } catch (error) {
-        console.error("Failed to update chart:", error);
-      }
-    };
-
-    updateChart();
-  }, [
-    chartType,
-    data,
-    scatterData,
-    radarData,
-    color,
-    showGrid,
-    showLabels,
-    title,
-  ]);
+    chartInstanceRef.current.setOption(option);
+  }, [option]);
 
   // 响应式调整
   useEffect(() => {
@@ -380,51 +227,223 @@ export const Chart = memo(Component);
 export const CreateChart = (props: Partial<IChartProps> = {}) => {
   const chartType = props.chartType || "bar1";
 
-  // 解析图表类型
-  const match = chartType.match(/^([a-z]+)(\d+)$/);
-  const type = match ? match[1] : "bar";
-
-  // 根据图表类型设置默认数据
-  let defaultData: any;
-  let defaultScatterData: any;
-  let defaultRadarData: any;
-
-  switch (type) {
-    case "scatter":
-      defaultScatterData = [
-        { x: 10, y: 20, label: "A" },
-        { x: 20, y: 30, label: "B" },
-        { x: 30, y: 25, label: "C" },
-        { x: 40, y: 35, label: "D" },
-      ];
-      break;
-    case "radar":
-      defaultRadarData = [
-        { name: "维度1", value: 60 },
-        { name: "维度2", value: 80 },
-        { name: "维度3", value: 45 },
-        { name: "维度4", value: 70 },
-        { name: "维度5", value: 55 },
-      ];
-      break;
-    default:
-      defaultData = [
-        { label: "A", value: 30 },
-        { label: "B", value: 80 },
-        { label: "C", value: 45 },
-        { label: "D", value: 60 },
-      ];
-  }
-
   const defaultProps: Omit<IChartProps, "type" | "id"> = {
     mode: "edit",
     chartType: chartType,
-    data: defaultData,
-    scatterData: defaultScatterData,
-    radarData: defaultRadarData,
-    color: "#5F95FF",
-    showGrid: true,
-    showLabels: true,
+    option: {
+      title: {
+        text: "标题",
+        show: true,
+        textStyle: {
+          color: "#333",
+          fontStyle: "normal",
+          fontWeight: "bold",
+          fontSize: 18,
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+        },
+        subtext: "",
+        subtextStyle: {
+          color: "#aaa",
+          fontStyle: "normal",
+          fontWeight: "bold",
+          fontSize: 12,
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+        },
+        left: 0,
+        top: 0,
+      },
+      grid: {
+        show: true,
+        left: 20,
+        right: 20,
+        top: 40,
+        bottom: 20,
+        shadowColor: "transparent",
+        shadowBlur: 0,
+        shadowOffsetX: 0,
+        shadowOffsetY: 0,
+        backgroundColor: "#fff",
+      },
+      dataset: {
+        source: [
+          ["product", "value"],
+          ["A", 30],
+          ["B", 80],
+          ["C", 45],
+          ["D", 60],
+        ],
+      },
+      legend: {
+        show: true,
+        left: 0,
+        top: 0,
+        itemWidth: 25,
+        itemHeight: 14,
+        textStyle: {
+          color: "#333",
+          fontSize: 12,
+          fontStyle: "normal",
+          fontWeight: "normal",
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+        },
+        itemStyle: {
+          borderColor: "transparent",
+          borderWidth: 0,
+          borderType: "solid",
+          opacity: 1,
+          shadowBlur: 0,
+          shadowColor: "transparent",
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+        },
+      },
+      xAxis: {
+        show: true,
+        name: "",
+        nameLocation: "end",
+        nameTextStyle: {
+          color: "#666",
+          fontSize: 12,
+          fontStyle: "normal",
+          fontWeight: "normal",
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+        },
+        type: "category",
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: "#666",
+            width: 1,
+            type: "solid",
+            shadowBlur: 0,
+            shadowColor: "transparent",
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            opacity: 1,
+          },
+        },
+        axisLabel: {
+          show: true,
+          color: "#666",
+          rotate: 0,
+          fontSize: 12,
+          fontStyle: "normal",
+          fontWeight: "normal",
+          shadowColor: "transparent",
+          shadowBlur: 0,
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+        },
+        axisTick: {
+          show: true,
+          length: 5,
+          lineStyle: {
+            color: "#ccc",
+            width: 1,
+            type: "solid",
+            opacity: 1,
+          },
+        },
+      },
+      yAxis: {
+        type: "value",
+        name: "",
+        nameLocation: "end",
+        nameTextStyle: {
+          color: "#666",
+          fontSize: 12,
+          fontStyle: "normal",
+          fontWeight: "normal",
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+        },
+        show: true,
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: "#666",
+            width: 1,
+            type: "solid",
+            shadowBlur: 0,
+            shadowColor: "transparent",
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            opacity: 1,
+          },
+        },
+        axisLabel: {
+          show: true,
+          color: "#666",
+          rotate: 0,
+          fontSize: 12,
+          fontStyle: "normal",
+          fontWeight: "normal",
+          shadowColor: "transparent",
+          shadowBlur: 0,
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+        },
+        axisTick: {
+          show: true,
+          length: 5,
+          lineStyle: {
+            color: "#ccc",
+            width: 1,
+            type: "solid",
+            opacity: 1,
+          },
+        },
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: "#e0e0e0",
+            type: "dashed",
+          },
+        },
+      },
+      series: [
+        {
+          type: "bar",
+          name: "数值",
+          encode: {
+            x: "product",
+            y: "value",
+          },
+          itemStyle: {
+            color: "#5F95FF",
+            borderRadius: [4, 4, 0, 0],
+          },
+          label: {
+            show: true,
+            position: "top",
+            color: "#333",
+            fontSize: 12,
+          },
+        },
+      ],
+    },
     x: 100,
     y: 100,
     width: 500,

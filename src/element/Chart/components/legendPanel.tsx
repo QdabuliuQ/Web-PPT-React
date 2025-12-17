@@ -1,21 +1,14 @@
 import { PanelLargeButton, PanelSelect } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { H } from "@icon-park/react";
+import { Text } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import {
-  Collapse,
-  ColorPicker,
-  Input,
-  InputNumber,
-  Popover,
-  Switch,
-} from "antd";
+import { Collapse, ColorPicker, InputNumber, Popover, Switch } from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import type { IChartProps } from "../index";
 import styles from "./panel.module.less";
 
-export const TitlePanel: FC = observer(() => {
+export const LegendPanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
   const pageId = pageActiveStore.getPageActive();
 
@@ -28,41 +21,39 @@ export const TitlePanel: FC = observer(() => {
 
   if (!chartInfo) return null;
 
-  // 获取 title 配置，如果没有则使用默认值
-  const titleConfig = chartInfo.option?.title || {
-    text: "标题",
-    subtext: "",
-    show: true,
-    textStyle: {
-      color: "#333",
-      fontStyle: "normal",
-      fontWeight: "bold",
-      fontSize: 18,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    subtextStyle: {
-      color: "#aaa",
-      fontStyle: "normal",
-      fontWeight: "bold",
-      fontSize: 12,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
+  // 获取 legend 配置，如果没有则使用默认值
+  const legendConfig = chartInfo.option?.legend || {
+    show: false,
     left: 0,
     top: 0,
-    right: 0,
-    bottom: 0,
+    itemWidth: 25,
+    itemHeight: 14,
+    textStyle: {
+      color: "#333",
+      fontSize: 12,
+      fontStyle: "normal",
+      fontWeight: "normal",
+      textShadowColor: "transparent",
+      textShadowBlur: 0,
+      textShadowOffsetX: 0,
+      textShadowOffsetY: 0,
+    },
+    itemStyle: {
+      borderColor: "transparent",
+      borderWidth: 0,
+      borderType: "solid",
+      opacity: 1,
+      shadowBlur: 0,
+      shadowColor: "transparent",
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+    },
   };
 
-  // 更新 title 配置的通用函数
-  const handleTitleChange = useMemoizedFn((path: string[], value: any) => {
-    const updatedTitle = { ...titleConfig };
-    let current: any = updatedTitle;
+  // 更新 legend 配置的通用函数
+  const handleLegendChange = useMemoizedFn((path: string[], value: any) => {
+    const updatedLegend = { ...legendConfig };
+    let current: any = updatedLegend;
 
     // 遍历路径，创建嵌套对象
     for (let i = 0; i < path.length - 1; i++) {
@@ -75,10 +66,10 @@ export const TitlePanel: FC = observer(() => {
     // 设置最终值
     current[path[path.length - 1]] = value;
 
-    // 更新 option.title
+    // 更新 option.legend
     const updatedOption = {
       ...chartInfo.option,
-      title: updatedTitle,
+      legend: updatedLegend,
     };
 
     pptStore.setElementInfo(pageId, elementId, {
@@ -90,7 +81,16 @@ export const TitlePanel: FC = observer(() => {
   // ColorPicker 防抖处理函数
   const handleColorChange = useDebounceFn(
     (keys: string[], color: any) => {
-      handleTitleChange(keys, color.toHexString());
+      // 处理 rgba 颜色
+      const colorObj = color.toRgb();
+      if (colorObj.a !== 1) {
+        handleLegendChange(
+          keys,
+          `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, ${colorObj.a})`
+        );
+      } else {
+        handleLegendChange(keys, color.toHexString());
+      }
     },
     { wait: 300 }
   );
@@ -103,18 +103,6 @@ export const TitlePanel: FC = observer(() => {
         title: "基础设置",
         configs: [
           {
-            type: "input",
-            keys: ["text"],
-            label: "主标题",
-            placeholder: "请输入主标题",
-          },
-          {
-            type: "input",
-            keys: ["subtext"],
-            label: "副标题",
-            placeholder: "请输入副标题",
-          },
-          {
             type: "switch",
             keys: ["show"],
             label: "显示",
@@ -123,27 +111,53 @@ export const TitlePanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["left"],
             label: "左边距",
-            min: -2000,
-            max: 2000,
+            defaultValue: 0,
+            min: 0,
+            max: 1000,
           },
           {
             type: "inputNumber",
             keys: ["top"],
             label: "上边距",
-            min: -2000,
-            max: 2000,
+            defaultValue: 0,
+            min: 0,
+            max: 1000,
+          },
+          {
+            type: "inputNumber",
+            keys: ["itemWidth"],
+            label: "图例项宽度",
+            defaultValue: 25,
+            min: 0,
+            max: 200,
+          },
+          {
+            type: "inputNumber",
+            keys: ["itemHeight"],
+            label: "图例项高度",
+            defaultValue: 14,
+            min: 0,
+            max: 200,
           },
         ],
       },
       {
         key: "textStyle",
-        title: "主标题样式",
+        title: "文字样式",
         configs: [
           {
             type: "colorPicker",
             keys: ["textStyle", "color"],
             label: "颜色",
             defaultValue: "#333",
+          },
+          {
+            type: "inputNumber",
+            keys: ["textStyle", "fontSize"],
+            label: "字体大小",
+            defaultValue: 12,
+            min: 1,
+            max: 100,
           },
           {
             type: "select",
@@ -160,80 +174,7 @@ export const TitlePanel: FC = observer(() => {
             type: "select",
             keys: ["textStyle", "fontWeight"],
             label: "字体粗细",
-            defaultValue: "bold",
-            options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
-              { label: "加粗", value: "bolder" },
-              { label: "细体", value: "lighter" },
-            ],
-          },
-          {
-            type: "inputNumber",
-            keys: ["textStyle", "fontSize"],
-            label: "字体大小",
-            defaultValue: 18,
-            min: 1,
-            max: 100,
-          },
-          {
-            type: "colorPicker",
-            keys: ["textStyle", "textShadowColor"],
-            label: "阴影颜色",
-            defaultValue: "transparent",
-          },
-          {
-            type: "inputNumber",
-            keys: ["textStyle", "textShadowBlur"],
-            label: "阴影模糊",
-            defaultValue: 0,
-            min: 0,
-            max: 50,
-          },
-          {
-            type: "inputNumber",
-            keys: ["textStyle", "textShadowOffsetX"],
-            label: "阴影X偏移",
-            defaultValue: 0,
-            min: -50,
-            max: 50,
-          },
-          {
-            type: "inputNumber",
-            keys: ["textStyle", "textShadowOffsetY"],
-            label: "阴影Y偏移",
-            defaultValue: 0,
-            min: -50,
-            max: 50,
-          },
-        ],
-      },
-      {
-        key: "subtextStyle",
-        title: "副标题样式",
-        configs: [
-          {
-            type: "colorPicker",
-            keys: ["subtextStyle", "color"],
-            label: "颜色",
-            defaultValue: "#aaa",
-          },
-          {
-            type: "select",
-            keys: ["subtextStyle", "fontStyle"],
-            label: "字体样式",
             defaultValue: "normal",
-            options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
-              { label: "倾斜", value: "oblique" },
-            ],
-          },
-          {
-            type: "select",
-            keys: ["subtextStyle", "fontWeight"],
-            label: "字体粗细",
-            defaultValue: "bold",
             options: [
               { label: "正常", value: "normal" },
               { label: "粗体", value: "bold" },
@@ -242,22 +183,84 @@ export const TitlePanel: FC = observer(() => {
             ],
           },
           {
+            type: "colorPicker",
+            keys: ["textStyle", "textShadowColor"],
+            label: "文字阴影颜色",
+            defaultValue: "transparent",
+          },
+          {
             type: "inputNumber",
-            keys: ["subtextStyle", "fontSize"],
-            label: "字体大小",
-            defaultValue: 12,
-            min: 1,
-            max: 100,
+            keys: ["textStyle", "textShadowBlur"],
+            label: "文字阴影模糊",
+            defaultValue: 0,
+            min: 0,
+            max: 50,
+          },
+          {
+            type: "inputNumber",
+            keys: ["textStyle", "textShadowOffsetX"],
+            label: "文字阴影X偏移",
+            defaultValue: 0,
+            min: -50,
+            max: 50,
+          },
+          {
+            type: "inputNumber",
+            keys: ["textStyle", "textShadowOffsetY"],
+            label: "文字阴影Y偏移",
+            defaultValue: 0,
+            min: -50,
+            max: 50,
+          },
+        ],
+      },
+      {
+        key: "itemStyle",
+        title: "图例项样式",
+        configs: [
+          {
+            type: "colorPicker",
+            keys: ["itemStyle", "borderColor"],
+            label: "边框颜色",
+            defaultValue: "transparent",
+          },
+          {
+            type: "inputNumber",
+            keys: ["itemStyle", "borderWidth"],
+            label: "边框宽度",
+            defaultValue: 0,
+            min: 0,
+            max: 20,
+          },
+          {
+            type: "select",
+            keys: ["itemStyle", "borderType"],
+            label: "边框样式",
+            defaultValue: "solid",
+            options: [
+              { label: "实线", value: "solid" },
+              { label: "虚线", value: "dashed" },
+              { label: "点线", value: "dotted" },
+            ],
+          },
+          {
+            type: "inputNumber",
+            keys: ["itemStyle", "opacity"],
+            label: "透明度",
+            defaultValue: 1,
+            min: 0,
+            max: 1,
+            step: 0.1,
           },
           {
             type: "colorPicker",
-            keys: ["subtextStyle", "textShadowColor"],
+            keys: ["itemStyle", "shadowColor"],
             label: "阴影颜色",
             defaultValue: "transparent",
           },
           {
             type: "inputNumber",
-            keys: ["subtextStyle", "textShadowBlur"],
+            keys: ["itemStyle", "shadowBlur"],
             label: "阴影模糊",
             defaultValue: 0,
             min: 0,
@@ -265,7 +268,7 @@ export const TitlePanel: FC = observer(() => {
           },
           {
             type: "inputNumber",
-            keys: ["subtextStyle", "textShadowOffsetX"],
+            keys: ["itemStyle", "shadowOffsetX"],
             label: "阴影X偏移",
             defaultValue: 0,
             min: -50,
@@ -273,7 +276,7 @@ export const TitlePanel: FC = observer(() => {
           },
           {
             type: "inputNumber",
-            keys: ["subtextStyle", "textShadowOffsetY"],
+            keys: ["itemStyle", "shadowOffsetY"],
             label: "阴影Y偏移",
             defaultValue: 0,
             min: -50,
@@ -287,7 +290,7 @@ export const TitlePanel: FC = observer(() => {
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {
-    let current: any = titleConfig;
+    let current: any = legendConfig;
     for (const key of keys) {
       if (current?.[key] === undefined) {
         return defaultValue;
@@ -303,23 +306,12 @@ export const TitlePanel: FC = observer(() => {
     const value = getValue(keys, defaultValue);
 
     switch (type) {
-      case "input":
-        return (
-          <Input
-            value={value || ""}
-            onChange={(e) => handleTitleChange(keys, e.target.value)}
-            placeholder={props.placeholder}
-            style={{ fontSize: "12px" }}
-            className="[&::placeholder]:text-[12px]"
-            maxLength={30}
-          />
-        );
       case "switch":
         return (
           <Switch
             checked={value !== false}
             style={{ width: "40px" }}
-            onChange={(checked) => handleTitleChange(keys, checked)}
+            onChange={(checked) => handleLegendChange(keys, checked)}
           />
         );
       case "inputNumber":
@@ -327,10 +319,11 @@ export const TitlePanel: FC = observer(() => {
           <InputNumber
             value={value ?? defaultValue ?? 0}
             onChange={(val) =>
-              handleTitleChange(keys, val ?? defaultValue ?? 0)
+              handleLegendChange(keys, val ?? defaultValue ?? 0)
             }
             min={props.min}
             max={props.max}
+            step={props.step}
             style={{ width: "100%" }}
           />
         );
@@ -338,7 +331,7 @@ export const TitlePanel: FC = observer(() => {
         return (
           <PanelSelect
             value={value ?? defaultValue}
-            onChange={(val) => handleTitleChange(keys, val)}
+            onChange={(val) => handleLegendChange(keys, val)}
             options={props.options}
             trigger="hover"
             style={{ width: "100%" }}
@@ -349,7 +342,6 @@ export const TitlePanel: FC = observer(() => {
           <ColorPicker
             value={value ?? defaultValue}
             onChange={(color) => handleColorChange.run(keys, color)}
-            showText
             className={styles.colorPicker}
           />
         );
@@ -365,46 +357,15 @@ export const TitlePanel: FC = observer(() => {
           key: panel.key,
           label: <span style={{ fontSize: "12px" }}>{panel.title}</span>,
           children: (
-            <div
-              className={
-                panel.key === "basic"
-                  ? "flex flex-col gap-[10px]"
-                  : "grid grid-cols-3 gap-[10px]"
-              }
-            >
-              {panel.key === "basic" ? (
-                <>
-                  <div className="grid grid-cols-3 gap-[10px]">
-                    {panel.configs.slice(0, 3).map((config, index) => (
-                      <div key={index} className="flex flex-col gap-[5px]">
-                        <label className="text-[12px] text-gray-600">
-                          {config.label}
-                        </label>
-                        {renderConfigItem(config)}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-3 gap-[10px]">
-                    {panel.configs.slice(3).map((config, index) => (
-                      <div key={index} className="flex flex-col gap-[5px]">
-                        <label className="text-[12px] text-gray-600">
-                          {config.label}
-                        </label>
-                        {renderConfigItem(config)}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                panel.configs.map((config, index) => (
-                  <div key={index} className="flex flex-col gap-[5px]">
-                    <label className="text-[12px] text-gray-600">
-                      {config.label}
-                    </label>
-                    {renderConfigItem(config)}
-                  </div>
-                ))
-              )}
+            <div className="grid grid-cols-3 gap-[10px]">
+              {panel.configs.map((config, index) => (
+                <div key={index} className="flex flex-col gap-[5px]">
+                  <label className="text-[12px] text-gray-600">
+                    {config.label}
+                  </label>
+                  {renderConfigItem(config)}
+                </div>
+              ))}
             </div>
           ),
         }))}
@@ -417,14 +378,14 @@ export const TitlePanel: FC = observer(() => {
   return (
     <Popover
       content={content}
-      trigger="hover"
+      trigger="click"
       placement="bottom"
       overlayInnerStyle={{ padding: 0 }}
     >
       <div className="h-full">
         <PanelLargeButton
-          title="标题"
-          icon={<H theme="outline" size="18" fill="#333" />}
+          title="图例"
+          icon={<Text theme="outline" size="18" fill="#333" />}
         />
       </div>
     </Popover>
