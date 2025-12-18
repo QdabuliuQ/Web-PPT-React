@@ -1,16 +1,28 @@
 import type { EChartsOption } from "echarts";
 
 export interface PieChartConfig {
-  data: Array<{ label: string; value: number }>;
-  color: string;
-  showLabels: boolean;
+  data?: Array<{ label: string; value: number }>;
+  color?: string;
+  showLabels?: boolean;
 }
 
 /**
  * 生成饼图的 echarts 配置
  */
-export function getPieChartOption(config: PieChartConfig): EChartsOption {
-  const { data, color, showLabels } = config;
+export function getPieChartOption(config?: PieChartConfig): EChartsOption {
+  // 默认配置
+  const defaultData = [
+    { label: "A", value: 30 },
+    { label: "B", value: 80 },
+    { label: "C", value: 45 },
+    { label: "D", value: 60 },
+  ];
+
+  const {
+    data = defaultData,
+    color = "#5F95FF",
+    showLabels = true,
+  } = config || {};
 
   return {
     tooltip: {
@@ -58,4 +70,3 @@ export function getPieChartOption(config: PieChartConfig): EChartsOption {
     ],
   };
 }
-

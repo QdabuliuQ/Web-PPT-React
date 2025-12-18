@@ -349,7 +349,6 @@ export const TitlePanel: FC = observer(() => {
           <ColorPicker
             value={value ?? defaultValue}
             onChange={(color) => handleColorChange.run(keys, color)}
-            showText
             className={styles.colorPicker}
           />
         );

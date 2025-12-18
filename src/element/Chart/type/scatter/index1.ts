@@ -1,19 +1,32 @@
 import type { EChartsOption } from "echarts";
 
 export interface ScatterChartConfig {
-  data: Array<{ x: number; y: number; label?: string }>;
-  color: string;
-  showGrid: boolean;
-  showLabels: boolean;
+  data?: Array<{ x: number; y: number; label?: string }>;
+  color?: string;
+  showGrid?: boolean;
+  showLabels?: boolean;
 }
 
 /**
  * 生成散点图的 echarts 配置
  */
 export function getScatterChartOption(
-  config: ScatterChartConfig
+  config?: ScatterChartConfig
 ): EChartsOption {
-  const { data, color, showGrid, showLabels } = config;
+  // 默认配置
+  const defaultData = [
+    { x: 30, y: 45, label: "A" },
+    { x: 80, y: 120, label: "B" },
+    { x: 45, y: 67.5, label: "C" },
+    { x: 60, y: 90, label: "D" },
+  ];
+
+  const {
+    data = defaultData,
+    color = "#5F95FF",
+    showGrid = true,
+    showLabels = true,
+  } = config || {};
 
   // 计算 x 和 y 的范围
   const xValues = data.map((d) => d.x);
@@ -89,9 +102,7 @@ export function getScatterChartOption(
           show: showLabels,
           formatter: (params: any) => {
             const index = params.dataIndex;
-            return (
-              data[index]?.label || `(${data[index].x}, ${data[index].y})`
-            );
+            return data[index]?.label || `(${data[index].x}, ${data[index].y})`;
           },
           position: "top",
           color: "#333",
@@ -101,4 +112,3 @@ export function getScatterChartOption(
     ],
   };
 }
-

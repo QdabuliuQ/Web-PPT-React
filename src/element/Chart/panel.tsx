@@ -5,11 +5,9 @@ import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
+import { ColorPanel } from "./components/colorPanel";
 import { GridPanel } from "./components/gridPanel";
-import { LegendPanel } from "./components/legendPanel";
 import { TitlePanel } from "./components/titlePanel";
-import { XAxisPanel } from "./components/xAxisPanel";
-import { YAxisPanel } from "./components/yAxisPanel";
 import type { IChartProps } from "./index";
 import { BarChartPanel } from "./type/bar/panel";
 import { LineChartPanel } from "./type/line/panel";
@@ -56,7 +54,7 @@ const ChartPanelComponent: FC = observer(() => {
 
   // 根据 chartType 渲染对应的 panel 组件
   const TypePanel = useMemo(() => {
-    // 解析 chartType，例如 "bar1" -> { type: "bar", index: 1 }
+    if (!chartInfo.chartType) return null;
     const match = chartInfo.chartType.match(/^([a-z]+)(\d+)$/);
     if (!match) return null;
 
@@ -84,11 +82,9 @@ const ChartPanelComponent: FC = observer(() => {
       <div className="h-[53px] flex gap-[10px] items-center">
         <TitlePanel />
         <GridPanel />
-        <XAxisPanel />
-        <YAxisPanel />
-        <LegendPanel />
-        <PanelSplitLine />
+        {chartInfo.chartType === "bar2" && <ColorPanel />}
         {TypePanel}
+        <PanelSplitLine />
         <PanelCommonSetting
           onPositionChange={(key) => positionHandle(key as Position)}
           onZIndexChange={onZIndexChange}

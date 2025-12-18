@@ -18,6 +18,7 @@ import {
   SendBackward,
   SentToBack,
 } from "@icon-park/react";
+import { message } from "antd";
 import { observer } from "mobx-react-lite";
 import { type FC } from "react";
 import { PanelDropdownButton } from "../PanelDropdownButton";
@@ -38,12 +39,15 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = observer(
         switch (key) {
           case "copy":
             copyActiveElement();
+            message.success("复制成功");
             break;
           case "cut":
             cutActiveElement();
+            message.success("剪切成功");
             break;
           case "delete":
             deleteActiveElement();
+            message.success("删除成功");
             break;
         }
       }

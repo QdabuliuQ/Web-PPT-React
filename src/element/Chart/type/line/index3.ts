@@ -4,10 +4,21 @@ import type { LineChartConfig } from "./index1";
 /**
  * 生成平滑折线图的 echarts 配置
  */
-export function getSmoothLineChartOption(
-  config: LineChartConfig
-): EChartsOption {
-  const { data, color, showGrid, showLabels } = config;
+export function getLineChartOption3(config?: LineChartConfig): EChartsOption {
+  // 默认配置
+  const defaultData = [
+    { label: "A", value: 30 },
+    { label: "B", value: 80 },
+    { label: "C", value: 45 },
+    { label: "D", value: 60 },
+  ];
+
+  const {
+    data = defaultData,
+    color = "#5F95FF",
+    showGrid = true,
+    showLabels = true,
+  } = config || {};
 
   return {
     grid: {
@@ -73,4 +84,3 @@ export function getSmoothLineChartOption(
     ],
   };
 }
-

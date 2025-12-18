@@ -1,11 +1,12 @@
-import { PanelLargeButton } from "@/components";
 import { PanelSplitLine } from "@/components/PanelSplitLine";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { Label } from "@icon-park/react";
-import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import { type FC } from "react";
+import { LegendPanel } from "../../components/legendPanel";
+import { XAxisPanel } from "../../components/xAxisPanel";
+import { YAxisPanel } from "../../components/yAxisPanel";
 import type { IChartProps } from "../../index";
+import { Bar2ChartPanel } from "./index2Panel";
 
 export const BarChartPanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
@@ -20,22 +21,21 @@ export const BarChartPanel: FC = observer(() => {
 
   if (!chartInfo) return null;
 
-  const handleChange = useMemoizedFn((key: keyof IChartProps, value: any) => {
-    pptStore.setElementInfo(pageId, elementId, {
-      ...chartInfo,
-      [key]: value,
-    });
-  });
-
   return (
     <>
-      <PanelLargeButton
-        active={chartInfo.showLabels}
-        icon={<Label theme="outline" size="16" fill="#333" />}
-        title="标签"
-        onClick={() => handleChange("showLabels", !chartInfo.showLabels)}
-      />
-      <PanelSplitLine />
+      {chartInfo.chartType === "bar1" && (
+        <>
+          <XAxisPanel />
+          <YAxisPanel />
+          <LegendPanel />
+        </>
+      )}
+      {chartInfo.chartType === "bar2" && (
+        <>
+          <PanelSplitLine />
+          <Bar2ChartPanel />
+        </>
+      )}
     </>
   );
 });

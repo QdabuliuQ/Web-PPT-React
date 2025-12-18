@@ -1,21 +1,31 @@
 import type { EChartsOption } from "echarts";
 
 export interface RadarChartConfig {
-  data: Array<{
+  data?: Array<{
     name: string;
     value: number;
   }>;
-  color: string;
-  showLabels: boolean;
+  color?: string;
+  showLabels?: boolean;
 }
 
 /**
  * 生成雷达图的 echarts 配置
  */
-export function getRadarChartOption(
-  config: RadarChartConfig
-): EChartsOption {
-  const { data, color, showLabels } = config;
+export function getRadarChartOption(config?: RadarChartConfig): EChartsOption {
+  // 默认配置
+  const defaultData = [
+    { name: "A", value: 30 },
+    { name: "B", value: 80 },
+    { name: "C", value: 45 },
+    { name: "D", value: 60 },
+  ];
+
+  const {
+    data = defaultData,
+    color = "#5F95FF",
+    showLabels = true,
+  } = config || {};
 
   // 计算最大值，用于设置雷达图的刻度
   const maxValue = Math.max(...data.map((d) => d.value), 100);
@@ -74,4 +84,3 @@ export function getRadarChartOption(
     ],
   };
 }
-

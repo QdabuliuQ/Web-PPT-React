@@ -1,17 +1,30 @@
 import type { EChartsOption } from "echarts";
 
 export interface LineChartConfig {
-  data: Array<{ label: string; value: number }>;
-  color: string;
-  showGrid: boolean;
-  showLabels: boolean;
+  data?: Array<{ label: string; value: number }>;
+  color?: string;
+  showGrid?: boolean;
+  showLabels?: boolean;
 }
 
 /**
  * 生成基础折线图的 echarts 配置
  */
-export function getLineChartOption(config: LineChartConfig): EChartsOption {
-  const { data, color, showGrid, showLabels } = config;
+export function getLineChartOption1(config?: LineChartConfig): EChartsOption {
+  // 默认配置
+  const defaultData = [
+    { label: "A", value: 30 },
+    { label: "B", value: 80 },
+    { label: "C", value: 45 },
+    { label: "D", value: 60 },
+  ];
+
+  const {
+    data = defaultData,
+    color = "#5F95FF",
+    showGrid = true,
+    showLabels = true,
+  } = config || {};
 
   return {
     grid: {
@@ -77,4 +90,3 @@ export function getLineChartOption(config: LineChartConfig): EChartsOption {
     ],
   };
 }
-

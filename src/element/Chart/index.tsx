@@ -14,6 +14,16 @@ import { memo, useEffect, useMemo, useRef, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
 import { getChartMenuItems } from "./menu";
+import {
+  getBarChartOption1,
+  getBarChartOption2,
+  getLineChartOption1,
+  getLineChartOption2,
+  getLineChartOption3,
+  getPieChartOption,
+  getRadarChartOption,
+  getScatterChartOption,
+} from "./type";
 export { ChartButtonComponent as ChartButton } from "./button";
 export { ChartPanel, ChartPanelKey, ChartPanelTitle } from "./panel";
 
@@ -224,226 +234,60 @@ const Component: FC<IChartProps> = observer((props) => {
 
 export const Chart = memo(Component);
 
+/**
+ * 根据 chartType 获取对应的配置函数
+ */
+const getChartOptionByType = (chartType: string): echarts.EChartsOption => {
+  // 解析 chartType，例如 "bar1" -> { type: "bar", index: 1 }
+  const match = chartType.match(/^([a-z]+)(\d+)$/);
+  if (!match) {
+    // 默认使用 bar1
+    return getBarChartOption1();
+  }
+
+  const [, type, indexStr] = match;
+  const index = parseInt(indexStr, 10);
+
+  // 根据类型和索引调用对应的配置函数
+  switch (type) {
+    case "bar":
+      if (index === 1) {
+        return getBarChartOption1();
+      } else if (index === 2) {
+        return getBarChartOption2();
+      }
+      break;
+    case "line":
+      if (index === 1) {
+        return getLineChartOption1();
+      } else if (index === 2) {
+        return getLineChartOption2();
+      } else if (index === 3) {
+        return getLineChartOption3();
+      }
+      break;
+    case "pie":
+      return getPieChartOption();
+    case "scatter":
+      return getScatterChartOption();
+    case "radar":
+      return getRadarChartOption();
+  }
+
+  // 默认返回 bar1 配置
+  return getBarChartOption1();
+};
+
 export const CreateChart = (props: Partial<IChartProps> = {}) => {
   const chartType = props.chartType || "bar1";
+
+  // 根据 chartType 调用对应的配置函数获取 option
+  const chartOption = getChartOptionByType(chartType);
 
   const defaultProps: Omit<IChartProps, "type" | "id"> = {
     mode: "edit",
     chartType: chartType,
-    option: {
-      title: {
-        text: "标题",
-        show: true,
-        textStyle: {
-          color: "#333",
-          fontStyle: "normal",
-          fontWeight: "bold",
-          fontSize: 18,
-          textShadowColor: "transparent",
-          textShadowBlur: 0,
-          textShadowOffsetX: 0,
-          textShadowOffsetY: 0,
-        },
-        subtext: "",
-        subtextStyle: {
-          color: "#aaa",
-          fontStyle: "normal",
-          fontWeight: "bold",
-          fontSize: 12,
-          textShadowColor: "transparent",
-          textShadowBlur: 0,
-          textShadowOffsetX: 0,
-          textShadowOffsetY: 0,
-        },
-        left: 0,
-        top: 0,
-      },
-      grid: {
-        show: true,
-        left: 20,
-        right: 20,
-        top: 40,
-        bottom: 20,
-        shadowColor: "transparent",
-        shadowBlur: 0,
-        shadowOffsetX: 0,
-        shadowOffsetY: 0,
-        backgroundColor: "#fff",
-      },
-      dataset: {
-        source: [
-          ["product", "value"],
-          ["A", 30],
-          ["B", 80],
-          ["C", 45],
-          ["D", 60],
-        ],
-      },
-      legend: {
-        show: true,
-        left: 0,
-        top: 0,
-        itemWidth: 25,
-        itemHeight: 14,
-        textStyle: {
-          color: "#333",
-          fontSize: 12,
-          fontStyle: "normal",
-          fontWeight: "normal",
-          textShadowColor: "transparent",
-          textShadowBlur: 0,
-          textShadowOffsetX: 0,
-          textShadowOffsetY: 0,
-        },
-        itemStyle: {
-          borderColor: "transparent",
-          borderWidth: 0,
-          borderType: "solid",
-          opacity: 1,
-          shadowBlur: 0,
-          shadowColor: "transparent",
-          shadowOffsetX: 0,
-          shadowOffsetY: 0,
-        },
-      },
-      xAxis: {
-        show: true,
-        name: "",
-        nameLocation: "end",
-        nameTextStyle: {
-          color: "#666",
-          fontSize: 12,
-          fontStyle: "normal",
-          fontWeight: "normal",
-          textShadowColor: "transparent",
-          textShadowBlur: 0,
-          textShadowOffsetX: 0,
-          textShadowOffsetY: 0,
-        },
-        type: "category",
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: "#666",
-            width: 1,
-            type: "solid",
-            shadowBlur: 0,
-            shadowColor: "transparent",
-            shadowOffsetX: 0,
-            shadowOffsetY: 0,
-            opacity: 1,
-          },
-        },
-        axisLabel: {
-          show: true,
-          color: "#666",
-          rotate: 0,
-          fontSize: 12,
-          fontStyle: "normal",
-          fontWeight: "normal",
-          shadowColor: "transparent",
-          shadowBlur: 0,
-          shadowOffsetX: 0,
-          shadowOffsetY: 0,
-          textShadowColor: "transparent",
-          textShadowBlur: 0,
-          textShadowOffsetX: 0,
-          textShadowOffsetY: 0,
-        },
-        axisTick: {
-          show: true,
-          length: 5,
-          lineStyle: {
-            color: "#ccc",
-            width: 1,
-            type: "solid",
-            opacity: 1,
-          },
-        },
-      },
-      yAxis: {
-        type: "value",
-        name: "",
-        nameLocation: "end",
-        nameTextStyle: {
-          color: "#666",
-          fontSize: 12,
-          fontStyle: "normal",
-          fontWeight: "normal",
-          textShadowColor: "transparent",
-          textShadowBlur: 0,
-          textShadowOffsetX: 0,
-          textShadowOffsetY: 0,
-        },
-        show: true,
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: "#666",
-            width: 1,
-            type: "solid",
-            shadowBlur: 0,
-            shadowColor: "transparent",
-            shadowOffsetX: 0,
-            shadowOffsetY: 0,
-            opacity: 1,
-          },
-        },
-        axisLabel: {
-          show: true,
-          color: "#666",
-          rotate: 0,
-          fontSize: 12,
-          fontStyle: "normal",
-          fontWeight: "normal",
-          shadowColor: "transparent",
-          shadowBlur: 0,
-          shadowOffsetX: 0,
-          shadowOffsetY: 0,
-          textShadowColor: "transparent",
-          textShadowBlur: 0,
-          textShadowOffsetX: 0,
-          textShadowOffsetY: 0,
-        },
-        axisTick: {
-          show: true,
-          length: 5,
-          lineStyle: {
-            color: "#ccc",
-            width: 1,
-            type: "solid",
-            opacity: 1,
-          },
-        },
-        splitLine: {
-          show: true,
-          lineStyle: {
-            color: "#e0e0e0",
-            type: "dashed",
-          },
-        },
-      },
-      series: [
-        {
-          type: "bar",
-          name: "数值",
-          encode: {
-            x: "product",
-            y: "value",
-          },
-          itemStyle: {
-            color: "#5F95FF",
-            borderRadius: [4, 4, 0, 0],
-          },
-          label: {
-            show: true,
-            position: "top",
-            color: "#333",
-            fontSize: 12,
-          },
-        },
-      ],
-    },
+    option: chartOption,
     x: 100,
     y: 100,
     width: 500,
