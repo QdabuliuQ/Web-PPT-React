@@ -7,7 +7,6 @@ import { MindMap } from "@/element/MindMap";
 import { Table } from "@/element/Table";
 import { Text } from "@/element/Text";
 import type { MenuItem } from "@/hooks/useContextMenu";
-import MockData from "@/mock";
 import { textureItems } from "@/pages/Menu/components/Start/texture";
 import {
   contextMenuStore,
@@ -22,6 +21,7 @@ import {
 import type { Elements } from "@/store/ppt";
 import { getRandomId } from "@/utils";
 import { globalEventBus } from "@/utils/eventBus";
+import { initPPTStore } from "@/utils/initStore";
 import {
   Clipboard,
   CloseOne,
@@ -104,28 +104,9 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     }
   });
 
-  // 初始化数据 - 只执行一次
+  // 初始化数据 - 只执行一次（作为备用，主要初始化在 App.tsx 中）
   useEffect(() => {
-    // 只在没有数据时初始化
-    if (pptStore.getPages().length === 0) {
-      pptStore.setPages(JSON.parse(JSON.stringify(MockData)).pages);
-      pptStore.setGridSize(MockData.gridSize);
-      pptStore.setKeyboardToggle(MockData.keyboardToggle);
-      pptStore.setName(MockData.name);
-      if ((MockData as any).gridType) {
-        pptStore.setGridType((MockData as any).gridType);
-      }
-      pptStore.setVerticalLine(MockData.verticalLine);
-      pptStore.setHorizontalLine(MockData.horizontalLine);
-      pptStore.setRule(MockData.rule);
-      pptStore.setGuideLineShow(MockData.guideLineShow);
-
-      const pages = pptStore.getPages();
-
-      if (pages.length > 0) {
-        pageActiveStore.setPageActive(pages[0].id);
-      }
-    }
+    initPPTStore();
   }, []);
 
   // 初始化缩放
@@ -363,10 +344,13 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   });
 
   // 直接获取页面数据，observer 会自动响应 store 变化
+  // preview 模式下也从 store 获取，确保能响应页面内容变化
   const currentPage =
     mode === "edit"
       ? pptStore.getActivePage(pageActiveStore.getPageActive() as string)
-      : page;
+      : mode === "preview" && page
+        ? pptStore.getActivePage(page.id)
+        : page;
 
   // 获取页面背景属性
   const backgroundType = (currentPage as any)?.backgroundType || "solidColor";
@@ -970,10 +954,13 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     }
 
     // 在 play 模式下优先使用传入的 page prop，否则从 pageActiveStore 获取
+    // preview 模式下也从 store 获取，确保能响应页面内容变化
     const currentPage =
       mode === "play" && page
         ? page
-        : pptStore.getActivePage(pageActiveStore.getPageActive() as string);
+        : mode === "preview" && page
+          ? pptStore.getActivePage(page.id)
+          : pptStore.getActivePage(pageActiveStore.getPageActive() as string);
     const {
       toggleInAnimation = "",
       toggleInDelay = "0",

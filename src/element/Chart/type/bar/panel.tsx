@@ -23,14 +23,14 @@ export const BarChartPanel: FC = observer(() => {
 
   return (
     <>
-      {chartInfo.chartType === "bar1" && (
+      {(chartInfo.chartType === "bar1" || chartInfo.chartType === "bar4") && (
         <>
           <XAxisPanel />
           <YAxisPanel />
           <LegendPanel />
         </>
       )}
-      {chartInfo.chartType === "bar2" && (
+      {(chartInfo.chartType === "bar2" || chartInfo.chartType === "bar3") && (
         <>
           <PanelSplitLine />
           <Bar2ChartPanel />

@@ -17,6 +17,8 @@ import { getChartMenuItems } from "./menu";
 import {
   getBarChartOption1,
   getBarChartOption2,
+  getBarChartOption3,
+  getBarChartOption4,
   getLineChartOption1,
   getLineChartOption2,
   getLineChartOption3,
@@ -255,6 +257,10 @@ const getChartOptionByType = (chartType: string): echarts.EChartsOption => {
         return getBarChartOption1();
       } else if (index === 2) {
         return getBarChartOption2();
+      } else if (index === 3) {
+        return getBarChartOption3();
+      } else if (index === 4) {
+        return getBarChartOption4();
       }
       break;
     case "line":

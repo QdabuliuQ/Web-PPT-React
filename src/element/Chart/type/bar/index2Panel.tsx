@@ -820,7 +820,7 @@ export const Bar2ChartPanel: FC = observer(() => {
   return (
     <Popover
       content={content}
-      trigger="click"
+      trigger="hover"
       placement="bottom"
       overlayInnerStyle={{ padding: 0 }}
     >

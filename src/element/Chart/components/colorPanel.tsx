@@ -148,7 +148,7 @@ export const ColorPanel: FC = observer(() => {
   return (
     <Popover
       content={content}
-      trigger="click"
+      trigger="hover"
       placement="bottom"
       overlayInnerStyle={{ padding: 0 }}
     >

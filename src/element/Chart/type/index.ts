@@ -1,6 +1,14 @@
 // 柱状图
 export { getBarChartOption1, type BarChartConfig } from "./bar/index1";
 export { getBarChartOption2, type PolarBarChartConfig } from "./bar/index2";
+export {
+  getBarChartOption3,
+  type TangentialPolarBarChartConfig,
+} from "./bar/index3";
+export {
+  getBarChartOption4,
+  type HorizontalBarChartConfig,
+} from "./bar/index4";
 
 // 折线图
 export { getLineChartOption1, type LineChartConfig } from "./line/index1";

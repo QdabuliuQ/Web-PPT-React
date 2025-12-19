@@ -1,3 +1,4 @@
+import type { IChartProps } from "@/element/Chart";
 import type { IIconProps } from "@/element/Icon";
 import type { IImageProps } from "@/element/Image";
 import type { IMindMapProps } from "@/element/MindMap";
@@ -11,6 +12,7 @@ type CopiedElement =
   | IIconProps
   | IImageProps
   | IMindMapProps
+  | IChartProps
   | null;
 
 class CopyElementStore {

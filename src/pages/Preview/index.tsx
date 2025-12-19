@@ -7,6 +7,7 @@ import {
   pptStore,
 } from "@/store";
 import type { Page } from "@/store/ppt";
+import { initPPTStore } from "@/utils/initStore";
 import {
   addPageAndActivate,
   copyActiveElement,
@@ -34,9 +35,24 @@ import { Canvas } from "../Canvas";
 import styles from "./index.module.less";
 
 const PreviewComponent: FC = () => {
-  const pages = pptStore.getPages();
+  // 直接访问 observable 属性，确保 MobX 能正确追踪变化
+  const pages = pptStore.pages;
 
   const pageActive = pageActiveStore.getPageActive();
+
+  // 确保数据已初始化
+  useEffect(() => {
+    if (pages.length === 0) {
+      initPPTStore();
+    }
+  }, [pages.length]);
+
+  // 调试：监听 pages 变化
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("Preview: pages changed, count:", pages.length);
+    }
+  }, [pages]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const addButtonRef = useRef<HTMLDivElement>(null);
@@ -297,77 +313,83 @@ const PreviewComponent: FC = () => {
           },
         }}
       >
-        {pages.map((page: Page, index: number) => (
-          <div
-            className={`${styles.pageItem} relative mr-[15px] cursor-pointer flex gap-[8px]`}
-            key={page.id}
-          >
-            <span
-              className={`text-[13px] mt-[5px] font-bold ${
-                pageActive === page.id ? "text-primary" : "text-[#9b9b9b]"
-              }`}
-            >
-              {index + 1}
-            </span>
+        {pages && pages.length > 0 ? (
+          pages.map((page: Page, index: number) => (
             <div
-              ref={index === 0 ? pageItemRef : null}
-              className="previewCanvas relative flex-1 rounded-[8px] overflow-hidden"
-              style={{
-                aspectRatio: "10 / 7", // 1000:700 的宽高比
-                boxShadow:
-                  pageActive === page.id ? "0 0 0 2px #f25f00" : "none",
-              }}
-              onClick={() => handlePageClick(page.id)}
-              onContextMenu={(e) => handleContextMenu(e, page.id)}
+              className={`${styles.pageItem} relative mr-[15px] cursor-pointer flex gap-[8px]`}
+              key={page.id}
             >
-              {page.visible === false && (
-                <div
-                  className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/10 rounded-[8px] z-10"
-                  onClick={() => handlePageClick(page.id)}
-                  onContextMenu={(e) => handleContextMenu(e, page.id)}
-                >
-                  <PreviewCloseOne theme="outline" size="24" fill="#333" />
-                </div>
-              )}
-              <Canvas mode="preview" page={page} previewZoom={scale} />
-            </div>
-            <div className="floatButton absolute bottom-[-12px] right-[13px] z-10 w-[80%] flex items-center justify-between opacity-0 transition-opacity">
-              <div
-                className="flex items-center justify-center w-[26px] h-[26px] bg-[#fff] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-                onClick={(e) => handlePlayPage(page.id, e)}
+              <span
+                className={`text-[13px] mt-[5px] font-bold ${
+                  pageActive === page.id ? "text-primary" : "text-[#9b9b9b]"
+                }`}
               >
-                <PlayOne theme="filled" size="18" fill="#f25f00" />
+                {index + 1}
+              </span>
+              <div
+                ref={index === 0 ? pageItemRef : null}
+                className="previewCanvas relative flex-1 rounded-[8px] overflow-hidden"
+                style={{
+                  aspectRatio: "10 / 7", // 1000:700 的宽高比
+                  boxShadow:
+                    pageActive === page.id ? "0 0 0 2px #f25f00" : "none",
+                }}
+                onClick={() => handlePageClick(page.id)}
+                onContextMenu={(e) => handleContextMenu(e, page.id)}
+              >
+                {page.visible === false && (
+                  <div
+                    className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/10 rounded-[8px] z-10"
+                    onClick={() => handlePageClick(page.id)}
+                    onContextMenu={(e) => handleContextMenu(e, page.id)}
+                  >
+                    <PreviewCloseOne theme="outline" size="24" fill="#333" />
+                  </div>
+                )}
+                <Canvas mode="preview" page={page} previewZoom={scale} />
               </div>
-              <div className="flex items-center gap-[10px]">
-                {/* 向上移动按钮 - 第一个画布不显示 */}
-                {index > 0 && (
-                  <div
-                    className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-                    onClick={(e) => handleMovePageUp(page.id, e)}
-                  >
-                    <Up theme="outline" size="18" fill="#fff" />
-                  </div>
-                )}
-                {/* 向下移动按钮 - 最后一个画布不显示 */}
-                {index < pages.length - 1 && (
-                  <div
-                    className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-                    onClick={(e) => handleMovePageDown(page.id, e)}
-                  >
-                    <Down theme="outline" size="18" fill="#fff" />
-                  </div>
-                )}
-                {/* 添加页面按钮 */}
+              <div className="floatButton absolute bottom-[-12px] right-[13px] z-10 w-[80%] flex items-center justify-between opacity-0 transition-opacity">
                 <div
-                  className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-                  onClick={(e) => handleAddPageAfter(page.id, e)}
+                  className="flex items-center justify-center w-[26px] h-[26px] bg-[#fff] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                  onClick={(e) => handlePlayPage(page.id, e)}
                 >
-                  <Plus theme="outline" size="18" fill="#fff" />
+                  <PlayOne theme="filled" size="18" fill="#f25f00" />
+                </div>
+                <div className="flex items-center gap-[10px]">
+                  {/* 向上移动按钮 - 第一个画布不显示 */}
+                  {index > 0 && (
+                    <div
+                      className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                      onClick={(e) => handleMovePageUp(page.id, e)}
+                    >
+                      <Up theme="outline" size="18" fill="#fff" />
+                    </div>
+                  )}
+                  {/* 向下移动按钮 - 最后一个画布不显示 */}
+                  {index < pages.length - 1 && (
+                    <div
+                      className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                      onClick={(e) => handleMovePageDown(page.id, e)}
+                    >
+                      <Down theme="outline" size="18" fill="#fff" />
+                    </div>
+                  )}
+                  {/* 添加页面按钮 */}
+                  <div
+                    className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+                    onClick={(e) => handleAddPageAfter(page.id, e)}
+                  >
+                    <Plus theme="outline" size="18" fill="#fff" />
+                  </div>
                 </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="flex items-center justify-center h-full text-[#9b9b9b] text-sm px-[15px]">
+            暂无页面数据
           </div>
-        ))}
+        )}
       </OverlayScrollbarsComponent>
 
       {/* 添加页面按钮 */}

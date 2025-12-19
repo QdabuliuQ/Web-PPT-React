@@ -35,7 +35,8 @@ class PPTStore {
   pages: IPage = [];
 
   constructor() {
-    makeAutoObservable(this);
+    // 使用 deep: true 确保嵌套对象也是 observable
+    makeAutoObservable(this, {}, { deep: true });
   }
 
   // keyboardToggle
@@ -103,7 +104,8 @@ class PPTStore {
   };
 
   setPages = (pages: IPage) => {
-    this.pages = pages;
+    // 确保创建新数组引用，触发 MobX 响应式更新
+    this.pages = [...pages];
   };
 
   getActivePage = (pageId: string): Page | undefined => {
@@ -125,21 +127,27 @@ class PPTStore {
       elements: [],
     };
 
+    let newPages: IPage;
     if (afterPageId) {
       // 找到指定页面的索引
       const index = this.pages.findIndex((page) => page.id === afterPageId);
       if (index !== -1) {
         // 插入到指定页面之后
-        this.pages.splice(index + 1, 0, newPage);
+        newPages = [
+          ...this.pages.slice(0, index + 1),
+          newPage,
+          ...this.pages.slice(index + 1),
+        ];
       } else {
         // 如果没找到，添加到末尾
-        this.pages.push(newPage);
+        newPages = [...this.pages, newPage];
       }
     } else {
       // 没有指定位置，添加到末尾
-      this.pages.push(newPage);
+      newPages = [...this.pages, newPage];
     }
 
+    this.pages = newPages;
     return newPage.id;
   };
 
@@ -152,7 +160,11 @@ class PPTStore {
 
     const index = this.pages.findIndex((page) => page.id === pageId);
     if (index !== -1) {
-      this.pages.splice(index, 1);
+      // 创建新数组，触发 MobX 响应式更新
+      this.pages = [
+        ...this.pages.slice(0, index),
+        ...this.pages.slice(index + 1),
+      ];
       return true;
     }
 
@@ -175,7 +187,12 @@ class PPTStore {
       })),
     };
 
-    this.pages.splice(pageIndex + 1, 0, newPage);
+    // 创建新数组，触发 MobX 响应式更新
+    this.pages = [
+      ...this.pages.slice(0, pageIndex + 1),
+      newPage,
+      ...this.pages.slice(pageIndex + 1),
+    ];
 
     return newPage.id;
   };
@@ -185,7 +202,7 @@ class PPTStore {
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return false;
 
-    const [page] = this.pages.splice(pageIndex, 1);
+    const page = this.pages[pageIndex];
 
     let newIndex = pageIndex;
     switch (direction) {
@@ -193,17 +210,32 @@ class PPTStore {
         newIndex = Math.max(0, pageIndex - 1);
         break;
       case "down":
-        newIndex = Math.min(this.pages.length, pageIndex + 1);
+        newIndex = Math.min(this.pages.length - 1, pageIndex + 1);
         break;
       case "first":
         newIndex = 0;
         break;
       case "last":
-        newIndex = this.pages.length;
+        newIndex = this.pages.length - 1;
         break;
     }
 
-    this.pages.splice(newIndex, 0, page);
+    // 如果位置没有变化，直接返回
+    if (newIndex === pageIndex) return true;
+
+    // 创建新数组，完全避免使用 splice，触发 MobX 响应式更新
+    const pagesWithoutMoved = [
+      ...this.pages.slice(0, pageIndex),
+      ...this.pages.slice(pageIndex + 1),
+    ];
+    
+    const newPages = [
+      ...pagesWithoutMoved.slice(0, newIndex),
+      page,
+      ...pagesWithoutMoved.slice(newIndex),
+    ];
+    
+    this.pages = newPages;
 
     return true;
   };
@@ -213,9 +245,17 @@ class PPTStore {
     const pageIndex = this.pages.findIndex((page) => page.id === pageId);
     if (pageIndex === -1) return false;
 
-    // 直接修改页面的 visible 属性
-    const currentVisible = this.pages[pageIndex].visible;
-    this.pages[pageIndex].visible = currentVisible === false ? true : false;
+    // 创建新的 pages 数组和页面对象，触发 MobX 响应式更新
+    const newPages = [...this.pages];
+    const currentPage = newPages[pageIndex];
+    const currentVisible = currentPage.visible;
+
+    newPages[pageIndex] = {
+      ...currentPage,
+      visible: currentVisible === false ? true : false,
+    };
+
+    this.pages = newPages;
 
     return true;
   };

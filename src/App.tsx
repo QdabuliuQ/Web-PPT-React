@@ -1,8 +1,12 @@
 import Index from "@/pages/index";
+import { initPPTStore } from "@/utils/initStore";
 import "animate.css";
 import { ConfigProvider } from "antd";
 import "react-contexify/dist/ReactContexify.css";
 import "./App.css";
+
+// 在模块加载时同步初始化数据，确保在组件渲染前完成
+initPPTStore();
 
 function App() {
   return (
