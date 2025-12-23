@@ -1,5 +1,6 @@
 import type { EChartsOption } from "echarts";
 import type { LineChartConfig } from "./index1";
+import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
 
 /**
  * 生成面积折线图的 echarts 配置
@@ -28,20 +29,14 @@ export function getLineChartOption2(config?: LineChartConfig): EChartsOption {
       bottom: "15%",
       containLabel: true,
     },
-    xAxis: {
+    xAxis: getXAxisDefaultOption({
       type: "category",
       data: data.map((d) => d.label),
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
-    yAxis: {
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
+    yAxis: getYAxisDefaultOption({
       type: "value",
       splitLine: {
         show: showGrid,
@@ -50,16 +45,10 @@ export function getLineChartOption2(config?: LineChartConfig): EChartsOption {
           type: "dashed",
         },
       },
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
     series: [
       {
         type: "line",

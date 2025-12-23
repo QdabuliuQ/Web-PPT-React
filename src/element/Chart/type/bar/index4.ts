@@ -1,4 +1,10 @@
 import type { EChartsOption } from "echarts";
+import {
+  getColorDefaultOption,
+  getTitleDefaultOption,
+  getXAxisDefaultOption,
+  getYAxisDefaultOption,
+} from "../../common";
 
 export interface HorizontalBarChartConfig {
   title?: any;
@@ -65,40 +71,12 @@ export function getBarChartOption4(
     },
   ];
 
-  const defaultTitle = {
-    text: "标题",
-    show: true,
-    textStyle: {
-      color: "#333",
-      fontStyle: "normal" as const,
-      fontWeight: "bold" as const,
-      fontSize: 18,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    subtext: "",
-    subtextStyle: {
-      color: "#aaa",
-      fontStyle: "normal" as const,
-      fontWeight: "bold" as const,
-      fontSize: 12,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    left: 0,
-    top: 0,
-  };
-
   const {
     data = defaultData,
     showGrid = true,
     showLabels = true,
     boundaryGap = [0, 0.01],
-    title = defaultTitle,
+    title = getTitleDefaultOption(),
   } = config || {};
 
   // 提取所有系列名称（从第一个数据项的 series 中获取）
@@ -139,17 +117,7 @@ export function getBarChartOption4(
 
   return {
     title,
-    color: [
-      "#5F95FF",
-      "#91CC75",
-      "#FAC858",
-      "#EE6666",
-      "#73C0DE",
-      "#3BA272",
-      "#FC8452",
-      "#9A60B4",
-      "#EA7CCC",
-    ],
+    color: getColorDefaultOption(),
     legend: {
       show: false,
     },
@@ -157,7 +125,7 @@ export function getBarChartOption4(
       top: 20,
       bottom: 50,
     },
-    xAxis: {
+    xAxis: getXAxisDefaultOption({
       type: "value" as const,
       boundaryGap,
       splitLine: {
@@ -167,29 +135,17 @@ export function getBarChartOption4(
           type: "dashed" as const,
         },
       },
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
-    yAxis: {
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
+    yAxis: getYAxisDefaultOption({
       type: "category" as const,
       data: data.map((d) => d.category),
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
     dataset: {
       source: datasetSource,
     },

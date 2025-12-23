@@ -1,4 +1,10 @@
 import type { EChartsOption } from "echarts";
+import {
+  getColorDefaultOption,
+  getTitleDefaultOption,
+  getXAxisDefaultOption,
+  getYAxisDefaultOption,
+} from "../../common";
 
 export interface BarChartConfig {
   title?: any;
@@ -20,55 +26,17 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
     { label: "D", value: 60 },
   ];
 
-  const defaultTitle = {
-    text: "标题",
-    show: true,
-    textStyle: {
-      color: "#333",
-      fontStyle: "normal" as const,
-      fontWeight: "bold" as const,
-      fontSize: 18,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    subtext: "",
-    subtextStyle: {
-      color: "#aaa",
-      fontStyle: "normal" as const,
-      fontWeight: "bold" as const,
-      fontSize: 12,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    left: 0,
-    top: 0,
-  };
-
   const {
     data = defaultData,
     color = "#5F95FF",
     showGrid = true,
     showLabels = true,
-    title = defaultTitle,
+    title = getTitleDefaultOption(),
   } = config || {};
 
   return {
     title,
-    color: [
-      "#5F95FF",
-      "#91CC75",
-      "#FAC858",
-      "#EE6666",
-      "#73C0DE",
-      "#3BA272",
-      "#FC8452",
-      "#9A60B4",
-      "#EA7CCC",
-    ],
+    color: getColorDefaultOption(),
     grid: {
       left: "10%",
       right: "10%",
@@ -76,38 +44,22 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
       bottom: "15%",
       containLabel: true,
     },
-    xAxis: {
+    xAxis: getXAxisDefaultOption({
       type: "category",
       data: data.map((d) => d.label),
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
-    yAxis: {
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
+    yAxis: getYAxisDefaultOption({
       type: "value",
-      splitLine: {
-        show: showGrid,
-        lineStyle: {
-          color: "#e0e0e0",
-          type: "dashed",
-        },
-      },
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
+      "splitLine.show": showGrid,
+      "splitLine.lineStyle.color": "#e0e0e0",
+      "splitLine.lineStyle.type": "dashed",
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
     series: [
       {
         type: "bar",

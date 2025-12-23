@@ -1,4 +1,5 @@
 import type { EChartsOption } from "echarts";
+import { getColorDefaultOption } from "../../common";
 
 export interface PieChartConfig {
   data?: Array<{ label: string; value: number }>;
@@ -40,17 +41,7 @@ export function getPieChartOption(config?: PieChartConfig): EChartsOption {
         itemStyle: {
           color: (params: any) => {
             // 使用颜色数组，如果只有一个颜色则使用它
-            const colors = [
-              color,
-              "#91CC75",
-              "#FAC858",
-              "#EE6666",
-              "#73C0DE",
-              "#3BA272",
-              "#FC8452",
-              "#9A60B4",
-              "#EA7CCC",
-            ];
+            const colors = [color, ...getColorDefaultOption().slice(1)];
             return colors[params.dataIndex % colors.length];
           },
         },

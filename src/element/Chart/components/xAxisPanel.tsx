@@ -43,8 +43,6 @@ export const XAxisPanel: FC = observer(() => {
       textShadowOffsetX: 0,
       textShadowOffsetY: 0,
     },
-    type: "category",
-    data: ["A", "B", "C", "D"],
     axisLine: {
       show: true,
       lineStyle: {

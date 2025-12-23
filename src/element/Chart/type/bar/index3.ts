@@ -1,4 +1,5 @@
 import type { EChartsOption } from "echarts";
+import { getColorDefaultOption, getTitleDefaultOption } from "../../common";
 
 export interface TangentialPolarBarChartConfig {
   title?: any;
@@ -18,34 +19,6 @@ export interface TangentialPolarBarChartConfig {
 export function getBarChartOption3(
   config?: TangentialPolarBarChartConfig
 ): EChartsOption {
-  const defaultTitle = {
-    text: "标题",
-    show: true,
-    textStyle: {
-      color: "#333",
-      fontStyle: "normal" as const,
-      fontWeight: "bold" as const,
-      fontSize: 18,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    subtext: "",
-    subtextStyle: {
-      color: "#aaa",
-      fontStyle: "normal" as const,
-      fontWeight: "bold" as const,
-      fontSize: 12,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    left: 0,
-    top: 0,
-  };
-
   const defaultData = [
     { label: "a", value: 2 },
     { label: "b", value: 1.2 },
@@ -54,7 +27,7 @@ export function getBarChartOption3(
   ];
 
   const {
-    title = defaultTitle,
+    title = getTitleDefaultOption(),
     data = defaultData,
     polarRadius = [30, "80%"],
     angleAxisMax = 4,
@@ -63,17 +36,7 @@ export function getBarChartOption3(
 
   return {
     title,
-    color: [
-      "#5F95FF",
-      "#91CC75",
-      "#FAC858",
-      "#EE6666",
-      "#73C0DE",
-      "#3BA272",
-      "#FC8452",
-      "#9A60B4",
-      "#EA7CCC",
-    ],
+    color: getColorDefaultOption(),
     polar: {
       radius: polarRadius,
       center: ["50%", "50%"],

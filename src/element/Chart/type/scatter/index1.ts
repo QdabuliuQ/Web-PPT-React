@@ -1,4 +1,5 @@
 import type { EChartsOption } from "echarts";
+import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
 
 export interface ScatterChartConfig {
   data?: Array<{ x: number; y: number; label?: string }>;
@@ -48,7 +49,7 @@ export function getScatterChartOption(
       bottom: "15%",
       containLabel: true,
     },
-    xAxis: {
+    xAxis: getXAxisDefaultOption({
       type: "value",
       min: xMin - xPadding,
       max: xMax + xPadding,
@@ -59,17 +60,11 @@ export function getScatterChartOption(
           type: "dashed",
         },
       },
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
-    yAxis: {
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
+    yAxis: getYAxisDefaultOption({
       type: "value",
       min: yMin - yPadding,
       max: yMax + yPadding,
@@ -80,16 +75,10 @@ export function getScatterChartOption(
           type: "dashed",
         },
       },
-      axisLine: {
-        lineStyle: {
-          color: "#666",
-        },
-      },
-      axisLabel: {
-        color: "#666",
-        fontSize: 12,
-      },
-    },
+      "axisLine.lineStyle.color": "#666",
+      "axisLabel.color": "#666",
+      "axisLabel.fontSize": 12,
+    }),
     series: [
       {
         type: "scatter",

@@ -1,7 +1,7 @@
 import { PlacementMapped } from "@/element/Text/constant";
 import { Canvas } from "@/pages/Canvas";
 import { pptStore } from "@/store";
-import { toCanvas } from "html-to-image";
+import { snapdom } from "@zumer/snapdom";
 import type { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -258,14 +258,14 @@ export async function exportPageAsImage(
           // 额外等待确保渲染完成
           await new Promise((r) => setTimeout(r, 300));
 
-          // 使用html-to-image的toCanvas方法获取Canvas
+          // 使用@zumer/snapdom的toCanvas方法获取Canvas
           // 这样可以更灵活地处理图片，也可以后续使用OffscreenCanvas
-          const canvas = await toCanvas(canvasElement, {
-            pixelRatio: 2,
+          const canvas = await snapdom.toCanvas(canvasElement, {
+            scale: 2,
             backgroundColor: "#fff",
             width: CANVAS_WIDTH,
             height: CANVAS_HEIGHT,
-            cacheBust: true,
+            cache: "disabled",
           });
 
           // 检查是否支持 Worker 和 ImageBitmap
