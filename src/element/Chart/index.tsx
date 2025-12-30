@@ -8,24 +8,17 @@ import {
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
+import { globalEventBus } from "@/utils/eventBus";
+import { useMemoizedFn } from "ahooks";
 import * as echarts from "echarts";
 import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
+import { ChartDataModal } from "./ChartDataModal";
+import { BASE_CHART_EVENTS, getChartEventName } from "./events";
 import styles from "./index.module.less";
 import { getChartMenuItems } from "./menu";
-import {
-  getBarChartOption1,
-  getBarChartOption2,
-  getBarChartOption3,
-  getBarChartOption4,
-  getLineChartOption1,
-  getLineChartOption2,
-  getLineChartOption3,
-  getPieChartOption,
-  getRadarChartOption,
-  getScatterChartOption,
-} from "./type";
+import { getChartOptionByType, useChartDataModal } from "./useChartDataModal";
 export { ChartButtonComponent as ChartButton } from "./button";
 export { ChartPanel, ChartPanelKey, ChartPanelTitle } from "./panel";
 
@@ -58,12 +51,15 @@ const Component: FC<IChartProps> = observer((props) => {
   const chartInstanceRef = useRef<echarts.ECharts | null>(null);
   const moveableRef = useRef<any>(null);
 
+  // 跟踪图表是否真正被拖拽移动过（用于防止误触发双击）
+  const hasDraggedRef = useRef(false);
+
   // 使用通用的可移动元素hook
   const {
     isDragging,
-    handleDragStart,
-    handleDrag,
-    handleDragEnd,
+    handleDragStart: originalHandleDragStart,
+    handleDrag: originalHandleDrag,
+    handleDragEnd: originalHandleDragEnd,
     handleResizeStart,
     handleResize,
     handleResizeEnd,
@@ -81,12 +77,65 @@ const Component: FC<IChartProps> = observer((props) => {
     },
   });
 
+  // 包装 handleDragStart，重置拖拽标记
+  const handleDragStart = useMemoizedFn(() => {
+    hasDraggedRef.current = false;
+    originalHandleDragStart();
+  });
+
+  // 包装 handleDrag，检测是否真正发生了移动
+  const handleDrag = useMemoizedFn(
+    (params: { x: number; y: number; transform: string }) => {
+      // 只要有移动超过阈值，就标记为真正的拖拽
+      if (Math.abs(params.x) > 1 || Math.abs(params.y) > 1) {
+        hasDraggedRef.current = true;
+      }
+      originalHandleDrag(params);
+    }
+  );
+
+  // 包装 handleDragEnd，延迟重置拖拽标记
+  const handleDragEnd = useMemoizedFn(() => {
+    originalHandleDragEnd();
+    // 延迟重置，确保 doubleClick 事件可以检查到拖拽状态
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 300);
+  });
+
   const isSelected = elementActiveStore.isElementActive(id);
   const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 获取通用菜单
   const currentPageId = pageActiveStore.getPageActive() || "";
   const { commonMenu } = useCommonContextMenu(currentPageId, id);
+
+  // 使用图表数据编辑弹窗 hook
+  const {
+    isDataModalOpen,
+    handleOpenDataModal,
+    handleCloseDataModal,
+    handleSaveChartData,
+  } = useChartDataModal({
+    pageId: currentPageId,
+    elementId: id,
+  });
+
+  // 监听来自 panel 的事件，打开数据编辑弹窗
+  useEffect(() => {
+    if (mode !== "edit") return;
+
+    const eventName = getChartEventName(BASE_CHART_EVENTS.OPEN_DATA_MODAL, id);
+    const handleOpenDataModalEvent = () => {
+      handleOpenDataModal();
+    };
+
+    globalEventBus.on(eventName, handleOpenDataModalEvent);
+
+    return () => {
+      globalEventBus.off(eventName, handleOpenDataModalEvent);
+    };
+  }, [id, mode, handleOpenDataModal]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -100,6 +149,17 @@ const Component: FC<IChartProps> = observer((props) => {
     onSelect?.();
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // 如果刚刚进行过拖拽，则不打开编辑窗口
+    if (hasDraggedRef.current) {
+      return;
+    }
+    if (mode === "edit") {
+      handleOpenDataModal();
+    }
+  };
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -108,7 +168,10 @@ const Component: FC<IChartProps> = observer((props) => {
       onSelect?.();
     }
 
-    const menuItems = [...getChartMenuItems(), ...commonMenu];
+    const menuItems = [
+      ...getChartMenuItems(handleOpenDataModal),
+      ...commonMenu,
+    ];
     contextMenuStore.showMenu(menuItems, e);
   };
 
@@ -136,7 +199,6 @@ const Component: FC<IChartProps> = observer((props) => {
   // 更新图表配置
   useEffect(() => {
     if (!chartInstanceRef.current || !option) return;
-    console.log(option, "option");
 
     chartInstanceRef.current.setOption(option);
   }, [option]);
@@ -182,6 +244,7 @@ const Component: FC<IChartProps> = observer((props) => {
         style={dynamicStyle}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
       >
         <AnimationWrapper
@@ -216,6 +279,12 @@ const Component: FC<IChartProps> = observer((props) => {
         onRotate={handleRotate}
         onRotateEnd={handleRotateEnd}
       />
+      <ChartDataModal
+        open={isDataModalOpen}
+        onClose={handleCloseDataModal}
+        chartInfo={props}
+        onSave={handleSaveChartData}
+      />
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
@@ -235,54 +304,6 @@ const Component: FC<IChartProps> = observer((props) => {
 });
 
 export const Chart = memo(Component);
-
-/**
- * 根据 chartType 获取对应的配置函数
- */
-const getChartOptionByType = (chartType: string): echarts.EChartsOption => {
-  // 解析 chartType，例如 "bar1" -> { type: "bar", index: 1 }
-  const match = chartType.match(/^([a-z]+)(\d+)$/);
-  if (!match) {
-    // 默认使用 bar1
-    return getBarChartOption1();
-  }
-
-  const [, type, indexStr] = match;
-  const index = parseInt(indexStr, 10);
-
-  // 根据类型和索引调用对应的配置函数
-  switch (type) {
-    case "bar":
-      if (index === 1) {
-        return getBarChartOption1();
-      } else if (index === 2) {
-        return getBarChartOption2();
-      } else if (index === 3) {
-        return getBarChartOption3();
-      } else if (index === 4) {
-        return getBarChartOption4();
-      }
-      break;
-    case "line":
-      if (index === 1) {
-        return getLineChartOption1();
-      } else if (index === 2) {
-        return getLineChartOption2();
-      } else if (index === 3) {
-        return getLineChartOption3();
-      }
-      break;
-    case "pie":
-      return getPieChartOption();
-    case "scatter":
-      return getScatterChartOption();
-    case "radar":
-      return getRadarChartOption();
-  }
-
-  // 默认返回 bar1 配置
-  return getBarChartOption1();
-};
 
 export const CreateChart = (props: Partial<IChartProps> = {}) => {
   const chartType = props.chartType || "bar1";

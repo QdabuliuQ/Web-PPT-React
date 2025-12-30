@@ -17,6 +17,7 @@ export interface HorizontalBarChartConfig {
   showLabels?: boolean;
   showLegend?: boolean;
   boundaryGap?: [number, number]; // [0, 0.01]
+  backgroundColor?: string;
 }
 
 /**
@@ -77,6 +78,7 @@ export function getBarChartOption4(
     showLabels = true,
     boundaryGap = [0, 0.01],
     title = getTitleDefaultOption(),
+    backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
 
   // 提取所有系列名称（从第一个数据项的 series 中获取）
@@ -117,6 +119,7 @@ export function getBarChartOption4(
 
   return {
     title,
+    backgroundColor,
     color: getColorDefaultOption(),
     legend: {
       show: false,
@@ -150,5 +153,74 @@ export function getBarChartOption4(
       source: datasetSource,
     },
     series,
+  };
+}
+
+/**
+ * 将图表数据转换为 Excel 格式（二维数组）
+ */
+export function getDataToExcel(
+  config?: HorizontalBarChartConfig
+): Array<Array<string | number>> {
+  const defaultData = [
+    {
+      category: "Brazil",
+      series: [
+        { name: "2011", value: 18203 },
+        { name: "2012", value: 19325 },
+      ],
+    },
+    {
+      category: "Indonesia",
+      series: [
+        { name: "2011", value: 23489 },
+        { name: "2012", value: 23438 },
+      ],
+    },
+  ];
+  const data = config?.data || defaultData;
+  // 提取所有系列名称
+  const seriesNames =
+    data.length > 0 && data[0].series.length > 0
+      ? data[0].series.map((s) => s.name)
+      : [];
+  // 第一行是表头：category + 系列名称
+  const result: Array<Array<string | number>> = [["", ...seriesNames]];
+  // 后续行是数据
+  data.forEach((item) => {
+    const row: Array<string | number> = [item.category];
+    seriesNames.forEach((seriesName) => {
+      const seriesItem = item.series.find((s) => s.name === seriesName);
+      row.push(seriesItem?.value ?? 0);
+    });
+    result.push(row);
+  });
+  return result;
+}
+
+/**
+ * 从 Excel 格式（二维数组）转换为图表数据
+ */
+export function setDataFromExcel(
+  excelData: Array<Array<string | number>>,
+  config?: HorizontalBarChartConfig
+): HorizontalBarChartConfig {
+  if (excelData.length < 2) {
+    return config || {};
+  }
+  // 第一行是表头：category + 系列名称
+  const header = excelData[0];
+  const seriesNames = header.slice(1).map((name) => String(name));
+  // 后续行是数据
+  const data = excelData.slice(1).map((row) => ({
+    category: String(row[0] || ""),
+    series: seriesNames.map((name, index) => ({
+      name,
+      value: Number(row[index + 1]) || 0,
+    })),
+  }));
+  return {
+    ...config,
+    data,
   };
 }

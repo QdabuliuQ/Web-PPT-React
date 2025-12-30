@@ -1,19 +1,25 @@
-import { PanelSplitLine } from "@/components";
+import { PanelLargeButton, PanelSplitLine } from "@/components";
 import { PanelCommonSetting } from "@/components/PanelCommonSetting";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import { globalEventBus } from "@/utils/eventBus";
+import { Edit } from "@icon-park/react";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
+import { ChartDataModal } from "./ChartDataModal";
+import { BackgroundColorPanel } from "./components/backgroundColorPanel";
 import { ColorPanel } from "./components/colorPanel";
 import { GridPanel } from "./components/gridPanel";
 import { TitlePanel } from "./components/titlePanel";
+import { BASE_CHART_EVENTS, getChartEventName } from "./events";
 import type { IChartProps } from "./index";
 import { BarChartPanel } from "./type/bar/panel";
 import { LineChartPanel } from "./type/line/panel";
 import { PieChartPanel } from "./type/pie/panel";
 import { RadarChartPanel } from "./type/radar/panel";
 import { ScatterChartPanel } from "./type/scatter/panel";
+import { useChartDataModal } from "./useChartDataModal";
 
 export const ChartPanelKey = "chart";
 export const ChartPanelTitle = "图表";
@@ -34,6 +40,22 @@ const ChartPanelComponent: FC = observer(() => {
   ) as IChartProps | null;
 
   if (!chartInfo) return null;
+
+  // 使用图表数据编辑弹窗 hook（用于 ChartDataModal 的状态管理）
+  const { isDataModalOpen, handleCloseDataModal, handleSaveChartData } =
+    useChartDataModal({
+      pageId,
+      elementId,
+    });
+
+  // 通过事件总线发送打开弹窗事件
+  const handleOpenDataModalFromPanel = () => {
+    const eventName = getChartEventName(
+      BASE_CHART_EVENTS.OPEN_DATA_MODAL,
+      elementId
+    );
+    globalEventBus.emit(eventName);
+  };
 
   const onZIndexChange = (key: string) => {
     switch (key) {
@@ -82,14 +104,26 @@ const ChartPanelComponent: FC = observer(() => {
       <div className="h-[53px] flex gap-[10px] items-center">
         <TitlePanel />
         <GridPanel />
+        <BackgroundColorPanel />
         {chartInfo.chartType === "bar2" && <ColorPanel />}
         {TypePanel}
+        <PanelLargeButton
+          title="数据"
+          icon={<Edit theme="outline" size="18" fill="#333" />}
+          onClick={handleOpenDataModalFromPanel}
+        />
         <PanelSplitLine />
         <PanelCommonSetting
           onPositionChange={(key) => positionHandle(key as Position)}
           onZIndexChange={onZIndexChange}
         />
       </div>
+      <ChartDataModal
+        open={isDataModalOpen}
+        onClose={handleCloseDataModal}
+        chartInfo={chartInfo}
+        onSave={handleSaveChartData}
+      />
     </>
   );
 });

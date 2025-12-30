@@ -12,6 +12,7 @@ export interface BarChartConfig {
   color?: string;
   showGrid?: boolean;
   showLabels?: boolean;
+  backgroundColor?: string;
 }
 
 /**
@@ -32,10 +33,20 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
     showGrid = true,
     showLabels = true,
     title = getTitleDefaultOption(),
+    backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
+
+  // 构建 dataset source
+  // 第一行是维度名称
+  const datasetSource: any[] = [["label", "value"]];
+  // 后续行是数据
+  data.forEach((item) => {
+    datasetSource.push([item.label, item.value]);
+  });
 
   return {
     title,
+    backgroundColor,
     color: getColorDefaultOption(),
     grid: {
       left: "10%",
@@ -46,7 +57,6 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
     },
     xAxis: getXAxisDefaultOption({
       type: "category",
-      data: data.map((d) => d.label),
       "axisLine.lineStyle.color": "#666",
       "axisLabel.color": "#666",
       "axisLabel.fontSize": 12,
@@ -60,10 +70,16 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
       "axisLabel.color": "#666",
       "axisLabel.fontSize": 12,
     }),
+    dataset: {
+      source: datasetSource,
+    },
     series: [
       {
         type: "bar",
-        data: data.map((d) => d.value),
+        encode: {
+          x: 0, // label 列
+          y: 1, // value 列
+        },
         itemStyle: {
           color: color,
           borderRadius: [4, 4, 0, 0],
@@ -76,5 +92,48 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
         },
       },
     ],
+  };
+}
+
+/**
+ * 将图表数据转换为 Excel 格式（二维数组）
+ */
+export function getDataToExcel(
+  config?: BarChartConfig
+): Array<Array<string | number>> {
+  const defaultData = [
+    { label: "A", value: 30 },
+    { label: "B", value: 80 },
+    { label: "C", value: 45 },
+    { label: "D", value: 60 },
+  ];
+  const data = config?.data || defaultData;
+  // 第一行是表头
+  const result: Array<Array<string | number>> = [["标签", "数值"]];
+  // 后续行是数据
+  data.forEach((item) => {
+    result.push([item.label, item.value]);
+  });
+  return result;
+}
+
+/**
+ * 从 Excel 格式（二维数组）转换为图表数据
+ */
+export function setDataFromExcel(
+  excelData: Array<Array<string | number>>,
+  config?: BarChartConfig
+): BarChartConfig {
+  if (excelData.length < 2) {
+    return config || {};
+  }
+  // 跳过表头，从第二行开始读取数据
+  const data = excelData.slice(1).map((row) => ({
+    label: String(row[0] || ""),
+    value: Number(row[1]) || 0,
+  }));
+  return {
+    ...config,
+    data,
   };
 }

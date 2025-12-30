@@ -1132,18 +1132,12 @@ const Component: FC<ITableProps> = (props) => {
         cancelText="取消"
         width={1000}
         centered
-        destroyOnHidden={true}
+        destroyOnClose={true}
       >
-        <div style={{ padding: "10px 0" }}>
+        <div className="py-[10px]">
           <div
             ref={spreadsheetContainerRef}
-            style={{
-              height: "500px",
-              width: "100%",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
+            className="h-[500px] w-full border border-gray-300 rounded overflow-hidden"
           />
         </div>
       </Modal>

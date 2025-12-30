@@ -6,6 +6,7 @@ export interface ScatterChartConfig {
   color?: string;
   showGrid?: boolean;
   showLabels?: boolean;
+  backgroundColor?: string;
 }
 
 /**
@@ -27,6 +28,7 @@ export function getScatterChartOption(
     color = "#5F95FF",
     showGrid = true,
     showLabels = true,
+    backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
 
   // 计算 x 和 y 的范围
@@ -42,6 +44,7 @@ export function getScatterChartOption(
   const yPadding = (yMax - yMin) * 0.1 || 1;
 
   return {
+    backgroundColor,
     grid: {
       left: "10%",
       right: "10%",
@@ -99,5 +102,49 @@ export function getScatterChartOption(
         },
       },
     ],
+  };
+}
+
+/**
+ * 将图表数据转换为 Excel 格式（二维数组）
+ */
+export function getDataToExcel(
+  config?: ScatterChartConfig
+): Array<Array<string | number>> {
+  const defaultData = [
+    { x: 30, y: 45, label: "A" },
+    { x: 80, y: 120, label: "B" },
+    { x: 45, y: 67.5, label: "C" },
+    { x: 60, y: 90, label: "D" },
+  ];
+  const data = config?.data || defaultData;
+  // 第一行是表头
+  const result: Array<Array<string | number>> = [["X", "Y", "标签"]];
+  // 后续行是数据
+  data.forEach((item) => {
+    result.push([item.x, item.y, item.label || ""]);
+  });
+  return result;
+}
+
+/**
+ * 从 Excel 格式（二维数组）转换为图表数据
+ */
+export function setDataFromExcel(
+  excelData: Array<Array<string | number>>,
+  config?: ScatterChartConfig
+): ScatterChartConfig {
+  if (excelData.length < 2) {
+    return config || {};
+  }
+  // 跳过表头，从第二行开始读取数据
+  const data = excelData.slice(1).map((row) => ({
+    x: Number(row[0]) || 0,
+    y: Number(row[1]) || 0,
+    label: row[2] ? String(row[2]) : undefined,
+  }));
+  return {
+    ...config,
+    data,
   };
 }

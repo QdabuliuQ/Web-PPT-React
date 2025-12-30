@@ -10,6 +10,7 @@ export interface PolarBarChartConfig {
   radiusAxisMax?: number; // 4
   angleAxisStartAngle?: number; // 75
   labelPosition?: "start" | "middle" | "end"; // 'middle'
+  backgroundColor?: string;
 }
 
 /**
@@ -18,15 +19,34 @@ export interface PolarBarChartConfig {
 export function getBarChartOption2(
   config?: PolarBarChartConfig
 ): EChartsOption {
+  const defaultData = [
+    { label: "a", value: 2 },
+    { label: "b", value: 1.2 },
+    { label: "c", value: 2.4 },
+    { label: "d", value: 3.6 },
+  ];
+
   const {
     title = getTitleDefaultOption(),
+    data = defaultData,
+    showLabels = true,
     polarRadius = ["10%", "80%"],
     radiusAxisMax = 4,
     angleAxisStartAngle = 75,
+    backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
+
+  // 构建 dataset source
+  // 第一行是维度名称
+  const datasetSource: any[] = [["label", "value"]];
+  // 后续行是数据
+  data.forEach((item) => {
+    datasetSource.push([item.label, item.value]);
+  });
 
   return {
     title,
+    backgroundColor,
     color: getColorDefaultOption(),
     polar: {
       radius: polarRadius,
@@ -37,7 +57,6 @@ export function getBarChartOption2(
     },
     angleAxis: {
       type: "category",
-      data: ["a", "b", "c", "d"],
       startAngle: angleAxisStartAngle,
       axisLine: {
         show: true,
@@ -69,16 +88,19 @@ export function getBarChartOption2(
         textShadowOffsetY: 0,
       },
     },
+    dataset: {
+      source: datasetSource,
+    },
     series: [
       {
         type: "bar",
-        data: [2, 1.2, 2.4, 3.6],
         coordinateSystem: "polar",
         encode: {
-          value: "value",
+          angle: 0, // label 列
+          radius: 1, // value 列
         },
         label: {
-          show: true,
+          show: showLabels,
           color: "#fff",
           fontStyle: "normal",
           fontWeight: "normal",
@@ -93,5 +115,48 @@ export function getBarChartOption2(
       },
     ],
     animation: false,
+  };
+}
+
+/**
+ * 将图表数据转换为 Excel 格式（二维数组）
+ */
+export function getDataToExcel(
+  config?: PolarBarChartConfig
+): Array<Array<string | number>> {
+  const defaultData = [
+    { label: "a", value: 2 },
+    { label: "b", value: 1.2 },
+    { label: "c", value: 2.4 },
+    { label: "d", value: 3.6 },
+  ];
+  const data = config?.data || defaultData;
+  // 第一行是表头
+  const result: Array<Array<string | number>> = [["标签", "数值"]];
+  // 后续行是数据
+  data.forEach((item) => {
+    result.push([item.label, item.value]);
+  });
+  return result;
+}
+
+/**
+ * 从 Excel 格式（二维数组）转换为图表数据
+ */
+export function setDataFromExcel(
+  excelData: Array<Array<string | number>>,
+  config?: PolarBarChartConfig
+): PolarBarChartConfig {
+  if (excelData.length < 2) {
+    return config || {};
+  }
+  // 跳过表头，从第二行开始读取数据
+  const data = excelData.slice(1).map((row) => ({
+    label: String(row[0] || ""),
+    value: Number(row[1]) || 0,
+  }));
+  return {
+    ...config,
+    data,
   };
 }

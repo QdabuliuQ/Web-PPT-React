@@ -1,6 +1,13 @@
 import type { EChartsOption } from "echarts";
 import type { LineChartConfig } from "./index1";
+import {
+  getDataToExcel,
+  setDataFromExcel,
+} from "./index1";
 import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
+
+// 重新导出数据转换方法
+export { getDataToExcel, setDataFromExcel };
 
 /**
  * 生成面积折线图的 echarts 配置
@@ -19,9 +26,11 @@ export function getLineChartOption2(config?: LineChartConfig): EChartsOption {
     color = "#5F95FF",
     showGrid = true,
     showLabels = true,
+    backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
 
   return {
+    backgroundColor,
     grid: {
       left: "10%",
       right: "10%",

@@ -71,7 +71,6 @@ export const LegendPanel: FC = observer(() => {
       ...chartInfo.option,
       legend: updatedLegend,
     };
-    console.log(updatedOption, "updatedOption");
 
     pptStore.setElementInfo(pageId, elementId, {
       ...chartInfo,
