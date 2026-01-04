@@ -1,5 +1,6 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import { pptStore } from "@/store";
 import { useMemoizedFn } from "ahooks";
+import * as echarts from "echarts";
 import { useState } from "react";
 import type { IChartProps } from "./index";
 import {
@@ -14,7 +15,6 @@ import {
   getRadarChartOption,
   getScatterChartOption,
 } from "./type";
-import * as echarts from "echarts";
 
 /**
  * 根据 chartType 获取对应的配置函数
@@ -44,11 +44,14 @@ export const getChartOptionByType = (
       if (index === 3) return getLineChartOption3(config);
       break;
     case "pie":
-      return getPieChartOption(config);
+      if (index === 1) return getPieChartOption(config);
+      break;
     case "scatter":
-      return getScatterChartOption(config);
+      if (index === 1) return getScatterChartOption(config);
+      break;
     case "radar":
-      return getRadarChartOption(config);
+      if (index === 1) return getRadarChartOption(config);
+      break;
   }
 
   return getBarChartOption1(config);
@@ -128,14 +131,43 @@ export function useChartDataModal({
     });
 
     // 合并保留的配置（如 grid, xAxis, yAxis 等的自定义样式）
+    // 对于散点图，需要移除 xAxis 和 yAxis 的 min/max，让它们根据数据重新计算
+    const isScatterChart = currentElement.chartType === "scatter1";
+
+    // 处理 xAxis：如果是散点图，移除 min/max；否则保留完整配置
+    let finalXAxis = xAxis;
+    if (isScatterChart && xAxis) {
+      const xAxisArray = Array.isArray(xAxis) ? xAxis : [xAxis];
+      finalXAxis = xAxisArray.map((axis: any) => {
+        const { min: _min, max: _max, ...rest } = axis || {};
+        return rest;
+      });
+      if (!Array.isArray(xAxis)) {
+        finalXAxis = finalXAxis[0];
+      }
+    }
+
+    // 处理 yAxis：如果是散点图，移除 min/max；否则保留完整配置
+    let finalYAxis = yAxis;
+    if (isScatterChart && yAxis) {
+      const yAxisArray = Array.isArray(yAxis) ? yAxis : [yAxis];
+      finalYAxis = yAxisArray.map((axis: any) => {
+        const { min: _min, max: _max, ...rest } = axis || {};
+        return rest;
+      });
+      if (!Array.isArray(yAxis)) {
+        finalYAxis = finalYAxis[0];
+      }
+    }
+
     const finalOption = {
       ...newOption,
       // 保留自定义的 grid 配置（如果存在）
       ...(grid && { grid }),
-      // 保留自定义的 xAxis 配置（如果存在）
-      ...(xAxis && { xAxis }),
-      // 保留自定义的 yAxis 配置（如果存在）
-      ...(yAxis && { yAxis }),
+      // 保留自定义的 xAxis 配置（如果存在，散点图已移除 min/max）
+      ...(finalXAxis && { xAxis: finalXAxis }),
+      // 保留自定义的 yAxis 配置（如果存在，散点图已移除 min/max）
+      ...(finalYAxis && { yAxis: finalYAxis }),
       // 保留自定义的 legend 配置（如果存在）
       ...(legend && { legend }),
       // 保留自定义的 polar 配置（如果存在）
@@ -163,4 +195,3 @@ export function useChartDataModal({
     handleSaveChartData,
   };
 }
-

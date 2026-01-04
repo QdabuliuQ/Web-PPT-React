@@ -2,7 +2,9 @@ import type { EChartsOption } from "echarts";
 import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
 
 export interface ScatterChartConfig {
-  data?: Array<{ x: number; y: number; label?: string }>;
+  data?:
+    | Array<[number, number]>
+    | Array<{ x: number; y: number; label?: string }>;
   color?: string;
   showGrid?: boolean;
   showLabels?: boolean;
@@ -17,10 +19,28 @@ export function getScatterChartOption(
 ): EChartsOption {
   // 默认配置
   const defaultData = [
-    { x: 30, y: 45, label: "A" },
-    { x: 80, y: 120, label: "B" },
-    { x: 45, y: 67.5, label: "C" },
-    { x: 60, y: 90, label: "D" },
+    [10.0, 8.04],
+    [8.07, 6.95],
+    [13.0, 7.58],
+    [9.05, 8.81],
+    [11.0, 8.33],
+    [14.0, 7.66],
+    [13.4, 6.81],
+    [10.0, 6.33],
+    [14.0, 8.96],
+    [12.5, 6.82],
+    [9.15, 7.2],
+    [11.5, 7.2],
+    [3.03, 4.23],
+    [12.2, 7.83],
+    [2.02, 4.47],
+    [1.05, 3.33],
+    [4.05, 4.96],
+    [6.03, 7.24],
+    [12.0, 6.26],
+    [12.0, 8.84],
+    [7.08, 5.82],
+    [5.02, 5.68],
   ];
 
   const {
@@ -31,17 +51,90 @@ export function getScatterChartOption(
     backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
 
-  // 计算 x 和 y 的范围
-  const xValues = data.map((d) => d.x);
-  const yValues = data.map((d) => d.y);
-  const xMin = Math.min(...xValues);
-  const xMax = Math.max(...xValues);
-  const yMin = Math.min(...yValues);
-  const yMax = Math.max(...yValues);
+  // 将数据统一转换为二维数组格式 [[x, y], ...]
+  const scatterData: Array<[number, number]> = data.map(
+    (item): [number, number] => {
+      // 如果已经是数组格式 [x, y]
+      if (Array.isArray(item) && item.length >= 2) {
+        return [Number(item[0]) || 0, Number(item[1]) || 0] as [number, number];
+      }
+      // 如果是对象格式 {x, y}
+      if (item && typeof item === "object" && "x" in item && "y" in item) {
+        return [Number((item as any).x) || 0, Number((item as any).y) || 0] as [
+          number,
+          number,
+        ];
+      }
+      // 默认值
+      return [0, 0] as [number, number];
+    }
+  );
 
-  // 添加一些边距
-  const xPadding = (xMax - xMin) * 0.1 || 1;
-  const yPadding = (yMax - yMin) * 0.1 || 1;
+  // 检查是否有有效数据
+  const hasValidData = scatterData.some(
+    (d) => d[0] != null && !isNaN(d[0]) && d[1] != null && !isNaN(d[1])
+  );
+
+  // 如果没有有效数据，返回空图表配置
+  if (!hasValidData || scatterData.length === 0) {
+    return {
+      backgroundColor,
+      grid: {
+        left: "10%",
+        right: "10%",
+        top: "10%",
+        bottom: "15%",
+        containLabel: true,
+      },
+      xAxis: getXAxisDefaultOption({
+        type: "value",
+        splitLine: {
+          show: showGrid,
+          lineStyle: {
+            color: "#e0e0e0",
+            type: "dashed",
+          },
+        },
+        "axisLine.lineStyle.color": "#666",
+        "axisLabel.color": "#666",
+        "axisLabel.fontSize": 12,
+      }),
+      yAxis: getYAxisDefaultOption({
+        type: "value",
+        splitLine: {
+          show: showGrid,
+          lineStyle: {
+            color: "#e0e0e0",
+            type: "dashed",
+          },
+        },
+        "axisLine.lineStyle.color": "#666",
+        "axisLabel.color": "#666",
+        "axisLabel.fontSize": 12,
+      }),
+      series: [
+        {
+          type: "scatter",
+          data: [],
+          symbolSize: 8,
+          itemStyle: {
+            color: color,
+          },
+          label: {
+            show: showLabels,
+            formatter: (params: any) => {
+              const index = params.dataIndex;
+              const point = scatterData[index];
+              return point ? `(${point[0]}, ${point[1]})` : "";
+            },
+            position: "top",
+            color: "#333",
+            fontSize: 12,
+          },
+        },
+      ],
+    };
+  }
 
   return {
     backgroundColor,
@@ -54,8 +147,6 @@ export function getScatterChartOption(
     },
     xAxis: getXAxisDefaultOption({
       type: "value",
-      min: xMin - xPadding,
-      max: xMax + xPadding,
       splitLine: {
         show: showGrid,
         lineStyle: {
@@ -69,8 +160,6 @@ export function getScatterChartOption(
     }),
     yAxis: getYAxisDefaultOption({
       type: "value",
-      min: yMin - yPadding,
-      max: yMax + yPadding,
       splitLine: {
         show: showGrid,
         lineStyle: {
@@ -82,26 +171,25 @@ export function getScatterChartOption(
       "axisLabel.color": "#666",
       "axisLabel.fontSize": 12,
     }),
-    series: [
-      {
-        type: "scatter",
-        data: data.map((d) => [d.x, d.y]),
-        symbolSize: 8,
-        itemStyle: {
-          color: color,
-        },
-        label: {
-          show: showLabels,
-          formatter: (params: any) => {
-            const index = params.dataIndex;
-            return data[index]?.label || `(${data[index].x}, ${data[index].y})`;
-          },
-          position: "top",
-          color: "#333",
-          fontSize: 12,
-        },
+    series: {
+      type: "scatter",
+      data: scatterData,
+      symbolSize: 8,
+      itemStyle: {
+        color: color,
       },
-    ],
+      label: {
+        show: showLabels,
+        formatter: (params: any) => {
+          const index = params.dataIndex;
+          const point = scatterData[index];
+          return point ? `(${point[0]}, ${point[1]})` : "";
+        },
+        position: "top",
+        color: "#333",
+        fontSize: 12,
+      },
+    },
   };
 }
 
@@ -109,21 +197,45 @@ export function getScatterChartOption(
  * 将图表数据转换为 Excel 格式（二维数组）
  */
 export function getDataToExcel(
-  config?: ScatterChartConfig
+  option?: EChartsOption
 ): Array<Array<string | number>> {
-  const defaultData = [
-    { x: 30, y: 45, label: "A" },
-    { x: 80, y: 120, label: "B" },
-    { x: 45, y: 67.5, label: "C" },
-    { x: 60, y: 90, label: "D" },
+  const defaultData: Array<[number, number]> = [
+    [10.0, 8.04],
+    [8.07, 6.95],
+    [13.0, 7.58],
+    [9.05, 8.81],
   ];
-  const data = config?.data || defaultData;
+
+  // 从 option 中提取数据
+  let data: Array<[number, number]> = defaultData;
+
+  if (
+    option?.series &&
+    Array.isArray(option.series) &&
+    option.series.length > 0
+  ) {
+    const series = option.series[0];
+    if (
+      series.type === "scatter" &&
+      series.data &&
+      Array.isArray(series.data)
+    ) {
+      data = series.data.map((item: any): [number, number] => {
+        if (Array.isArray(item) && item.length >= 2) {
+          return [Number(item[0]) || 0, Number(item[1]) || 0];
+        }
+        return [0, 0];
+      });
+    }
+  }
+
   // 第一行是表头
-  const result: Array<Array<string | number>> = [["X", "Y", "标签"]];
+  const result: Array<Array<string | number>> = [["X", "Y"]];
   // 后续行是数据
   data.forEach((item) => {
-    result.push([item.x, item.y, item.label || ""]);
+    result.push([item[0], item[1]]);
   });
+
   return result;
 }
 
@@ -138,11 +250,31 @@ export function setDataFromExcel(
     return config || {};
   }
   // 跳过表头，从第二行开始读取数据
-  const data = excelData.slice(1).map((row) => ({
-    x: Number(row[0]) || 0,
-    y: Number(row[1]) || 0,
-    label: row[2] ? String(row[2]) : undefined,
-  }));
+  const data: Array<[number, number]> = [];
+
+  for (let i = 1; i < excelData.length; i++) {
+    const row = excelData[i];
+    // 检查 x, y 是否为空（空字符串、null、undefined、NaN）
+    const x = row[0];
+    const y = row[1];
+
+    // 如果 x 或 y 为空，停止处理后续行
+    if (
+      x === undefined ||
+      x === null ||
+      x === "" ||
+      isNaN(Number(x)) ||
+      y === undefined ||
+      y === null ||
+      y === "" ||
+      isNaN(Number(y))
+    ) {
+      break;
+    }
+
+    data.push([Number(x) || 0, Number(y) || 0]);
+  }
+
   return {
     ...config,
     data,

@@ -87,7 +87,7 @@ export function getLineChartOption1(config?: LineChartConfig): EChartsOption {
  * 将图表数据转换为 Excel 格式（二维数组）
  */
 export function getDataToExcel(
-  config?: LineChartConfig
+  option?: EChartsOption
 ): Array<Array<string | number>> {
   const defaultData = [
     { label: "A", value: 30 },
@@ -95,7 +95,30 @@ export function getDataToExcel(
     { label: "C", value: 45 },
     { label: "D", value: 60 },
   ];
-  const data = config?.data || defaultData;
+
+  // 从 option 中提取数据
+  let data = defaultData;
+
+  // 折线图数据在 xAxis.data 和 series[0].data 中
+  if (option) {
+    const xAxis = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
+    if (xAxis && (xAxis as any).data && Array.isArray((xAxis as any).data)) {
+      const xAxisData = (xAxis as any).data;
+      const seriesData = option.series?.[0]?.data;
+
+      if (
+        Array.isArray(xAxisData) &&
+        Array.isArray(seriesData) &&
+        xAxisData.length === seriesData.length
+      ) {
+        data = xAxisData.map((label: string, index: number) => ({
+          label: String(label || ""),
+          value: Number(seriesData[index]) || 0,
+        }));
+      }
+    }
+  }
+
   // 第一行是表头
   const result: Array<Array<string | number>> = [["标签", "数值"]];
   // 后续行是数据
@@ -116,10 +139,32 @@ export function setDataFromExcel(
     return config || {};
   }
   // 跳过表头，从第二行开始读取数据
-  const data = excelData.slice(1).map((row) => ({
-    label: String(row[0] || ""),
-    value: Number(row[1]) || 0,
-  }));
+  const data: Array<{ label: string; value: number }> = [];
+
+  for (let i = 1; i < excelData.length; i++) {
+    const row = excelData[i];
+    const label = row[0];
+    const value = row[1];
+
+    // 如果 label 或 value 为空，停止处理后续行
+    if (
+      label === undefined ||
+      label === null ||
+      label === "" ||
+      value === undefined ||
+      value === null ||
+      value === "" ||
+      isNaN(Number(value))
+    ) {
+      break;
+    }
+
+    data.push({
+      label: String(label),
+      value: Number(value) || 0,
+    });
+  }
+
   return {
     ...config,
     data,

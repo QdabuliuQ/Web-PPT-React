@@ -1,4 +1,3 @@
-import { PanelSplitLine } from "@/components/PanelSplitLine";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { observer } from "mobx-react-lite";
 import { type FC } from "react";
@@ -32,7 +31,6 @@ export const BarChartPanel: FC = observer(() => {
       )}
       {(chartInfo.chartType === "bar2" || chartInfo.chartType === "bar3") && (
         <>
-          <PanelSplitLine />
           <Bar2ChartPanel />
         </>
       )}

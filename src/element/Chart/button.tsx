@@ -14,11 +14,11 @@ const chartTypes = [
   { type: "bar3", name: "切向极坐标柱状图" },
   { type: "bar4", name: "横向柱状图" },
   { type: "line1", name: "折线图" },
-  { type: "line2", name: "面积图" },
-  { type: "line3", name: "堆叠面积图" },
-  { type: "pie", name: "饼图" },
-  { type: "scatter", name: "散点图" },
-  { type: "radar", name: "雷达图" },
+  { type: "line2", name: "堆叠折线图" },
+  { type: "line3", name: "面积图" },
+  { type: "pie1", name: "饼图" },
+  { type: "scatter1", name: "散点图" },
+  { type: "radar1", name: "雷达图" },
 ];
 
 export default function ChartButton() {

@@ -1,6 +1,6 @@
 import { PanelLargeButton } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { ColorFilter } from "@icon-park/react";
+import { BackgroundColor } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { ColorPicker } from "antd";
 import { observer } from "mobx-react-lite";
@@ -92,7 +92,7 @@ export const BackgroundColorPanel: FC = observer(() => {
       <div className="h-full">
         <PanelLargeButton
           title="背景"
-          icon={<ColorFilter theme="outline" size="18" fill="#333" />}
+          icon={<BackgroundColor theme="outline" size="18" fill="#333" />}
         />
       </div>
     </ColorPicker>

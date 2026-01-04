@@ -24,6 +24,7 @@ export const LegendPanel: FC = observer(() => {
   // 获取 legend 配置，如果没有则使用默认值
   const legendConfig = chartInfo.option?.legend || {
     show: false,
+    icon: "roundRect",
     left: 0,
     top: 0,
     itemWidth: 25,
@@ -106,6 +107,22 @@ export const LegendPanel: FC = observer(() => {
             type: "switch",
             keys: ["show"],
             label: "显示",
+          },
+          {
+            type: "select",
+            keys: ["icon"],
+            label: "形状",
+            defaultValue: "roundRect",
+            options: [
+              { label: "圆角矩形", value: "roundRect" },
+              { label: "矩形", value: "rect" },
+              { label: "圆形", value: "circle" },
+              { label: "三角形", value: "triangle" },
+              { label: "菱形", value: "diamond" },
+              { label: "大头针", value: "pin" },
+              { label: "箭头", value: "arrow" },
+              { label: "无", value: "none" },
+            ],
           },
           {
             type: "inputNumber",

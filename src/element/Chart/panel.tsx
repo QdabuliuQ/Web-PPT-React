@@ -4,7 +4,7 @@ import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { globalEventBus } from "@/utils/eventBus";
-import { Edit } from "@icon-park/react";
+import { EditOne } from "@icon-park/react";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { ChartDataModal } from "./ChartDataModal";
@@ -105,11 +105,11 @@ const ChartPanelComponent: FC = observer(() => {
         <TitlePanel />
         <GridPanel />
         <BackgroundColorPanel />
-        {chartInfo.chartType === "bar2" && <ColorPanel />}
+        <ColorPanel />
         {TypePanel}
         <PanelLargeButton
           title="数据"
-          icon={<Edit theme="outline" size="18" fill="#333" />}
+          icon={<EditOne theme="outline" size="18" fill="#333" />}
           onClick={handleOpenDataModalFromPanel}
         />
         <PanelSplitLine />

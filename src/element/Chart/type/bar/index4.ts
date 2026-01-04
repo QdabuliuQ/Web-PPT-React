@@ -160,7 +160,7 @@ export function getBarChartOption4(
  * 将图表数据转换为 Excel 格式（二维数组）
  */
 export function getDataToExcel(
-  config?: HorizontalBarChartConfig
+  option?: EChartsOption
 ): Array<Array<string | number>> {
   const defaultData = [
     {
@@ -178,7 +178,34 @@ export function getDataToExcel(
       ],
     },
   ];
-  const data = config?.data || defaultData;
+
+  // 从 option 中提取数据
+  let data = defaultData;
+
+  const dataset = Array.isArray(option?.dataset)
+    ? option.dataset[0]
+    : option?.dataset;
+  if (
+    dataset?.source &&
+    Array.isArray(dataset.source) &&
+    dataset.source.length > 1
+  ) {
+    const source = dataset.source as any[][];
+    const headers = source[0];
+    const dataRows = source.slice(1);
+
+    if (Array.isArray(headers) && headers.length > 1) {
+      const seriesNames = headers.slice(1) as string[];
+      data = dataRows.map((row: any[]) => ({
+        category: String(row[0] || ""),
+        series: seriesNames.map((name: string, idx: number) => ({
+          name: String(name),
+          value: Number(row[idx + 1]) || 0,
+        })),
+      }));
+    }
+  }
+
   // 提取所有系列名称
   const seriesNames =
     data.length > 0 && data[0].series.length > 0
@@ -212,13 +239,49 @@ export function setDataFromExcel(
   const header = excelData[0];
   const seriesNames = header.slice(1).map((name) => String(name));
   // 后续行是数据
-  const data = excelData.slice(1).map((row) => ({
-    category: String(row[0] || ""),
-    series: seriesNames.map((name, index) => ({
-      name,
-      value: Number(row[index + 1]) || 0,
-    })),
-  }));
+  const data: Array<{
+    category: string;
+    series: Array<{ name: string; value: number }>;
+  }> = [];
+
+  for (let i = 1; i < excelData.length; i++) {
+    const row = excelData[i];
+    const category = row[0];
+
+    // 如果 category 为空，停止处理后续行
+    if (category === undefined || category === null || category === "") {
+      break;
+    }
+
+    // 检查所有系列值是否为空
+    let hasEmptyValue = false;
+    for (let j = 0; j < seriesNames.length; j++) {
+      const value = row[j + 1];
+      if (
+        value === undefined ||
+        value === null ||
+        value === "" ||
+        isNaN(Number(value))
+      ) {
+        hasEmptyValue = true;
+        break;
+      }
+    }
+
+    // 如果任何一个系列值为空，停止处理后续行
+    if (hasEmptyValue) {
+      break;
+    }
+
+    data.push({
+      category: String(category),
+      series: seriesNames.map((name, index) => ({
+        name,
+        value: Number(row[index + 1]) || 0,
+      })),
+    });
+  }
+
   return {
     ...config,
     data,

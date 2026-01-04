@@ -99,7 +99,7 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
  * 将图表数据转换为 Excel 格式（二维数组）
  */
 export function getDataToExcel(
-  config?: BarChartConfig
+  option?: EChartsOption
 ): Array<Array<string | number>> {
   const defaultData = [
     { label: "A", value: 30 },
@@ -107,7 +107,30 @@ export function getDataToExcel(
     { label: "C", value: 45 },
     { label: "D", value: 60 },
   ];
-  const data = config?.data || defaultData;
+
+  // 从 option 中提取数据
+  let data = defaultData;
+
+  const dataset = Array.isArray(option?.dataset)
+    ? option.dataset[0]
+    : option?.dataset;
+  if (
+    dataset?.source &&
+    Array.isArray(dataset.source) &&
+    dataset.source.length > 1
+  ) {
+    const source = dataset.source as any[][];
+    const headers = source[0];
+    const dataRows = source.slice(1);
+
+    if (Array.isArray(headers) && headers.length === 2) {
+      data = dataRows.map((row: any[]) => ({
+        label: String(row[0] || ""),
+        value: Number(row[1]) || 0,
+      }));
+    }
+  }
+
   // 第一行是表头
   const result: Array<Array<string | number>> = [["标签", "数值"]];
   // 后续行是数据
@@ -128,10 +151,32 @@ export function setDataFromExcel(
     return config || {};
   }
   // 跳过表头，从第二行开始读取数据
-  const data = excelData.slice(1).map((row) => ({
-    label: String(row[0] || ""),
-    value: Number(row[1]) || 0,
-  }));
+  const data: Array<{ label: string; value: number }> = [];
+
+  for (let i = 1; i < excelData.length; i++) {
+    const row = excelData[i];
+    const label = row[0];
+    const value = row[1];
+
+    // 如果 label 或 value 为空，停止处理后续行
+    if (
+      label === undefined ||
+      label === null ||
+      label === "" ||
+      value === undefined ||
+      value === null ||
+      value === "" ||
+      isNaN(Number(value))
+    ) {
+      break;
+    }
+
+    data.push({
+      label: String(label),
+      value: Number(value) || 0,
+    });
+  }
+
   return {
     ...config,
     data,
