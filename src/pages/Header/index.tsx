@@ -205,13 +205,60 @@ export const Header: FC = observer(() => {
           continue;
         }
 
+        // 将 PNG 转换为 JPEG 以减小文件大小
+        let imageData: string;
+        let imageFormat: "PNG" | "JPEG" = "JPEG";
+        try {
+          imageData = await new Promise<string>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) {
+                reject(new Error("无法创建 Canvas 上下文"));
+                return;
+              }
+              // 填充白色背景（JPEG 不支持透明）
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(img, 0, 0);
+              // 转换为 JPEG，质量 0.8（平衡质量和文件大小）
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      resolve(reader.result as string);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                  } else {
+                    reject(new Error("转换失败"));
+                  }
+                },
+                "image/jpeg",
+                0.8
+              );
+            };
+            img.onerror = reject;
+            img.src = imgData;
+          });
+        } catch (error) {
+          console.warn(`页面 ${page.id} 图片转换失败，使用原始 PNG:`, error);
+          // 如果转换失败，使用原始 PNG
+          imageData = imgData;
+          imageFormat = "PNG";
+        }
+
         // 如果不是第一页，添加新页面
         if (i > 0) {
           pdf.addPage();
         }
 
         // 添加图片到PDF
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imageData, imageFormat, 0, 0, pdfWidth, pdfHeight);
       }
 
       // 保存PDF

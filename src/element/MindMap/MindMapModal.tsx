@@ -1,3 +1,4 @@
+import { cloneDeep } from "@/utils";
 import { Export, Graph, Node, Selection, Shape } from "@antv/x6";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { message, Modal, Spin, theme } from "antd";
@@ -254,7 +255,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
     const graphData = data || createDefaultMindMapData();
 
     // 保存初始数据快照
-    initialDataRef.current = JSON.parse(JSON.stringify(graphData));
+    initialDataRef.current = cloneDeep(graphData);
 
     // 如果数据中有 edge 数据，检查是否包含样式信息
     // 如果没有样式信息，需要从第一个 edge 的 attrs 中读取
@@ -810,7 +811,7 @@ export const MindMapModal: FC<MindMapModalProps> = ({
         // 更新初始数据快照
         if (graphRef.current) {
           const currentData = getDataFromGraph(graphRef.current);
-          initialDataRef.current = JSON.parse(JSON.stringify(currentData));
+          initialDataRef.current = cloneDeep(currentData);
           setHasUnsavedChanges(false);
         }
       } finally {

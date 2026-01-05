@@ -9,12 +9,13 @@ import {
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { globalEventBus } from "@/utils/eventBus";
+import { ChartHistogram } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import * as echarts from "echarts";
 import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
-import { ChartDataModal } from "./ChartDataModal";
+import { ChartDataModal } from "./chartDataModal";
 import { BASE_CHART_EVENTS, getChartEventName } from "./events";
 import styles from "./index.module.less";
 import { getChartMenuItems } from "./menu";
@@ -169,7 +170,7 @@ const Component: FC<IChartProps> = observer((props) => {
     }
 
     const menuItems = [
-      ...getChartMenuItems(handleOpenDataModal),
+      ...getChartMenuItems(handleOpenDataModal, id),
       ...commonMenu,
     ];
     contextMenuStore.showMenu(menuItems, e);
@@ -184,8 +185,10 @@ const Component: FC<IChartProps> = observer((props) => {
       chartInstanceRef.current.dispose();
     }
 
-    // 创建新的 echarts 实例
-    const chartInstance = echarts.init(chartRef.current);
+    // 创建新的 echarts 实例，使用 SVG 渲染器
+    const chartInstance = echarts.init(chartRef.current, null, {
+      renderer: "svg",
+    });
     chartInstanceRef.current = chartInstance;
 
     return () => {
@@ -256,7 +259,11 @@ const Component: FC<IChartProps> = observer((props) => {
           animationTrigger={animationTrigger}
           className="w-full h-full relative"
         >
-          <div ref={chartRef} style={{ width: "100%", height: "100%" }} />
+          <div
+            ref={chartRef}
+            id={`dom_${id}`}
+            style={{ width: "100%", height: "100%" }}
+          />
         </AnimationWrapper>
       </div>
       <MovableWrapper
@@ -331,4 +338,4 @@ export const CreateChart = (props: Partial<IChartProps> = {}) => {
 };
 
 export const Name = "图表";
-export const ChartPanelIcon = null;
+export const ChartPanelIcon = ChartHistogram;

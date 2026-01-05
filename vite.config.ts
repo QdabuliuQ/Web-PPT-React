@@ -4,6 +4,10 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    port: 5174, // 与 Cypress baseUrl 保持一致
+    strictPort: true, // 如果端口被占用，不自动尝试其他端口
+  },
   plugins: [
     react({
       babel: {

@@ -1,3 +1,4 @@
+import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
 import {
   getColorDefaultOption,
@@ -262,11 +263,19 @@ export function getDataToExcel(
  */
 export function setDataFromExcel(
   excelData: Array<Array<string | number>>,
-  config?: StackedLineChartConfig
-): StackedLineChartConfig {
-  if (excelData.length < 2) {
-    return config || {};
+  option?: EChartsOption
+): EChartsOption {
+  if (!option) {
+    return getLineChartOption2();
   }
+
+  // 深拷贝 option，避免直接修改原对象
+  const updatedOption = cloneDeep(option);
+
+  if (excelData.length < 2) {
+    return updatedOption;
+  }
+
   // 第一行是表头：category + 系列名称
   const header = excelData[0];
   const seriesNames = header.slice(1).map((name) => String(name));
@@ -314,8 +323,37 @@ export function setDataFromExcel(
     });
   }
 
-  return {
-    ...config,
-    data,
-  };
+  // 更新 dataset.source
+  const datasetSource: any[] = [];
+  // 第一行是维度名称
+  datasetSource.push(["category", ...seriesNames]);
+  // 后续行是数据
+  data.forEach((item) => {
+    const row: any[] = [item.category];
+    seriesNames.forEach((seriesName) => {
+      const seriesItem = item.series.find((s) => s.name === seriesName);
+      row.push(seriesItem?.value ?? 0);
+    });
+    datasetSource.push(row);
+  });
+
+  if (updatedOption.dataset) {
+    if (Array.isArray(updatedOption.dataset)) {
+      updatedOption.dataset[0] = {
+        ...updatedOption.dataset[0],
+        source: datasetSource,
+      };
+    } else {
+      updatedOption.dataset = {
+        ...updatedOption.dataset,
+        source: datasetSource,
+      };
+    }
+  } else {
+    updatedOption.dataset = {
+      source: datasetSource,
+    };
+  }
+
+  return updatedOption;
 }

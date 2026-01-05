@@ -1,4 +1,4 @@
-import { PanelLargeButton, PanelSelect } from "@/components";
+import { PanelLargeButton, PanelNumberOrAuto, PanelSelect } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { H } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
@@ -12,6 +12,7 @@ import {
 } from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
+import { getTitleDefaultOption } from "../common";
 import type { IChartProps } from "../index";
 import styles from "./panel.module.less";
 
@@ -29,35 +30,7 @@ export const TitlePanel: FC = observer(() => {
   if (!chartInfo) return null;
 
   // 获取 title 配置，如果没有则使用默认值
-  const titleConfig = chartInfo.option?.title || {
-    text: "标题",
-    subtext: "",
-    show: true,
-    textStyle: {
-      color: "#333",
-      fontStyle: "normal",
-      fontWeight: "bold",
-      fontSize: 18,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    subtextStyle: {
-      color: "#aaa",
-      fontStyle: "normal",
-      fontWeight: "bold",
-      fontSize: 12,
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
-  };
+  const titleConfig = chartInfo.option?.title || getTitleDefaultOption();
 
   // 更新 title 配置的通用函数
   const handleTitleChange = useMemoizedFn((path: string[], value: any) => {
@@ -96,8 +69,23 @@ export const TitlePanel: FC = observer(() => {
   );
 
   // 配置数组
-  const panelConfigs = useMemo(
-    () => [
+  const panelConfigs = useMemo(() => {
+    // 获取默认配置
+    const defaultTitleConfig = getTitleDefaultOption();
+
+    // 从默认配置获取值的辅助函数
+    const getDefaultValue = (keys: string[]) => {
+      let current: any = defaultTitleConfig;
+      for (const key of keys) {
+        if (current?.[key] === undefined) {
+          return undefined;
+        }
+        current = current[key];
+      }
+      return current;
+    };
+
+    return [
       {
         key: "basic",
         title: "基础设置",
@@ -107,31 +95,36 @@ export const TitlePanel: FC = observer(() => {
             keys: ["text"],
             label: "主标题",
             placeholder: "请输入主标题",
+            defaultValue: getDefaultValue(["text"]),
           },
           {
             type: "input",
             keys: ["subtext"],
             label: "副标题",
             placeholder: "请输入副标题",
+            defaultValue: getDefaultValue(["subtext"]),
           },
           {
             type: "switch",
             keys: ["show"],
             label: "显示",
+            defaultValue: getDefaultValue(["show"]),
           },
           {
-            type: "inputNumber",
+            type: "numberOrAuto",
             keys: ["left"],
             label: "左边距",
-            min: -2000,
+            min: 0,
             max: 2000,
+            defaultValue: getDefaultValue(["left"]),
           },
           {
-            type: "inputNumber",
+            type: "numberOrAuto",
             keys: ["top"],
             label: "上边距",
-            min: -2000,
+            min: 0,
             max: 2000,
+            defaultValue: getDefaultValue(["top"]),
           },
         ],
       },
@@ -143,13 +136,13 @@ export const TitlePanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["textStyle", "color"],
             label: "颜色",
-            defaultValue: "#333",
+            defaultValue: getDefaultValue(["textStyle", "color"]),
           },
           {
             type: "select",
             keys: ["textStyle", "fontStyle"],
             label: "字体样式",
-            defaultValue: "normal",
+            defaultValue: getDefaultValue(["textStyle", "fontStyle"]),
             options: [
               { label: "正常", value: "normal" },
               { label: "斜体", value: "italic" },
@@ -160,7 +153,7 @@ export const TitlePanel: FC = observer(() => {
             type: "select",
             keys: ["textStyle", "fontWeight"],
             label: "字体粗细",
-            defaultValue: "bold",
+            defaultValue: getDefaultValue(["textStyle", "fontWeight"]),
             options: [
               { label: "正常", value: "normal" },
               { label: "粗体", value: "bold" },
@@ -172,7 +165,7 @@ export const TitlePanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["textStyle", "fontSize"],
             label: "字体大小",
-            defaultValue: 18,
+            defaultValue: getDefaultValue(["textStyle", "fontSize"]),
             min: 1,
             max: 100,
           },
@@ -180,13 +173,13 @@ export const TitlePanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["textStyle", "textShadowColor"],
             label: "阴影颜色",
-            defaultValue: "transparent",
+            defaultValue: getDefaultValue(["textStyle", "textShadowColor"]),
           },
           {
             type: "inputNumber",
             keys: ["textStyle", "textShadowBlur"],
             label: "阴影模糊",
-            defaultValue: 0,
+            defaultValue: getDefaultValue(["textStyle", "textShadowBlur"]),
             min: 0,
             max: 50,
           },
@@ -194,7 +187,7 @@ export const TitlePanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["textStyle", "textShadowOffsetX"],
             label: "阴影X偏移",
-            defaultValue: 0,
+            defaultValue: getDefaultValue(["textStyle", "textShadowOffsetX"]),
             min: -50,
             max: 50,
           },
@@ -202,7 +195,7 @@ export const TitlePanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["textStyle", "textShadowOffsetY"],
             label: "阴影Y偏移",
-            defaultValue: 0,
+            defaultValue: getDefaultValue(["textStyle", "textShadowOffsetY"]),
             min: -50,
             max: 50,
           },
@@ -216,13 +209,13 @@ export const TitlePanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["subtextStyle", "color"],
             label: "颜色",
-            defaultValue: "#aaa",
+            defaultValue: getDefaultValue(["subtextStyle", "color"]),
           },
           {
             type: "select",
             keys: ["subtextStyle", "fontStyle"],
             label: "字体样式",
-            defaultValue: "normal",
+            defaultValue: getDefaultValue(["subtextStyle", "fontStyle"]),
             options: [
               { label: "正常", value: "normal" },
               { label: "斜体", value: "italic" },
@@ -233,7 +226,7 @@ export const TitlePanel: FC = observer(() => {
             type: "select",
             keys: ["subtextStyle", "fontWeight"],
             label: "字体粗细",
-            defaultValue: "bold",
+            defaultValue: getDefaultValue(["subtextStyle", "fontWeight"]),
             options: [
               { label: "正常", value: "normal" },
               { label: "粗体", value: "bold" },
@@ -245,7 +238,7 @@ export const TitlePanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["subtextStyle", "fontSize"],
             label: "字体大小",
-            defaultValue: 12,
+            defaultValue: getDefaultValue(["subtextStyle", "fontSize"]),
             min: 1,
             max: 100,
           },
@@ -253,13 +246,13 @@ export const TitlePanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["subtextStyle", "textShadowColor"],
             label: "阴影颜色",
-            defaultValue: "transparent",
+            defaultValue: getDefaultValue(["subtextStyle", "textShadowColor"]),
           },
           {
             type: "inputNumber",
             keys: ["subtextStyle", "textShadowBlur"],
             label: "阴影模糊",
-            defaultValue: 0,
+            defaultValue: getDefaultValue(["subtextStyle", "textShadowBlur"]),
             min: 0,
             max: 50,
           },
@@ -267,7 +260,10 @@ export const TitlePanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["subtextStyle", "textShadowOffsetX"],
             label: "阴影X偏移",
-            defaultValue: 0,
+            defaultValue: getDefaultValue([
+              "subtextStyle",
+              "textShadowOffsetX",
+            ]),
             min: -50,
             max: 50,
           },
@@ -275,15 +271,17 @@ export const TitlePanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["subtextStyle", "textShadowOffsetY"],
             label: "阴影Y偏移",
-            defaultValue: 0,
+            defaultValue: getDefaultValue([
+              "subtextStyle",
+              "textShadowOffsetY",
+            ]),
             min: -50,
             max: 50,
           },
         ],
       },
-    ],
-    []
-  );
+    ];
+  }, []);
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {
@@ -332,6 +330,13 @@ export const TitlePanel: FC = observer(() => {
             min={props.min}
             max={props.max}
             style={{ width: "100%" }}
+          />
+        );
+      case "numberOrAuto":
+        return (
+          <PanelNumberOrAuto
+            value={value ?? defaultValue ?? 0}
+            onChange={(val) => handleTitleChange(keys, val)}
           />
         );
       case "select":

@@ -1,3 +1,4 @@
+import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
 import { getColorDefaultOption } from "../../common";
 
@@ -138,11 +139,19 @@ export function getDataToExcel(
  */
 export function setDataFromExcel(
   excelData: Array<Array<string | number>>,
-  config?: PieChartConfig
-): PieChartConfig {
-  if (excelData.length < 2) {
-    return config || {};
+  option?: EChartsOption
+): EChartsOption {
+  if (!option) {
+    return getPieChartOption();
   }
+
+  // 深拷贝 option，避免直接修改原对象
+  const updatedOption = cloneDeep(option);
+
+  if (excelData.length < 2) {
+    return updatedOption;
+  }
+
   // 跳过表头，从第二行开始读取数据
   const data: Array<{ label: string; value: number }> = [];
 
@@ -170,8 +179,29 @@ export function setDataFromExcel(
     });
   }
 
-  return {
-    ...config,
-    data,
-  };
+  // 更新 dataset.source
+  const datasetSource: any[] = [["label", "value"]];
+  data.forEach((item) => {
+    datasetSource.push([item.label, item.value]);
+  });
+
+  if (updatedOption.dataset) {
+    if (Array.isArray(updatedOption.dataset)) {
+      updatedOption.dataset[0] = {
+        ...updatedOption.dataset[0],
+        source: datasetSource,
+      };
+    } else {
+      updatedOption.dataset = {
+        ...updatedOption.dataset,
+        source: datasetSource,
+      };
+    }
+  } else {
+    updatedOption.dataset = {
+      source: datasetSource,
+    };
+  }
+
+  return updatedOption;
 }

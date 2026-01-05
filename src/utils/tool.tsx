@@ -5,6 +5,31 @@ import { snapdom } from "@zumer/snapdom";
 import type { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
 
+/**
+ * 深拷贝对象
+ * 优先使用 structuredClone（如果支持），否则回退到 JSON.stringify/parse
+ *
+ * @param obj - 要拷贝的对象
+ * @returns 深拷贝后的新对象
+ */
+export function cloneDeep<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (typeof structuredClone !== "undefined") {
+    return structuredClone(obj);
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (error) {
+    // 如果 JSON 方法也失败（例如遇到循环引用），返回原对象
+    console.warn("cloneDeep failed, returning original object:", error);
+    return obj;
+  }
+}
+
 export function getRandomId() {
   return (
     Math.random().toString(36).substring(2, 15) +

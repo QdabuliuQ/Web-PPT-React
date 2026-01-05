@@ -6,7 +6,7 @@ import type { ITextProps } from "@/element/Text";
 import type { PlacementMapped } from "@/element/Text/constant";
 import type { IMindMapProps } from "@/types/element";
 import { getRandomId } from "@/utils";
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 
 export type Elements =
   | ITextProps
@@ -18,7 +18,18 @@ export type Elements =
 export type Page = {
   id: string;
   elements: Array<Elements>;
-  visible?: boolean;
+  visible: boolean;
+  toggleInAnimation: string;
+  toggleInDuration: string;
+  toggleInDelay: string;
+  autoToggle: boolean;
+  autoToggleTime: number;
+  backgroundType: string;
+  background: string;
+  bgColor: string;
+  fgColor: string;
+  bgOpacity: number;
+  remark: string;
 };
 
 type IPage = Array<Page>;
@@ -125,6 +136,18 @@ class PPTStore {
     const newPage: Page = {
       id: `page_${getRandomId()}`,
       elements: [],
+      visible: true,
+      toggleInAnimation: "backInLeft",
+      toggleInDuration: "default",
+      toggleInDelay: "0s",
+      autoToggle: false,
+      autoToggleTime: 5,
+      backgroundType: "solidColor",
+      background: "#fff",
+      bgColor: "#e4e4e4",
+      fgColor: "#9C92AC",
+      bgOpacity: 0.4,
+      remark: "",
     };
 
     let newPages: IPage;
@@ -147,7 +170,11 @@ class PPTStore {
       newPages = [...this.pages, newPage];
     }
 
-    this.pages = newPages;
+    // 使用 runInAction 确保 MobX 正确追踪变化
+    runInAction(() => {
+      this.pages = newPages;
+    });
+
     return newPage.id;
   };
 
@@ -180,6 +207,7 @@ class PPTStore {
 
     // 深拷贝页面和元素
     const newPage: Page = {
+      ...originalPage,
       id: `page_${getRandomId()}`,
       elements: originalPage.elements.map((element) => ({
         ...element,
@@ -228,13 +256,13 @@ class PPTStore {
       ...this.pages.slice(0, pageIndex),
       ...this.pages.slice(pageIndex + 1),
     ];
-    
+
     const newPages = [
       ...pagesWithoutMoved.slice(0, newIndex),
       page,
       ...pagesWithoutMoved.slice(newIndex),
     ];
-    
+
     this.pages = newPages;
 
     return true;

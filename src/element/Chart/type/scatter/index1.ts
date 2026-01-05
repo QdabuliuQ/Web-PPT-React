@@ -1,3 +1,4 @@
+import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
 import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
 
@@ -244,11 +245,19 @@ export function getDataToExcel(
  */
 export function setDataFromExcel(
   excelData: Array<Array<string | number>>,
-  config?: ScatterChartConfig
-): ScatterChartConfig {
-  if (excelData.length < 2) {
-    return config || {};
+  option?: EChartsOption
+): EChartsOption {
+  if (!option) {
+    return getScatterChartOption();
   }
+
+  // 深拷贝 option，避免直接修改原对象
+  const updatedOption = cloneDeep(option);
+
+  if (excelData.length < 2) {
+    return updatedOption;
+  }
+
   // 跳过表头，从第二行开始读取数据
   const data: Array<[number, number]> = [];
 
@@ -275,8 +284,13 @@ export function setDataFromExcel(
     data.push([Number(x) || 0, Number(y) || 0]);
   }
 
-  return {
-    ...config,
-    data,
-  };
+  // 更新 series[0].data
+  const series = Array.isArray(updatedOption.series)
+    ? updatedOption.series[0]
+    : updatedOption.series;
+  if (series) {
+    (series as any).data = data;
+  }
+
+  return updatedOption;
 }

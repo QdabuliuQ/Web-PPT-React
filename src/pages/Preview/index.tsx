@@ -26,7 +26,7 @@ import {
   PreviewCloseOne,
   Up,
 } from "@icon-park/react";
-import { useKeyPress, useMemoizedFn } from "ahooks";
+import { useKeyPress, useMemoizedFn, useMount } from "ahooks";
 import { Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
@@ -134,13 +134,18 @@ const PageItem: FC<{
 );
 
 const PreviewComponent: FC = () => {
+  // 在组件顶层直接访问 observable，确保 MobX 能追踪到
+  // 这很重要：必须在组件函数体的顶层访问，而不是在嵌套函数中
   const pages = pptStore.pages;
 
-  useEffect(() => {
-    if (pages.length === 0) {
+  // 添加调试日志，确认组件是否重新渲染
+  console.log("PreviewComponent render, pages count:", pages.length);
+
+  useMount(() => {
+    if (pptStore.pages.length === 0) {
       initPPTStore();
     }
-  }, [pages.length]);
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const addButtonRef = useRef<HTMLDivElement>(null);
@@ -151,6 +156,7 @@ const PreviewComponent: FC = () => {
 
   // 滚动到底部
   const scrollToBottom = useMemoizedFn(() => {
+    // 增加延迟，确保 DOM 已更新
     setTimeout(() => {
       if (scrollContainerRef.current) {
         const osInstance = scrollContainerRef.current.osInstance();
@@ -162,7 +168,7 @@ const PreviewComponent: FC = () => {
           });
         }
       }
-    }, 100);
+    }, 300);
   });
 
   // 处理右键菜单
@@ -184,7 +190,9 @@ const PreviewComponent: FC = () => {
   });
 
   const handleAddPage = useMemoizedFn(() => {
-    const lastPage = pages[pages.length - 1];
+    // 直接使用 pptStore.pages 获取最新的页面列表
+    const currentPages = pptStore.pages;
+    const lastPage = currentPages[currentPages.length - 1];
     addPageAndActivate(lastPage?.id, () => {
       scrollToBottom();
     });
@@ -376,30 +384,66 @@ const PreviewComponent: FC = () => {
           },
         }}
       >
-        {pages && pages.length > 0 ? (
-          pages.map((page: Page, index: number) => (
-            <PageItem
-              key={page.id}
-              page={page}
-              index={index}
-              scale={scale}
-              totalPages={pages.length}
-              onPageClick={handlePageClick}
-              onContextMenu={handleContextMenu}
-              onPlayPage={handlePlayPage}
-              onMovePageUp={handleMovePageUp}
-              onMovePageDown={handleMovePageDown}
-              onAddPageAfter={handleAddPageAfter}
-              pageItemRef={index === 0 ? pageItemRef : null}
-            />
-          ))
-        ) : (
-          <div className="flex items-center justify-center h-full text-[#9b9b9b] text-sm px-[15px]">
-            暂无页面数据
-          </div>
-        )}
+        {(() => {
+          if (pages && pages.length > 0) {
+            const pagesArray = [...pages];
+            if (pagesArray.length !== pages.length) {
+              console.warn("Spread operator failed, using index access");
+              const pagesByIndex: Page[] = [];
+              for (let i = 0; i < pages.length; i++) {
+                pagesByIndex.push(pages[i]);
+              }
+              console.log("JSX: Pages by index length:", pagesByIndex.length);
+              const mapped = pagesByIndex.map((page: Page, index: number) => {
+                console.log(`JSX: Mapping page ${index}:`, page.id);
+                return (
+                  <PageItem
+                    key={page.id}
+                    page={page}
+                    index={index}
+                    scale={scale}
+                    totalPages={pages.length}
+                    onPageClick={handlePageClick}
+                    onContextMenu={handleContextMenu}
+                    onPlayPage={handlePlayPage}
+                    onMovePageUp={handleMovePageUp}
+                    onMovePageDown={handleMovePageDown}
+                    onAddPageAfter={handleAddPageAfter}
+                    pageItemRef={index === 0 ? pageItemRef : null}
+                  />
+                );
+              });
+              console.log("JSX: Map result length:", mapped.length);
+              return mapped;
+            }
+            const mapped = pagesArray.map((page: Page, index: number) => {
+              return (
+                <PageItem
+                  key={page.id}
+                  page={page}
+                  index={index}
+                  scale={scale}
+                  totalPages={pages.length}
+                  onPageClick={handlePageClick}
+                  onContextMenu={handleContextMenu}
+                  onPlayPage={handlePlayPage}
+                  onMovePageUp={handleMovePageUp}
+                  onMovePageDown={handleMovePageDown}
+                  onAddPageAfter={handleAddPageAfter}
+                  pageItemRef={index === 0 ? pageItemRef : null}
+                />
+              );
+            });
+            return mapped;
+          } else {
+            return (
+              <div className="flex items-center justify-center h-full text-[#9b9b9b] text-sm px-[15px]">
+                暂无页面数据
+              </div>
+            );
+          }
+        })()}
       </OverlayScrollbarsComponent>
-
       <div ref={addButtonRef} className="pr-[15px]">
         <Tooltip placement="top" title="添加页面">
           <div

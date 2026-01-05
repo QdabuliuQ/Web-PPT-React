@@ -4,10 +4,10 @@ import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { globalEventBus } from "@/utils/eventBus";
-import { EditOne } from "@icon-park/react";
+import { Download, EditOne } from "@icon-park/react";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
-import { ChartDataModal } from "./ChartDataModal";
+import { ChartDataModal } from "./chartDataModal";
 import { BackgroundColorPanel } from "./components/backgroundColorPanel";
 import { ColorPanel } from "./components/colorPanel";
 import { GridPanel } from "./components/gridPanel";
@@ -20,6 +20,7 @@ import { PieChartPanel } from "./type/pie/panel";
 import { RadarChartPanel } from "./type/radar/panel";
 import { ScatterChartPanel } from "./type/scatter/panel";
 import { useChartDataModal } from "./useChartDataModal";
+import { exportChartAsImage } from "./utils";
 
 export const ChartPanelKey = "chart";
 export const ChartPanelTitle = "图表";
@@ -55,6 +56,11 @@ const ChartPanelComponent: FC = observer(() => {
       elementId
     );
     globalEventBus.emit(eventName);
+  };
+
+  // 导出图表图片
+  const handleExportChartImage = async () => {
+    await exportChartAsImage(elementId, "chart", "png");
   };
 
   const onZIndexChange = (key: string) => {
@@ -111,6 +117,12 @@ const ChartPanelComponent: FC = observer(() => {
           title="数据"
           icon={<EditOne theme="outline" size="18" fill="#333" />}
           onClick={handleOpenDataModalFromPanel}
+        />
+        <PanelLargeButton
+          title="下载图片"
+          icon={<Download theme="outline" size="18" fill="#333" />}
+          onClick={handleExportChartImage}
+          aspectRatio={false}
         />
         <PanelSplitLine />
         <PanelCommonSetting

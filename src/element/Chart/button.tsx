@@ -1,6 +1,6 @@
 import { PanelButton } from "@/components/PanelButton";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { ChartLine } from "@icon-park/react";
+import { ChartHistogram } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Popover } from "antd";
 import { observer } from "mobx-react-lite";
@@ -84,7 +84,7 @@ export default function ChartButton() {
     <Popover open={open} placement="bottom" content={content} trigger={[]}>
       <div onMouseEnter={handleOpen} onMouseLeave={handleClose}>
         <PanelButton
-          icon={<ChartLine theme="outline" size="24" fill="#333" />}
+          icon={<ChartHistogram theme="outline" size="24" fill="#333" />}
           title="图表"
         />
       </div>

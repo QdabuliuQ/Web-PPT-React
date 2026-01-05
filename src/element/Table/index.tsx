@@ -7,7 +7,7 @@ import {
   pptStore,
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
-import { getRandomId, placementConvey } from "@/utils";
+import { cloneDeep, getRandomId, placementConvey } from "@/utils";
 import { globalEventBus } from "@/utils/eventBus";
 import { TableFile } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
@@ -761,7 +761,7 @@ const Component: FC<ITableProps> = (props) => {
     for (let i = 0; i < tableData.length; i++) {
       newTableData[i] = [];
       for (let j = 0; j < tableData[i].length; j++) {
-        const item = JSON.parse(JSON.stringify(tableData[i][j]));
+        const item = cloneDeep(tableData[i][j]);
         item.value = spreadsheetData[0].rows[i]?.cells[j]?.text || "";
         newTableData[i].push(item);
       }

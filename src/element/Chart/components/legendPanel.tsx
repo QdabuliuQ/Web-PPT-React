@@ -1,10 +1,11 @@
-import { PanelLargeButton, PanelSelect } from "@/components";
+import { PanelLargeButton, PanelNumberOrAuto, PanelSelect } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { Text } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Collapse, ColorPicker, InputNumber, Popover, Switch } from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
+import { getLegendDefaultOption } from "../common";
 import type { IChartProps } from "../index";
 import styles from "./panel.module.less";
 
@@ -22,34 +23,7 @@ export const LegendPanel: FC = observer(() => {
   if (!chartInfo) return null;
 
   // 获取 legend 配置，如果没有则使用默认值
-  const legendConfig = chartInfo.option?.legend || {
-    show: false,
-    icon: "roundRect",
-    left: 0,
-    top: 0,
-    itemWidth: 25,
-    itemHeight: 14,
-    textStyle: {
-      color: "#333",
-      fontSize: 12,
-      fontStyle: "normal",
-      fontWeight: "normal",
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-    },
-    itemStyle: {
-      borderColor: "transparent",
-      borderWidth: 0,
-      borderType: "solid",
-      opacity: 1,
-      shadowBlur: 0,
-      shadowColor: "transparent",
-      shadowOffsetX: 0,
-      shadowOffsetY: 0,
-    },
-  };
+  const legendConfig = chartInfo.option?.legend || getLegendDefaultOption();
 
   // 更新 legend 配置的通用函数
   const handleLegendChange = useMemoizedFn((path: string[], value: any) => {
@@ -97,8 +71,20 @@ export const LegendPanel: FC = observer(() => {
   );
 
   // 配置数组
-  const panelConfigs = useMemo(
-    () => [
+  const panelConfigs = useMemo(() => {
+    // 从 legendConfig 获取值的辅助函数
+    const getConfigValue = (keys: string[]) => {
+      let current: any = legendConfig;
+      for (const key of keys) {
+        if (current?.[key] === undefined) {
+          return undefined;
+        }
+        current = current[key];
+      }
+      return current;
+    };
+
+    return [
       {
         key: "basic",
         title: "基础设置",
@@ -107,12 +93,13 @@ export const LegendPanel: FC = observer(() => {
             type: "switch",
             keys: ["show"],
             label: "显示",
+            defaultValue: getConfigValue(["show"]),
           },
           {
             type: "select",
             keys: ["icon"],
             label: "形状",
-            defaultValue: "roundRect",
+            defaultValue: getConfigValue(["icon"]),
             options: [
               { label: "圆角矩形", value: "roundRect" },
               { label: "矩形", value: "rect" },
@@ -125,26 +112,26 @@ export const LegendPanel: FC = observer(() => {
             ],
           },
           {
-            type: "inputNumber",
+            type: "numberOrAuto",
             keys: ["left"],
             label: "左边距",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["left"]),
             min: 0,
-            max: 1000,
+            max: 2000,
           },
           {
-            type: "inputNumber",
+            type: "numberOrAuto",
             keys: ["top"],
             label: "上边距",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["top"]),
             min: 0,
-            max: 1000,
+            max: 2000,
           },
           {
             type: "inputNumber",
             keys: ["itemWidth"],
             label: "图例项宽度",
-            defaultValue: 25,
+            defaultValue: getConfigValue(["itemWidth"]),
             min: 0,
             max: 200,
           },
@@ -152,7 +139,7 @@ export const LegendPanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["itemHeight"],
             label: "图例项高度",
-            defaultValue: 14,
+            defaultValue: getConfigValue(["itemHeight"]),
             min: 0,
             max: 200,
           },
@@ -166,13 +153,13 @@ export const LegendPanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["textStyle", "color"],
             label: "颜色",
-            defaultValue: "#333",
+            defaultValue: getConfigValue(["textStyle", "color"]),
           },
           {
             type: "inputNumber",
             keys: ["textStyle", "fontSize"],
             label: "字体大小",
-            defaultValue: 12,
+            defaultValue: getConfigValue(["textStyle", "fontSize"]),
             min: 1,
             max: 100,
           },
@@ -180,7 +167,7 @@ export const LegendPanel: FC = observer(() => {
             type: "select",
             keys: ["textStyle", "fontStyle"],
             label: "字体样式",
-            defaultValue: "normal",
+            defaultValue: getConfigValue(["textStyle", "fontStyle"]),
             options: [
               { label: "正常", value: "normal" },
               { label: "斜体", value: "italic" },
@@ -191,7 +178,7 @@ export const LegendPanel: FC = observer(() => {
             type: "select",
             keys: ["textStyle", "fontWeight"],
             label: "字体粗细",
-            defaultValue: "normal",
+            defaultValue: getConfigValue(["textStyle", "fontWeight"]),
             options: [
               { label: "正常", value: "normal" },
               { label: "粗体", value: "bold" },
@@ -203,13 +190,13 @@ export const LegendPanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["textStyle", "textShadowColor"],
             label: "文字阴影颜色",
-            defaultValue: "transparent",
+            defaultValue: getConfigValue(["textStyle", "textShadowColor"]),
           },
           {
             type: "inputNumber",
             keys: ["textStyle", "textShadowBlur"],
             label: "文字阴影模糊",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["textStyle", "textShadowBlur"]),
             min: 0,
             max: 50,
           },
@@ -217,7 +204,7 @@ export const LegendPanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["textStyle", "textShadowOffsetX"],
             label: "文字阴影X偏移",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["textStyle", "textShadowOffsetX"]),
             min: -50,
             max: 50,
           },
@@ -225,7 +212,7 @@ export const LegendPanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["textStyle", "textShadowOffsetY"],
             label: "文字阴影Y偏移",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["textStyle", "textShadowOffsetY"]),
             min: -50,
             max: 50,
           },
@@ -239,13 +226,13 @@ export const LegendPanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["itemStyle", "borderColor"],
             label: "边框颜色",
-            defaultValue: "transparent",
+            defaultValue: getConfigValue(["itemStyle", "borderColor"]),
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "borderWidth"],
             label: "边框宽度",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["itemStyle", "borderWidth"]),
             min: 0,
             max: 20,
           },
@@ -253,7 +240,7 @@ export const LegendPanel: FC = observer(() => {
             type: "select",
             keys: ["itemStyle", "borderType"],
             label: "边框样式",
-            defaultValue: "solid",
+            defaultValue: getConfigValue(["itemStyle", "borderType"]),
             options: [
               { label: "实线", value: "solid" },
               { label: "虚线", value: "dashed" },
@@ -264,7 +251,7 @@ export const LegendPanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["itemStyle", "opacity"],
             label: "透明度",
-            defaultValue: 1,
+            defaultValue: getConfigValue(["itemStyle", "opacity"]),
             min: 0,
             max: 1,
             step: 0.1,
@@ -273,13 +260,13 @@ export const LegendPanel: FC = observer(() => {
             type: "colorPicker",
             keys: ["itemStyle", "shadowColor"],
             label: "阴影颜色",
-            defaultValue: "transparent",
+            defaultValue: getConfigValue(["itemStyle", "shadowColor"]),
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowBlur"],
             label: "阴影模糊",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["itemStyle", "shadowBlur"]),
             min: 0,
             max: 50,
           },
@@ -287,7 +274,7 @@ export const LegendPanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetX"],
             label: "阴影X偏移",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["itemStyle", "shadowOffsetX"]),
             min: -50,
             max: 50,
           },
@@ -295,15 +282,14 @@ export const LegendPanel: FC = observer(() => {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetY"],
             label: "阴影Y偏移",
-            defaultValue: 0,
+            defaultValue: getConfigValue(["itemStyle", "shadowOffsetY"]),
             min: -50,
             max: 50,
           },
         ],
       },
-    ],
-    []
-  );
+    ];
+  }, [legendConfig]);
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {
@@ -342,6 +328,13 @@ export const LegendPanel: FC = observer(() => {
             max={props.max}
             step={props.step}
             style={{ width: "100%" }}
+          />
+        );
+      case "numberOrAuto":
+        return (
+          <PanelNumberOrAuto
+            value={value ?? defaultValue ?? 0}
+            onChange={(val) => handleLegendChange(keys, val)}
           />
         );
       case "select":

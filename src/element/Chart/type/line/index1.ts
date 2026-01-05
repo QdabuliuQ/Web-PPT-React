@@ -1,3 +1,4 @@
+import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
 import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
 
@@ -133,13 +134,22 @@ export function getDataToExcel(
  */
 export function setDataFromExcel(
   excelData: Array<Array<string | number>>,
-  config?: LineChartConfig
-): LineChartConfig {
-  if (excelData.length < 2) {
-    return config || {};
+  option?: EChartsOption
+): EChartsOption {
+  if (!option) {
+    return getLineChartOption1();
   }
+
+  // 深拷贝 option，避免直接修改原对象
+  const updatedOption = cloneDeep(option);
+
+  if (excelData.length < 2) {
+    return updatedOption;
+  }
+
   // 跳过表头，从第二行开始读取数据
-  const data: Array<{ label: string; value: number }> = [];
+  const labels: string[] = [];
+  const values: number[] = [];
 
   for (let i = 1; i < excelData.length; i++) {
     const row = excelData[i];
@@ -159,14 +169,25 @@ export function setDataFromExcel(
       break;
     }
 
-    data.push({
-      label: String(label),
-      value: Number(value) || 0,
-    });
+    labels.push(String(label));
+    values.push(Number(value) || 0);
   }
 
-  return {
-    ...config,
-    data,
-  };
+  // 更新 xAxis.data
+  const xAxis = Array.isArray(updatedOption.xAxis)
+    ? updatedOption.xAxis[0]
+    : updatedOption.xAxis;
+  if (xAxis) {
+    (xAxis as any).data = labels;
+  }
+
+  // 更新 series[0].data
+  const series = Array.isArray(updatedOption.series)
+    ? updatedOption.series[0]
+    : updatedOption.series;
+  if (series) {
+    (series as any).data = values;
+  }
+
+  return updatedOption;
 }

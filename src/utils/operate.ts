@@ -5,7 +5,7 @@ import {
   pageActiveStore,
   pptStore,
 } from "@/store";
-import { getRandomId } from "@/utils";
+import { cloneDeep, getRandomId } from "@/utils";
 
 /**
  * 新建页面（插入到指定页面之后），并切换到新页面。
@@ -126,7 +126,7 @@ export function pasteCopiedElement(pageId?: string | null) {
   const copied = copyElementStore.getCopiedElement();
   if (!copied) return;
 
-  const newElement = JSON.parse(JSON.stringify(copied));
+  const newElement = cloneDeep(copied);
   newElement.id = `${newElement.id.split("_")[0]}_${getRandomId()}`;
   pptStore.addElementInfo(targetPageId, newElement as any);
 }

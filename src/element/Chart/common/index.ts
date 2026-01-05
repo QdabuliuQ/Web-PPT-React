@@ -1,3 +1,5 @@
+import { cloneDeep } from "@/utils";
+
 /**
  * 应用覆盖值到默认配置的辅助函数
  * @param defaultOption - 默认配置对象
@@ -13,7 +15,7 @@ function applyOverrides<T extends Record<string, any>>(
   }
 
   // 深拷贝默认配置
-  const result = JSON.parse(JSON.stringify(defaultOption));
+  const result = cloneDeep(defaultOption);
 
   // 处理覆盖值，支持嵌套路径
   for (const [key, value] of Object.entries(overrides)) {
@@ -245,4 +247,41 @@ export function getColorDefaultOption(): string[] {
     "#9A60B4",
     "#EA7CCC",
   ];
+}
+
+/**
+ * 获取图例的默认配置选项
+ * @param overrides - 可选的覆盖对象，支持嵌套路径如 {'textStyle.fontSize': 20}
+ * @returns 返回默认的图例配置对象，已应用覆盖值
+ */
+export function getLegendDefaultOption(overrides?: Record<string, any>) {
+  const defaultOption = {
+    show: false,
+    icon: "roundRect" as const,
+    left: 0,
+    top: 0,
+    itemWidth: 25,
+    itemHeight: 14,
+    textStyle: {
+      color: "#333",
+      fontSize: 12,
+      fontStyle: "normal" as const,
+      fontWeight: "normal" as const,
+      textShadowColor: "transparent",
+      textShadowBlur: 0,
+      textShadowOffsetX: 0,
+      textShadowOffsetY: 0,
+    },
+    itemStyle: {
+      borderColor: "transparent",
+      borderWidth: 0,
+      borderType: "solid" as const,
+      opacity: 1,
+      shadowBlur: 0,
+      shadowColor: "transparent",
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+    },
+  };
+  return applyOverrides(defaultOption, overrides);
 }

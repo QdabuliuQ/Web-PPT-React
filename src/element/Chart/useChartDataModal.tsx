@@ -89,7 +89,7 @@ export function useChartDataModal({
   });
 
   // 保存图表数据
-  const handleSaveChartData = useMemoizedFn((updatedConfig: any) => {
+  const handleSaveChartData = useMemoizedFn((updatedOption: any) => {
     if (!pageId || !elementId) return;
 
     const currentElement = pptStore.getElementInfo(
@@ -98,93 +98,10 @@ export function useChartDataModal({
     ) as IChartProps;
     if (!currentElement) return;
 
-    // 获取当前 option 中的其他配置（保留非数据相关的配置）
-    const currentOption = currentElement.option || {};
-    const {
-      title,
-      backgroundColor,
-      color,
-      grid,
-      xAxis,
-      yAxis,
-      legend,
-      polar,
-      radiusAxis,
-      angleAxis,
-      radar,
-      tooltip,
-    } = currentOption;
-
-    // 重新生成完整的 option，使用更新后的数据配置
-    const gridOption = Array.isArray(grid) ? grid[0] : grid;
-    const legendOption = Array.isArray(legend) ? legend[0] : legend;
-
-    const newOption = getChartOptionByType(currentElement.chartType, {
-      ...updatedConfig,
-      // 保留其他配置
-      title,
-      backgroundColor,
-      color,
-      showGrid: (gridOption as any)?.splitLine?.show !== false,
-      showLabels: currentOption.series?.[0]?.label?.show !== false,
-      showLegend: (legendOption as any)?.show !== false,
-    });
-
-    // 合并保留的配置（如 grid, xAxis, yAxis 等的自定义样式）
-    // 对于散点图，需要移除 xAxis 和 yAxis 的 min/max，让它们根据数据重新计算
-    const isScatterChart = currentElement.chartType === "scatter1";
-
-    // 处理 xAxis：如果是散点图，移除 min/max；否则保留完整配置
-    let finalXAxis = xAxis;
-    if (isScatterChart && xAxis) {
-      const xAxisArray = Array.isArray(xAxis) ? xAxis : [xAxis];
-      finalXAxis = xAxisArray.map((axis: any) => {
-        const { min: _min, max: _max, ...rest } = axis || {};
-        return rest;
-      });
-      if (!Array.isArray(xAxis)) {
-        finalXAxis = finalXAxis[0];
-      }
-    }
-
-    // 处理 yAxis：如果是散点图，移除 min/max；否则保留完整配置
-    let finalYAxis = yAxis;
-    if (isScatterChart && yAxis) {
-      const yAxisArray = Array.isArray(yAxis) ? yAxis : [yAxis];
-      finalYAxis = yAxisArray.map((axis: any) => {
-        const { min: _min, max: _max, ...rest } = axis || {};
-        return rest;
-      });
-      if (!Array.isArray(yAxis)) {
-        finalYAxis = finalYAxis[0];
-      }
-    }
-
-    const finalOption = {
-      ...newOption,
-      // 保留自定义的 grid 配置（如果存在）
-      ...(grid && { grid }),
-      // 保留自定义的 xAxis 配置（如果存在，散点图已移除 min/max）
-      ...(finalXAxis && { xAxis: finalXAxis }),
-      // 保留自定义的 yAxis 配置（如果存在，散点图已移除 min/max）
-      ...(finalYAxis && { yAxis: finalYAxis }),
-      // 保留自定义的 legend 配置（如果存在）
-      ...(legend && { legend }),
-      // 保留自定义的 polar 配置（如果存在）
-      ...(polar && { polar }),
-      // 保留自定义的 radiusAxis 配置（如果存在）
-      ...(radiusAxis && { radiusAxis }),
-      // 保留自定义的 angleAxis 配置（如果存在）
-      ...(angleAxis && { angleAxis }),
-      // 保留自定义的 radar 配置（如果存在）
-      ...(radar && { radar }),
-      // 保留自定义的 tooltip 配置（如果存在）
-      ...(tooltip && { tooltip }),
-    };
-
+    // setDataFromExcel 已经返回完整的 option，直接使用
     pptStore.setElementInfo(pageId, elementId, {
       ...currentElement,
-      option: finalOption,
+      option: updatedOption,
     } as IChartProps);
   });
 

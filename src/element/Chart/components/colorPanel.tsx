@@ -107,6 +107,7 @@ export const ColorPanel: FC = observer(() => {
             const colorStr = typeof color === "string" ? color : String(color);
             return (
               <ColorPicker
+                key={index}
                 value={colorStr}
                 trigger="hover"
                 onChange={(c) => handleColorPickerChange.run(index, c)}

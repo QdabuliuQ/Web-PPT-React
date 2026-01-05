@@ -1,4 +1,6 @@
+import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
+import { getColorDefaultOption } from "../../common";
 
 export interface RadarChartConfig {
   data?: Array<{
@@ -42,6 +44,7 @@ export function getRadarChartOption(config?: RadarChartConfig): EChartsOption {
 
   return {
     backgroundColor,
+    color: getColorDefaultOption(),
     dataset: {
       source: datasetSource,
     },
@@ -53,30 +56,49 @@ export function getRadarChartOption(config?: RadarChartConfig): EChartsOption {
       center: ["50%", "55%"],
       radius: "70%",
       axisName: {
+        show: true,
         color: "#666",
+        fontStyle: "normal",
+        fontWeight: "normal",
         fontSize: 12,
+        textShadowColor: "transparent",
+        textShadowBlur: 0,
+        textShadowOffsetX: 0,
+        textShadowOffsetY: 0,
       },
       splitLine: {
+        show: true,
         lineStyle: {
           color: "#e0e0e0",
+          width: 1,
+          type: "solid", // solid dashed dotted
+          opacity: 1,
         },
       },
       splitArea: {
         show: true,
         areaStyle: {
-          color: ["rgba(250, 250, 250, 0.3)", "rgba(200, 200, 200, 0.1)"],
+          color: ["rgba(250, 250, 250, 1)", "rgba(200, 200, 200, 0.1)"],
         },
       },
       axisLine: {
         lineStyle: {
           color: "#666",
+          width: 1,
+          type: "solid",
+          shadowBlur: 0,
+          shadowColor: "transparent",
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          opacity: 1,
         },
       },
     },
     series: {
       type: "radar",
       encode: {
-        value: 1, // value 列
+        itemName: "name",
+        value: "value",
       },
       data: [
         {
@@ -171,15 +193,23 @@ export function getDataToExcel(
 }
 
 /**
- * 从 Excel 格式（二维数组）转换为图表数据
+ * 从 Excel 格式（二维数组）转换为图表数据，直接更新 option
  */
 export function setDataFromExcel(
   excelData: Array<Array<string | number>>,
-  config?: RadarChartConfig
-): RadarChartConfig {
-  if (excelData.length < 2) {
-    return config || {};
+  option?: EChartsOption
+): EChartsOption {
+  if (!option) {
+    return getRadarChartOption();
   }
+
+  // 深拷贝 option，避免直接修改原对象
+  const updatedOption = cloneDeep(option);
+
+  if (excelData.length < 2) {
+    return updatedOption;
+  }
+
   // 跳过表头，从第二行开始读取数据
   const data: Array<{ name: string; value: number }> = [];
 
@@ -207,8 +237,51 @@ export function setDataFromExcel(
     });
   }
 
-  return {
-    ...config,
-    data,
-  };
+  // 计算最大值，用于设置雷达图的刻度
+  const maxValue = Math.max(...data.map((d) => d.value), 100);
+
+  // 更新 dataset.source
+  const datasetSource: any[] = [["name", "value"]];
+  data.forEach((item) => {
+    datasetSource.push([item.name, item.value]);
+  });
+
+  if (updatedOption.dataset) {
+    if (Array.isArray(updatedOption.dataset)) {
+      updatedOption.dataset[0] = {
+        ...updatedOption.dataset[0],
+        source: datasetSource,
+      };
+    } else {
+      updatedOption.dataset = {
+        ...updatedOption.dataset,
+        source: datasetSource,
+      };
+    }
+  } else {
+    updatedOption.dataset = {
+      source: datasetSource,
+    };
+  }
+
+  // 更新 radar.indicator
+  const radar = Array.isArray(updatedOption.radar)
+    ? updatedOption.radar[0]
+    : updatedOption.radar;
+  if (radar) {
+    (radar as any).indicator = data.map((d) => ({
+      name: d.name,
+      max: Math.ceil(maxValue * 1.2), // 添加 20% 的边距
+    }));
+  }
+
+  // 更新 series.data[0].value
+  const series = Array.isArray(updatedOption.series)
+    ? updatedOption.series[0]
+    : updatedOption.series;
+  if (series && series.data && Array.isArray(series.data) && series.data[0]) {
+    (series.data[0] as any).value = data.map((d) => d.value);
+  }
+
+  return updatedOption;
 }
