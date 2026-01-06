@@ -9,9 +9,9 @@ export interface PieChartConfig {
 }
 
 /**
- * 生成饼图的 echarts 配置
+ * 生成环形饼图的 echarts 配置
  */
-export function getPieChartOption(config?: PieChartConfig): EChartsOption {
+export function getPieChartOption2(config?: PieChartConfig): EChartsOption {
   // 默认配置
   const defaultData = [
     { label: "A", value: 30 },
@@ -44,7 +44,7 @@ export function getPieChartOption(config?: PieChartConfig): EChartsOption {
     },
     series: {
       type: "pie",
-      radius: "60%",
+      radius: ["40%", "70%"],
       center: ["50%", "50%"],
       encode: {
         itemName: 0, // label 列
@@ -154,7 +154,7 @@ export function setDataFromExcel(
   option?: EChartsOption
 ): EChartsOption {
   if (!option) {
-    return getPieChartOption();
+    return getPieChartOption2();
   }
 
   // 深拷贝 option，避免直接修改原对象

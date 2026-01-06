@@ -1,5 +1,6 @@
+import { PanelNumberOrAuto } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
-import { ChartPie } from "@icon-park/react";
+import { Filter } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { InputNumber } from "antd";
 import { observer } from "mobx-react-lite";
@@ -7,7 +8,7 @@ import { useMemo, type FC } from "react";
 import { ChartStylePanel } from "../../components/chartStylePanel";
 import type { IChartProps } from "../../index";
 
-export const Pie1ChartPanel: FC = observer(() => {
+export const Funnel1ChartPanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
   const pageId = pageActiveStore.getPageActive();
 
@@ -22,48 +23,25 @@ export const Pie1ChartPanel: FC = observer(() => {
 
   // 获取 series 配置，如果没有则使用默认值
   const seriesOption = chartInfo.option?.series;
-  const seriesConfig = useMemo(
-    () =>
-      Array.isArray(seriesOption) ? seriesOption[0] || {} : seriesOption || {},
-    [seriesOption]
-  );
+  const seriesConfig = Array.isArray(seriesOption)
+    ? seriesOption[0] || {}
+    : seriesOption || {};
 
-  // 解析 radius 值，默认 "60%"
-  const radiusValue = (seriesConfig as any)?.radius || "60%";
-  // 判断 radius 是否为数组（环形图）
-  const isDonutChart = Array.isArray(radiusValue);
-
-  // 如果是数组，解析内半径和外半径
-  const innerRadius = isDonutChart
-    ? parseFloat(
-        typeof radiusValue[0] === "string"
-          ? radiusValue[0].replace("%", "")
-          : String(radiusValue[0] || "40")
-      ) || 40
-    : null;
-  const outerRadius = isDonutChart
-    ? parseFloat(
-        typeof radiusValue[1] === "string"
-          ? radiusValue[1].replace("%", "")
-          : String(radiusValue[1] || "70")
-      ) || 70
-    : parseFloat(
-        typeof radiusValue === "string"
-          ? radiusValue.replace("%", "")
-          : String(radiusValue)
-      ) || 60;
-
-  // 解析 center 值，默认 ["50%", "50%"]
-  const centerValue = useMemo(
-    () => (seriesConfig as any)?.center || ["50%", "50%"],
-    [seriesConfig]
-  );
-  const centerX = parseFloat(
-    centerValue[0]?.toString().replace("%", "") || "50"
-  );
-  const centerY = parseFloat(
-    centerValue[1]?.toString().replace("%", "") || "50"
-  );
+  // 解析 width 值，默认 "80%"
+  const widthValue = (seriesConfig as any)?.width || "80%";
+  const heightValue = (seriesConfig as any)?.height || "90%";
+  const width =
+    parseFloat(
+      typeof widthValue === "string"
+        ? widthValue.replace("%", "")
+        : String(widthValue)
+    ) || 80;
+  const height =
+    parseFloat(
+      typeof heightValue === "string"
+        ? heightValue.replace("%", "")
+        : String(heightValue)
+    ) || 80;
 
   // 更新 series 配置的函数
   const handleSeriesChange = useMemoizedFn((path: string[], value: any) => {
@@ -93,39 +71,14 @@ export const Pie1ChartPanel: FC = observer(() => {
     });
   });
 
-  // 更新 radius（饼图）
-  const handleRadiusChange = useMemoizedFn((value: number | null) => {
-    handleSeriesChange(["radius"], `${value ?? 60}%`);
+  // 更新 width
+  const handleWidthChange = useMemoizedFn((value: number | null) => {
+    handleSeriesChange(["width"], `${value ?? 80}%`);
   });
 
-  // 更新内半径（环形图）
-  const handleInnerRadiusChange = useMemoizedFn((value: number | null) => {
-    const currentRadius = (seriesConfig as any)?.radius || ["40%", "70%"];
-    const outerRadiusValue = Array.isArray(currentRadius)
-      ? currentRadius[1] || "70%"
-      : "70%";
-    handleSeriesChange(["radius"], [`${value ?? 40}%`, outerRadiusValue]);
-  });
-
-  // 更新外半径（环形图）
-  const handleOuterRadiusChange = useMemoizedFn((value: number | null) => {
-    const currentRadius = (seriesConfig as any)?.radius || ["40%", "70%"];
-    const innerRadiusValue = Array.isArray(currentRadius)
-      ? currentRadius[0] || "40%"
-      : "40%";
-    handleSeriesChange(["radius"], [innerRadiusValue, `${value ?? 70}%`]);
-  });
-
-  // 更新 center 的 X 值
-  const handleCenterXChange = useMemoizedFn((value: number | null) => {
-    const newCenter = [`${value ?? 50}%`, centerValue[1] || "50%"];
-    handleSeriesChange(["center"], newCenter);
-  });
-
-  // 更新 center 的 Y 值
-  const handleCenterYChange = useMemoizedFn((value: number | null) => {
-    const newCenter = [centerValue[0] || "50%", `${value ?? 50}%`];
-    handleSeriesChange(["center"], newCenter);
+  // 更新 height
+  const handleHeightChange = useMemoizedFn((value: number | null) => {
+    handleSeriesChange(["height"], `${value ?? 90}%`);
   });
 
   // ColorPicker 防抖处理函数
@@ -156,10 +109,28 @@ export const Pie1ChartPanel: FC = observer(() => {
     return current ?? defaultValue;
   });
 
+  // 解析/格式化 left/top 值，转换为 PanelNumberOrAuto 支持的格式（只支持 center 或数字）
+  const parsePositionValue = useMemoizedFn((value: any) => {
+    if (value === "center") return "center";
+    if (typeof value === "number") return value;
+    // 其他值都返回 center
+    return "center";
+  });
+
+  // 统一的 onChange 处理函数（用于 customRender）
+  const handleChangeWithCallback = useMemoizedFn(
+    (config: any, newValue: any) => {
+      // 如果配置项有自定义 onChange，先调用它
+      if (config.onChange) {
+        config.onChange(newValue, config.keys);
+      }
+      // 然后调用默认的 handleSeriesChange
+      handleSeriesChange(config.keys, newValue);
+    }
+  );
+
   // 通用的 onChange 处理函数（用于非 customRender 的配置项）
   const handleConfigChange = useMemoizedFn((value: any, keys: string[]) => {
-    console.log(keys, value);
-
     handleSeriesChange(keys, value);
   });
 
@@ -177,139 +148,73 @@ export const Pie1ChartPanel: FC = observer(() => {
         key: "basic",
         title: "基础设置",
         configs: [
-          // 根据是否为环形图显示不同的输入框
-          ...(isDonutChart
-            ? [
-                {
-                  type: "inputNumber",
-                  keys: ["radius", "0"],
-                  label: "内半径",
-                  defaultValue: getValue(["radius", "0"], 40),
-                  min: 0,
-                  max: 100,
-                  step: 1,
-                  customRender: (config) => (
-                    <InputNumber
-                      value={innerRadius}
-                      onChange={(val) => {
-                        const currentRadius = (seriesConfig as any)?.radius || [
-                          "40%",
-                          "70%",
-                        ];
-                        const outerRadiusValue = Array.isArray(currentRadius)
-                          ? currentRadius[1] || "70%"
-                          : "70%";
-                        const formattedValue = [
-                          `${val ?? 40}%`,
-                          outerRadiusValue,
-                        ];
-                        if (config.onChange) {
-                          config.onChange(formattedValue, ["radius"]);
-                        }
-                        handleInnerRadiusChange(val);
-                      }}
-                      min={0}
-                      max={100}
-                      step={1}
-                      style={{ width: "100%" }}
-                      formatter={(value) => `${value}%`}
-                      parser={(value) =>
-                        parseFloat(value?.replace("%", "") || "0")
-                      }
-                    />
-                  ),
-                },
-                {
-                  type: "inputNumber",
-                  keys: ["radius", "1"],
-                  label: "外半径",
-                  defaultValue: getValue(["radius", "1"], 70),
-                  min: 0,
-                  max: 100,
-                  step: 1,
-                  customRender: (config) => (
-                    <InputNumber
-                      value={outerRadius}
-                      onChange={(val) => {
-                        const currentRadius = (seriesConfig as any)?.radius || [
-                          "40%",
-                          "70%",
-                        ];
-                        const innerRadiusValue = Array.isArray(currentRadius)
-                          ? currentRadius[0] || "40%"
-                          : "40%";
-                        const formattedValue = [
-                          innerRadiusValue,
-                          `${val ?? 70}%`,
-                        ];
-                        if (config.onChange) {
-                          config.onChange(formattedValue, ["radius"]);
-                        }
-                        handleOuterRadiusChange(val);
-                      }}
-                      min={0}
-                      max={100}
-                      step={1}
-                      style={{ width: "100%" }}
-                      formatter={(value) => `${value}%`}
-                      parser={(value) =>
-                        parseFloat(value?.replace("%", "") || "0")
-                      }
-                    />
-                  ),
-                },
-              ]
-            : [
-                {
-                  type: "inputNumber",
-                  keys: ["radius"],
-                  label: "半径",
-                  defaultValue: getValue(["radius"], 60),
-                  min: 0,
-                  max: 100,
-                  step: 1,
-                  customRender: (config) => (
-                    <InputNumber
-                      value={outerRadius}
-                      onChange={(val) => {
-                        const formattedValue = `${val ?? 60}%`;
-                        if (config.onChange) {
-                          config.onChange(formattedValue, config.keys);
-                        }
-                        handleRadiusChange(val);
-                      }}
-                      min={0}
-                      max={100}
-                      step={1}
-                      style={{ width: "100%" }}
-                      formatter={(value) => `${value}%`}
-                      parser={(value) =>
-                        parseFloat(value?.replace("%", "") || "0")
-                      }
-                    />
-                  ),
-                },
-              ]),
+          {
+            type: "numberOrAuto",
+            keys: ["left"],
+            label: "水平位置",
+            defaultValue: parsePositionValue(getValue(["left"], "center")),
+            min: 0,
+            max: 100,
+            step: 1,
+            customRender: (config) => {
+              const leftValue = parsePositionValue(
+                getValue(["left"], "center")
+              );
+              return (
+                <PanelNumberOrAuto
+                  value={leftValue}
+                  onChange={(val) =>
+                    handleChangeWithCallback(config, parsePositionValue(val))
+                  }
+                  min={0}
+                  max={100}
+                  step={1}
+                  style={{ width: "100%" }}
+                />
+              );
+            },
+          },
+          {
+            type: "numberOrAuto",
+            keys: ["top"],
+            label: "垂直位置",
+            defaultValue: parsePositionValue(getValue(["top"], "center")),
+            min: 0,
+            max: 100,
+            step: 1,
+            customRender: (config) => {
+              const topValue = parsePositionValue(getValue(["top"], "center"));
+              return (
+                <PanelNumberOrAuto
+                  value={topValue}
+                  onChange={(val) =>
+                    handleChangeWithCallback(config, parsePositionValue(val))
+                  }
+                  min={0}
+                  max={100}
+                  step={1}
+                  style={{ width: "100%" }}
+                />
+              );
+            },
+          },
           {
             type: "inputNumber",
-            keys: ["center", "0"],
-            label: "中心X",
-            defaultValue: getValue(["center", "0"], 50),
+            keys: ["width"],
+            label: "宽度",
+            defaultValue: width,
             min: 0,
             max: 100,
             step: 1,
             customRender: (config) => (
               <InputNumber
-                value={centerX}
+                value={width}
                 onChange={(val) => {
-                  const formattedValue = [
-                    `${val ?? 50}%`,
-                    centerValue[1] || "50%",
-                  ];
+                  const formattedValue = `${val ?? 80}%`;
                   if (config.onChange) {
                     config.onChange(formattedValue, config.keys);
                   }
-                  handleCenterXChange(val);
+                  handleWidthChange(val);
                 }}
                 min={0}
                 max={100}
@@ -322,24 +227,21 @@ export const Pie1ChartPanel: FC = observer(() => {
           },
           {
             type: "inputNumber",
-            keys: ["center", "1"],
-            label: "中心Y",
-            defaultValue: getValue(["center", "1"], 50),
+            keys: ["height"],
+            label: "高度",
+            defaultValue: height,
             min: 0,
             max: 100,
             step: 1,
             customRender: (config) => (
               <InputNumber
-                value={centerY}
+                value={height}
                 onChange={(val) => {
-                  const formattedValue = [
-                    centerValue[0] || "50%",
-                    `${val ?? 50}%`,
-                  ];
+                  const formattedValue = `${val ?? 90}%`;
                   if (config.onChange) {
                     config.onChange(formattedValue, config.keys);
                   }
-                  handleCenterYChange(val);
+                  handleHeightChange(val);
                 }}
                 min={0}
                 max={100}
@@ -349,6 +251,48 @@ export const Pie1ChartPanel: FC = observer(() => {
                 parser={(value) => parseFloat(value?.replace("%", "") || "0")}
               />
             ),
+          },
+          {
+            type: "inputNumber",
+            keys: ["min"],
+            label: "最小值",
+            defaultValue: getValue(["min"], 0),
+            min: 0,
+            max: 1000,
+            step: 1,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["max"],
+            label: "最大值",
+            defaultValue: getValue(["max"], 100),
+            min: 0,
+            max: 1000,
+            step: 1,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["gap"],
+            label: "间距",
+            defaultValue: getValue(["gap"], 2),
+            min: 0,
+            max: 50,
+            step: 1,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "select",
+            keys: ["sort"],
+            label: "排序",
+            defaultValue: getValue(["sort"], "descending"),
+            options: [
+              { label: "降序", value: "descending" },
+              { label: "升序", value: "ascending" },
+              { label: "无", value: "none" },
+            ],
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -363,10 +307,33 @@ export const Pie1ChartPanel: FC = observer(() => {
             onChange: handleConfigChange,
           },
           {
+            type: "select",
+            keys: ["label", "position"],
+            label: "位置",
+            defaultValue: getValue(["label", "position"], "inside"),
+            options: [
+              { label: "内部", value: "inside" },
+              { label: "外部", value: "outside" },
+              { label: "左侧", value: "left" },
+              { label: "右侧", value: "right" },
+              { label: "上侧", value: "top" },
+              { label: "下侧", value: "bottom" },
+              { label: "内部右侧", value: "insideRight" },
+              { label: "内部左侧", value: "insideLeft" },
+              { label: "左侧上部", value: "leftTop" },
+              { label: "左侧下部", value: "leftBottom" },
+              { label: "右侧上部", value: "rightTop" },
+              { label: "右侧下部", value: "rightBottom" },
+              { label: "内部(同inside)", value: "inner" },
+              { label: "居中(同inside)", value: "center" },
+            ],
+            onChange: handleConfigChange,
+          },
+          {
             type: "colorPicker",
             keys: ["label", "color"],
             label: "颜色",
-            defaultValue: getValue(["label", "color"], "#333"),
+            defaultValue: getValue(["label", "color"], "#fff"),
             onChange: handleColorConfigChange,
           },
           {
@@ -377,19 +344,6 @@ export const Pie1ChartPanel: FC = observer(() => {
             min: 8,
             max: 72,
             step: 1,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "select",
-            keys: ["label", "position"],
-            label: "位置",
-            defaultValue: getValue(["label", "position"], "outside"),
-            options: [
-              { label: "外侧", value: "outside" },
-              { label: "内侧", value: "inside" },
-              { label: "内部", value: "inner" },
-              { label: "中心", value: "center" },
-            ],
             onChange: handleConfigChange,
           },
           {
@@ -467,10 +421,20 @@ export const Pie1ChartPanel: FC = observer(() => {
             onChange: handleConfigChange,
           },
           {
+            type: "inputNumber",
+            keys: ["labelLine", "length"],
+            label: "长度",
+            defaultValue: getValue(["labelLine", "length"], 10),
+            min: 0,
+            max: 100,
+            step: 1,
+            onChange: handleConfigChange,
+          },
+          {
             type: "colorPicker",
             keys: ["labelLine", "lineStyle", "color"],
             label: "颜色",
-            defaultValue: getValue(["labelLine", "lineStyle", "color"], "#666"),
+            defaultValue: getValue(["labelLine", "lineStyle", "color"], "#000"),
             onChange: handleColorConfigChange,
           },
           {
@@ -509,40 +473,20 @@ export const Pie1ChartPanel: FC = observer(() => {
       },
       {
         key: "itemStyle",
-        title: "图形样式",
+        title: "样式",
         configs: [
-          {
-            type: "inputNumber",
-            keys: ["padAngle"],
-            label: "图形间距",
-            defaultValue: getValue(["padAngle"], 0),
-            min: 0,
-            max: 500,
-            step: 1,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["itemStyle", "borderRadius"],
-            label: "边框圆角",
-            defaultValue: getValue(["itemStyle", "borderRadius"], 0),
-            min: 0,
-            max: 1000,
-            step: 1,
-            onChange: handleConfigChange,
-          },
           {
             type: "colorPicker",
             keys: ["itemStyle", "borderColor"],
             label: "边框颜色",
-            defaultValue: getValue(["itemStyle", "borderColor"], "#000"),
+            defaultValue: getValue(["itemStyle", "borderColor"], "#fff"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "borderWidth"],
             label: "边框宽度",
-            defaultValue: getValue(["itemStyle", "borderWidth"], 0),
+            defaultValue: getValue(["itemStyle", "borderWidth"], 1),
             min: 0,
             max: 20,
             step: 1,
@@ -611,19 +555,13 @@ export const Pie1ChartPanel: FC = observer(() => {
       },
     ],
     [
-      isDonutChart,
-      innerRadius,
-      outerRadius,
-      handleRadiusChange,
-      handleInnerRadiusChange,
-      handleOuterRadiusChange,
-      centerX,
-      handleCenterXChange,
-      centerY,
-      handleCenterYChange,
+      width,
+      handleWidthChange,
+      height,
+      handleHeightChange,
       getValue,
-      centerValue,
-      seriesConfig,
+      parsePositionValue,
+      handleChangeWithCallback,
       handleConfigChange,
       handleColorConfigChange,
     ]
@@ -632,10 +570,10 @@ export const Pie1ChartPanel: FC = observer(() => {
   return (
     <ChartStylePanel
       title="样式"
-      icon={<ChartPie theme="outline" size="18" fill="#333" />}
+      icon={<Filter theme="outline" size="18" fill="#333" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
-      defaultActiveKey={["basic", "label", "labelLine", "itemStyle"]}
+      defaultActiveKey={["basic"]}
     />
   );
 });

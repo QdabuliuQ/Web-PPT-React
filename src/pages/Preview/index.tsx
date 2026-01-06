@@ -262,7 +262,7 @@ const PreviewComponent: FC = () => {
     );
   };
 
-  useKeyPress(["ctrl.c", "meta.c"], (e) => {
+  useKeyPress(["ctrl.c"], (e) => {
     const target = e.target as HTMLElement;
     if (!isInputElement(target)) {
       e.preventDefault();
@@ -270,7 +270,7 @@ const PreviewComponent: FC = () => {
     }
   });
 
-  useKeyPress(["ctrl.d", "meta.d"], (e) => {
+  useKeyPress(["ctrl.d"], (e) => {
     const target = e.target as HTMLElement;
     if (!isInputElement(target)) {
       e.preventDefault();
@@ -299,7 +299,7 @@ const PreviewComponent: FC = () => {
     deleteActiveElement();
   });
 
-  useKeyPress(["ctrl.h", "meta.h"], (e) => {
+  useKeyPress(["ctrl.h"], (e) => {
     const target = e.target as HTMLElement;
     if (!isInputElement(target)) {
       e.preventDefault();
@@ -307,7 +307,7 @@ const PreviewComponent: FC = () => {
     }
   });
 
-  useKeyPress(["ctrl.p", "meta.p"], (e) => {
+  useKeyPress(["ctrl.p"], (e) => {
     const target = e.target as HTMLElement;
     if (!isInputElement(target)) {
       e.preventDefault();
@@ -315,7 +315,7 @@ const PreviewComponent: FC = () => {
     }
   });
 
-  useKeyPress(["ctrl.r", "meta.r"], (e) => {
+  useKeyPress(["ctrl.r"], (e) => {
     const target = e.target as HTMLElement;
     if (!isInputElement(target)) {
       e.preventDefault();

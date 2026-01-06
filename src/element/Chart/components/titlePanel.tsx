@@ -1,20 +1,11 @@
-import { PanelLargeButton, PanelNumberOrAuto, PanelSelect } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { H } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import {
-  Collapse,
-  ColorPicker,
-  Input,
-  InputNumber,
-  Popover,
-  Switch,
-} from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { getTitleDefaultOption } from "../common";
 import type { IChartProps } from "../index";
-import styles from "./panel.module.less";
+import { ChartStylePanel } from "./chartStylePanel";
 
 export const TitlePanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
@@ -68,6 +59,18 @@ export const TitlePanel: FC = observer(() => {
     { wait: 300 }
   );
 
+  // 通用的 onChange 处理函数
+  const handleConfigChange = useMemoizedFn((value: any, keys: string[]) => {
+    handleTitleChange(keys, value);
+  });
+
+  // ColorPicker 的 onChange 处理函数（需要防抖）
+  const handleColorConfigChange = useMemoizedFn(
+    (value: any, keys: string[]) => {
+      handleColorChange.run(keys, value);
+    }
+  );
+
   // 配置数组
   const panelConfigs = useMemo(() => {
     // 获取默认配置
@@ -96,6 +99,7 @@ export const TitlePanel: FC = observer(() => {
             label: "主标题",
             placeholder: "请输入主标题",
             defaultValue: getDefaultValue(["text"]),
+            onChange: handleConfigChange,
           },
           {
             type: "input",
@@ -103,12 +107,14 @@ export const TitlePanel: FC = observer(() => {
             label: "副标题",
             placeholder: "请输入副标题",
             defaultValue: getDefaultValue(["subtext"]),
+            onChange: handleConfigChange,
           },
           {
             type: "switch",
             keys: ["show"],
             label: "显示",
             defaultValue: getDefaultValue(["show"]),
+            onChange: handleConfigChange,
           },
           {
             type: "numberOrAuto",
@@ -117,6 +123,7 @@ export const TitlePanel: FC = observer(() => {
             min: 0,
             max: 2000,
             defaultValue: getDefaultValue(["left"]),
+            onChange: handleConfigChange,
           },
           {
             type: "numberOrAuto",
@@ -125,6 +132,7 @@ export const TitlePanel: FC = observer(() => {
             min: 0,
             max: 2000,
             defaultValue: getDefaultValue(["top"]),
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -137,6 +145,7 @@ export const TitlePanel: FC = observer(() => {
             keys: ["textStyle", "color"],
             label: "颜色",
             defaultValue: getDefaultValue(["textStyle", "color"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "select",
@@ -148,6 +157,7 @@ export const TitlePanel: FC = observer(() => {
               { label: "斜体", value: "italic" },
               { label: "倾斜", value: "oblique" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -160,6 +170,7 @@ export const TitlePanel: FC = observer(() => {
               { label: "加粗", value: "bolder" },
               { label: "细体", value: "lighter" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -168,12 +179,14 @@ export const TitlePanel: FC = observer(() => {
             defaultValue: getDefaultValue(["textStyle", "fontSize"]),
             min: 1,
             max: 100,
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["textStyle", "textShadowColor"],
             label: "阴影颜色",
             defaultValue: getDefaultValue(["textStyle", "textShadowColor"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -182,6 +195,7 @@ export const TitlePanel: FC = observer(() => {
             defaultValue: getDefaultValue(["textStyle", "textShadowBlur"]),
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -190,6 +204,7 @@ export const TitlePanel: FC = observer(() => {
             defaultValue: getDefaultValue(["textStyle", "textShadowOffsetX"]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -198,6 +213,7 @@ export const TitlePanel: FC = observer(() => {
             defaultValue: getDefaultValue(["textStyle", "textShadowOffsetY"]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -210,6 +226,7 @@ export const TitlePanel: FC = observer(() => {
             keys: ["subtextStyle", "color"],
             label: "颜色",
             defaultValue: getDefaultValue(["subtextStyle", "color"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "select",
@@ -221,6 +238,7 @@ export const TitlePanel: FC = observer(() => {
               { label: "斜体", value: "italic" },
               { label: "倾斜", value: "oblique" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -233,6 +251,7 @@ export const TitlePanel: FC = observer(() => {
               { label: "更粗", value: "bolder" },
               { label: "更细", value: "lighter" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -241,12 +260,14 @@ export const TitlePanel: FC = observer(() => {
             defaultValue: getDefaultValue(["subtextStyle", "fontSize"]),
             min: 1,
             max: 100,
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["subtextStyle", "textShadowColor"],
             label: "阴影颜色",
             defaultValue: getDefaultValue(["subtextStyle", "textShadowColor"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -255,6 +276,7 @@ export const TitlePanel: FC = observer(() => {
             defaultValue: getDefaultValue(["subtextStyle", "textShadowBlur"]),
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -266,6 +288,7 @@ export const TitlePanel: FC = observer(() => {
             ]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -277,11 +300,12 @@ export const TitlePanel: FC = observer(() => {
             ]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
         ],
       },
     ];
-  }, []);
+  }, [handleColorConfigChange, handleConfigChange]);
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {
@@ -295,142 +319,13 @@ export const TitlePanel: FC = observer(() => {
     return current ?? defaultValue;
   });
 
-  // 渲染配置项组件
-  const renderConfigItem = useMemoizedFn((config: any) => {
-    const { type, keys, defaultValue, ...props } = config;
-    const value = getValue(keys, defaultValue);
-
-    switch (type) {
-      case "input":
-        return (
-          <Input
-            value={value || ""}
-            onChange={(e) => handleTitleChange(keys, e.target.value)}
-            placeholder={props.placeholder}
-            style={{ fontSize: "12px" }}
-            className="[&::placeholder]:text-[12px]"
-            maxLength={30}
-          />
-        );
-      case "switch":
-        return (
-          <Switch
-            checked={value !== false}
-            style={{ width: "40px" }}
-            onChange={(checked) => handleTitleChange(keys, checked)}
-          />
-        );
-      case "inputNumber":
-        return (
-          <InputNumber
-            value={value ?? defaultValue ?? 0}
-            onChange={(val) =>
-              handleTitleChange(keys, val ?? defaultValue ?? 0)
-            }
-            min={props.min}
-            max={props.max}
-            style={{ width: "100%" }}
-          />
-        );
-      case "numberOrAuto":
-        return (
-          <PanelNumberOrAuto
-            value={value ?? defaultValue ?? 0}
-            onChange={(val) => handleTitleChange(keys, val)}
-          />
-        );
-      case "select":
-        return (
-          <PanelSelect
-            value={value ?? defaultValue}
-            onChange={(val) => handleTitleChange(keys, val)}
-            options={props.options}
-            trigger="hover"
-            style={{ width: "100%" }}
-          />
-        );
-      case "colorPicker":
-        return (
-          <ColorPicker
-            value={value ?? defaultValue}
-            onChange={(color) => handleColorChange.run(keys, color)}
-            className={styles.colorPicker}
-          />
-        );
-      default:
-        return null;
-    }
-  });
-
-  const content = (
-    <div className="w-[400px] max-h-[600px] overflow-y-auto box-border p-[15px]">
-      <Collapse
-        items={panelConfigs.map((panel) => ({
-          key: panel.key,
-          label: <span style={{ fontSize: "12px" }}>{panel.title}</span>,
-          children: (
-            <div
-              className={
-                panel.key === "basic"
-                  ? "flex flex-col gap-[10px]"
-                  : "grid grid-cols-3 gap-[10px]"
-              }
-            >
-              {panel.key === "basic" ? (
-                <>
-                  <div className="grid grid-cols-3 gap-[10px]">
-                    {panel.configs.slice(0, 3).map((config, index) => (
-                      <div key={index} className="flex flex-col gap-[5px]">
-                        <label className="text-[12px] text-gray-600">
-                          {config.label}
-                        </label>
-                        {renderConfigItem(config)}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-3 gap-[10px]">
-                    {panel.configs.slice(3).map((config, index) => (
-                      <div key={index} className="flex flex-col gap-[5px]">
-                        <label className="text-[12px] text-gray-600">
-                          {config.label}
-                        </label>
-                        {renderConfigItem(config)}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                panel.configs.map((config, index) => (
-                  <div key={index} className="flex flex-col gap-[5px]">
-                    <label className="text-[12px] text-gray-600">
-                      {config.label}
-                    </label>
-                    {renderConfigItem(config)}
-                  </div>
-                ))
-              )}
-            </div>
-          ),
-        }))}
-        defaultActiveKey={["basic"]}
-        size="small"
-      />
-    </div>
-  );
-
   return (
-    <Popover
-      content={content}
-      trigger="hover"
-      placement="bottom"
-      overlayInnerStyle={{ padding: 0 }}
-    >
-      <div className="h-full">
-        <PanelLargeButton
-          title="标题"
-          icon={<H theme="outline" size="18" fill="#333" />}
-        />
-      </div>
-    </Popover>
+    <ChartStylePanel
+      title="标题"
+      icon={<H theme="outline" size="18" fill="#333" />}
+      panelConfigs={panelConfigs}
+      getValue={getValue}
+      defaultActiveKey={["basic"]}
+    />
   );
 });

@@ -8,10 +8,12 @@ import {
   getBarChartOption2,
   getBarChartOption3,
   getBarChartOption4,
+  getFunnelChartOption,
   getLineChartOption1,
   getLineChartOption2,
   getLineChartOption3,
   getPieChartOption,
+  getPieChartOption2,
   getRadarChartOption,
   getScatterChartOption,
 } from "./type";
@@ -45,12 +47,18 @@ export const getChartOptionByType = (
       break;
     case "pie":
       if (index === 1) return getPieChartOption(config);
+      if (index === 2) return getPieChartOption2(config);
       break;
     case "scatter":
       if (index === 1) return getScatterChartOption(config);
       break;
     case "radar":
       if (index === 1) return getRadarChartOption(config);
+      break;
+    case "funnel":
+      if (index === 1) return getFunnelChartOption(config);
+      break;
+    default:
       break;
   }
 

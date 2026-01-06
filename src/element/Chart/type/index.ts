@@ -50,6 +50,12 @@ export {
   setDataFromExcel as setPieChartDataFromExcel,
   type PieChartConfig,
 } from "./pie/index1";
+export {
+  getDataToExcel as getPieChart2DataToExcel,
+  getPieChartOption2,
+  setDataFromExcel as setPieChart2DataFromExcel,
+  type PieChartConfig as PieChart2Config,
+} from "./pie/index2";
 
 // 散点图
 export {
@@ -67,4 +73,12 @@ export {
   type RadarChartConfig,
 } from "./radar/index1";
 
-export type ChartType = "bar" | "line" | "pie" | "scatter" | "radar";
+// 漏斗图
+export {
+  getDataToExcel as getFunnelChartDataToExcel,
+  getFunnelChartOption,
+  setDataFromExcel as setFunnelChartDataFromExcel,
+  type FunnelChartConfig,
+} from "./funnel/index1";
+
+export type ChartType = "bar" | "line" | "pie" | "scatter" | "radar" | "funnel";

@@ -1,19 +1,10 @@
-import { PanelLargeButton, PanelSelect } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { ChartHistogram } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import {
-  Collapse,
-  ColorPicker,
-  Input,
-  InputNumber,
-  Popover,
-  Switch,
-} from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import type { IChartProps } from "../index";
-import styles from "./panel.module.less";
+import { ChartStylePanel } from "./chartStylePanel";
 
 export const XAxisPanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
@@ -129,6 +120,18 @@ export const XAxisPanel: FC = observer(() => {
     { wait: 300 }
   );
 
+  // 通用的 onChange 处理函数
+  const handleConfigChange = useMemoizedFn((value: any, keys: string[]) => {
+    handleXAxisChange(keys, value);
+  });
+
+  // ColorPicker 的 onChange 处理函数（需要防抖）
+  const handleColorConfigChange = useMemoizedFn(
+    (value: any, keys: string[]) => {
+      handleColorChange.run(keys, value);
+    }
+  );
+
   // 配置数组
   const panelConfigs = useMemo(
     () => [
@@ -140,12 +143,14 @@ export const XAxisPanel: FC = observer(() => {
             type: "switch",
             keys: ["show"],
             label: "显示",
+            onChange: handleConfigChange,
           },
           {
             type: "input",
             keys: ["name"],
             label: "名称",
             placeholder: "请输入坐标轴名称",
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -157,12 +162,14 @@ export const XAxisPanel: FC = observer(() => {
               { label: "居中", value: "center" },
               { label: "结束", value: "end" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["nameTextStyle", "color"],
             label: "名称颜色",
             defaultValue: "#666",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -171,6 +178,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 12,
             min: 1,
             max: 100,
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -182,6 +190,7 @@ export const XAxisPanel: FC = observer(() => {
               { label: "斜体", value: "italic" },
               { label: "倾斜", value: "oblique" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -194,12 +203,14 @@ export const XAxisPanel: FC = observer(() => {
               { label: "更粗", value: "bolder" },
               { label: "更细", value: "lighter" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["nameTextStyle", "textShadowColor"],
             label: "名称文字阴影颜色",
             defaultValue: "transparent",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -208,6 +219,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -216,6 +228,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -224,6 +237,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -235,12 +249,14 @@ export const XAxisPanel: FC = observer(() => {
             type: "switch",
             keys: ["axisLine", "show"],
             label: "显示",
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "color"],
             label: "颜色",
             defaultValue: "#666",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -249,6 +265,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 1,
             min: 0,
             max: 10,
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -260,21 +277,24 @@ export const XAxisPanel: FC = observer(() => {
               { label: "虚线", value: "dashed" },
               { label: "点线", value: "dotted" },
             ],
+            onChange: handleConfigChange,
           },
           {
-            type: "inputNumber",
+            type: "slider",
             keys: ["axisLine", "lineStyle", "opacity"],
             label: "透明度",
             defaultValue: 1,
             min: 0,
             max: 1,
             step: 0.1,
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "shadowColor"],
             label: "阴影颜色",
             defaultValue: "transparent",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -283,6 +303,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -291,6 +312,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -299,6 +321,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -310,12 +333,14 @@ export const XAxisPanel: FC = observer(() => {
             type: "switch",
             keys: ["axisLabel", "show"],
             label: "显示",
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLabel", "color"],
             label: "颜色",
             defaultValue: "#666",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -324,6 +349,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -180,
             max: 180,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -332,6 +358,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 12,
             min: 1,
             max: 100,
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -343,6 +370,7 @@ export const XAxisPanel: FC = observer(() => {
               { label: "斜体", value: "italic" },
               { label: "倾斜", value: "oblique" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -355,12 +383,14 @@ export const XAxisPanel: FC = observer(() => {
               { label: "更粗", value: "bolder" },
               { label: "更细", value: "lighter" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLabel", "shadowColor"],
             label: "阴影颜色",
             defaultValue: "transparent",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -369,6 +399,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -377,6 +408,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -385,12 +417,14 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLabel", "textShadowColor"],
             label: "文字阴影颜色",
             defaultValue: "transparent",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -399,6 +433,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -407,6 +442,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -415,6 +451,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 0,
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -426,6 +463,7 @@ export const XAxisPanel: FC = observer(() => {
             type: "switch",
             keys: ["axisTick", "show"],
             label: "显示",
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -434,12 +472,14 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 5,
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisTick", "lineStyle", "color"],
             label: "颜色",
             defaultValue: "#ccc",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -448,6 +488,7 @@ export const XAxisPanel: FC = observer(() => {
             defaultValue: 1,
             min: 0,
             max: 10,
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -459,20 +500,22 @@ export const XAxisPanel: FC = observer(() => {
               { label: "虚线", value: "dashed" },
               { label: "点线", value: "dotted" },
             ],
+            onChange: handleConfigChange,
           },
           {
-            type: "inputNumber",
+            type: "slider",
             keys: ["axisTick", "lineStyle", "opacity"],
             label: "透明度",
             defaultValue: 1,
             min: 0,
             max: 1,
             step: 0.1,
+            onChange: handleConfigChange,
           },
         ],
       },
     ],
-    []
+    [handleColorConfigChange, handleConfigChange]
   );
 
   // 根据配置获取值
@@ -487,142 +530,13 @@ export const XAxisPanel: FC = observer(() => {
     return current ?? defaultValue;
   });
 
-  // 渲染配置项组件
-  const renderConfigItem = useMemoizedFn((config: any) => {
-    const { type, keys, defaultValue, ...props } = config;
-    const value = getValue(keys, defaultValue);
-
-    switch (type) {
-      case "input":
-        // 对于 data 字段，如果是数组则转换为字符串
-        if (keys[0] === "data") {
-          const displayValue = Array.isArray(value)
-            ? JSON.stringify(value)
-            : typeof value === "string"
-              ? value
-              : "";
-          return (
-            <Input
-              value={displayValue}
-              onChange={(e) => {
-                const inputValue = e.target.value.trim();
-                if (!inputValue) {
-                  handleXAxisChange(keys, []);
-                  return;
-                }
-                try {
-                  // 尝试解析 JSON
-                  const parsed = JSON.parse(inputValue);
-                  if (Array.isArray(parsed)) {
-                    handleXAxisChange(keys, parsed);
-                  } else {
-                    // 如果不是数组，尝试按逗号分割
-                    const split = inputValue.split(",").map((s) => s.trim());
-                    handleXAxisChange(keys, split);
-                  }
-                } catch {
-                  // 如果解析失败，尝试按逗号分割
-                  const split = inputValue.split(",").map((s) => s.trim());
-                  handleXAxisChange(keys, split);
-                }
-              }}
-              placeholder={props.placeholder}
-              style={{ fontSize: "12px" }}
-              className="[&::placeholder]:text-[12px]"
-            />
-          );
-        }
-        return (
-          <Input
-            value={value || ""}
-            onChange={(e) => handleXAxisChange(keys, e.target.value)}
-            placeholder={props.placeholder}
-            style={{ fontSize: "12px" }}
-            className="[&::placeholder]:text-[12px]"
-          />
-        );
-      case "switch":
-        return (
-          <Switch
-            checked={value !== false}
-            style={{ width: "40px" }}
-            onChange={(checked) => handleXAxisChange(keys, checked)}
-          />
-        );
-      case "inputNumber":
-        return (
-          <InputNumber
-            value={value ?? defaultValue ?? 0}
-            onChange={(val) =>
-              handleXAxisChange(keys, val ?? defaultValue ?? 0)
-            }
-            min={props.min}
-            max={props.max}
-            step={props.step}
-            style={{ width: "100%" }}
-          />
-        );
-      case "select":
-        return (
-          <PanelSelect
-            value={value ?? defaultValue}
-            onChange={(val) => handleXAxisChange(keys, val)}
-            options={props.options}
-            trigger="hover"
-            style={{ width: "100%" }}
-          />
-        );
-      case "colorPicker":
-        return (
-          <ColorPicker
-            value={value ?? defaultValue}
-            onChange={(color) => handleColorChange.run(keys, color)}
-            className={styles.colorPicker}
-          />
-        );
-      default:
-        return null;
-    }
-  });
-
-  const content = (
-    <div className="w-[400px] max-h-[600px] overflow-y-auto box-border p-[15px]">
-      <Collapse
-        items={panelConfigs.map((panel) => ({
-          key: panel.key,
-          label: <span style={{ fontSize: "12px" }}>{panel.title}</span>,
-          children: (
-            <div className="grid grid-cols-3 gap-[10px]">
-              {panel.configs.map((config, index) => (
-                <div key={index} className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">
-                    {config.label}
-                  </label>
-                  {renderConfigItem(config)}
-                </div>
-              ))}
-            </div>
-          ),
-        }))}
-        defaultActiveKey={["basic"]}
-        size="small"
-      />
-    </div>
-  );
-
   return (
-    <Popover
-      content={content}
-      trigger="hover"
-      placement="bottom"
-      overlayInnerStyle={{ padding: 0 }}
-    >
-      <div className="h-full">
-        <PanelLargeButton
-          title="X轴"
-          icon={<ChartHistogram theme="outline" size="18" fill="#333" />}
-        />
-      </div>
-    </Popover>
+    <ChartStylePanel
+      title="X轴"
+      icon={<ChartHistogram theme="outline" size="18" fill="#333" />}
+      panelConfigs={panelConfigs}
+      getValue={getValue}
+      defaultActiveKey={["basic"]}
+    />
   );
 });

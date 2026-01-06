@@ -17,8 +17,10 @@ const chartTypes = [
   { type: "line2", name: "堆叠折线图" },
   { type: "line3", name: "面积图" },
   { type: "pie1", name: "饼图" },
+  { type: "pie2", name: "环形图" },
   { type: "scatter1", name: "散点图" },
   { type: "radar1", name: "雷达图" },
+  { type: "funnel1", name: "漏斗图" },
 ];
 
 export default function ChartButton() {

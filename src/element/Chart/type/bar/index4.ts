@@ -146,7 +146,6 @@ export function getBarChartOption4(
     }),
     yAxis: getYAxisDefaultOption({
       type: "category" as const,
-      data: data.map((d) => d.category),
       "axisLine.lineStyle.color": "#666",
       "axisLabel.color": "#666",
       "axisLabel.fontSize": 12,

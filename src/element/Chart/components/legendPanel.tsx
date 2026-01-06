@@ -1,13 +1,11 @@
-import { PanelLargeButton, PanelNumberOrAuto, PanelSelect } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { Text } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import { Collapse, ColorPicker, InputNumber, Popover, Switch } from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { getLegendDefaultOption } from "../common";
 import type { IChartProps } from "../index";
-import styles from "./panel.module.less";
+import { ChartStylePanel } from "./chartStylePanel";
 
 export const LegendPanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
@@ -70,6 +68,18 @@ export const LegendPanel: FC = observer(() => {
     { wait: 300 }
   );
 
+  // 通用的 onChange 处理函数
+  const handleConfigChange = useMemoizedFn((value: any, keys: string[]) => {
+    handleLegendChange(keys, value);
+  });
+
+  // ColorPicker 的 onChange 处理函数（需要防抖）
+  const handleColorConfigChange = useMemoizedFn(
+    (value: any, keys: string[]) => {
+      handleColorChange.run(keys, value);
+    }
+  );
+
   // 配置数组
   const panelConfigs = useMemo(() => {
     // 从 legendConfig 获取值的辅助函数
@@ -94,6 +104,7 @@ export const LegendPanel: FC = observer(() => {
             keys: ["show"],
             label: "显示",
             defaultValue: getConfigValue(["show"]),
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -110,6 +121,7 @@ export const LegendPanel: FC = observer(() => {
               { label: "箭头", value: "arrow" },
               { label: "无", value: "none" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "numberOrAuto",
@@ -118,6 +130,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["left"]),
             min: 0,
             max: 2000,
+            onChange: handleConfigChange,
           },
           {
             type: "numberOrAuto",
@@ -126,6 +139,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["top"]),
             min: 0,
             max: 2000,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -134,6 +148,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["itemWidth"]),
             min: 0,
             max: 200,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -142,6 +157,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["itemHeight"]),
             min: 0,
             max: 200,
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -154,6 +170,7 @@ export const LegendPanel: FC = observer(() => {
             keys: ["textStyle", "color"],
             label: "颜色",
             defaultValue: getConfigValue(["textStyle", "color"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -162,6 +179,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["textStyle", "fontSize"]),
             min: 1,
             max: 100,
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -173,6 +191,7 @@ export const LegendPanel: FC = observer(() => {
               { label: "斜体", value: "italic" },
               { label: "倾斜", value: "oblique" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -185,12 +204,14 @@ export const LegendPanel: FC = observer(() => {
               { label: "更粗", value: "bolder" },
               { label: "更细", value: "lighter" },
             ],
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["textStyle", "textShadowColor"],
             label: "文字阴影颜色",
             defaultValue: getConfigValue(["textStyle", "textShadowColor"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -199,6 +220,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["textStyle", "textShadowBlur"]),
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -207,6 +229,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["textStyle", "textShadowOffsetX"]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -215,6 +238,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["textStyle", "textShadowOffsetY"]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
         ],
       },
@@ -227,6 +251,7 @@ export const LegendPanel: FC = observer(() => {
             keys: ["itemStyle", "borderColor"],
             label: "边框颜色",
             defaultValue: getConfigValue(["itemStyle", "borderColor"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -235,6 +260,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["itemStyle", "borderWidth"]),
             min: 0,
             max: 20,
+            onChange: handleConfigChange,
           },
           {
             type: "select",
@@ -246,21 +272,24 @@ export const LegendPanel: FC = observer(() => {
               { label: "虚线", value: "dashed" },
               { label: "点线", value: "dotted" },
             ],
+            onChange: handleConfigChange,
           },
           {
-            type: "inputNumber",
+            type: "slider",
             keys: ["itemStyle", "opacity"],
             label: "透明度",
             defaultValue: getConfigValue(["itemStyle", "opacity"]),
             min: 0,
             max: 1,
             step: 0.1,
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["itemStyle", "shadowColor"],
             label: "阴影颜色",
             defaultValue: getConfigValue(["itemStyle", "shadowColor"]),
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -269,6 +298,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["itemStyle", "shadowBlur"]),
             min: 0,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -277,6 +307,7 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["itemStyle", "shadowOffsetX"]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -285,11 +316,12 @@ export const LegendPanel: FC = observer(() => {
             defaultValue: getConfigValue(["itemStyle", "shadowOffsetY"]),
             min: -50,
             max: 50,
+            onChange: handleConfigChange,
           },
         ],
       },
     ];
-  }, [legendConfig]);
+  }, [legendConfig, handleConfigChange, handleColorConfigChange]);
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {
@@ -303,101 +335,13 @@ export const LegendPanel: FC = observer(() => {
     return current ?? defaultValue;
   });
 
-  // 渲染配置项组件
-  const renderConfigItem = useMemoizedFn((config: any) => {
-    const { type, keys, defaultValue, ...props } = config;
-    const value = getValue(keys, defaultValue);
-
-    switch (type) {
-      case "switch":
-        return (
-          <Switch
-            checked={value !== false}
-            style={{ width: "40px" }}
-            onChange={(checked) => handleLegendChange(keys, checked)}
-          />
-        );
-      case "inputNumber":
-        return (
-          <InputNumber
-            value={value ?? defaultValue ?? 0}
-            onChange={(val) =>
-              handleLegendChange(keys, val ?? defaultValue ?? 0)
-            }
-            min={props.min}
-            max={props.max}
-            step={props.step}
-            style={{ width: "100%" }}
-          />
-        );
-      case "numberOrAuto":
-        return (
-          <PanelNumberOrAuto
-            value={value ?? defaultValue ?? 0}
-            onChange={(val) => handleLegendChange(keys, val)}
-          />
-        );
-      case "select":
-        return (
-          <PanelSelect
-            value={value ?? defaultValue}
-            onChange={(val) => handleLegendChange(keys, val)}
-            options={props.options}
-            trigger="hover"
-            style={{ width: "100%" }}
-          />
-        );
-      case "colorPicker":
-        return (
-          <ColorPicker
-            value={value ?? defaultValue}
-            onChange={(color) => handleColorChange.run(keys, color)}
-            className={styles.colorPicker}
-          />
-        );
-      default:
-        return null;
-    }
-  });
-
-  const content = (
-    <div className="w-[400px] max-h-[600px] overflow-y-auto box-border p-[15px]">
-      <Collapse
-        items={panelConfigs.map((panel) => ({
-          key: panel.key,
-          label: <span style={{ fontSize: "12px" }}>{panel.title}</span>,
-          children: (
-            <div className="grid grid-cols-3 gap-[10px]">
-              {panel.configs.map((config, index) => (
-                <div key={index} className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">
-                    {config.label}
-                  </label>
-                  {renderConfigItem(config)}
-                </div>
-              ))}
-            </div>
-          ),
-        }))}
-        defaultActiveKey={["basic"]}
-        size="small"
-      />
-    </div>
-  );
-
   return (
-    <Popover
-      content={content}
-      trigger="hover"
-      placement="bottom"
-      overlayInnerStyle={{ padding: 0 }}
-    >
-      <div className="h-full">
-        <PanelLargeButton
-          title="图例"
-          icon={<Text theme="outline" size="18" fill="#333" />}
-        />
-      </div>
-    </Popover>
+    <ChartStylePanel
+      title="图例"
+      icon={<Text theme="outline" size="18" fill="#333" />}
+      panelConfigs={panelConfigs}
+      getValue={getValue}
+      defaultActiveKey={["basic"]}
+    />
   );
 });

@@ -1,8 +1,8 @@
 /// <reference types="cypress" />
-/// <reference types="cypress/support/index.d.ts" />
 
-// 导入 Cypress 命令
+// 导入 Cypress 类型定义和命令
 import "./commands";
+import "./index.d.ts";
 
 // 处理未捕获的异常（全局处理）
 Cypress.on("uncaught:exception", (err) => {

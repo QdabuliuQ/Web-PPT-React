@@ -1,12 +1,10 @@
-import { PanelLargeButton } from "@/components";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { GridFour } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import { Collapse, ColorPicker, InputNumber, Popover, Switch } from "antd";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
+import { ChartStylePanel } from "./chartStylePanel";
 import type { IChartProps } from "../index";
-import styles from "./panel.module.less";
 
 export const GridPanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
@@ -80,6 +78,18 @@ export const GridPanel: FC = observer(() => {
     { wait: 300 }
   );
 
+  // 通用的 onChange 处理函数
+  const handleConfigChange = useMemoizedFn((value: any, keys: string[]) => {
+    handleGridChange(keys, value);
+  });
+
+  // ColorPicker 的 onChange 处理函数（需要防抖）
+  const handleColorConfigChange = useMemoizedFn(
+    (value: any, keys: string[]) => {
+      handleColorChange.run(keys, value);
+    }
+  );
+
   // 配置数组
   const panelConfigs = useMemo(
     () => [
@@ -91,6 +101,7 @@ export const GridPanel: FC = observer(() => {
             type: "switch",
             keys: ["show"],
             label: "显示",
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -99,6 +110,7 @@ export const GridPanel: FC = observer(() => {
             defaultValue: 20,
             min: 0,
             max: 500,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -107,6 +119,7 @@ export const GridPanel: FC = observer(() => {
             defaultValue: 20,
             min: 0,
             max: 500,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -115,6 +128,7 @@ export const GridPanel: FC = observer(() => {
             defaultValue: 40,
             min: 0,
             max: 500,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -123,12 +137,14 @@ export const GridPanel: FC = observer(() => {
             defaultValue: 20,
             min: 0,
             max: 500,
+            onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["backgroundColor"],
             label: "背景颜色",
             defaultValue: "#fff",
+            onChange: handleColorConfigChange,
           },
         ],
       },
@@ -141,6 +157,7 @@ export const GridPanel: FC = observer(() => {
             keys: ["shadowColor"],
             label: "阴影颜色",
             defaultValue: "rgba(0, 0, 0, 0.5)",
+            onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
@@ -149,6 +166,7 @@ export const GridPanel: FC = observer(() => {
             defaultValue: 10,
             min: 0,
             max: 100,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -157,6 +175,7 @@ export const GridPanel: FC = observer(() => {
             defaultValue: 0,
             min: -100,
             max: 100,
+            onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
@@ -165,11 +184,12 @@ export const GridPanel: FC = observer(() => {
             defaultValue: 0,
             min: -100,
             max: 100,
+            onChange: handleConfigChange,
           },
         ],
       },
     ],
-    []
+    [handleConfigChange, handleColorConfigChange]
   );
 
   // 根据配置获取值
@@ -184,81 +204,13 @@ export const GridPanel: FC = observer(() => {
     return current ?? defaultValue;
   });
 
-  // 渲染配置项组件
-  const renderConfigItem = useMemoizedFn((config: any) => {
-    const { type, keys, defaultValue, ...props } = config;
-    const value = getValue(keys, defaultValue);
-
-    switch (type) {
-      case "switch":
-        return (
-          <Switch
-            checked={value !== false}
-            style={{ width: "40px" }}
-            onChange={(checked) => handleGridChange(keys, checked)}
-          />
-        );
-      case "inputNumber":
-        return (
-          <InputNumber
-            value={value ?? defaultValue ?? 0}
-            onChange={(val) => handleGridChange(keys, val ?? defaultValue ?? 0)}
-            min={props.min}
-            max={props.max}
-            style={{ width: "100%" }}
-          />
-        );
-      case "colorPicker":
-        return (
-          <ColorPicker
-            value={value ?? defaultValue}
-            onChange={(color) => handleColorChange.run(keys, color)}
-            className={styles.colorPicker}
-          />
-        );
-      default:
-        return null;
-    }
-  });
-
-  const content = (
-    <div className="w-[400px] max-h-[600px] overflow-y-auto box-border p-[15px]">
-      <Collapse
-        items={panelConfigs.map((panel) => ({
-          key: panel.key,
-          label: <span style={{ fontSize: "12px" }}>{panel.title}</span>,
-          children: (
-            <div className="grid grid-cols-3 gap-[10px]">
-              {panel.configs.map((config, index) => (
-                <div key={index} className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">
-                    {config.label}
-                  </label>
-                  {renderConfigItem(config)}
-                </div>
-              ))}
-            </div>
-          ),
-        }))}
-        defaultActiveKey={["basic"]}
-        size="small"
-      />
-    </div>
-  );
-
   return (
-    <Popover
-      content={content}
-      trigger="hover"
-      placement="bottom"
-      overlayInnerStyle={{ padding: 0 }}
-    >
-      <div className="h-full">
-        <PanelLargeButton
-          title="网格"
-          icon={<GridFour theme="outline" size="18" fill="#333" />}
-        />
-      </div>
-    </Popover>
+    <ChartStylePanel
+      title="网格"
+      icon={<GridFour theme="outline" size="18" fill="#333" />}
+      panelConfigs={panelConfigs}
+      getValue={getValue}
+      defaultActiveKey={["basic"]}
+    />
   );
 });

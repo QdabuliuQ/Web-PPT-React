@@ -15,6 +15,7 @@ import { TitlePanel } from "./components/titlePanel";
 import { BASE_CHART_EVENTS, getChartEventName } from "./events";
 import type { IChartProps } from "./index";
 import { BarChartPanel } from "./type/bar/panel";
+import { FunnelChartPanel } from "./type/funnel/panel";
 import { LineChartPanel } from "./type/line/panel";
 import { PieChartPanel } from "./type/pie/panel";
 import { RadarChartPanel } from "./type/radar/panel";
@@ -100,6 +101,8 @@ const ChartPanelComponent: FC = observer(() => {
         return <ScatterChartPanel />;
       case "radar":
         return <RadarChartPanel />;
+      case "funnel":
+        return <FunnelChartPanel />;
       default:
         return null;
     }

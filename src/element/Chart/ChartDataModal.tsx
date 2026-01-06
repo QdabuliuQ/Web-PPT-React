@@ -297,17 +297,41 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
       // 转换为 Excel 格式
       const excelData = convertFromXSpreadsheetData(spreadsheetData);
 
+      // 清理 chartInfo.option，确保它是可序列化的
+      // 因为 setDataFromExcel 内部会调用 cloneDeep，需要确保 option 是可序列化的
+      let cleanOption: any;
+      try {
+        cleanOption = JSON.parse(JSON.stringify(chartInfo.option));
+      } catch (jsonError) {
+        // 如果 JSON 序列化失败，使用原始 option
+        console.warn("Failed to clean option, using original:", jsonError);
+        cleanOption = chartInfo.option;
+      }
+
       // 转换为图表数据格式
-      const updatedConfig = converter.setDataFromExcel(
-        excelData,
-        chartInfo.option as any
-      );
+      const updatedConfig = converter.setDataFromExcel(excelData, cleanOption);
+
+      // 确保返回的数据是可序列化的，避免 structuredClone 错误
+      // 使用 JSON 序列化/反序列化来清理不可序列化的内容
+      let serializableConfig: any;
+      try {
+        serializableConfig = JSON.parse(JSON.stringify(updatedConfig));
+      } catch (jsonError) {
+        // 如果 JSON 序列化失败，尝试手动清理
+        console.warn(
+          "JSON serialization failed, using original config:",
+          jsonError
+        );
+        serializableConfig = updatedConfig;
+      }
+      console.log(serializableConfig, "serializableConfig");
 
       // 调用保存回调
-      onSave(updatedConfig);
+      onSave(serializableConfig);
       onClose();
-    } catch {
+    } catch (err) {
       // 静默处理错误
+      console.error("Failed to save chart data:", err);
     }
   });
 
