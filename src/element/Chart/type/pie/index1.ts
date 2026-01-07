@@ -1,5 +1,6 @@
 import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
+import { getLegendDefaultOption, getTitleDefaultOption } from "../../common";
 
 export interface PieChartConfig {
   data?: Array<{ label: string; value: number }>;
@@ -35,10 +36,11 @@ export function getPieChartOption(config?: PieChartConfig): EChartsOption {
   });
 
   return {
+    title: getTitleDefaultOption(),
+    legend: getLegendDefaultOption({
+      left: "center",
+    }),
     backgroundColor,
-    tooltip: {
-      trigger: "item",
-    },
     dataset: {
       source: datasetSource,
     },

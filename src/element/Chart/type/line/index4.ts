@@ -1,5 +1,5 @@
 import { cloneDeep } from "@/utils/tool";
-import type { EChartsOption, SeriesOption } from "echarts";
+import type { EChartsOption } from "echarts";
 import {
   getColorDefaultOption,
   getLegendDefaultOption,
@@ -8,11 +8,15 @@ import {
   getYAxisDefaultOption,
 } from "../../common";
 
-export interface StackedLineChartConfig {
+export interface StepLineChartConfig {
   title?: any;
   data?: Array<{
     category: string;
-    series: Array<{ name: string; value: number }>;
+    series: Array<{
+      name: string;
+      value: number;
+      step?: "start" | "middle" | "end";
+    }>;
   }>;
   showGrid?: boolean;
   showLabels?: boolean;
@@ -21,80 +25,66 @@ export interface StackedLineChartConfig {
 }
 
 /**
- * 生成堆叠折线图的 echarts 配置
+ * 生成阶梯折线图的 echarts 配置
  */
-export function getLineChartOption2(
-  config?: StackedLineChartConfig
+export function getLineChartOption4(
+  config?: StepLineChartConfig
 ): EChartsOption {
   const defaultData = [
     {
       category: "Mon",
       series: [
-        { name: "Email", value: 120 },
-        { name: "Union Ads", value: 220 },
-        { name: "Video Ads", value: 150 },
-        { name: "Direct", value: 320 },
-        { name: "Search Engine", value: 820 },
+        { name: "Step Start", value: 120, step: "start" },
+        { name: "Step Middle", value: 220, step: "middle" },
+        { name: "Step End", value: 450, step: "end" },
       ],
     },
     {
       category: "Tue",
       series: [
-        { name: "Email", value: 132 },
-        { name: "Union Ads", value: 182 },
-        { name: "Video Ads", value: 232 },
-        { name: "Direct", value: 332 },
-        { name: "Search Engine", value: 932 },
+        { name: "Step Start", value: 132, step: "start" },
+        { name: "Step Middle", value: 282, step: "middle" },
+        { name: "Step End", value: 432, step: "end" },
       ],
     },
     {
       category: "Wed",
       series: [
-        { name: "Email", value: 101 },
-        { name: "Union Ads", value: 191 },
-        { name: "Video Ads", value: 201 },
-        { name: "Direct", value: 301 },
-        { name: "Search Engine", value: 901 },
+        { name: "Step Start", value: 101, step: "start" },
+        { name: "Step Middle", value: 201, step: "middle" },
+        { name: "Step End", value: 401, step: "end" },
       ],
     },
     {
       category: "Thu",
       series: [
-        { name: "Email", value: 134 },
-        { name: "Union Ads", value: 234 },
-        { name: "Video Ads", value: 154 },
-        { name: "Direct", value: 334 },
-        { name: "Search Engine", value: 934 },
+        { name: "Step Start", value: 134, step: "start" },
+        { name: "Step Middle", value: 234, step: "middle" },
+        { name: "Step End", value: 454, step: "end" },
       ],
     },
     {
       category: "Fri",
       series: [
-        { name: "Email", value: 90 },
-        { name: "Union Ads", value: 290 },
-        { name: "Video Ads", value: 190 },
-        { name: "Direct", value: 390 },
-        { name: "Search Engine", value: 1290 },
+        { name: "Step Start", value: 90, step: "start" },
+        { name: "Step Middle", value: 290, step: "middle" },
+        { name: "Step End", value: 590, step: "end" },
       ],
     },
     {
       category: "Sat",
       series: [
-        { name: "Email", value: 230 },
-        { name: "Union Ads", value: 330 },
-        { name: "Video Ads", value: 330 },
-        { name: "Direct", value: 330 },
-        { name: "Search Engine", value: 1330 },
+        { name: "Step Start", value: 230, step: "start" },
+        { name: "Step Middle", value: 430, step: "middle" },
+        { name: "Step End", value: 530, step: "end" },
       ],
     },
     {
       category: "Sun",
       series: [
-        { name: "Email", value: 210 },
-        { name: "Union Ads", value: 310 },
-        { name: "Video Ads", value: 410 },
-        { name: "Direct", value: 320 },
-        { name: "Search Engine", value: 1320 },
+        { name: "Step Start", value: 210, step: "start" },
+        { name: "Step Middle", value: 410, step: "middle" },
+        { name: "Step End", value: 510, step: "end" },
       ],
     },
   ];
@@ -102,6 +92,7 @@ export function getLineChartOption2(
   const {
     data = defaultData,
     showGrid = true,
+    showLabels = false,
     showLegend = true,
     backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
@@ -126,56 +117,61 @@ export function getLineChartOption2(
     datasetSource.push(row);
   });
 
-  // 构建 series 配置
-  const series = seriesNames.map((name, index) => ({
-    name,
-    type: "line" as const,
-    stack: "Total",
-    encode: {
-      x: 0, // category 列
-      y: index + 1, // 对应 dataset 中的列索引（从1开始，因为0是category）
-    },
-    smooth: true,
-    lineStyle: {
-      width: 2,
-      type: "solid",
-      shadowBlur: 0,
-      shadowColor: "transparent",
-      shadowOffsetX: 0,
-      shadowOffsetY: 0,
-      opacity: 1,
-    },
-    symbol: "circle", // 'circle', 'rect', 'roundRect', 'triangle', 'diamond', 'pin', 'arrow', 'none'
-    symbolSize: 6,
-    label: {
-      show: false,
-      position: "top", // top / left / right / bottom / inside / insideLeft / insideRight / insideTop / insideBottom / insideTopLeft / insideBottomLeft / insideTopRight / insideBottomRight
-      color: "#333",
-      fontSize: 12,
-      fontStyle: "normal",
-      fontWeight: "normal",
-      textShadowColor: "transparent",
-      textShadowBlur: 0,
-      textShadowOffsetX: 0,
-      textShadowOffsetY: 0,
-      distance: 5,
-    },
-    labelLine: {
-      show: false,
-      length2: 0,
-      smooth: false,
+  // 构建 series 配置，每个系列保留其 step 属性
+  const series = seriesNames.map((name, index) => {
+    // 从第一个数据项中找到该系列的 step 配置
+    const firstSeriesItem = data[0]?.series.find((s) => s.name === name);
+    const stepValue = firstSeriesItem?.step || "start";
+
+    return {
+      name,
+      type: "line" as const,
+      step: stepValue as "start" | "middle" | "end",
+      encode: {
+        x: 0, // category 列
+        y: index + 1, // 对应 dataset 中的列索引（从1开始，因为0是category）
+      },
       lineStyle: {
-        color: "#000",
-        width: 1,
-        type: "solid",
+        width: 2,
+        type: "solid" as const,
         shadowBlur: 0,
         shadowColor: "transparent",
         shadowOffsetX: 0,
         shadowOffsetY: 0,
         opacity: 1,
       },
-    },
-  }));
+      symbol: "circle",
+      symbolSize: 6,
+      label: {
+        show: showLabels,
+        position: "top" as const,
+        color: "#333",
+        fontSize: 12,
+        fontStyle: "normal" as const,
+        fontWeight: "normal" as const,
+        textShadowColor: "transparent",
+        textShadowBlur: 0,
+        textShadowOffsetX: 0,
+        textShadowOffsetY: 0,
+        distance: 5,
+      },
+      labelLine: {
+        show: false,
+        length2: 0,
+        smooth: false,
+        lineStyle: {
+          color: "#000",
+          width: 1,
+          type: "solid" as const,
+          shadowBlur: 0,
+          shadowColor: "transparent",
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          opacity: 1,
+        },
+      },
+    };
+  });
 
   return {
     title: getTitleDefaultOption(),
@@ -189,15 +185,14 @@ export function getLineChartOption2(
       top: 5,
     }),
     grid: {
-      left: 20,
-      right: 20,
-      top: 60,
-      bottom: 20,
+      left: 15,
+      right: 15,
+      bottom: 15,
+      top: 35,
       containLabel: true,
     },
     xAxis: getXAxisDefaultOption({
       type: "category" as const,
-      boundaryGap: false,
       "axisLine.lineStyle.color": "#666",
       "axisLabel.color": "#666",
       "axisLabel.fontSize": 12,
@@ -218,7 +213,7 @@ export function getLineChartOption2(
     dataset: {
       source: datasetSource,
     },
-    series: series as SeriesOption[],
+    series,
   };
 }
 
@@ -232,17 +227,17 @@ export function getDataToExcel(
     {
       category: "Mon",
       series: [
-        { name: "Email", value: 120 },
-        { name: "Union Ads", value: 220 },
-        { name: "Video Ads", value: 150 },
+        { name: "Step Start", value: 120 },
+        { name: "Step Middle", value: 220 },
+        { name: "Step End", value: 450 },
       ],
     },
     {
       category: "Tue",
       series: [
-        { name: "Email", value: 132 },
-        { name: "Union Ads", value: 182 },
-        { name: "Video Ads", value: 232 },
+        { name: "Step Start", value: 132 },
+        { name: "Step Middle", value: 282 },
+        { name: "Step End", value: 432 },
       ],
     },
   ];
@@ -301,7 +296,7 @@ export function setDataFromExcel(
   option?: EChartsOption
 ): EChartsOption {
   if (!option) {
-    return getLineChartOption2();
+    return getLineChartOption4();
   }
 
   // 深拷贝 option，避免直接修改原对象
@@ -317,8 +312,21 @@ export function setDataFromExcel(
   // 后续行是数据
   const data: Array<{
     category: string;
-    series: Array<{ name: string; value: number }>;
+    series: Array<{
+      name: string;
+      value: number;
+      step?: "start" | "middle" | "end";
+    }>;
   }> = [];
+
+  // 获取原有 series 配置，保留 step 属性
+  const originalSeries = Array.isArray(option.series) ? option.series : [];
+  const seriesStepMap: Record<string, "start" | "middle" | "end"> = {};
+  originalSeries.forEach((s: any) => {
+    if (s.name && s.step) {
+      seriesStepMap[s.name] = s.step;
+    }
+  });
 
   for (let i = 1; i < excelData.length; i++) {
     const row = excelData[i];
@@ -351,9 +359,10 @@ export function setDataFromExcel(
 
     data.push({
       category: String(category),
-      series: seriesNames.map((name, index) => ({
+      series: seriesNames.map((name) => ({
         name,
-        value: Number(row[index + 1]) || 0,
+        value: Number(row[seriesNames.indexOf(name) + 1]) || 0,
+        step: seriesStepMap[name] || "start",
       })),
     });
   }
@@ -389,6 +398,26 @@ export function setDataFromExcel(
       source: datasetSource,
     };
   }
+
+  // 更新 series，保留 step 属性
+  const updatedSeries = seriesNames.map((name, index) => {
+    const originalSeriesItem = originalSeries[index] || {};
+    const stepValue =
+      seriesStepMap[name] || (originalSeriesItem as any).step || "start";
+
+    return {
+      ...originalSeriesItem,
+      name,
+      type: "line" as const,
+      step: stepValue as "start" | "middle" | "end",
+      encode: {
+        x: 0,
+        y: index + 1,
+      },
+    } as any;
+  });
+
+  updatedOption.series = updatedSeries as any;
 
   return updatedOption;
 }

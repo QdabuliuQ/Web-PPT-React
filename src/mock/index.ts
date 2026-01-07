@@ -1,4 +1,4 @@
-import { getBarChartOption4 } from "@/element/Chart/type";
+import { getScatterChartOption } from "@/element/Chart/type";
 import { createDefaultMindMapData } from "@/element/MindMap/utils";
 import { getRandomId } from "@/utils";
 
@@ -21,14 +21,14 @@ export default {
         {
           type: "chart",
           id: "chart_" + getRandomId(),
-          chartType: "bar4",
+          chartType: "scatter1",
           x: 200,
           y: 200,
           width: 300,
           height: 200,
           rotate: 0,
           zIndex: 10,
-          option: getBarChartOption4(),
+          option: getScatterChartOption(),
           animationName: "backInLeft",
           animationDuration: "default",
           animationDelay: "0s",

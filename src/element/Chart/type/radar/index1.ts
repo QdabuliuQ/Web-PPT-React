@@ -1,6 +1,10 @@
 import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
-import { getColorDefaultOption } from "../../common";
+import {
+  getColorDefaultOption,
+  getLegendDefaultOption,
+  getTitleDefaultOption,
+} from "../../common";
 
 export interface RadarChartConfig {
   data?: Array<{
@@ -43,6 +47,8 @@ export function getRadarChartOption(config?: RadarChartConfig): EChartsOption {
   });
 
   return {
+    title: getTitleDefaultOption(),
+    legend: getLegendDefaultOption(),
     backgroundColor,
     color: getColorDefaultOption(),
     dataset: {
@@ -53,8 +59,8 @@ export function getRadarChartOption(config?: RadarChartConfig): EChartsOption {
         name: d.name,
         max: Math.ceil(maxValue * 1.2), // 添加 20% 的边距
       })),
-      center: ["50%", "55%"],
-      radius: "70%",
+      center: ["50%", "50%"],
+      radius: "65%",
       axisName: {
         show: true,
         color: "#666",

@@ -1,6 +1,10 @@
 import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
-import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
+import {
+  getTitleDefaultOption,
+  getXAxisDefaultOption,
+  getYAxisDefaultOption,
+} from "../../common";
 
 export interface ScatterChartConfig {
   data?:
@@ -79,12 +83,13 @@ export function getScatterChartOption(
   // 如果没有有效数据，返回空图表配置
   if (!hasValidData || scatterData.length === 0) {
     return {
+      title: getTitleDefaultOption(),
       backgroundColor,
       grid: {
-        left: "10%",
-        right: "10%",
-        top: "10%",
-        bottom: "15%",
+        left: 10,
+        right: 10,
+        top: 30,
+        bottom: 10,
         containLabel: true,
       },
       xAxis: getXAxisDefaultOption({
@@ -123,11 +128,6 @@ export function getScatterChartOption(
           },
           label: {
             show: showLabels,
-            formatter: (params: any) => {
-              const index = params.dataIndex;
-              const point = scatterData[index];
-              return point ? `(${point[0]}, ${point[1]})` : "";
-            },
             position: "top",
             color: "#333",
             fontSize: 12,
@@ -138,12 +138,13 @@ export function getScatterChartOption(
   }
 
   return {
+    title: getTitleDefaultOption(),
     backgroundColor,
     grid: {
-      left: "10%",
-      right: "10%",
-      top: "10%",
-      bottom: "15%",
+      left: 10,
+      right: 10,
+      top: 30,
+      bottom: 10,
       containLabel: true,
     },
     xAxis: getXAxisDefaultOption({
@@ -181,11 +182,6 @@ export function getScatterChartOption(
       },
       label: {
         show: showLabels,
-        formatter: (params: any) => {
-          const index = params.dataIndex;
-          const point = scatterData[index];
-          return point ? `(${point[0]}, ${point[1]})` : "";
-        },
         position: "top",
         color: "#333",
         fontSize: 12,

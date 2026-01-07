@@ -50,10 +50,10 @@ export function getBarChartOption1(config?: BarChartConfig): EChartsOption {
     backgroundColor,
     color: getColorDefaultOption(),
     grid: {
-      left: "10%",
-      right: "10%",
-      top: "10%",
-      bottom: "15%",
+      left: 20,
+      right: 20,
+      top: 40,
+      bottom: 10,
       containLabel: true,
     },
     xAxis: getXAxisDefaultOption({

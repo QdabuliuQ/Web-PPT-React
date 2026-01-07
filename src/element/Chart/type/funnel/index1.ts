@@ -40,7 +40,7 @@ export function getFunnelChartOption(
         left: "center",
         top: "center",
         width: "80%",
-        height: "90%",
+        height: "75%",
         min: 0,
         max: 100,
         sort: "descending",

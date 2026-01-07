@@ -102,7 +102,7 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = ({
             value={value || ""}
             onChange={(e) => handleChange(e.target.value)}
             placeholder={props.placeholder}
-            style={{ fontSize: "12px", width: "100%" }}
+            style={{ fontSize: "12px", width: "100%", height: "32px" }}
             className="[&::placeholder]:text-[12px]"
             maxLength={props.maxLength}
           />

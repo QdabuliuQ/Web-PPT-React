@@ -6,8 +6,45 @@ import type { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
 
 /**
+ * 移除对象中的函数，使其可序列化
+ * @param obj - 要处理的对象
+ * @returns 移除函数后的新对象
+ */
+function removeFunctions<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (typeof obj === "function") {
+    return undefined as T;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj
+      .map((item) => removeFunctions(item))
+      .filter((item) => item !== undefined) as T;
+  }
+
+  if (typeof obj === "object") {
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value !== "function") {
+        const cleanedValue = removeFunctions(value);
+        if (cleanedValue !== undefined) {
+          result[key] = cleanedValue;
+        }
+      }
+    }
+    return result as T;
+  }
+
+  return obj;
+}
+
+/**
  * 深拷贝对象
  * 优先使用 structuredClone（如果支持），否则回退到 JSON.stringify/parse
+ * 会自动移除函数，确保可序列化
  *
  * @param obj - 要拷贝的对象
  * @returns 深拷贝后的新对象
@@ -17,16 +54,24 @@ export function cloneDeep<T>(obj: T): T {
     return obj;
   }
 
+  // 先移除函数，确保可序列化
+  const cleanedObj = removeFunctions(obj);
+
   if (typeof structuredClone !== "undefined") {
-    return structuredClone(obj);
+    try {
+      return structuredClone(cleanedObj);
+    } catch (error) {
+      // 如果 structuredClone 失败，回退到 JSON 方法
+      console.warn("structuredClone failed, falling back to JSON:", error);
+    }
   }
 
   try {
-    return JSON.parse(JSON.stringify(obj));
+    return JSON.parse(JSON.stringify(cleanedObj));
   } catch (error) {
-    // 如果 JSON 方法也失败（例如遇到循环引用），返回原对象
-    console.warn("cloneDeep failed, returning original object:", error);
-    return obj;
+    // 如果 JSON 方法也失败（例如遇到循环引用），返回清理后的对象
+    console.warn("cloneDeep failed, returning cleaned object:", error);
+    return cleanedObj;
   }
 }
 

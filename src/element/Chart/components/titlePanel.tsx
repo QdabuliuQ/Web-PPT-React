@@ -305,7 +305,8 @@ export const TitlePanel: FC = observer(() => {
         ],
       },
     ];
-  }, [handleColorConfigChange, handleConfigChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleColorConfigChange, handleConfigChange, titleConfig]);
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {

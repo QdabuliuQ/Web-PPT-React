@@ -1,6 +1,10 @@
 import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
-import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
+import {
+  getTitleDefaultOption,
+  getXAxisDefaultOption,
+  getYAxisDefaultOption,
+} from "../../common";
 import type { LineChartConfig } from "./index1";
 
 /**
@@ -17,9 +21,7 @@ export function getLineChartOption3(config?: LineChartConfig): EChartsOption {
 
   const {
     data = defaultData,
-    color = "#5F95FF",
     showGrid = true,
-    showLabels = true,
     backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
 
@@ -30,12 +32,13 @@ export function getLineChartOption3(config?: LineChartConfig): EChartsOption {
   });
 
   return {
+    title: getTitleDefaultOption(),
     backgroundColor,
     grid: {
-      left: "10%",
-      right: "10%",
-      top: "10%",
-      bottom: "15%",
+      left: 20,
+      right: 20,
+      top: 30,
+      bottom: 10,
       containLabel: true,
     },
     xAxis: getXAxisDefaultOption({
@@ -67,21 +70,45 @@ export function getLineChartOption3(config?: LineChartConfig): EChartsOption {
           x: "label",
           y: "value",
         },
-        smooth: 0.6, // 更平滑的曲线
+        smooth: true,
         lineStyle: {
-          color: color,
           width: 2,
+          type: "solid",
+          shadowBlur: 0,
+          shadowColor: "transparent",
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          opacity: 1,
         },
-        itemStyle: {
-          color: color,
-        },
-        symbol: "circle",
+        symbol: "circle", // 'circle', 'rect', 'roundRect', 'triangle', 'diamond', 'pin', 'arrow', 'none'
         symbolSize: 6,
         label: {
-          show: showLabels,
-          position: "top",
+          show: false,
+          position: "top", // top / left / right / bottom / inside / insideLeft / insideRight / insideTop / insideBottom / insideTopLeft / insideBottomLeft / insideTopRight / insideBottomRight
           color: "#333",
           fontSize: 12,
+          fontStyle: "normal",
+          fontWeight: "normal",
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textShadowOffsetX: 0,
+          textShadowOffsetY: 0,
+          distance: 5,
+        },
+        labelLine: {
+          show: false,
+          length2: 0,
+          smooth: false,
+          lineStyle: {
+            color: "#000",
+            width: 1,
+            type: "solid",
+            shadowBlur: 0,
+            shadowColor: "transparent",
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            opacity: 1,
+          },
         },
         areaStyle: {},
       },

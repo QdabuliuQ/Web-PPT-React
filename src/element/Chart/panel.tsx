@@ -112,7 +112,8 @@ const ChartPanelComponent: FC = observer(() => {
     <>
       <div className="h-[53px] flex gap-[10px] items-center">
         <TitlePanel />
-        <GridPanel />
+        {chartInfo.chartType !== "funnel1" &&
+          chartInfo.chartType !== "radar1" && <GridPanel />}
         <BackgroundColorPanel />
         <ColorPanel />
         {TypePanel}

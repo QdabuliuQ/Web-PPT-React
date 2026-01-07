@@ -17,6 +17,7 @@ import {
   getRadarChartOption,
   getScatterChartOption,
 } from "./type";
+import { getLineChartOption4 } from "./type/line/index4";
 
 /**
  * 根据 chartType 获取对应的配置函数
@@ -44,6 +45,7 @@ export const getChartOptionByType = (
       if (index === 1) return getLineChartOption1(config);
       if (index === 2) return getLineChartOption2(config);
       if (index === 3) return getLineChartOption3(config);
+      if (index === 4) return getLineChartOption4(config);
       break;
     case "pie":
       if (index === 1) return getPieChartOption(config);

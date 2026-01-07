@@ -1,10 +1,10 @@
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { GridFour } from "@icon-park/react";
-import { useDebounceFn, useMemoizedFn } from "ahooks";
+import { useMemoizedFn } from "ahooks";
 import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
-import { ChartStylePanel } from "./chartStylePanel";
 import type { IChartProps } from "../index";
+import { ChartStylePanel } from "./chartStylePanel";
 
 export const GridPanel: FC = observer(() => {
   const elementId = elementActiveStore.getElementActive();
@@ -61,135 +61,17 @@ export const GridPanel: FC = observer(() => {
     });
   });
 
-  // ColorPicker 防抖处理函数
-  const handleColorChange = useDebounceFn(
-    (keys: string[], color: any) => {
-      // 处理 rgba 颜色
-      const colorObj = color.toRgb();
-      if (colorObj.a !== 1) {
-        handleGridChange(
-          keys,
-          `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, ${colorObj.a})`
-        );
-      } else {
-        handleGridChange(keys, color.toHexString());
-      }
-    },
-    { wait: 300 }
-  );
-
   // 通用的 onChange 处理函数
   const handleConfigChange = useMemoizedFn((value: any, keys: string[]) => {
     handleGridChange(keys, value);
   });
 
-  // ColorPicker 的 onChange 处理函数（需要防抖）
+  // ColorPicker 的 onChange 处理函数
+  // ChartStylePanel 已经将颜色对象转换为字符串，所以这里直接使用字符串值
   const handleColorConfigChange = useMemoizedFn(
     (value: any, keys: string[]) => {
-      handleColorChange.run(keys, value);
+      handleGridChange(keys, value);
     }
-  );
-
-  // 配置数组
-  const panelConfigs = useMemo(
-    () => [
-      {
-        key: "basic",
-        title: "基础设置",
-        configs: [
-          {
-            type: "switch",
-            keys: ["show"],
-            label: "显示",
-            onChange: handleConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["left"],
-            label: "左边距",
-            defaultValue: 20,
-            min: 0,
-            max: 500,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["right"],
-            label: "右边距",
-            defaultValue: 20,
-            min: 0,
-            max: 500,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["top"],
-            label: "上边距",
-            defaultValue: 40,
-            min: 0,
-            max: 500,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["bottom"],
-            label: "下边距",
-            defaultValue: 20,
-            min: 0,
-            max: 500,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "colorPicker",
-            keys: ["backgroundColor"],
-            label: "背景颜色",
-            defaultValue: "#fff",
-            onChange: handleColorConfigChange,
-          },
-        ],
-      },
-      {
-        key: "shadow",
-        title: "阴影设置",
-        configs: [
-          {
-            type: "colorPicker",
-            keys: ["shadowColor"],
-            label: "阴影颜色",
-            defaultValue: "rgba(0, 0, 0, 0.5)",
-            onChange: handleColorConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["shadowBlur"],
-            label: "阴影模糊",
-            defaultValue: 10,
-            min: 0,
-            max: 100,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["shadowOffsetX"],
-            label: "阴影X偏移",
-            defaultValue: 0,
-            min: -100,
-            max: 100,
-            onChange: handleConfigChange,
-          },
-          {
-            type: "inputNumber",
-            keys: ["shadowOffsetY"],
-            label: "阴影Y偏移",
-            defaultValue: 0,
-            min: -100,
-            max: 100,
-            onChange: handleConfigChange,
-          },
-        ],
-      },
-    ],
-    [handleConfigChange, handleColorConfigChange]
   );
 
   // 根据配置获取值
@@ -203,6 +85,110 @@ export const GridPanel: FC = observer(() => {
     }
     return current ?? defaultValue;
   });
+
+  // 配置数组
+  const panelConfigs = useMemo(
+    () => [
+      {
+        key: "basic",
+        title: "基础设置",
+        configs: [
+          {
+            type: "switch",
+            keys: ["show"],
+            label: "显示",
+            defaultValue: getValue(["show"], true),
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["left"],
+            label: "左边距",
+            defaultValue: getValue(["left"], 20),
+            min: 0,
+            max: 500,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["right"],
+            label: "右边距",
+            defaultValue: getValue(["right"], 20),
+            min: 0,
+            max: 500,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["top"],
+            label: "上边距",
+            defaultValue: getValue(["top"], 40),
+            min: 0,
+            max: 500,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["bottom"],
+            label: "下边距",
+            defaultValue: getValue(["bottom"], 20),
+            min: 0,
+            max: 500,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "colorPicker",
+            keys: ["backgroundColor"],
+            label: "背景颜色",
+            defaultValue: getValue(["backgroundColor"], "#fff"),
+            onChange: handleColorConfigChange,
+          },
+        ],
+      },
+      {
+        key: "shadow",
+        title: "阴影设置",
+        configs: [
+          {
+            type: "colorPicker",
+            keys: ["shadowColor"],
+            label: "阴影颜色",
+            defaultValue: getValue(["shadowColor"], "rgba(0, 0, 0, 0.5)"),
+            onChange: handleColorConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["shadowBlur"],
+            label: "阴影模糊",
+            defaultValue: getValue(["shadowBlur"], 10),
+            min: 0,
+            max: 100,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["shadowOffsetX"],
+            label: "阴影X偏移",
+            defaultValue: getValue(["shadowOffsetX"], 0),
+            min: -100,
+            max: 100,
+            onChange: handleConfigChange,
+          },
+          {
+            type: "inputNumber",
+            keys: ["shadowOffsetY"],
+            label: "阴影Y偏移",
+            defaultValue: getValue(["shadowOffsetY"], 0),
+            min: -100,
+            max: 100,
+            onChange: handleConfigChange,
+          },
+        ],
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleConfigChange, handleColorConfigChange, getValue, gridConfig]
+  );
 
   return (
     <ChartStylePanel

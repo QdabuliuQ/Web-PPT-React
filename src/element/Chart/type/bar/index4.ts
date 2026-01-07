@@ -127,8 +127,10 @@ export function getBarChartOption4(
       left: "center",
     }),
     grid: {
-      top: 20,
-      bottom: 50,
+      top: 30,
+      bottom: 40,
+      left: 30,
+      right: 40,
     },
     xAxis: getXAxisDefaultOption({
       type: "value" as const,

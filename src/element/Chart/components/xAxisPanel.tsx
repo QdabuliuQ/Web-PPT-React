@@ -515,7 +515,8 @@ export const XAxisPanel: FC = observer(() => {
         ],
       },
     ],
-    [handleColorConfigChange, handleConfigChange]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleColorConfigChange, handleConfigChange, xAxisConfig]
   );
 
   // 根据配置获取值

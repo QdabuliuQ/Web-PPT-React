@@ -1,6 +1,10 @@
 import { cloneDeep } from "@/utils/tool";
 import type { EChartsOption } from "echarts";
-import { getXAxisDefaultOption, getYAxisDefaultOption } from "../../common";
+import {
+  getTitleDefaultOption,
+  getXAxisDefaultOption,
+  getYAxisDefaultOption,
+} from "../../common";
 
 export interface LineChartConfig {
   data?: Array<{ label: string; value: number }>;
@@ -24,24 +28,28 @@ export function getLineChartOption1(config?: LineChartConfig): EChartsOption {
 
   const {
     data = defaultData,
-    color = "#5F95FF",
     showGrid = true,
-    showLabels = true,
     backgroundColor = "rgba(0,0,0,0)",
   } = config || {};
 
+  // 构建 dataset source
+  const datasetSource: any[] = [["label", "value"]];
+  data.forEach((item) => {
+    datasetSource.push([item.label, item.value]);
+  });
+
   return {
+    title: getTitleDefaultOption(),
     backgroundColor,
     grid: {
-      left: "10%",
-      right: "10%",
-      top: "10%",
-      bottom: "15%",
+      left: 20,
+      right: 20,
+      top: 35,
+      bottom: 10,
       containLabel: true,
     },
     xAxis: getXAxisDefaultOption({
       type: "category",
-      data: data.map((d) => d.label),
       "axisLine.lineStyle.color": "#666",
       "axisLabel.color": "#666",
       "axisLabel.fontSize": 12,
@@ -59,28 +67,56 @@ export function getLineChartOption1(config?: LineChartConfig): EChartsOption {
       "axisLabel.color": "#666",
       "axisLabel.fontSize": 12,
     }),
-    series: [
-      {
-        type: "line",
-        data: data.map((d) => d.value),
-        smooth: true,
+    dataset: {
+      source: datasetSource,
+    },
+    series: {
+      type: "line",
+      encode: {
+        x: 0, // label 列
+        y: 1, // value 列
+      },
+      smooth: true,
+      lineStyle: {
+        width: 2,
+        type: "solid",
+        shadowBlur: 0,
+        shadowColor: "transparent",
+        shadowOffsetX: 0,
+        shadowOffsetY: 0,
+        opacity: 1,
+      },
+      symbol: "circle", // 'circle', 'rect', 'roundRect', 'triangle', 'diamond', 'pin', 'arrow', 'none'
+      symbolSize: 6,
+      label: {
+        show: false,
+        position: "top", // top / left / right / bottom / inside / insideLeft / insideRight / insideTop / insideBottom / insideTopLeft / insideBottomLeft / insideTopRight / insideBottomRight
+        color: "#333",
+        fontSize: 12,
+        fontStyle: "normal",
+        fontWeight: "normal",
+        textShadowColor: "transparent",
+        textShadowBlur: 0,
+        textShadowOffsetX: 0,
+        textShadowOffsetY: 0,
+        distance: 5,
+      },
+      labelLine: {
+        show: false,
+        length2: 0,
+        smooth: false,
         lineStyle: {
-          color: color,
-          width: 2,
-        },
-        itemStyle: {
-          color: color,
-        },
-        symbol: "circle",
-        symbolSize: 6,
-        label: {
-          show: showLabels,
-          position: "top",
-          color: "#333",
-          fontSize: 12,
+          color: "#000",
+          width: 1,
+          type: "solid",
+          shadowBlur: 0,
+          shadowColor: "transparent",
+          shadowOffsetX: 0,
+          shadowOffsetY: 0,
+          opacity: 1,
         },
       },
-    ],
+    },
   };
 }
 
@@ -100,8 +136,28 @@ export function getDataToExcel(
   // 从 option 中提取数据
   let data = defaultData;
 
-  // 折线图数据在 xAxis.data 和 series[0].data 中
-  if (option) {
+  // 优先从 dataset.source 中提取数据
+  const dataset = Array.isArray(option?.dataset)
+    ? option.dataset[0]
+    : option?.dataset;
+  if (
+    dataset?.source &&
+    Array.isArray(dataset.source) &&
+    dataset.source.length > 1
+  ) {
+    const source = dataset.source as any[][];
+    const headers = source[0];
+    const dataRows = source.slice(1);
+
+    if (Array.isArray(headers) && headers.length === 2) {
+      data = dataRows.map((row: any[]) => ({
+        label: String(row[0] || ""),
+        value: Number(row[1]) || 0,
+      }));
+    }
+  }
+  // 如果没有 dataset，尝试从 xAxis.data 和 series[0].data 中提取（向后兼容）
+  else if (option) {
     const xAxis = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
     if (xAxis && (xAxis as any).data && Array.isArray((xAxis as any).data)) {
       const xAxisData = (xAxis as any).data;
@@ -148,8 +204,7 @@ export function setDataFromExcel(
   }
 
   // 跳过表头，从第二行开始读取数据
-  const labels: string[] = [];
-  const values: number[] = [];
+  const data: Array<{ label: string; value: number }> = [];
 
   for (let i = 1; i < excelData.length; i++) {
     const row = excelData[i];
@@ -169,24 +224,34 @@ export function setDataFromExcel(
       break;
     }
 
-    labels.push(String(label));
-    values.push(Number(value) || 0);
+    data.push({
+      label: String(label),
+      value: Number(value) || 0,
+    });
   }
 
-  // 更新 xAxis.data
-  const xAxis = Array.isArray(updatedOption.xAxis)
-    ? updatedOption.xAxis[0]
-    : updatedOption.xAxis;
-  if (xAxis) {
-    (xAxis as any).data = labels;
-  }
+  // 更新 dataset.source
+  const datasetSource: any[] = [["label", "value"]];
+  data.forEach((item) => {
+    datasetSource.push([item.label, item.value]);
+  });
 
-  // 更新 series[0].data
-  const series = Array.isArray(updatedOption.series)
-    ? updatedOption.series[0]
-    : updatedOption.series;
-  if (series) {
-    (series as any).data = values;
+  if (updatedOption.dataset) {
+    if (Array.isArray(updatedOption.dataset)) {
+      updatedOption.dataset[0] = {
+        ...updatedOption.dataset[0],
+        source: datasetSource,
+      };
+    } else {
+      updatedOption.dataset = {
+        ...updatedOption.dataset,
+        source: datasetSource,
+      };
+    }
+  } else {
+    updatedOption.dataset = {
+      source: datasetSource,
+    };
   }
 
   return updatedOption;
