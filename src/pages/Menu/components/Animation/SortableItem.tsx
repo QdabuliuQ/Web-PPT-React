@@ -1,4 +1,4 @@
-import { elementHoverActiveStore } from "@/store";
+import { useElementHoverActiveStore } from "@/store";
 import { getAllElementPanelInfo } from "@/utils/tool";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -27,6 +27,13 @@ export const SortableItem: FC<SortableItemProps> = ({
   onDelete,
   disabled = false,
 }) => {
+  // 使用 Zustand hook 获取方法
+  const setElementHoverActive = useElementHoverActiveStore(
+    (state) => state.setElementHoverActive
+  );
+  const resetElementHoverActive = useElementHoverActiveStore(
+    (state) => state.resetElementHoverActive
+  );
   // 动态获取所有元素面板信息并创建映射（包含名称和图标）
   const elementInfoMap = useMemo(() => {
     const panels = getAllElementPanelInfo();
@@ -91,10 +98,10 @@ export const SortableItem: FC<SortableItemProps> = ({
         onSelect(element.id);
       }}
       onMouseEnter={() => {
-        elementHoverActiveStore.setElementHoverActive(element.id);
+        setElementHoverActive(element.id);
       }}
       onMouseLeave={() => {
-        elementHoverActiveStore.resetElementHoverActive();
+        resetElementHoverActive();
       }}
     >
       {!disabled && (

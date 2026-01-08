@@ -12,7 +12,11 @@ import { PanelDropdownButton } from "@/components/PanelDropdownButton";
 import { PanelPlacementButton } from "@/components/PanelPlacementButton";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import {
   Add,
   AutoHeightOne,
@@ -27,8 +31,14 @@ import {
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Button, ColorPicker, Popover, Slider, Tooltip } from "antd";
-import { observer } from "mobx-react-lite";
-import { useCallback, useMemo, useRef, useState, type FC } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from "react";
 import type { ITextProps } from ".";
 import { FontSize } from "./constant";
 import styles from "./panel.module.less";
@@ -36,27 +46,89 @@ interface ITextPanelProps {
   title?: string;
 }
 
-export const TextPanel: FC<ITextPanelProps> = observer(() => {
+export const TextPanel: FC<ITextPanelProps> = () => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [backgroundColorPickerOpen, setBackgroundColorPickerOpen] =
     useState(false);
 
-  // 直接从store获取当前元素，observer会自动响应变化
-  const activeElementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+  // 使用本地状态存储需要即时响应的属性
+  const [fontSize, setFontSize] = useState<number | null>(null);
+  const [lineHeight, setLineHeight] = useState<number | null>(null);
+  const [strokeWidth, setStrokeWidth] = useState<number | null>(null);
+  const [shadowOffsetX, setShadowOffsetX] = useState<number | null>(null);
+  const [shadowOffsetY, setShadowOffsetY] = useState<number | null>(null);
+  const [borderWidth, setBorderWidth] = useState<number | null>(null);
 
-  // 简化实现：直接获取元素，不使用useMemo
-  let currentElement: ITextProps | null = null;
-  if (activeElementId && pageId) {
-    const element = pptStore.getElementInfo(pageId, activeElementId);
+  // 使用 Zustand hooks 订阅状态变化
+  const activeElementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const pages = usePPTStore((state) => state.pages);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
+
+  // 使用 useMemo 依赖 pages 来响应元素更新
+  const currentElement = useMemo<ITextProps | null>(() => {
+    if (!activeElementId || !pageId) return null;
+    const page = pages.find((p) => p.id === pageId);
+    if (!page) return null;
+    const element = page.elements.find((el) => el.id === activeElementId);
     if (element && element.type === "text") {
-      currentElement = element as ITextProps;
+      return element as ITextProps;
     }
-  }
+    return null;
+  }, [activeElementId, pageId, pages]);
+
+  // 当 currentElement 变化时，同步更新本地状态
+  useEffect(() => {
+    if (currentElement) {
+      setFontSize(currentElement.fontSize ?? null);
+      setLineHeight(currentElement.lineHeight ?? null);
+      setStrokeWidth(currentElement.strokeWidth ?? null);
+      setShadowOffsetX(currentElement.shadowOffsetX ?? null);
+      setShadowOffsetY(currentElement.shadowOffsetY ?? null);
+      setBorderWidth(currentElement.borderWidth ?? null);
+    } else {
+      setFontSize(null);
+      setLineHeight(null);
+      setStrokeWidth(null);
+      setShadowOffsetX(null);
+      setShadowOffsetY(null);
+      setBorderWidth(null);
+    }
+  }, [currentElement]);
+
+  // 防抖更新 Zustand store
+  const debouncedUpdateStore = useCallback(
+    (key: keyof ITextProps, value: any) => {
+      if (!currentElement || !pageId) return;
+      if (key === "fontSize" && value <= 1) return;
+      if (key === "lineHeight" && value < 1) return;
+      const updatedElement = {
+        ...currentElement,
+        type: "text",
+        [key]: value,
+      } as ITextProps;
+      setElementInfo(pageId, currentElement.id, updatedElement);
+    },
+    [currentElement, pageId, setElementInfo]
+  );
+
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedPropertyChange = useCallback(
+    (key: keyof ITextProps, value: any) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        debouncedUpdateStore(key, value);
+      }, 300);
+    },
+    [debouncedUpdateStore]
+  );
 
   const propertyChangeHandle = useMemoizedFn(
     (key: keyof ITextProps, value: any) => {
-      if (!currentElement) return;
+      if (!currentElement || !pageId) return;
       if (key === "fontSize" && value <= 1) {
         return;
       }
@@ -69,16 +141,9 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
         type: "text",
         [key]: value,
       } as ITextProps;
-      pptStore.setElementInfo(
-        pageActiveStore.getPageActive() as string,
-        currentElement.id,
-        updatedElement
-      );
+      setElementInfo(pageId, currentElement.id, updatedElement);
     }
   );
-
-  // 通用防抖定时器引用
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 通用防抖颜色变更函数
   const debouncedColorChange = useCallback(
@@ -91,10 +156,10 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
         currentColor = color2 as string;
       }
       debounceTimerRef.current = setTimeout(() => {
-        propertyChangeHandle(property, currentColor);
+        debouncedUpdateStore(property, currentColor);
       }, 300);
     },
-    [propertyChangeHandle]
+    [debouncedUpdateStore]
   );
 
   const largeButtons = useMemo(() => {
@@ -123,23 +188,16 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
   }, []);
 
   const handlePreviewSelect = useMemoizedFn((item: Partial<ITextProps>) => {
-    if (!currentElement) return;
+    if (!currentElement || !pageId) return;
     const updatedElement = { ...currentElement, ...item } as ITextProps;
-    pptStore.setElementInfo(
-      pageActiveStore.getPageActive() as string,
-      currentElement.id,
-      updatedElement
-    );
+    setElementInfo(pageId, currentElement.id, updatedElement);
   });
 
   const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
-    useZIndexElement(
-      pageActiveStore.getPageActive() as string,
-      activeElementId as string
-    );
+    useZIndexElement(pageId || "", activeElementId || "");
   const { positionHandle } = usePositionElement(
-    pageActiveStore.getPageActive() as string,
-    activeElementId as string
+    pageId || "",
+    activeElementId || ""
   );
   const onZIndexChange = useMemoizedFn((key: string) => {
     if (key === "toFront") {
@@ -178,20 +236,25 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
         <div className="flex gap-[5px] items-center">
           <Tooltip title="文本字体大小">
             <PanelSelect
-              value={currentElement?.fontSize}
+              value={fontSize}
               style={{ width: 82 }}
               size="small"
               options={FontSize}
-              onChange={(value) => propertyChangeHandle("fontSize", value)}
+              onChange={(value) => {
+                setFontSize(value);
+                debouncedPropertyChange("fontSize", value);
+              }}
             />
           </Tooltip>
           <Tooltip title="增大字号">
             <Button
               size="small"
               type="text"
-              onClick={() =>
-                propertyChangeHandle("fontSize", currentElement!.fontSize + 1)
-              }
+              onClick={() => {
+                const newValue = (fontSize || 14) + 1;
+                setFontSize(newValue);
+                debouncedPropertyChange("fontSize", newValue);
+              }}
               icon={<Add theme="outline" size="13" fill="#333" />}
             />
           </Tooltip>
@@ -199,9 +262,11 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
             <Button
               size="small"
               type="text"
-              onClick={() =>
-                propertyChangeHandle("fontSize", currentElement!.fontSize - 1)
-              }
+              onClick={() => {
+                const newValue = Math.max(1, (fontSize || 14) - 1);
+                setFontSize(newValue);
+                debouncedPropertyChange("fontSize", newValue);
+              }}
               icon={<Reduce theme="outline" size="13" fill="#333" />}
             />
           </Tooltip>
@@ -255,10 +320,12 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
           </Popover>
           <PanelDropdownButton
             title="行高"
-            value={currentElement?.lineHeight.toString()}
+            value={lineHeight?.toString() || "1"}
             icon={<AutoHeightOne theme="outline" size="14" fill="#333" />}
             onSelect={(key) => {
-              propertyChangeHandle("lineHeight", parseFloat(key));
+              const newValue = parseFloat(key);
+              setLineHeight(newValue);
+              debouncedPropertyChange("lineHeight", newValue);
             }}
             menu={{
               items: [
@@ -285,12 +352,11 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
             <Button
               size="small"
               type="text"
-              onClick={() =>
-                propertyChangeHandle(
-                  "lineHeight",
-                  currentElement!.lineHeight + 0.5
-                )
-              }
+              onClick={() => {
+                const newValue = (lineHeight || 1) + 0.5;
+                setLineHeight(newValue);
+                debouncedPropertyChange("lineHeight", newValue);
+              }}
               icon={<Add theme="outline" size="13" fill="#333" />}
             />
           </Tooltip>
@@ -298,12 +364,11 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
             <Button
               size="small"
               type="text"
-              onClick={() =>
-                propertyChangeHandle(
-                  "lineHeight",
-                  currentElement!.lineHeight - 0.5
-                )
-              }
+              onClick={() => {
+                const newValue = Math.max(1, (lineHeight || 1) - 0.5);
+                setLineHeight(newValue);
+                debouncedPropertyChange("lineHeight", newValue);
+              }}
               icon={<Reduce theme="outline" size="13" fill="#333" />}
             />
           </Tooltip>
@@ -312,17 +377,19 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
       <PanelSplitLine />
       <PanelShadowSetting
         shadow={currentElement?.shadow || false}
-        shadowOffsetX={currentElement?.shadowOffsetX || 0}
-        shadowOffsetY={currentElement?.shadowOffsetY || 0}
+        shadowOffsetX={shadowOffsetX ?? 0}
+        shadowOffsetY={shadowOffsetY ?? 0}
         shadowColor={currentElement?.shadowColor || "#000000"}
         shadowType="text-shadow"
         onShadowChange={(value) => propertyChangeHandle("shadow", value)}
-        onShadowOffsetXChange={(value) =>
-          propertyChangeHandle("shadowOffsetX", value)
-        }
-        onShadowOffsetYChange={(value) =>
-          propertyChangeHandle("shadowOffsetY", value)
-        }
+        onShadowOffsetXChange={(value) => {
+          setShadowOffsetX(value);
+          debouncedPropertyChange("shadowOffsetX", value);
+        }}
+        onShadowOffsetYChange={(value) => {
+          setShadowOffsetY(value);
+          debouncedPropertyChange("shadowOffsetY", value);
+        }}
         onShadowColorChange={(color) =>
           debouncedColorChange("shadowColor")(color)
         }
@@ -330,13 +397,14 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
       <PanelSplitLine />
       <PanelBorderSetting
         border={currentElement?.border || false}
-        borderWidth={currentElement?.borderWidth || 0}
+        borderWidth={borderWidth ?? 0}
         borderStyle={currentElement?.borderStyle || "solid"}
         borderColor={currentElement?.borderColor || "#000000"}
         onBorderChange={(value) => propertyChangeHandle("border", value)}
-        onBorderWidthChange={(value) =>
-          propertyChangeHandle("borderWidth", value)
-        }
+        onBorderWidthChange={(value) => {
+          setBorderWidth(value);
+          debouncedPropertyChange("borderWidth", value);
+        }}
         onBorderStyleChange={(value) =>
           propertyChangeHandle("borderStyle", value)
         }
@@ -359,10 +427,10 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
             style={{ width: 90, margin: 0 }}
             min={0}
             max={10}
-            defaultValue={currentElement?.strokeWidth}
-            value={currentElement?.strokeWidth}
+            value={strokeWidth ?? 0}
             onChange={(value) => {
-              propertyChangeHandle("strokeWidth", value);
+              setStrokeWidth(value);
+              debouncedPropertyChange("strokeWidth", value);
             }}
             disabled={!currentElement?.stroke}
           />
@@ -384,7 +452,7 @@ export const TextPanel: FC<ITextPanelProps> = observer(() => {
       />
     </div>
   );
-});
+};
 
 export const TextPanelTitle = "文本工具";
 export const TextPanelKey = "text";

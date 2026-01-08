@@ -1,9 +1,12 @@
 import { PanelButton } from "@/components/PanelButton";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { ChartHistogram } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Popover } from "antd";
-import { observer } from "mobx-react-lite";
 import { memo, useMemo, useRef, useState } from "react";
 import { CreateChart } from ".";
 
@@ -45,7 +48,12 @@ const chartCategories = [
 ];
 
 export default function ChartButton() {
-  const pageId = pageActiveStore.getPageActive() as string;
+  // 使用 Zustand hooks 订阅状态变化
+  const pageId = usePageActiveStore((state) => state.pageActive) || "";
+  const addElement = usePPTStore((state) => state.addElement);
+  const setElementActive = useElementActiveStore(
+    (state) => state.setElementActive
+  );
   const [open, setOpen] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -71,9 +79,9 @@ export default function ChartButton() {
     }
 
     const option = CreateChart({ chartType });
-    pptStore.addElementInfo(pageId, option);
-    if (pageActiveStore.getPageActive()) {
-      elementActiveStore.setElementActive(option.id);
+    addElement(pageId, option);
+    if (pageId) {
+      setElementActive(option.id);
     }
 
     // 立即关闭 Popover
@@ -127,4 +135,4 @@ export default function ChartButton() {
   );
 }
 
-export const ChartButtonComponent = memo(observer(ChartButton));
+export const ChartButtonComponent = memo(ChartButton);

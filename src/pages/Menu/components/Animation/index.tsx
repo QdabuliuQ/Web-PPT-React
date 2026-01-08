@@ -5,7 +5,11 @@ import {
   PanelSplitLine,
 } from "@/components";
 import { PanelDropdownButton } from "@/components/PanelDropdownButton";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { globalEventBus } from "@/utils/eventBus";
 import type { DragEndEvent } from "@dnd-kit/core";
 import {
@@ -31,7 +35,6 @@ import {
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Button, Popover, Select } from "antd";
-import { observer } from "mobx-react-lite";
 import { useMemo, useState, type FC } from "react";
 import { toggleInDelayOptions, toggleInDurationOptions } from "../Toggle";
 import { SortableItem } from "./SortableItem";
@@ -206,19 +209,23 @@ const AnimationComponent: FC = () => {
     string | null
   >(null);
 
-  // 获取当前选中的元素
-  const pageActive = pageActiveStore.getPageActive();
-  const elementActive = elementActiveStore.getElementActive();
+  // 使用 Zustand hooks 订阅状态变化
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+  const elementActive = useElementActiveStore((state) => state.elementActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const getAllElementInfo = usePPTStore((state) => state.getAllElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
+
   const currentElement =
     pageActive && elementActive
-      ? pptStore.getElementInfo(pageActive, elementActive)
+      ? getElementInfo(pageActive, elementActive)
       : null;
   const currentAnimationName = currentElement?.animationName || "";
 
   // 获取动画列表中选中的元素
   const selectedAnimationElement =
     pageActive && selectedAnimationElementId
-      ? pptStore.getElementInfo(pageActive, selectedAnimationElementId)
+      ? getElementInfo(pageActive, selectedAnimationElementId)
       : null;
 
   // 回显选中元素的动画属性
@@ -245,7 +252,7 @@ const AnimationComponent: FC = () => {
   const handleAnimationSelect = useMemoizedFn((type: string) => {
     if (!pageActive || !elementActive || !currentElement) return;
 
-    pptStore.setElementInfo(pageActive, elementActive, {
+    setElementInfo(pageActive, elementActive, {
       ...currentElement,
       animationName: type,
     } as any);
@@ -260,10 +267,10 @@ const AnimationComponent: FC = () => {
     ) => {
       if (!pageActive) return;
 
-      const element = pptStore.getElementInfo(pageActive, elementId);
+      const element = getElementInfo(pageActive, elementId);
       if (!element) return;
 
-      pptStore.setElementInfo(pageActive, elementId, {
+      setElementInfo(pageActive, elementId, {
         ...element,
         [property]: value,
       } as any);
@@ -282,15 +289,15 @@ const AnimationComponent: FC = () => {
       // 删除当前对象的动画
       if (!elementActive || !currentElement) return;
 
-      pptStore.setElementInfo(pageActive, elementActive, {
+      setElementInfo(pageActive, elementActive, {
         ...currentElement,
         animationName: "",
       } as any);
     } else if (key === "deleteAll") {
       // 删除当前页面所有对象的动画
-      const allElements = pptStore.getAllElementInfo(pageActive);
+      const allElements = getAllElementInfo(pageActive);
       allElements.forEach((element) => {
-        pptStore.setElementInfo(pageActive, element.id, {
+        setElementInfo(pageActive, element.id, {
           ...element,
           animationName: "",
         } as any);
@@ -300,8 +307,9 @@ const AnimationComponent: FC = () => {
 
   // 获取当前页面所有设置了动画的元素，并按 animationTrigger 分组
   // default 元素放在前面，click 元素放在后面
-  // 不使用 useMemo，让 observer 自动响应 MobX store 的变化
-  const { defaultElements, clickElements, animatedElements } = (() => {
+  // 使用 useMemo 来响应 pages 和 pageActive 的变化
+  const pages = usePPTStore((state) => state.pages);
+  const { defaultElements, clickElements, animatedElements } = useMemo(() => {
     if (!pageActive) {
       return {
         defaultElements: [],
@@ -309,7 +317,7 @@ const AnimationComponent: FC = () => {
         animatedElements: [],
       };
     }
-    const allElements = pptStore.getAllElementInfo(pageActive);
+    const allElements = getAllElementInfo(pageActive);
     const filtered = allElements.filter(
       (element) => element.animationName && element.animationName !== ""
     );
@@ -339,7 +347,7 @@ const AnimationComponent: FC = () => {
       clickElements: sortedClickEls,
       animatedElements: animatedEls,
     };
-  })();
+  }, [pageActive, pages]);
 
   // 获取元素类型的中文名称
   const getElementTypeName = useMemoizedFn((type: string) => {
@@ -391,7 +399,7 @@ const AnimationComponent: FC = () => {
       );
       // 只更新 click 元素的 animationIndex
       newOrderedClickElements.forEach((element, index) => {
-        pptStore.setElementInfo(pageActive, element.id, {
+        setElementInfo(pageActive, element.id, {
           ...element,
           animationIndex: index,
         } as any);
@@ -402,10 +410,10 @@ const AnimationComponent: FC = () => {
   // 处理删除单个元素的动画
   const handleDeleteElementAnimation = useMemoizedFn((elementId: string) => {
     if (!pageActive) return;
-    const element = pptStore.getElementInfo(pageActive, elementId);
+    const element = getElementInfo(pageActive, elementId);
     if (!element) return;
 
-    pptStore.setElementInfo(pageActive, elementId, {
+    setElementInfo(pageActive, elementId, {
       ...element,
       animationName: "",
     } as any);
@@ -431,7 +439,7 @@ const AnimationComponent: FC = () => {
     // 在 useMemo 内部重新获取选中元素，确保值正确更新
     const selectedElement =
       pageActive && selectedAnimationElementId
-        ? pptStore.getElementInfo(pageActive, selectedAnimationElementId)
+        ? getElementInfo(pageActive, selectedAnimationElementId)
         : null;
 
     // 获取选中元素的动画属性值
@@ -697,4 +705,4 @@ const AnimationComponent: FC = () => {
   );
 };
 
-export const Animation: FC = observer(AnimationComponent);
+export const Animation: FC = AnimationComponent;

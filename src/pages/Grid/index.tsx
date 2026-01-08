@@ -2,19 +2,20 @@ import {
   displayStatusStore,
   elementActiveStore,
   pageActiveStore,
-  pptStore,
+  usePageActiveStore,
+  usePPTStore,
 } from "@/store";
 import type { Page } from "@/store/ppt";
 import { showPageContextMenu } from "@/utils/pageContextMenu";
 import { PreviewCloseOne } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { type FC, useEffect, useRef, useState } from "react";
 import { Canvas } from "../Canvas";
 
 const GridComponent: FC = () => {
-  const pages = pptStore.getPages();
-  const pageActive = pageActiveStore.getPageActive();
+  // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
+  const pages = usePPTStore((state) => state.pages);
+  const pageActive = usePageActiveStore((state) => state.pageActive);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.2);
 
@@ -119,4 +120,4 @@ const GridComponent: FC = () => {
   );
 };
 
-export const Grid: FC = observer(GridComponent);
+export const Grid: FC = GridComponent;

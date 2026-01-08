@@ -3,11 +3,14 @@ import { PanelLargeButton } from "@/components/PanelLargeButton";
 import { PanelSplitLine } from "@/components/PanelSplitLine";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { Download, Editor } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
-import { type FC } from "react";
+import { useMemo, type FC } from "react";
 import type { IMindMapProps } from "./index";
 import { MindMapModal } from "./MindMapModal";
 import { useMindMapModal } from "./useMindMapModal";
@@ -16,27 +19,29 @@ import { downloadMindMapImage } from "./utils";
 export const MindMapPanelKey = "mindmap";
 export const MindMapPanelTitle = "思维导图";
 
-const MindMapPanelComponent: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+const MindMapPanelComponent: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const pages = usePPTStore((state) => state.pages);
 
   const { positionHandle } = usePositionElement(pageId || "", elementId || "");
   const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
     useZIndexElement(pageId || "", elementId || "");
 
-  if (!pageId || !elementId) return null;
-
-  const mindMapInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IMindMapProps | null;
-
-  if (!mindMapInfo) return null;
+  // 使用 useMemo 依赖 pages 来响应元素更新
+  const mindMapInfo = useMemo<IMindMapProps | null>(() => {
+    if (!pageId || !elementId) return null;
+    const page = pages.find((p) => p.id === pageId);
+    if (!page) return null;
+    const element = page.elements.find((el) => el.id === elementId);
+    return (element as IMindMapProps) || null;
+  }, [pageId, elementId, pages]);
 
   // 使用 MindMapModal hook
   const { handleModalOpen, modalProps } = useMindMapModal({
-    pageId,
-    elementId,
+    pageId: pageId || "",
+    elementId: elementId || "",
     readonly: false,
   });
 
@@ -64,6 +69,7 @@ const MindMapPanelComponent: FC = observer(() => {
 
   // 下载图片
   const handleDownloadImage = useMemoizedFn(async () => {
+    if (!mindMapInfo || !elementId) return;
     const previewImage = (mindMapInfo as any)?.previewImage;
     if (!previewImage) {
       console.warn("没有预览图片，无法下载");
@@ -71,6 +77,8 @@ const MindMapPanelComponent: FC = observer(() => {
     }
     await downloadMindMapImage(previewImage, elementId);
   });
+
+  if (!pageId || !elementId || !mindMapInfo) return null;
 
   return (
     <>
@@ -95,6 +103,6 @@ const MindMapPanelComponent: FC = observer(() => {
       <MindMapModal {...modalProps} />
     </>
   );
-});
+};
 
 export const MindMapPanel = MindMapPanelComponent;

@@ -7,13 +7,16 @@ import { PanelCommonSetting } from "@/components/PanelCommonSetting";
 import { PanelSplitLine } from "@/components/PanelSplitLine";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { LoadingOutlined } from "@ant-design/icons";
 import { ColorFilter, Download, Help, Scale } from "@icon-park/react";
-import { useMemoizedFn } from "ahooks";
+import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Popover, Slider, Tooltip } from "antd";
-import { observer } from "mobx-react-lite";
-import { useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import type { IImageProps } from "./index";
 import { downloadImageFile } from "./utils";
 
@@ -79,24 +82,30 @@ const filterProperty = [
   },
 ];
 
-const ImagePanelComponent: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive() as string;
-  const pageId = pageActiveStore.getPageActive() as string;
+const ImagePanelComponent: FC = () => {
+  // 使用本地状态存储需要即时响应的属性
+  const [localState, setLocalState] = useState<Partial<IImageProps>>({});
 
-  if (!pageId || !elementId) return null;
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const pages = usePPTStore((state) => state.pages);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  const imageInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IImageProps | null;
-
-  if (!imageInfo) return null;
+  // 使用 useMemo 依赖 pages 来响应元素更新
+  const imageInfo = useMemo<IImageProps | null>(() => {
+    if (!pageId || !elementId) return null;
+    const page = pages.find((p) => p.id === pageId);
+    if (!page) return null;
+    const element = page.elements.find((el) => el.id === elementId);
+    return (element as IImageProps) || null;
+  }, [pageId, elementId, pages]);
 
   // 位置调整
-  const { positionHandle } = usePositionElement(pageId, elementId);
+  const { positionHandle } = usePositionElement(pageId || "", elementId || "");
   // z-index调整
   const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
-    useZIndexElement(pageId, elementId);
+    useZIndexElement(pageId || "", elementId || "");
 
   const onZIndexChange = useMemoizedFn((key: string) => {
     switch (key) {
@@ -115,21 +124,56 @@ const ImagePanelComponent: FC = observer(() => {
     }
   });
 
+  // 防抖更新 Zustand store
+  const debouncedUpdateStore = useDebounceFn(
+    (key: keyof IImageProps, value: any) => {
+      if (!pageId || !elementId || !imageInfo) return;
+      setElementInfo(pageId, elementId, {
+        ...imageInfo,
+        [key]: value,
+      });
+    },
+    { wait: 300 }
+  );
+
   const handleChange = useMemoizedFn((key: keyof IImageProps, value: any) => {
-    if (!pageId || !elementId) return;
-    pptStore.setElementInfo(pageId, elementId, {
-      ...imageInfo,
-      [key]: value,
-    });
+    // 立即更新本地状态
+    setLocalState((prev) => ({ ...prev, [key]: value }));
+    // 防抖更新 store
+    debouncedUpdateStore.run(key, value);
   });
 
   const [loading, setLoading] = useState(false);
   const handleDownloadImage = useMemoizedFn(async () => {
-    if (!imageInfo.src || !elementId) return;
+    if (!imageInfo?.src || !elementId) return;
     setLoading(true);
     await downloadImageFile(imageInfo.src, elementId);
     setLoading(false);
   });
+
+  // 当 imageInfo 变化时，同步更新本地状态
+  useEffect(() => {
+    if (imageInfo) {
+      setLocalState({
+        opacity: imageInfo.opacity,
+        borderRadius: imageInfo.borderRadius,
+        brightness: imageInfo.brightness,
+        contrast: imageInfo.contrast,
+        saturate: imageInfo.saturate,
+        grayscale: imageInfo.grayscale,
+        hueRotate: imageInfo.hueRotate,
+        invert: imageInfo.invert,
+        sepia: imageInfo.sepia,
+        borderWidth: imageInfo.borderWidth,
+        shadowOffsetX: imageInfo.shadowOffsetX,
+        shadowOffsetY: imageInfo.shadowOffsetY,
+        shadowBlur: imageInfo.shadowBlur,
+        shadowSpread: imageInfo.shadowSpread,
+      });
+    } else {
+      setLocalState({});
+    }
+  }, [imageInfo]);
 
   const content = useMemo(
     () => (
@@ -151,7 +195,11 @@ const ImagePanelComponent: FC = observer(() => {
                 </Tooltip>
               </div>
               <Slider
-                value={imageInfo[item.type] as number}
+                value={
+                  (localState[item.type] ??
+                    imageInfo?.[item.type] ??
+                    0) as number
+                }
                 style={{ flex: 1 }}
                 onChange={(value) => handleChange(item.type, value)}
                 min={item.min}
@@ -164,8 +212,10 @@ const ImagePanelComponent: FC = observer(() => {
         </div>
       </div>
     ),
-    [handleChange, imageInfo]
+    [handleChange, imageInfo, localState]
   );
+
+  if (!pageId || !elementId || !imageInfo) return null;
 
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
@@ -176,7 +226,7 @@ const ImagePanelComponent: FC = observer(() => {
             min={0}
             max={1}
             step={0.1}
-            value={imageInfo.opacity}
+            value={localState.opacity ?? imageInfo.opacity}
             onChange={(value) => handleChange("opacity", value)}
             style={{ width: 90, margin: 0 }}
           />
@@ -187,7 +237,7 @@ const ImagePanelComponent: FC = observer(() => {
             min={0}
             max={200}
             step={1}
-            value={imageInfo.borderRadius}
+            value={localState.borderRadius ?? imageInfo.borderRadius}
             onChange={(value) => handleChange("borderRadius", value)}
             style={{ width: 90, margin: 0 }}
           />
@@ -210,7 +260,7 @@ const ImagePanelComponent: FC = observer(() => {
       <PanelSplitLine />
       <PanelBorderSetting
         border={imageInfo.border}
-        borderWidth={imageInfo.borderWidth}
+        borderWidth={localState.borderWidth ?? imageInfo.borderWidth}
         borderStyle={imageInfo.borderStyle}
         borderColor={imageInfo.borderColor}
         onBorderChange={(value) => handleChange("border", value)}
@@ -221,11 +271,11 @@ const ImagePanelComponent: FC = observer(() => {
       <PanelSplitLine />
       <PanelShadowSetting
         shadow={imageInfo.shadow}
-        shadowOffsetX={imageInfo.shadowOffsetX}
-        shadowOffsetY={imageInfo.shadowOffsetY}
+        shadowOffsetX={localState.shadowOffsetX ?? imageInfo.shadowOffsetX}
+        shadowOffsetY={localState.shadowOffsetY ?? imageInfo.shadowOffsetY}
         shadowColor={imageInfo.shadowColor}
-        shadowBlur={imageInfo.shadowBlur}
-        shadowSpread={imageInfo.shadowSpread}
+        shadowBlur={localState.shadowBlur ?? imageInfo.shadowBlur}
+        shadowSpread={localState.shadowSpread ?? imageInfo.shadowSpread}
         onShadowChange={(value) => handleChange("shadow", value)}
         onShadowOffsetXChange={(value) => handleChange("shadowOffsetX", value)}
         onShadowOffsetYChange={(value) => handleChange("shadowOffsetY", value)}
@@ -253,6 +303,6 @@ const ImagePanelComponent: FC = observer(() => {
       />
     </div>
   );
-});
+};
 
 export const ImagePanel = ImagePanelComponent;

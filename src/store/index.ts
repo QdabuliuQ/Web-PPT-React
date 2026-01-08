@@ -1,10 +1,29 @@
-export { contextMenuStore } from "./contextMenu";
-export { copyElementStore } from "./copyElement";
-export { displayStatusStore } from "./displayStatus";
-export { elementActiveStore } from "./elementActive";
-export { elementHoverActiveStore } from "./elementHoverActive";
-export { fullscreenStore } from "./fullscreen";
-export { menuActiveStore } from "./menuActive";
-export { pageActiveStore } from "./pageActive";
-export { pptStore } from "./ppt";
-export { remarkEditActiveStore } from "./remarkEditActive";
+// Export all Zustand stores (new)
+export {
+  usePPTStore,
+  usePageActiveStore,
+  useElementActiveStore,
+  useContextMenuStore,
+  useFullscreenStore,
+  useDisplayStatusStore,
+  useElementHoverActiveStore,
+  useMenuActiveStore,
+  useRemarkEditActiveStore,
+  useCopyElementStore,
+} from "./zustand";
+
+export type { Page, Elements } from "./zustand";
+
+// Export compatibility layers (for gradual migration)
+export {
+  pageActiveStore,
+  pptStore,
+  elementActiveStore,
+  contextMenuStore,
+  fullscreenStore,
+  displayStatusStore,
+  elementHoverActiveStore,
+  menuActiveStore,
+  remarkEditActiveStore,
+  copyElementStore,
+} from "./zustand";

@@ -1,26 +1,28 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { ChartLine } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { ChartStylePanel } from "../../components/chartStylePanel";
 import type { IChartProps } from "../../index";
 
-export const Line4ChartPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const Line4ChartPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 series 配置，series 是数组
-  const seriesOption = chartInfo.option?.series;
+  const seriesOption = chartInfo?.option?.series;
   const seriesArray = useMemo(
     () => (Array.isArray(seriesOption) ? seriesOption : []),
     [seriesOption]
@@ -33,7 +35,7 @@ export const Line4ChartPanel: FC = observer(() => {
   // 对于 step 属性，需要单独处理每个系列
   // 对于其他属性，统一更新所有系列
   const handleSeriesChange = useMemoizedFn((path: string[], value: any) => {
-    if (seriesArray.length === 0) return;
+    if (seriesArray.length === 0 || !chartInfo || !pageId || !elementId) return;
 
     // 更新所有 series 项的相同属性
     const updatedSeriesArray = seriesArray.map((seriesItem: any) => {
@@ -60,7 +62,7 @@ export const Line4ChartPanel: FC = observer(() => {
       series: updatedSeriesArray,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -68,7 +70,7 @@ export const Line4ChartPanel: FC = observer(() => {
 
   // 统一设置所有系列的 step 属性
   const handleStepChange = useMemoizedFn((value: any) => {
-    if (seriesArray.length === 0) return;
+    if (seriesArray.length === 0 || !chartInfo || !pageId || !elementId) return;
 
     const stepValue = value as "start" | "middle" | "end";
     const updatedSeriesArray = seriesArray.map((seriesItem: any) => ({
@@ -81,7 +83,7 @@ export const Line4ChartPanel: FC = observer(() => {
       series: updatedSeriesArray,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -489,6 +491,8 @@ export const Line4ChartPanel: FC = observer(() => {
     ]
   );
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <ChartStylePanel
       title="样式"
@@ -498,4 +502,4 @@ export const Line4ChartPanel: FC = observer(() => {
       defaultActiveKey={["basic"]}
     />
   );
-});
+};

@@ -174,5 +174,5 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
   ];
 
-  contextMenuStore.showMenu(menuItems, event);
+  contextMenuStore.showMenu(event.clientX, event.clientY, menuItems);
 };

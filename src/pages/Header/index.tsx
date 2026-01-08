@@ -5,17 +5,16 @@ import { MindMapPanelKey, MindMapPanelTitle } from "@/element/MindMap";
 import { TablePanelKey, TablePanelTitle } from "@/element/Table";
 import { TextPanelKey, TextPanelTitle } from "@/element/Text";
 import {
-  elementActiveStore,
-  menuActiveStore,
-  pageActiveStore,
-  pptStore,
+  useElementActiveStore,
+  useMenuActiveStore,
+  usePageActiveStore,
+  usePPTStore,
 } from "@/store";
 import { exportPageAsImage } from "@/utils/tool";
 import { LoadingOutlined } from "@ant-design/icons";
 import { FileJpg, FilePdf, FileSettings } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Button, Tooltip } from "antd";
-import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import styles from "./index.module.less";
 
@@ -46,7 +45,7 @@ const MenuMapped = {
   },
 };
 
-export const Header: FC = observer(() => {
+export const Header: FC = () => {
   const menuItems = useMemo(
     () => [
       {
@@ -73,18 +72,40 @@ export const Header: FC = observer(() => {
     []
   );
 
-  const pageActive = pageActiveStore.getPageActive();
-  const elementActive = elementActiveStore.getElementActive();
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const menuActive = useMenuActiveStore((state) => state.menuActive);
+  const setActiveMenu = useMenuActiveStore((state) => state.setActiveMenu);
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+  const elementActive = useElementActiveStore((state) => state.elementActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
 
   const [elementPanel, setElementPanel] = useState<{
     key: string;
     title: string;
   } | null>(null);
 
+  // 使用 ref 跟踪上一次的 elementActive，用于判断元素是否刚被选中或切换
+  const prevElementActiveRef = useRef<string | null>(null);
+  // 使用 ref 跟踪上一次的 elementPanel key，用于判断是否需要自动切换
+  const prevElementPanelKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
+    const prevElementActive = prevElementActiveRef.current;
+    const isElementJustSelected =
+      elementActive !== null && prevElementActive === null;
+    const isElementJustDeselected =
+      elementActive === null && prevElementActive !== null;
+    const isElementSwitched =
+      elementActive !== null &&
+      prevElementActive !== null &&
+      elementActive !== prevElementActive;
+
+    // 更新 ref
+    prevElementActiveRef.current = elementActive;
+
     if (pageActive && elementActive) {
       // 重新获取元素信息，确保获取到最新的数据
-      const element = pptStore.getElementInfo(pageActive, elementActive);
+      const element = getElementInfo(pageActive, elementActive);
 
       if (element) {
         // 检查元素类型是否在 MenuMapped 中
@@ -92,31 +113,41 @@ export const Header: FC = observer(() => {
         if (MenuMapped[elementType]) {
           const panel = MenuMapped[elementType];
           setElementPanel(panel);
-          // 直接切换 panel，确保元素已经选中
-          menuActiveStore.setActiveMenu(panel.key);
+
+          // 当元素刚被选中或切换到新元素时，自动切换到对应的 panel
+          // 如果元素已经选中且没有切换（elementActive 没变），则保持当前 menuActive，允许用户手动切换
+          const shouldAutoSwitch = isElementJustSelected || isElementSwitched;
+
+          if (shouldAutoSwitch) {
+            setActiveMenu(panel.key);
+            prevElementPanelKeyRef.current = panel.key;
+          }
           return;
         }
       }
     }
 
-    // 没有选中元素时，切换回开始页面
-    setElementPanel(null);
-    const menuActive = menuActiveStore.getMenuActive();
-    if (
-      menuActive !== "start" &&
-      menuActive !== "insert" &&
-      menuActive !== "toggle" &&
-      menuActive !== "view"
-    ) {
-      menuActiveStore.setActiveMenu("start");
+    // 元素取消选中时，清除 elementPanel 并切换到 start
+    if (isElementJustDeselected) {
+      setElementPanel(null);
+      setActiveMenu("start");
+      prevElementPanelKeyRef.current = null;
+    } else if (!elementActive) {
+      // 如果没有选中元素，清除 elementPanel（但不强制切换，除非是刚取消选中）
+      setElementPanel(null);
+      prevElementPanelKeyRef.current = null;
     }
-  }, [elementActive, pageActive]);
+  }, [elementActive, pageActive, setActiveMenu, getElementInfo]);
 
   const otherPanelClick = useMemoizedFn(() => {
-    menuActiveStore.setActiveMenu(elementPanel?.key || "");
+    setActiveMenu(elementPanel?.key || "");
   });
 
-  const name = pptStore.getName();
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const name = usePPTStore((state) => state.name);
+  const setName = usePPTStore((state) => state.setName);
+  const getName = usePPTStore((state) => state.getName);
+  const getPages = usePPTStore((state) => state.getPages);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isEdit, setIsEdit] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
@@ -131,8 +162,8 @@ export const Header: FC = observer(() => {
     try {
       // 获取数据
       const configData = {
-        name: pptStore.getName(),
-        pages: pptStore.getPages(),
+        name: getName(),
+        pages: getPages(),
       };
 
       // 转换为 JSON 字符串
@@ -171,16 +202,14 @@ export const Header: FC = observer(() => {
     try {
       // 动态导入jsPDF
       const { default: jsPDF } = await import("jspdf");
-      const pages = pptStore
-        .getPages()
-        .filter((page) => page.visible !== false);
+      const pages = getPages().filter((page) => page.visible !== false);
 
       if (pages.length === 0) {
         console.warn("没有可导出的页面");
         return;
       }
 
-      const name = pptStore.getName();
+      const currentName = getName();
 
       // 创建PDF实例 (横向，1000x700)
       const pdf = new jsPDF({
@@ -262,7 +291,7 @@ export const Header: FC = observer(() => {
       }
 
       // 保存PDF
-      pdf.save(`${name || "未命名"}.pdf`);
+      pdf.save(`${currentName || "未命名"}.pdf`);
     } catch (error) {
       console.error("导出PDF失败:", error);
     } finally {
@@ -278,9 +307,7 @@ export const Header: FC = observer(() => {
 
     setImageLoading(true);
     try {
-      const pages = pptStore
-        .getPages()
-        .filter((page) => page.visible !== false);
+      const pages = getPages().filter((page) => page.visible !== false);
 
       if (pages.length === 0) {
         console.warn("没有可导出的页面");
@@ -399,7 +426,7 @@ export const Header: FC = observer(() => {
             type="text"
             className={styles.input}
             value={name}
-            onChange={(e) => pptStore.setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             onBlur={() => {
               setIsEdit(false);
             }}
@@ -462,12 +489,12 @@ export const Header: FC = observer(() => {
         {menuItems.map((item) => (
           <div
             className={`text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${
-              menuActiveStore.isActive(item.key)
+              menuActive === item.key
                 ? `text-[var(--primary-color)] font-bold ${styles.activeItem}`
                 : "text-gray-600 hover:text-[var(--primary-color)]"
             }`}
             key={item.key}
-            onClick={() => menuActiveStore.setActiveMenu(item.key)}
+            onClick={() => setActiveMenu(item.key)}
           >
             {item.label}
           </div>
@@ -475,11 +502,11 @@ export const Header: FC = observer(() => {
         {elementActive && (
           <div
             className={`text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${
-              menuActiveStore.isActive("animation")
+              menuActive === "animation"
                 ? `text-[var(--primary-color)] font-bold ${styles.activeItem}`
                 : "text-gray-600 hover:text-[var(--primary-color)]"
             }`}
-            onClick={() => menuActiveStore.setActiveMenu("animation")}
+            onClick={() => setActiveMenu("animation")}
           >
             动画
           </div>
@@ -487,7 +514,7 @@ export const Header: FC = observer(() => {
         {elementPanel && (
           <div
             className={`text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${
-              menuActiveStore.isActive(elementPanel.key)
+              menuActive === elementPanel.key
                 ? `text-[var(--primary-color)] font-bold ${styles.activeItem}`
                 : "text-gray-600 hover:text-[var(--primary-color)]"
             }`}
@@ -500,4 +527,4 @@ export const Header: FC = observer(() => {
       <div className="flex-2">12</div>
     </div>
   );
-});
+};

@@ -1,6 +1,11 @@
-import { fullscreenStore, pageActiveStore, pptStore } from "@/store";
+import {
+  fullscreenStore,
+  pageActiveStore,
+  pptStore,
+  useFullscreenStore,
+  usePPTStore,
+} from "@/store";
 import { useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState, type FC } from "react";
 import screenfull from "screenfull";
 import { Canvas } from "../Canvas";
@@ -10,8 +15,9 @@ import { Canvas } from "../Canvas";
  * 用于演示模式的全屏播放，与 Preview 组件完全独立
  */
 const SlideshowComponent: FC = () => {
-  const pages = pptStore.getPages();
-  const currentPageId = fullscreenStore.currentSlidePageId;
+  // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
+  const pages = usePPTStore((state) => state.pages);
+  const currentPageId = useFullscreenStore((state) => state.currentSlidePageId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreenReady, setIsFullscreenReady] = useState(false);
 
@@ -164,4 +170,4 @@ const SlideshowComponent: FC = () => {
   );
 };
 
-export const Slideshow: FC = observer(SlideshowComponent);
+export const Slideshow: FC = SlideshowComponent;

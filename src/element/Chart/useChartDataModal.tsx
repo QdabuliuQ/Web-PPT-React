@@ -1,4 +1,4 @@
-import { pptStore } from "@/store";
+import { usePPTStore } from "@/store";
 import { useMemoizedFn } from "ahooks";
 import * as echarts from "echarts";
 import { useState } from "react";
@@ -99,17 +99,17 @@ export function useChartDataModal({
   });
 
   // 保存图表数据
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
+
   const handleSaveChartData = useMemoizedFn((updatedOption: any) => {
     if (!pageId || !elementId) return;
 
-    const currentElement = pptStore.getElementInfo(
-      pageId,
-      elementId
-    ) as IChartProps;
+    const currentElement = getElementInfo(pageId, elementId) as IChartProps;
     if (!currentElement) return;
 
     // setDataFromExcel 已经返回完整的 option，直接使用
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...currentElement,
       option: updatedOption,
     } as IChartProps);

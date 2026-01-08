@@ -1,14 +1,15 @@
-import { menuActiveStore } from "@/store";
+import { useMenuActiveStore } from "@/store";
 import { useDebounceFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import "overlayscrollbars/overlayscrollbars.css";
 import { useEffect, useRef, useState, type FC } from "react";
 import Panel from "./components";
 import "./overlay-scrollbar.css";
 
-export const Menu: FC = observer(() => {
-  const activePanelKey = menuActiveStore.menuActive as keyof typeof Panel;
+export const Menu: FC = () => {
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const menuActive = useMenuActiveStore((state) => state.menuActive);
+  const activePanelKey = menuActive as keyof typeof Panel;
   const ActivePanelComponent = Panel[activePanelKey];
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,4 +92,4 @@ export const Menu: FC = observer(() => {
       </OverlayScrollbarsComponent>
     </div>
   );
-});
+};

@@ -1,10 +1,11 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
+import type { MenuItem } from "@/hooks/useContextMenu";
 import {
   contextMenuStore,
-  elementActiveStore,
-  elementHoverActiveStore,
-  pageActiveStore,
+  useElementActiveStore,
+  useElementHoverActiveStore,
+  usePageActiveStore,
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
@@ -12,7 +13,6 @@ import { globalEventBus } from "@/utils/eventBus";
 import { ChartHistogram } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import * as echarts from "echarts";
-import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import { ChartDataModal } from "./chartDataModal";
@@ -30,7 +30,7 @@ export interface IChartProps extends ICommonElementProps {
   option?: echarts.EChartsOption;
 }
 
-const Component: FC<IChartProps> = observer((props) => {
+const Component: FC<IChartProps> = (props) => {
   const {
     mode = "edit",
     id,
@@ -104,11 +104,18 @@ const Component: FC<IChartProps> = observer((props) => {
     }, 300);
   });
 
-  const isSelected = elementActiveStore.isElementActive(id);
-  const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const elementActive = useElementActiveStore((state) => state.elementActive);
+  const elementHoverActive = useElementHoverActiveStore(
+    (state) => state.elementHoverActive
+  );
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+
+  const isSelected = elementActive === id;
+  const isHoverActive = elementHoverActive === id;
 
   // 获取通用菜单
-  const currentPageId = pageActiveStore.getPageActive() || "";
+  const currentPageId = pageActive || "";
   const { commonMenu } = useCommonContextMenu(currentPageId, id);
 
   // 使用图表数据编辑弹窗 hook
@@ -165,15 +172,28 @@ const Component: FC<IChartProps> = observer((props) => {
     e.preventDefault();
     e.stopPropagation();
 
+    // 如果未选中，先选中
     if (!isSelected) {
       onSelect?.();
     }
 
-    const menuItems = [
-      ...getChartMenuItems(handleOpenDataModal, id),
+    const chartMenuItems = getChartMenuItems(handleOpenDataModal, id);
+
+    // 合并菜单项，直接使用 MenuItem 类型
+    const menuItems: MenuItem[] = [
+      ...chartMenuItems,
+      // 在 chartMenuItems 和 commonMenu 之间添加分隔符（如果 chartMenuItems 有内容且 commonMenu 有内容）
+      ...(chartMenuItems.length > 0 && commonMenu.length > 0
+        ? [
+            {
+              type: "separator" as const,
+            },
+          ]
+        : []),
       ...commonMenu,
     ];
-    contextMenuStore.showMenu(menuItems, e);
+
+    contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
   };
 
   // 初始化 echarts 实例
@@ -308,7 +328,7 @@ const Component: FC<IChartProps> = observer((props) => {
       </AnimationWrapper>
     </div>
   );
-});
+};
 
 export const Chart = memo(Component);
 

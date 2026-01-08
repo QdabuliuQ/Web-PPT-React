@@ -5,6 +5,7 @@ import {
   elementHoverActiveStore,
   pageActiveStore,
   pptStore,
+  useElementActiveStore,
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { cloneDeep, getRandomId, placementConvey } from "@/utils";
@@ -12,7 +13,6 @@ import { globalEventBus } from "@/utils/eventBus";
 import { TableFile } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Modal } from "antd";
-import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useRef, useState, type FC } from "react";
 import Spreadsheet from "x-data-spreadsheet";
 import "x-data-spreadsheet/dist/locale/zh-cn";
@@ -524,7 +524,9 @@ const Component: FC<ITableProps> = (props) => {
   });
 
   // 从 MobX store 中获取选中状态
-  const isSelected = elementActiveStore.isElementActive(id);
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const elementActive = useElementActiveStore((state) => state.elementActive);
+  const isSelected = elementActive === id;
   const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 监听shift键状态
@@ -1147,7 +1149,7 @@ const Component: FC<ITableProps> = (props) => {
   );
 };
 
-export const Table = observer(Component);
+export const Table = Component;
 
 export const CreateTable = (props: Partial<ITableProps> = {}) => {
   const defaultProps: Omit<ITableProps, "type" | "id"> = {

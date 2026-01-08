@@ -1,5 +1,9 @@
 import { PanelLargeButton, PanelSelect } from "@/components";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { RadarChart } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import {
@@ -10,26 +14,24 @@ import {
   Popover,
   Switch,
 } from "antd";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import styles from "../../components/panel.module.less";
 import type { IChartProps } from "../../index";
 
-export const Bar2ChartPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const Bar2ChartPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 polar 配置，如果没有则使用默认值
-  const polarOption = chartInfo.option?.polar;
+  const polarOption = chartInfo?.option?.polar;
   const polarConfig = Array.isArray(polarOption)
     ? polarOption[0] || {}
     : polarOption || {};
@@ -54,6 +56,7 @@ export const Bar2ChartPanel: FC = observer(() => {
 
   // 更新 polar 配置的函数
   const handlePolarChange = useMemoizedFn((path: string[], value: any) => {
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedPolar = { ...polarConfig };
     let current: any = updatedPolar;
 
@@ -74,7 +77,7 @@ export const Bar2ChartPanel: FC = observer(() => {
       polar: Array.isArray(polarOption) ? [updatedPolar] : updatedPolar,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -105,7 +108,7 @@ export const Bar2ChartPanel: FC = observer(() => {
   });
 
   // 获取 angleAxis 配置
-  const angleAxisConfig = chartInfo.option?.angleAxis || {
+  const angleAxisConfig = chartInfo?.option?.angleAxis || {
     type: "category",
     data: ["a", "b", "c", "d"],
     startAngle: 75,
@@ -142,6 +145,7 @@ export const Bar2ChartPanel: FC = observer(() => {
 
   // 更新 angleAxis 配置的函数
   const handleAngleAxisChange = useMemoizedFn((path: string[], value: any) => {
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedAngleAxis = { ...angleAxisConfig };
     let current: any = updatedAngleAxis;
 
@@ -162,7 +166,7 @@ export const Bar2ChartPanel: FC = observer(() => {
       angleAxis: updatedAngleAxis,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -466,7 +470,7 @@ export const Bar2ChartPanel: FC = observer(() => {
   );
 
   // 获取 series[0].label 配置
-  const series = chartInfo.option?.series;
+  const series = chartInfo?.option?.series;
   const series0 = Array.isArray(series) ? series[0] : series;
   const labelConfig = (series0 as any)?.label || {
     show: true,
@@ -484,6 +488,7 @@ export const Bar2ChartPanel: FC = observer(() => {
 
   // 更新 series[0].label 配置的函数
   const handleLabelChange = useMemoizedFn((path: string[], value: any) => {
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedLabel = { ...labelConfig };
     let current: any = updatedLabel;
 
@@ -513,7 +518,7 @@ export const Bar2ChartPanel: FC = observer(() => {
       series: updatedSeries,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -817,6 +822,8 @@ export const Bar2ChartPanel: FC = observer(() => {
     </div>
   );
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <Popover
       content={content}
@@ -832,4 +839,4 @@ export const Bar2ChartPanel: FC = observer(() => {
       </div>
     </Popover>
   );
-});
+};

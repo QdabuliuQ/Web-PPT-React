@@ -2,7 +2,6 @@ import { PanelButton } from "@/components/PanelButton";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { MindmapMap } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { memo } from "react";
 import { CreateMindMap } from ".";
 
@@ -26,4 +25,4 @@ export default function MindMapButton() {
   );
 }
 
-export const MindMapButtonComponent = memo(observer(MindMapButton));
+export const MindMapButtonComponent = memo(MindMapButton);

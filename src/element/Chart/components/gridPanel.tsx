@@ -1,26 +1,28 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { GridFour } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import type { IChartProps } from "../index";
 import { ChartStylePanel } from "./chartStylePanel";
 
-export const GridPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const GridPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 grid 配置，如果没有则使用默认值
-  const gridConfig = chartInfo.option?.grid || {
+  const gridConfig = chartInfo?.option?.grid || {
     show: true,
     left: 20,
     right: 20,
@@ -50,12 +52,13 @@ export const GridPanel: FC = observer(() => {
     current[path[path.length - 1]] = value;
 
     // 更新 option.grid
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedOption = {
       ...chartInfo.option,
       grid: updatedGrid,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -190,6 +193,8 @@ export const GridPanel: FC = observer(() => {
     [handleConfigChange, handleColorConfigChange, getValue, gridConfig]
   );
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <ChartStylePanel
       title="网格"
@@ -199,4 +204,4 @@ export const GridPanel: FC = observer(() => {
       defaultActiveKey={["basic"]}
     />
   );
-});
+};

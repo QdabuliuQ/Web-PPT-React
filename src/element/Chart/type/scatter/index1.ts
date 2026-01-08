@@ -206,23 +206,10 @@ export function getDataToExcel(
   // 从 option 中提取数据
   let data: Array<[number, number]> = defaultData;
 
-  if (
-    option?.series &&
-    Array.isArray(option.series) &&
-    option.series.length > 0
-  ) {
-    const series = option.series[0];
-    if (
-      series.type === "scatter" &&
-      series.data &&
-      Array.isArray(series.data)
-    ) {
-      data = series.data.map((item: any): [number, number] => {
-        if (Array.isArray(item) && item.length >= 2) {
-          return [Number(item[0]) || 0, Number(item[1]) || 0];
-        }
-        return [0, 0];
-      });
+  if (option?.series) {
+    const series = option.series as any;
+    if (Array.isArray(series.data)) {
+      data = series.data as Array<[number, number]>;
     }
   }
 

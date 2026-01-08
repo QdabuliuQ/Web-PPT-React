@@ -4,31 +4,39 @@ import { PanelSelect } from "@/components/PanelSelect";
 import { PanelSplitLine } from "@/components/PanelSplitLine";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { Redo, Switch, Undo } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { ColorPicker, InputNumber, Tooltip } from "antd";
-import { observer } from "mobx-react-lite";
-import { type FC } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import { IconPicker } from "./IconPicker";
 import type { IIconProps } from "./index";
 
 export const IconPanelKey = "icon";
 export const IconPanelTitle = "图标";
 
-const IconPanelComponent: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+const IconPanelComponent: FC = () => {
+  // 使用本地状态存储需要即时响应的属性
+  const [strokeWidth, setStrokeWidth] = useState<number | null>(null);
 
-  // 提前返回必须在所有 hooks 调用之后
-  if (!pageId || !elementId) return null;
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const pages = usePPTStore((state) => state.pages);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  const iconInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IIconProps | null;
-
-  if (!iconInfo) return null;
+  // 使用 useMemo 依赖 pages 来响应元素更新
+  const iconInfo = useMemo<IIconProps | null>(() => {
+    if (!pageId || !elementId) return null;
+    const page = pages.find((p) => p.id === pageId);
+    if (!page) return null;
+    const element = page.elements.find((el) => el.id === elementId);
+    return (element as IIconProps) || null;
+  }, [pageId, elementId, pages]);
 
   // 确保 hooks 总是被调用，避免 hooks 数量不一致的错误
   const { positionHandle } = usePositionElement(pageId || "", elementId || "");
@@ -52,13 +60,33 @@ const IconPanelComponent: FC = observer(() => {
     }
   };
 
+  // 防抖更新 Zustand store
+  const debouncedUpdateStore = useDebounceFn(
+    (key: keyof IIconProps, value: any) => {
+      if (!pageId || !elementId || !iconInfo) return;
+      setElementInfo(pageId, elementId, {
+        ...iconInfo,
+        [key]: value,
+      });
+    },
+    { wait: 300 }
+  );
+
   const handleChange = (key: keyof IIconProps, value: any) => {
-    if (!pageId || !elementId) return;
-    pptStore.setElementInfo(pageId, elementId, {
+    if (!pageId || !elementId || !iconInfo) return;
+    setElementInfo(pageId, elementId, {
       ...iconInfo,
       [key]: value,
     });
   };
+
+  // 处理 strokeWidth 变化：立即更新本地状态，防抖更新 store
+  const handleStrokeWidthChange = useMemoizedFn((value: number | null) => {
+    setStrokeWidth(value);
+    if (value !== null) {
+      debouncedUpdateStore.run("strokeWidth", value);
+    }
+  });
 
   // 防抖的颜色变更处理
   const { run: debouncedColorChange } = useDebounceFn(
@@ -73,9 +101,9 @@ const IconPanelComponent: FC = observer(() => {
 
   // 旋转处理函数
   const handleRotate = (degree: number) => {
-    if (!pageId || !elementId) return;
+    if (!pageId || !elementId || !iconInfo) return;
     const newRotate = (iconInfo.rotate + degree) % 360;
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...iconInfo,
       rotate: newRotate,
     });
@@ -86,6 +114,17 @@ const IconPanelComponent: FC = observer(() => {
     if (!pageId || !elementId) return;
     handleChange("iconName", iconName);
   });
+
+  // 当 iconInfo 变化时，同步更新本地状态
+  useEffect(() => {
+    if (iconInfo) {
+      setStrokeWidth(iconInfo.strokeWidth ?? null);
+    } else {
+      setStrokeWidth(null);
+    }
+  }, [iconInfo]);
+
+  if (!pageId || !elementId || !iconInfo) return null;
 
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
@@ -117,7 +156,7 @@ const IconPanelComponent: FC = observer(() => {
                 default:
                   newFill = ["#333333"];
               }
-              pptStore.setElementInfo(pageId, elementId, {
+              setElementInfo(pageId, elementId, {
                 ...iconInfo,
                 theme: value,
                 fill: newFill,
@@ -128,12 +167,8 @@ const IconPanelComponent: FC = observer(() => {
 
         <Tooltip title="线段粗细" placement="bottom">
           <InputNumber
-            value={iconInfo.strokeWidth}
-            onChange={(value) => {
-              if (value !== null) {
-                handleChange("strokeWidth", value);
-              }
-            }}
+            value={strokeWidth}
+            onChange={handleStrokeWidthChange}
             min={1}
             max={4}
             size="small"
@@ -217,6 +252,6 @@ const IconPanelComponent: FC = observer(() => {
       />
     </div>
   );
-});
+};
 
 export const IconPanel = IconPanelComponent;

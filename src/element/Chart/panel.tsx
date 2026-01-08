@@ -2,10 +2,13 @@ import { PanelLargeButton, PanelSplitLine } from "@/components";
 import { PanelCommonSetting } from "@/components/PanelCommonSetting";
 import { usePositionElement, type Position } from "@/hooks/usePositionElement";
 import { useZIndexElement } from "@/hooks/useZIndexElement";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { globalEventBus } from "@/utils/eventBus";
 import { Download, EditOne } from "@icon-park/react";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { ChartDataModal } from "./chartDataModal";
 import { BackgroundColorPanel } from "./components/backgroundColorPanel";
@@ -26,32 +29,35 @@ import { exportChartAsImage } from "./utils";
 export const ChartPanelKey = "chart";
 export const ChartPanelTitle = "图表";
 
-const ChartPanelComponent: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+const ChartPanelComponent: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const pages = usePPTStore((state) => state.pages);
 
   const { positionHandle } = usePositionElement(pageId || "", elementId || "");
   const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
     useZIndexElement(pageId || "", elementId || "");
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
-
   // 使用图表数据编辑弹窗 hook（用于 ChartDataModal 的状态管理）
   const { isDataModalOpen, handleCloseDataModal, handleSaveChartData } =
     useChartDataModal({
-      pageId,
-      elementId,
+      pageId: pageId || "",
+      elementId: elementId || "",
     });
+
+  // 使用 useMemo 依赖 pages 来响应元素更新
+  const chartInfo = useMemo(() => {
+    if (!pageId || !elementId) return null;
+    const page = pages.find((p) => p.id === pageId);
+    if (!page) return null;
+    const element = page.elements.find((el) => el.id === elementId);
+    return (element as IChartProps) || null;
+  }, [pageId, elementId, pages]);
 
   // 通过事件总线发送打开弹窗事件
   const handleOpenDataModalFromPanel = () => {
+    if (!elementId) return;
     const eventName = getChartEventName(
       BASE_CHART_EVENTS.OPEN_DATA_MODAL,
       elementId
@@ -61,6 +67,7 @@ const ChartPanelComponent: FC = observer(() => {
 
   // 导出图表图片
   const handleExportChartImage = async () => {
+    if (!elementId) return;
     await exportChartAsImage(elementId, "chart", "png");
   };
 
@@ -83,7 +90,7 @@ const ChartPanelComponent: FC = observer(() => {
 
   // 根据 chartType 渲染对应的 panel 组件
   const TypePanel = useMemo(() => {
-    if (!chartInfo.chartType) return null;
+    if (!chartInfo?.chartType) return null;
     const match = chartInfo.chartType.match(/^([a-z]+)(\d+)$/);
     if (!match) return null;
 
@@ -106,7 +113,9 @@ const ChartPanelComponent: FC = observer(() => {
       default:
         return null;
     }
-  }, [chartInfo.chartType]);
+  }, [chartInfo?.chartType]);
+
+  if (!pageId || !elementId || !chartInfo) return null;
 
   return (
     <>
@@ -142,6 +151,6 @@ const ChartPanelComponent: FC = observer(() => {
       />
     </>
   );
-});
+};
 
 export const ChartPanel = ChartPanelComponent;

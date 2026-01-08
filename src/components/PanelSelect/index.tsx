@@ -27,6 +27,11 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
     };
   }, []);
 
+  // 当 value 变化时，关闭下拉框
+  useEffect(() => {
+    setIsOpen(false);
+  }, [selectProps.value]);
+
   const handleMouseEnter = () => {
     if (trigger === "hover") {
       // 清除可能存在的关闭定时器

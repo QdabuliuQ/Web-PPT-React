@@ -1,6 +1,5 @@
 import { GlobalContextMenu } from "@/components/GlobalContextMenu";
-import { displayStatusStore, fullscreenStore } from "@/store";
-import { observer } from "mobx-react-lite";
+import { useDisplayStatusStore, useFullscreenStore } from "@/store";
 import { Canvas } from "./Canvas";
 import { Footer } from "./Footer";
 import { Grid } from "./Grid";
@@ -10,9 +9,10 @@ import { Preview } from "./Preview";
 import { Slideshow } from "./Slideshow";
 import styles from "./index.module.less";
 
-const Index = observer(function Index() {
-  const displayStatus = displayStatusStore.getDisplayStatus();
-  const isFullscreen = fullscreenStore.isFullscreen;
+export default function Index() {
+  // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
+  const displayStatus = useDisplayStatusStore((state) => state.displayStatus);
+  const isFullscreen = useFullscreenStore((state) => state.isFullscreen);
 
   return (
     <div className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] bg-[#eee] flex flex-col overflow-hidden">
@@ -40,6 +40,4 @@ const Index = observer(function Index() {
       )}
     </div>
   );
-});
-
-export default Index;
+}

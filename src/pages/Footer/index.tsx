@@ -1,9 +1,9 @@
 import {
-  displayStatusStore,
-  fullscreenStore,
-  pageActiveStore,
-  pptStore,
-  remarkEditActiveStore,
+  useDisplayStatusStore,
+  useFullscreenStore,
+  usePageActiveStore,
+  usePPTStore,
+  useRemarkEditActiveStore,
 } from "@/store";
 import {
   Column,
@@ -16,25 +16,42 @@ import {
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Button, Dropdown, message, Tooltip } from "antd";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 
 const FooterComponent: FC = () => {
-  const pages = pptStore.getPages();
-  const pageIndex = pageActiveStore.getPageIndex(pages);
-  const displayStatus = displayStatusStore.getDisplayStatus();
+  // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
+  const pages = usePPTStore((state) => state.pages);
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+  const displayStatus = useDisplayStatusStore((state) => state.displayStatus);
+  const setDisplayStatus = useDisplayStatusStore(
+    (state) => state.setDisplayStatus
+  );
+  const remarkEditActive = useRemarkEditActiveStore(
+    (state) => state.remarkEditActive
+  );
+  const toggleRemarkEditActive = useRemarkEditActiveStore(
+    (state) => state.toggleRemarkEditActive
+  );
+  const enterFullscreen = useFullscreenStore((state) => state.enterFullscreen);
+
+  // 计算当前页面索引
+  const pageIndex = pages.findIndex((p) => p.id === pageActive);
+
+  // 处理备注按钮点击
+  const handleToggleRemark = useMemoizedFn(() => {
+    toggleRemarkEditActive();
+  });
 
   // 处理播放按钮点击
   const handlePlay = useMemoizedFn(() => {
-    // 获取当前页面 ID
-    const currentPageId = pageActiveStore.getPageActive();
-    if (!currentPageId) {
+    // 使用已订阅的 pageActive
+    if (!pageActive) {
       message.error("未找到当前页面");
       return;
     }
 
     // 进入全屏模式，从当前页面开始播放
-    fullscreenStore.enterFullscreen(currentPageId);
+    enterFullscreen(pageActive);
   });
 
   // 从开头开始播放
@@ -44,17 +61,17 @@ const FooterComponent: FC = () => {
       return;
     }
     const firstPageId = pages[0].id;
-    fullscreenStore.enterFullscreen(firstPageId);
+    enterFullscreen(firstPageId);
   });
 
   // 从当前页面开始播放
   const handlePlayFromCurrent = useMemoizedFn(() => {
-    const currentPageId = pageActiveStore.getPageActive();
-    if (!currentPageId) {
+    // 使用已订阅的 pageActive
+    if (!pageActive) {
       message.error("未找到当前页面");
       return;
     }
-    fullscreenStore.enterFullscreen(currentPageId);
+    enterFullscreen(pageActive);
   });
 
   const playDropDownMenu = useMemo(
@@ -88,16 +105,10 @@ const FooterComponent: FC = () => {
           style={{
             height: "22px",
             fontSize: "11px",
-            background: remarkEditActiveStore.getRemarkEditActive()
-              ? "#ddd"
-              : "transparent",
+            background: remarkEditActive ? "#ddd" : "transparent",
           }}
           icon={<Notes theme="outline" size="13" fill="#333" />}
-          onClick={() =>
-            remarkEditActiveStore.setRemarkEditActive(
-              !remarkEditActiveStore.getRemarkEditActive()
-            )
-          }
+          onClick={handleToggleRemark}
         >
           备注
         </Button>
@@ -122,7 +133,7 @@ const FooterComponent: FC = () => {
         <Tooltip title="普通视图">
           <span
             className="cursor-pointer"
-            onClick={() => displayStatusStore.setDisplayStatus("default")}
+            onClick={() => setDisplayStatus("default")}
           >
             <Column
               theme="outline"
@@ -134,7 +145,7 @@ const FooterComponent: FC = () => {
         <Tooltip title="幻灯片预览">
           <span
             className="cursor-pointer"
-            onClick={() => displayStatusStore.setDisplayStatus("grid")}
+            onClick={() => setDisplayStatus("grid")}
           >
             <ViewGridCard
               theme="outline"
@@ -148,4 +159,4 @@ const FooterComponent: FC = () => {
   );
 };
 
-export const Footer: FC = observer(FooterComponent);
+export const Footer: FC = FooterComponent;

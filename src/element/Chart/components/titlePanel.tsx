@@ -1,27 +1,32 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { H } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { getTitleDefaultOption } from "../common";
 import type { IChartProps } from "../index";
 import { ChartStylePanel } from "./chartStylePanel";
 
-export const TitlePanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const TitlePanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 title 配置，如果没有则使用默认值
-  const titleConfig = chartInfo.option?.title || getTitleDefaultOption();
+  // 使用 useMemo 确保引用稳定性
+  const titleConfig = useMemo(() => {
+    return chartInfo?.option?.title || getTitleDefaultOption();
+  }, [chartInfo]);
 
   // 更新 title 配置的通用函数
   const handleTitleChange = useMemoizedFn((path: string[], value: any) => {
@@ -40,12 +45,13 @@ export const TitlePanel: FC = observer(() => {
     current[path[path.length - 1]] = value;
 
     // 更新 option.title
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedOption = {
       ...chartInfo.option,
       title: updatedTitle,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -306,7 +312,7 @@ export const TitlePanel: FC = observer(() => {
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleColorConfigChange, handleConfigChange, titleConfig]);
+  }, [handleColorConfigChange, handleConfigChange, chartInfo]);
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {
@@ -320,6 +326,8 @@ export const TitlePanel: FC = observer(() => {
     return current ?? defaultValue;
   });
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <ChartStylePanel
       title="标题"
@@ -329,4 +337,4 @@ export const TitlePanel: FC = observer(() => {
       defaultActiveKey={["basic"]}
     />
   );
-});
+};

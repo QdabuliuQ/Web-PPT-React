@@ -19,7 +19,6 @@ import {
   SentToBack,
 } from "@icon-park/react";
 import { message } from "antd";
-import { observer } from "mobx-react-lite";
 import { type FC } from "react";
 import { PanelDropdownButton } from "../PanelDropdownButton";
 import { PanelLargeButton } from "../PanelLargeButton";
@@ -29,7 +28,7 @@ interface IPanelCommonSettingProps {
   onOperationChange?: (key: string) => void;
 }
 
-export const PanelCommonSetting: FC<IPanelCommonSettingProps> = observer(
+export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
   (props) => {
     // 如果没有传入 onOperationChange，则使用 hook
     const handleOperation = (key: string) => {

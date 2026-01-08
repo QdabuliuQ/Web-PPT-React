@@ -1,5 +1,9 @@
 import { PanelLargeButton, PanelSplitLine } from "@/components";
-import { displayStatusStore, elementActiveStore, pptStore } from "@/store";
+import {
+  elementActiveStore,
+  useDisplayStatusStore,
+  usePPTStore,
+} from "@/store";
 import {
   Clear,
   Column,
@@ -9,14 +13,22 @@ import {
   ViewGridCard,
 } from "@icon-park/react";
 import { Dropdown, type MenuProps } from "antd";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 
 const ViewComponent: FC = () => {
-  const displayStatus = displayStatusStore.getDisplayStatus();
-  const gridType = pptStore.getGridType();
-  const gridSize = pptStore.getGridSize();
-  const guideLineShow = pptStore.getGuideLineShow();
+  // 使用 Zustand hooks 订阅状态变化
+  const displayStatus = useDisplayStatusStore((state) => state.displayStatus);
+  const setDisplayStatus = useDisplayStatusStore(
+    (state) => state.setDisplayStatus
+  );
+  const gridType = usePPTStore((state) => state.gridType);
+  const gridSize = usePPTStore((state) => state.gridSize);
+  const guideLineShow = usePPTStore((state) => state.guideLineShow);
+  const setGridType = usePPTStore((state) => state.setGridType);
+  const setGridSize = usePPTStore((state) => state.setGridSize);
+  const setGuideLineShow = usePPTStore((state) => state.setGuideLineShow);
+  const setHorizontalLine = usePPTStore((state) => state.setHorizontalLine);
+  const setVerticalLine = usePPTStore((state) => state.setVerticalLine);
 
   const gridLineMenuItems: MenuProps["items"] = useMemo(
     () => [
@@ -44,7 +56,7 @@ const ViewComponent: FC = () => {
     <div className="h-[53px] flex items-center gap-[10px]">
       <PanelLargeButton
         onClick={() => {
-          displayStatusStore.setDisplayStatus("default", false);
+          setDisplayStatus("default");
         }}
         active={displayStatus === "default"}
         aspectRatio={false}
@@ -54,7 +66,7 @@ const ViewComponent: FC = () => {
       <PanelLargeButton
         onClick={() => {
           elementActiveStore.resetElementActive();
-          displayStatusStore.setDisplayStatus("grid", false);
+          setDisplayStatus("grid");
         }}
         active={displayStatus === "grid"}
         aspectRatio={false}
@@ -71,8 +83,8 @@ const ViewComponent: FC = () => {
           onClick: ({ key }) => {
             const size = Number(key);
             if (!Number.isNaN(size)) {
-              pptStore.setGridType("grid");
-              pptStore.setGridSize(size);
+              setGridType("grid");
+              setGridSize(size);
             }
           },
         }}
@@ -81,7 +93,7 @@ const ViewComponent: FC = () => {
         <div className="h-full">
           <PanelLargeButton
             onClick={() => {
-              pptStore.setGridType(gridType === "grid" ? "none" : "grid");
+              setGridType(gridType === "grid" ? "none" : "grid");
             }}
             active={gridType === "grid"}
             icon={<GridTwo theme="outline" size="18" fill="#333" />}
@@ -91,7 +103,7 @@ const ViewComponent: FC = () => {
       </Dropdown>
       <PanelLargeButton
         onClick={() => {
-          pptStore.setGridType(gridType === "line" ? "none" : "line");
+          setGridType(gridType === "line" ? "none" : "line");
         }}
         active={gridType === "line"}
         icon={<Ruler theme="outline" size="18" fill="#333" />}
@@ -99,7 +111,7 @@ const ViewComponent: FC = () => {
       />
       <PanelLargeButton
         onClick={() => {
-          pptStore.setGuideLineShow(!guideLineShow);
+          setGuideLineShow(!guideLineShow);
         }}
         active={guideLineShow}
         disabled={gridType !== "line"}
@@ -108,8 +120,8 @@ const ViewComponent: FC = () => {
       />
       <PanelLargeButton
         onClick={() => {
-          pptStore.setHorizontalLine([]);
-          pptStore.setVerticalLine([]);
+          setHorizontalLine([]);
+          setVerticalLine([]);
         }}
         aspectRatio={false}
         disabled={gridType !== "line"}
@@ -120,4 +132,4 @@ const ViewComponent: FC = () => {
   );
 };
 
-export const View: FC = observer(ViewComponent);
+export const View: FC = ViewComponent;

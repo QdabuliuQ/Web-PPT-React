@@ -1,27 +1,29 @@
 import { PanelLargeButton } from "@/components";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { BackgroundColor } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { ColorPicker } from "antd";
-import { observer } from "mobx-react-lite";
 import { useEffect, useState, type FC } from "react";
 import type { IChartProps } from "../index";
 
-export const BackgroundColorPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const BackgroundColorPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 backgroundColor 配置，如果没有则使用默认值 "rgba(0,0,0,0)"
-  const backgroundColor = chartInfo.option?.backgroundColor || "rgba(0,0,0,0)";
+  const backgroundColor = chartInfo?.option?.backgroundColor || "rgba(0,0,0,0)";
 
   // 使用本地状态来立即更新 UI，避免闪烁
   const [localColor, setLocalColor] = useState<string>(
@@ -37,12 +39,13 @@ export const BackgroundColorPanel: FC = observer(() => {
 
   // 更新 backgroundColor 配置
   const handleBackgroundColorChange = useMemoizedFn((color: string) => {
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedOption = {
       ...chartInfo.option,
       backgroundColor: color,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -76,6 +79,8 @@ export const BackgroundColorPanel: FC = observer(() => {
     handleColorPickerChangeDebounced.run(color);
   });
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <ColorPicker
       value={localColor}
@@ -97,4 +102,4 @@ export const BackgroundColorPanel: FC = observer(() => {
       </div>
     </ColorPicker>
   );
-});
+};

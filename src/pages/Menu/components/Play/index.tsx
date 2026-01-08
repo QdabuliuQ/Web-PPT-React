@@ -1,9 +1,9 @@
 import { PanelLargeButton, PanelSplitLine } from "@/components";
 import {
-  fullscreenStore,
-  pageActiveStore,
-  pptStore,
-  remarkEditActiveStore,
+  useFullscreenStore,
+  usePageActiveStore,
+  usePPTStore,
+  useRemarkEditActiveStore,
 } from "@/store";
 import {
   Notes,
@@ -14,38 +14,48 @@ import {
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { message } from "antd";
-import { observer } from "mobx-react-lite";
 import { type FC } from "react";
 
 export const PlayComponent: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const pages = usePPTStore((state) => state.pages);
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+  const getActivePage = usePPTStore((state) => state.getActivePage);
+  const togglePageVisible = usePPTStore((state) => state.togglePageVisible);
+  const remarkEditActive = useRemarkEditActiveStore(
+    (state) => state.remarkEditActive
+  );
+  const toggleRemarkEditActive = useRemarkEditActiveStore(
+    (state) => state.toggleRemarkEditActive
+  );
+  const enterFullscreen = useFullscreenStore((state) => state.enterFullscreen);
+
   const handleStartPlay = useMemoizedFn(() => {
-    const pages = pptStore.getPages();
-    fullscreenStore.enterFullscreen(pages[0].id);
+    if (pages.length === 0) {
+      message.error("没有可播放的页面");
+      return;
+    }
+    enterFullscreen(pages[0].id);
   });
 
   const handleCurrentPlay = useMemoizedFn(() => {
     // 获取当前页面 ID
-    const currentPageId = pageActiveStore.getPageActive();
-    if (!currentPageId) {
+    if (!pageActive) {
       message.error("未找到当前页面");
       return;
     }
-    fullscreenStore.enterFullscreen(currentPageId);
+    enterFullscreen(pageActive);
   });
 
-  const page = pptStore.getActivePage(
-    pageActiveStore.getPageActive() as string
-  );
+  const page = pageActive ? getActivePage(pageActive) : null;
 
   const handleTogglePageVisible = useMemoizedFn(() => {
     if (!page) return;
-    pptStore.togglePageVisible(page.id);
+    togglePageVisible(page.id);
   });
 
-  const remarkEditActive = remarkEditActiveStore.getRemarkEditActive();
-
   const handleToggleRemark = useMemoizedFn(() => {
-    remarkEditActiveStore.toggleRemarkEditActive();
+    toggleRemarkEditActive();
   });
 
   return (
@@ -85,4 +95,4 @@ export const PlayComponent: FC = () => {
   );
 };
 
-export const Play: FC = observer(PlayComponent);
+export const Play: FC = PlayComponent;

@@ -2,16 +2,15 @@ import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
-  elementActiveStore,
   elementHoverActiveStore,
   pageActiveStore,
+  useElementActiveStore,
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { Pic } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Spin } from "antd";
-import { observer } from "mobx-react-lite";
 import {
   forwardRef,
   memo,
@@ -60,10 +59,9 @@ export interface ImageRef {
   openPreview: () => void;
 }
 
-const Component = observer(
-  forwardRef<ImageRef, IImageProps>((props, ref) => {
-    const {
-      mode = "edit",
+const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
+  const {
+    mode = "edit",
       id,
       src,
       opacity,
@@ -173,7 +171,9 @@ const Component = observer(
       },
     });
 
-    const isSelected = elementActiveStore.isElementActive(id);
+    // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+    const elementActive = useElementActiveStore((state) => state.elementActive);
+    const isSelected = elementActive === id;
     const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
     // 获取当前页面ID
@@ -244,7 +244,7 @@ const Component = observer(
         onDownload: handleDownload,
       });
       const menuItems = [...imageMenuItems, ...commonMenu];
-      contextMenuStore.showMenu(menuItems, e);
+      contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
     });
 
     useEffect(() => {
@@ -462,7 +462,7 @@ const Component = observer(
         {ImageContent}
       </div>
     );
-  })
+  }
 );
 
 export const Image = memo(Component);

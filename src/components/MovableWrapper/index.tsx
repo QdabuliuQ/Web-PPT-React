@@ -1,5 +1,4 @@
 import { pptStore } from "@/store";
-import { observer } from "mobx-react-lite";
 import {
   forwardRef,
   useEffect,
@@ -373,4 +372,4 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
 
 MovableWrapperComponent.displayName = "MovableWrapper";
 
-export const MovableWrapper = observer(MovableWrapperComponent);
+export const MovableWrapper = MovableWrapperComponent;

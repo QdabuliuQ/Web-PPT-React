@@ -5,11 +5,10 @@ import {
   PanelSelect,
   PanelSplitLine,
 } from "@/components";
-import { pageActiveStore, pptStore } from "@/store";
+import { usePageActiveStore, usePPTStore } from "@/store/zustand";
 import { FullSelection } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Checkbox, InputNumber, message } from "antd";
-import { observer } from "mobx-react-lite";
 import { useState, type FC } from "react";
 import styles from "./index.module.less";
 
@@ -217,13 +216,25 @@ export const toggleInDelayOptions = [
 const ToggleComponent: FC = () => {
   const [animationName, setAnimationName] = useState<string>("");
 
-  // 获取当前页面
-  const pageActive = pageActiveStore.getPageActive();
-  const currentPage = pageActive ? pptStore.getActivePage(pageActive) : null;
+  // 使用 Zustand hooks 获取状态
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+  const pages = usePPTStore((state) => state.pages);
+  const keyboardToggle = usePPTStore((state) => state.keyboardToggle);
+  const updatePagePropertyAction = usePPTStore(
+    (state) => state.updatePageProperty
+  );
+  const setKeyboardToggle = usePPTStore((state) => state.setKeyboardToggle);
+
+  // 找到当前页面
+  const currentPage = pageActive
+    ? pages.find((p) => p.id === pageActive)
+    : null;
+
+  // 获取当前页面的属性
   const currentToggleIn = (currentPage as any)?.toggleInAnimation || "";
-  const currentToggleInDuration = (currentPage as any)?.toggleInDuration || 0;
-  const currentToggleInDelay = (currentPage as any)?.toggleInDelay || 0;
-  const currentKeyboardToggle = pptStore.getKeyboardToggle();
+  const currentToggleInDuration =
+    (currentPage as any)?.toggleInDuration || "default";
+  const currentToggleInDelay = (currentPage as any)?.toggleInDelay || "0s";
   const currentAutoToggle = (currentPage as any)?.autoToggle || false;
   const currentAutoToggleTime = (currentPage as any)?.autoToggleTime || 5;
 
@@ -238,64 +249,50 @@ const ToggleComponent: FC = () => {
 
   const mouseLeaveHandle = useMemoizedFn(() => setAnimationName(""));
 
-  // 更新页面属性的通用函数
-  const updatePageProperty = useMemoizedFn((property: string, value: any) => {
-    if (!pageActive) return;
-    const page = pptStore.getActivePage(pageActive);
-    if (!page) return;
-
-    const pageIndex = pptStore.getPages().findIndex((p) => p.id === pageActive);
-    if (pageIndex === -1) return;
-
-    const newPages = [...pptStore.getPages()];
-    newPages[pageIndex] = {
-      ...newPages[pageIndex],
-      [property]: value,
-    } as any;
-
-    pptStore.setPages(newPages);
-  });
-
   // 处理动画选择
   const handleAnimationSelect = useMemoizedFn((type: string) => {
-    updatePageProperty("toggleInAnimation", type);
+    if (!pageActive) return;
+    updatePagePropertyAction(pageActive, "toggleInAnimation", type);
   });
 
   // 处理过渡时间变化
   const handleToggleInDurationChange = useMemoizedFn((value: string) => {
-    updatePageProperty("toggleInDuration", value);
+    if (!pageActive) return;
+    updatePagePropertyAction(pageActive, "toggleInDuration", value);
   });
 
   // 处理延迟时间变化
   const handleToggleInDelayChange = useMemoizedFn((value: string) => {
-    updatePageProperty("toggleInDelay", value);
+    if (!pageActive) return;
+    updatePagePropertyAction(pageActive, "toggleInDelay", value);
   });
 
   // 处理单击换片变化
   const handleKeyboardToggleChange = useMemoizedFn(
     (e: { target: { checked: boolean } }) => {
-      pptStore.setKeyboardToggle(e.target.checked);
+      setKeyboardToggle(e.target.checked);
     }
   );
 
   // 处理自动换片变化
   const handleAutoToggleChange = useMemoizedFn(
     (e: { target: { checked: boolean } }) => {
-      updatePageProperty("autoToggle", e.target.checked);
+      if (!pageActive) return;
+      updatePagePropertyAction(pageActive, "autoToggle", e.target.checked);
     }
   );
 
   // 处理自动换片时间变化
   const handleAutoToggleTimeChange = useMemoizedFn((value: number | null) => {
-    if (value !== null) {
-      if (value === currentAutoToggle) return;
-      updatePageProperty("autoToggleTime", value);
+    if (value !== null && pageActive) {
+      if (value === currentAutoToggleTime) return;
+      updatePagePropertyAction(pageActive, "autoToggleTime", value);
     }
   });
 
   // 应用全部：将当前页面的切换动画设置应用到所有页面
   const handleApplyToAll = useMemoizedFn(() => {
-    if (!pageActive || !currentPage) return;
+    if (!pageActive) return;
 
     // 获取当前页面的切换动画相关属性
     const toggleSettings = {
@@ -307,12 +304,34 @@ const ToggleComponent: FC = () => {
     };
 
     // 更新所有页面
-    const newPages = pptStore.getPages().map((page) => ({
-      ...page,
-      ...toggleSettings,
-    })) as any;
+    pages.forEach((page) => {
+      updatePagePropertyAction(
+        page.id,
+        "toggleInAnimation",
+        toggleSettings.toggleInAnimation
+      );
+      updatePagePropertyAction(
+        page.id,
+        "toggleInDuration",
+        toggleSettings.toggleInDuration
+      );
+      updatePagePropertyAction(
+        page.id,
+        "toggleInDelay",
+        toggleSettings.toggleInDelay
+      );
+      updatePagePropertyAction(
+        page.id,
+        "autoToggle",
+        toggleSettings.autoToggle
+      );
+      updatePagePropertyAction(
+        page.id,
+        "autoToggleTime",
+        toggleSettings.autoToggleTime
+      );
+    });
 
-    pptStore.setPages(newPages);
     message.success("修改成功");
   });
 
@@ -353,7 +372,7 @@ const ToggleComponent: FC = () => {
       <div className="flex flex-col justify-between gap-[4px]">
         <div className="flex items-center gap-[4px] text-[12px] h-[24px]">
           <Checkbox
-            checked={currentKeyboardToggle}
+            checked={keyboardToggle}
             onChange={handleKeyboardToggleChange}
             style={{ fontSize: "12px" }}
           >
@@ -388,4 +407,4 @@ const ToggleComponent: FC = () => {
   );
 };
 
-export const Toggle: FC = observer(ToggleComponent);
+export const Toggle: FC = ToggleComponent;

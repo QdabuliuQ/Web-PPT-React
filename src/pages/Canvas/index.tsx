@@ -16,7 +16,10 @@ import {
   menuActiveStore,
   pageActiveStore,
   pptStore,
-  remarkEditActiveStore,
+  useFullscreenStore,
+  usePageActiveStore,
+  usePPTStore,
+  useRemarkEditActiveStore,
 } from "@/store";
 import type { Elements } from "@/store/ppt";
 import { getRandomId } from "@/utils";
@@ -32,7 +35,6 @@ import {
 } from "@icon-park/react";
 import Guides from "@scena/react-guides";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import {
   useCallback,
   useEffect,
@@ -53,6 +55,10 @@ interface CanvasProps {
 }
 
 const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
+  // 使用 Zustand hooks 订阅状态变化
+  const pages = usePPTStore((state) => state.pages);
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [, forceUpdate] = useState(0); // 用于 play 模式强制重新渲染
@@ -343,14 +349,19 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     contextMenuStore.hideMenu();
   });
 
-  // 直接获取页面数据，observer 会自动响应 store 变化
-  // preview 模式下也从 store 获取，确保能响应页面内容变化
-  const currentPage =
-    mode === "edit"
-      ? pptStore.getActivePage(pageActiveStore.getPageActive() as string)
-      : mode === "preview" && page
-        ? pptStore.getActivePage(page.id)
-        : page;
+  // 根据 pageActive 获取当前页面，使用 hook 订阅状态变化确保响应式更新
+  const currentPage = useMemo(() => {
+    if (mode === "edit") {
+      // edit 模式：使用 pageActive 从 pages 中查找
+      return pageActive ? pages.find((p) => p.id === pageActive) : undefined;
+    } else if (mode === "preview" && page) {
+      // preview 模式：优先使用传入的 page prop，如果没有则从 pages 中查找
+      return pages.find((p) => p.id === page.id) || page;
+    } else {
+      // play 模式或其他：使用传入的 page prop
+      return page;
+    }
+  }, [mode, pageActive, pages, page]);
 
   // 获取页面背景属性
   const backgroundType = (currentPage as any)?.backgroundType || "solidColor";
@@ -406,19 +417,19 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
   const backgroundStyle = getBackgroundStyle();
 
-  // 获取全屏状态（直接访问属性，确保 MobX 能追踪依赖）
-  const isFullscreen = fullscreenStore.isFullscreen;
-  const gridType = pptStore.getGridType();
-  const gridSize = pptStore.getGridSize();
+  // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
+  const isFullscreen = useFullscreenStore((state) => state.isFullscreen);
+  const gridType = usePPTStore((state) => state.gridType);
+  const gridSize = usePPTStore((state) => state.gridSize);
+  const guideLineShow = usePPTStore((state) => state.guideLineShow);
 
-  const showLine =
-    mode === "edit" && gridType === "line" && pptStore.getGuideLineShow();
+  const showLine = mode === "edit" && gridType === "line" && guideLineShow;
   // 标尺缩放跟随画布缩放（编辑模式使用 scale，播放/预览为 1）
   const rulerZoom = mode === "edit" ? scale : 1;
   const guideSnapStep = gridSize;
   const guideSnapThreshold = Math.max(1, Math.floor(guideSnapStep / 2));
 
-  // Canvas 样式对象 - 不使用 useMemo，让 MobX observer 自动追踪 isFullscreen 的变化
+  // Canvas 样式对象
   const getCanvasStyle = () => {
     let computedScale = 1;
 
@@ -574,15 +585,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       fullscreenStore.getCurrentSlidePageId() ||
       pageActiveStore.getPageActive();
     const currentPageIndex = pages.findIndex((p) => p.id === currentPageId);
-    const isFirstPage = currentPageIndex === 0;
-    const isLastPage = currentPageIndex === pages.length - 1;
 
+    // 使用 MenuItem 类型定义菜单项
     const menuItems: MenuItem[] = [
       {
         type: "item",
         label: "上一页",
-        icon: <Left theme="outline" size="13" fill="#333" />,
-        disabled: isFirstPage,
         onClick: () => {
           if (currentPageIndex > 0) {
             const prevPageId =
@@ -593,12 +601,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(false);
           }
         },
+        icon: <Left theme="outline" size="13" fill="#333" />,
+        disabled: currentPageIndex === 0,
       },
       {
         type: "item",
         label: "下一页",
-        icon: <Right theme="outline" size="13" fill="#333" />,
-        disabled: isLastPage,
         onClick: () => {
           if (currentPageIndex < pages.length - 1) {
             // 直接计算下一页的ID，不依赖 pageActiveStore
@@ -611,12 +619,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(true);
           }
         },
+        icon: <Right theme="outline" size="13" fill="#333" />,
+        disabled: currentPageIndex === pages.length - 1,
       },
       {
         type: "item",
         label: "第一页",
-        icon: <GoStart theme="outline" size="13" fill="#333" />,
-        disabled: isFirstPage,
         onClick: () => {
           if (pages.length > 0) {
             const firstPageId = pages[0].id;
@@ -625,12 +633,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(false);
           }
         },
+        icon: <GoStart theme="outline" size="13" fill="#333" />,
+        disabled: currentPageIndex === 0,
       },
       {
         type: "item",
         label: "最后一页",
-        icon: <GoEnd theme="outline" size="13" fill="#333" />,
-        disabled: isLastPage,
         onClick: () => {
           if (pages.length > 0) {
             const lastPageId = pages[pages.length - 1].id;
@@ -639,6 +647,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(false);
           }
         },
+        icon: <GoEnd theme="outline" size="13" fill="#333" />,
+        disabled: currentPageIndex === pages.length - 1,
       },
       {
         type: "separator",
@@ -646,13 +656,6 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       {
         type: "item",
         label: "结束放映",
-        icon: (
-          <CloseOne
-            theme="multi-color"
-            size="13"
-            fill={["#ff8501", "#ff8501", "#FFF", "#43CCF8"]}
-          />
-        ),
         onClick: () => {
           // 关闭菜单
           contextMenuStore.hideMenu();
@@ -665,10 +668,17 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
           }
           setShowEndMessage(false);
         },
+        icon: (
+          <CloseOne
+            theme="multi-color"
+            size="13"
+            fill={["#ff8501", "#ff8501", "#FFF", "#43CCF8"]}
+          />
+        ),
       },
     ];
 
-    contextMenuStore.showMenu(menuItems, e);
+    contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
   });
 
   // 处理前进（下一页）的逻辑，包含动画处理
@@ -921,22 +931,29 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
               // 计算鼠标在画布内部的相对坐标
               const canvasX = (e.clientX - canvasRect.left) / scale;
               const canvasY = (e.clientY - canvasRect.top) / scale;
+
+              // 添加粘贴菜单项
               menuItems.push({
-                type: "item" as const,
+                type: "item",
                 label: "粘贴",
-                icon: <Clipboard theme="outline" size="13" fill="#333" />,
                 onClick: () => {
                   handleCanvasPaste(canvasX, canvasY);
                   closeMenu();
                 },
+                icon: <Clipboard theme="outline" size="13" fill="#333" />,
                 disabled: !copyElementStore.hasCopiedElement(),
               });
+
               elementActiveStore.resetElementActive();
               menuActiveStore.resetMenu();
+
+              // 显示全局右键菜单
+              contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
+              return;
             }
 
             // 显示全局右键菜单
-            contextMenuStore.showMenu(menuItems, e);
+            contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
           }}
         >
           {gridType === "grid" && (
@@ -953,14 +970,16 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       );
     }
 
-    // 在 play 模式下优先使用传入的 page prop，否则从 pageActiveStore 获取
-    // preview 模式下也从 store 获取，确保能响应页面内容变化
+    // 在 play 模式下优先使用传入的 page prop，否则从 pages 中查找
+    // preview 模式下也从 pages 中查找，确保能响应页面内容变化
     const currentPage =
       mode === "play" && page
         ? page
         : mode === "preview" && page
-          ? pptStore.getActivePage(page.id)
-          : pptStore.getActivePage(pageActiveStore.getPageActive() as string);
+          ? pages.find((p) => p.id === page.id) || page
+          : pageActive
+            ? pages.find((p) => p.id === pageActive)
+            : undefined;
     const {
       toggleInAnimation = "",
       toggleInDelay = "0",
@@ -1010,23 +1029,21 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
   // 获取页面ID用于生成唯一的容器ID
   const pageId =
-    mode === "edit"
-      ? pageActiveStore.getPageActive() || "default"
-      : page?.id || "default";
+    mode === "edit" ? pageActive || "default" : page?.id || "default";
 
-  const remarkEditActive = remarkEditActiveStore.getRemarkEditActive();
+  const remarkEditActive = useRemarkEditActiveStore(
+    (state) => state.remarkEditActive
+  );
 
-  // 获取当前页面的 remark 属性
-  // 直接访问 store 属性，observer 会自动追踪变化
-  const currentPageRemark = (() => {
+  // 获取当前页面的 remark 属性，使用 hook 订阅状态变化
+  const currentPageRemark = useMemo(() => {
     if (mode === "edit") {
-      const pageActive = pageActiveStore.pageActive;
       if (!pageActive) return "";
-      const activePage = pptStore.getActivePage(pageActive);
+      const activePage = pages.find((p) => p.id === pageActive);
       return (activePage as any)?.remark || "";
     }
     return (page as any)?.remark || "";
-  })();
+  }, [mode, pageActive, pages, page]);
 
   // 本地 state 存储 remark 值，用于即时更新 UI
   const [localRemark, setLocalRemark] = useState(currentPageRemark);
@@ -1060,7 +1077,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   // 防抖定时器引用
   const remarkDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 防抖处理备注变更：先更新本地 state，再通过防抖更新 MobX store
+  // 防抖处理备注变更：先更新本地 state，再通过防抖更新 Zustand store
   const handleRemarkChange = useCallback(
     (value: string) => {
       // 先更新本地 state，立即反映到 UI
@@ -1071,7 +1088,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         clearTimeout(remarkDebounceTimerRef.current);
       }
 
-      // 防抖更新 MobX store
+      // 防抖更新 Zustand store
       remarkDebounceTimerRef.current = setTimeout(() => {
         updatePageRemark(value);
       }, 300);
@@ -1088,7 +1105,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     };
   }, []);
 
-  // 动态生成 className（全屏优先）- 不使用 useMemo，让 MobX observer 自动追踪
+  // 动态生成 className（全屏优先）
   const getContainerClassName = () => {
     // 如果全屏，优先使用全屏样式
     if (isFullscreen) {
@@ -1113,7 +1130,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const containerClassName = getContainerClassName();
 
   // 动态生成 style（用于 preview/play 模式的 zoom）
-  // 注意：不使用 useMemo，让 MobX observer 自动追踪 isFullscreen 的变化
+  // 获取容器样式
   const getContainerStyle = () => {
     // 优先判断全屏状态（play 模式全屏）
     if (isFullscreen && mode === "play") {
@@ -1424,4 +1441,4 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   );
 };
 
-export const Canvas: FC<CanvasProps> = observer(Component);
+export const Canvas: FC<CanvasProps> = Component;

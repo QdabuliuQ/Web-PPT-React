@@ -1,28 +1,34 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { ChartLine } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { ChartStylePanel } from "../../components/chartStylePanel";
 import type { IChartProps } from "../../index";
 
-export const Line2ChartPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const Line2ChartPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  // 获取 chartInfo，使用 useMemo 确保依赖正确
+  const chartInfo = useMemo(() => {
+    if (!pageId || !elementId) return null;
+    return getElementInfo(pageId, elementId) as IChartProps | null;
+  }, [pageId, elementId, getElementInfo]);
 
   // 获取 series 配置，series 是数组
-  const seriesOption = chartInfo.option?.series;
-  const seriesArray = Array.isArray(seriesOption) ? seriesOption : [];
-  
+  const seriesArray = useMemo(() => {
+    if (!chartInfo) return [];
+    const seriesOption = chartInfo.option?.series;
+    return Array.isArray(seriesOption) ? seriesOption : [];
+  }, [chartInfo]);
+
   // 获取第一个 series 的配置作为模板（所有 line 的属性都一样）
   const seriesConfig = useMemo(
     () => seriesArray[0] || {},
@@ -32,7 +38,7 @@ export const Line2ChartPanel: FC = observer(() => {
   // 更新 series 配置的函数
   // 由于所有 line 的属性都一样，更新时需要同步更新数组中所有项
   const handleSeriesChange = useMemoizedFn((path: string[], value: any) => {
-    if (seriesArray.length === 0) return;
+    if (!chartInfo || !pageId || !elementId || seriesArray.length === 0) return;
 
     // 更新所有 series 项的相同属性
     const updatedSeriesArray = seriesArray.map((seriesItem: any) => {
@@ -59,7 +65,7 @@ export const Line2ChartPanel: FC = observer(() => {
       series: updatedSeriesArray,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -452,6 +458,9 @@ export const Line2ChartPanel: FC = observer(() => {
     [getValue, handleConfigChange, handleColorConfigChange, seriesConfig]
   );
 
+  // 早期返回必须在所有 hooks 之后
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <ChartStylePanel
       title="样式"
@@ -461,5 +470,5 @@ export const Line2ChartPanel: FC = observer(() => {
       defaultActiveKey={["basic"]}
     />
   );
-});
+};
 

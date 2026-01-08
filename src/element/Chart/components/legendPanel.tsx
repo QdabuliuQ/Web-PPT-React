@@ -1,27 +1,29 @@
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { Text } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { getLegendDefaultOption } from "../common";
 import type { IChartProps } from "../index";
 import { ChartStylePanel } from "./chartStylePanel";
 
-export const LegendPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const LegendPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 legend 配置，如果没有则使用默认值
-  const legendConfig = chartInfo.option?.legend || getLegendDefaultOption();
+  const legendConfig = chartInfo?.option?.legend || getLegendDefaultOption();
 
   // 更新 legend 配置的通用函数
   const handleLegendChange = useMemoizedFn((path: string[], value: any) => {
@@ -40,12 +42,13 @@ export const LegendPanel: FC = observer(() => {
     current[path[path.length - 1]] = value;
 
     // 更新 option.legend
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedOption = {
       ...chartInfo.option,
       legend: updatedLegend,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -335,6 +338,8 @@ export const LegendPanel: FC = observer(() => {
     return current ?? defaultValue;
   });
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <ChartStylePanel
       title="图例"
@@ -344,4 +349,4 @@ export const LegendPanel: FC = observer(() => {
       defaultActiveKey={["basic"]}
     />
   );
-});
+};

@@ -5,6 +5,8 @@ import {
   menuActiveStore,
   pageActiveStore,
   pptStore,
+  usePageActiveStore,
+  usePPTStore,
 } from "@/store";
 import type { Page } from "@/store/ppt";
 import { initPPTStore } from "@/utils/initStore";
@@ -28,7 +30,6 @@ import {
 } from "@icon-park/react";
 import { useKeyPress, useMemoizedFn, useMount } from "ahooks";
 import { Tooltip } from "antd";
-import { observer } from "mobx-react-lite";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import { useEffect, useRef, useState, type FC } from "react";
 import { Canvas } from "../Canvas";
@@ -39,6 +40,7 @@ const PageItem: FC<{
   index: number;
   scale: number;
   totalPages: number;
+  pageActive: string | null;
   onPageClick: (pageId: string) => void;
   onContextMenu: (e: React.MouseEvent, pageId: string) => void;
   onPlayPage: (pageId: string, e: React.MouseEvent) => void;
@@ -46,103 +48,105 @@ const PageItem: FC<{
   onMovePageDown: (pageId: string, e: React.MouseEvent) => void;
   onAddPageAfter: (pageId: string, e: React.MouseEvent) => void;
   pageItemRef: React.RefObject<HTMLDivElement> | null;
-}> = observer(
-  ({
-    page,
-    index,
-    scale,
-    totalPages,
-    onPageClick,
-    onContextMenu,
-    onPlayPage,
-    onMovePageUp,
-    onMovePageDown,
-    onAddPageAfter,
-    pageItemRef,
-  }) => {
-    const isActive = pageActiveStore.pageActive === page.id;
+}> = ({
+  page,
+  index,
+  scale,
+  totalPages,
+  pageActive,
+  onPageClick,
+  onContextMenu,
+  onPlayPage,
+  onMovePageUp,
+  onMovePageDown,
+  onAddPageAfter,
+  pageItemRef,
+}) => {
+  const isActive = pageActive === page.id;
 
-    return (
-      <div
-        className={`${styles.pageItem} relative mr-[15px] cursor-pointer flex gap-[8px]`}
+  return (
+    <div
+      className={`${styles.pageItem} relative mr-[15px] cursor-pointer flex gap-[8px]`}
+    >
+      <span
+        className={`text-[13px] mt-[5px] font-bold ${
+          isActive ? "text-primary" : "text-[#9b9b9b]"
+        }`}
       >
-        <span
-          className={`text-[13px] mt-[5px] font-bold ${
-            isActive ? "text-primary" : "text-[#9b9b9b]"
-          }`}
-        >
-          {index + 1}
-        </span>
+        {index + 1}
+      </span>
+      <div
+        className={`flex-1 relative rounded-lg ${
+          isActive ? "shadow-[0_0_0_2px_#f25f00]" : ""
+        }`}
+        onClick={() => onPageClick(page.id)}
+        onContextMenu={(e) => onContextMenu(e, page.id)}
+      >
         <div
-          className={`flex-1 relative rounded-lg ${
-            isActive ? "shadow-[0_0_0_2px_#f25f00]" : ""
-          }`}
-          onClick={() => onPageClick(page.id)}
-          onContextMenu={(e) => onContextMenu(e, page.id)}
+          ref={index === 0 ? pageItemRef : null}
+          className="previewCanvas relative w-full rounded-lg overflow-hidden aspect-[10/7] pointer-events-none"
         >
-          <div
-            ref={index === 0 ? pageItemRef : null}
-            className="previewCanvas relative w-full rounded-lg overflow-hidden aspect-[10/7] pointer-events-none"
-          >
-            {page.visible === false && (
-              <div
-                className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/10 rounded-lg z-10 pointer-events-auto"
-                onClick={() => onPageClick(page.id)}
-                onContextMenu={(e) => onContextMenu(e, page.id)}
-              >
-                <PreviewCloseOne theme="outline" size="24" fill="#333" />
-              </div>
-            )}
-            <Canvas mode="preview" page={page} previewZoom={scale} />
-          </div>
+          {page.visible === false && (
+            <div
+              className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/10 rounded-lg z-10 pointer-events-auto"
+              onClick={() => onPageClick(page.id)}
+              onContextMenu={(e) => onContextMenu(e, page.id)}
+            >
+              <PreviewCloseOne theme="outline" size="24" fill="#333" />
+            </div>
+          )}
+          <Canvas mode="preview" page={page} previewZoom={scale} />
         </div>
-        <div className="floatButton absolute bottom-[-12px] right-[13px] z-10 w-[80%] flex items-center justify-between opacity-0 transition-opacity">
-          <div
-            className="flex items-center justify-center w-[26px] h-[26px] bg-[#fff] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-            onClick={(e) => onPlayPage(page.id, e)}
-          >
-            <PlayOne theme="filled" size="18" fill="#f25f00" />
-          </div>
-          <div className="flex items-center gap-[10px]">
-            {index > 0 && (
-              <div
-                className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-                onClick={(e) => onMovePageUp(page.id, e)}
-              >
-                <Up theme="outline" size="18" fill="#fff" />
-              </div>
-            )}
-            {index < totalPages - 1 && (
-              <div
-                className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-                onClick={(e) => onMovePageDown(page.id, e)}
-              >
-                <Down theme="outline" size="18" fill="#fff" />
-              </div>
-            )}
+      </div>
+      <div className="floatButton absolute bottom-[-12px] right-[13px] z-10 w-[80%] flex items-center justify-between opacity-0 transition-opacity">
+        <div
+          className="flex items-center justify-center w-[26px] h-[26px] bg-[#fff] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+          onClick={(e) => onPlayPage(page.id, e)}
+        >
+          <PlayOne theme="filled" size="18" fill="#f25f00" />
+        </div>
+        <div className="flex items-center gap-[10px]">
+          {index > 0 && (
             <div
               className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-              onClick={(e) => onAddPageAfter(page.id, e)}
+              onClick={(e) => onMovePageUp(page.id, e)}
             >
-              <Plus theme="outline" size="18" fill="#fff" />
+              <Up theme="outline" size="18" fill="#fff" />
             </div>
+          )}
+          {index < totalPages - 1 && (
+            <div
+              className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+              onClick={(e) => onMovePageDown(page.id, e)}
+            >
+              <Down theme="outline" size="18" fill="#fff" />
+            </div>
+          )}
+          <div
+            className="flex items-center justify-center w-[26px] h-[26px] bg-[#f25f00] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+            onClick={(e) => onAddPageAfter(page.id, e)}
+          >
+            <Plus theme="outline" size="18" fill="#fff" />
           </div>
         </div>
       </div>
-    );
-  }
-);
+    </div>
+  );
+};
 
 const PreviewComponent: FC = () => {
-  // 在组件顶层直接访问 observable，确保 MobX 能追踪到
-  // 这很重要：必须在组件函数体的顶层访问，而不是在嵌套函数中
-  const pages = pptStore.pages;
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const pages = usePPTStore((state) => state.pages);
+  const pageActive = usePageActiveStore((state) => state.pageActive);
 
-  // 添加调试日志，确认组件是否重新渲染
-  console.log("PreviewComponent render, pages count:", pages.length);
+  // 直接使用 pages.map 构建渲染数组
+  const pagesToRender = pages.map((page, index) => ({
+    page,
+    index,
+  }));
 
   useMount(() => {
-    if (pptStore.pages.length === 0) {
+    if (pages.length === 0) {
       initPPTStore();
     }
   });
@@ -190,9 +194,8 @@ const PreviewComponent: FC = () => {
   });
 
   const handleAddPage = useMemoizedFn(() => {
-    // 直接使用 pptStore.pages 获取最新的页面列表
-    const currentPages = pptStore.pages;
-    const lastPage = currentPages[currentPages.length - 1];
+    // 使用最新的页面列表
+    const lastPage = pages[pages.length - 1];
     addPageAndActivate(lastPage?.id, () => {
       scrollToBottom();
     });
@@ -384,65 +387,29 @@ const PreviewComponent: FC = () => {
           },
         }}
       >
-        {(() => {
-          if (pages && pages.length > 0) {
-            const pagesArray = [...pages];
-            if (pagesArray.length !== pages.length) {
-              console.warn("Spread operator failed, using index access");
-              const pagesByIndex: Page[] = [];
-              for (let i = 0; i < pages.length; i++) {
-                pagesByIndex.push(pages[i]);
-              }
-              console.log("JSX: Pages by index length:", pagesByIndex.length);
-              const mapped = pagesByIndex.map((page: Page, index: number) => {
-                console.log(`JSX: Mapping page ${index}:`, page.id);
-                return (
-                  <PageItem
-                    key={page.id}
-                    page={page}
-                    index={index}
-                    scale={scale}
-                    totalPages={pages.length}
-                    onPageClick={handlePageClick}
-                    onContextMenu={handleContextMenu}
-                    onPlayPage={handlePlayPage}
-                    onMovePageUp={handleMovePageUp}
-                    onMovePageDown={handleMovePageDown}
-                    onAddPageAfter={handleAddPageAfter}
-                    pageItemRef={index === 0 ? pageItemRef : null}
-                  />
-                );
-              });
-              console.log("JSX: Map result length:", mapped.length);
-              return mapped;
-            }
-            const mapped = pagesArray.map((page: Page, index: number) => {
-              return (
-                <PageItem
-                  key={page.id}
-                  page={page}
-                  index={index}
-                  scale={scale}
-                  totalPages={pages.length}
-                  onPageClick={handlePageClick}
-                  onContextMenu={handleContextMenu}
-                  onPlayPage={handlePlayPage}
-                  onMovePageUp={handleMovePageUp}
-                  onMovePageDown={handleMovePageDown}
-                  onAddPageAfter={handleAddPageAfter}
-                  pageItemRef={index === 0 ? pageItemRef : null}
-                />
-              );
-            });
-            return mapped;
-          } else {
-            return (
-              <div className="flex items-center justify-center h-full text-[#9b9b9b] text-sm px-[15px]">
-                暂无页面数据
-              </div>
-            );
-          }
-        })()}
+        {pagesToRender.length > 0 ? (
+          pagesToRender.map(({ page, index }) => (
+            <PageItem
+              key={page.id}
+              page={page}
+              index={index}
+              scale={scale}
+              totalPages={pages.length}
+              pageActive={pageActive}
+              onPageClick={handlePageClick}
+              onContextMenu={handleContextMenu}
+              onPlayPage={handlePlayPage}
+              onMovePageUp={handleMovePageUp}
+              onMovePageDown={handleMovePageDown}
+              onAddPageAfter={handleAddPageAfter}
+              pageItemRef={index === 0 ? pageItemRef : null}
+            />
+          ))
+        ) : (
+          <div className="flex items-center justify-center h-full text-[#9b9b9b] text-sm px-[15px]">
+            暂无页面数据
+          </div>
+        )}
       </OverlayScrollbarsComponent>
       <div ref={addButtonRef} className="pr-[15px]">
         <Tooltip placement="top" title="添加页面">
@@ -458,4 +425,4 @@ const PreviewComponent: FC = () => {
   );
 };
 
-export const Preview: FC = observer(PreviewComponent);
+export const Preview: FC = PreviewComponent;

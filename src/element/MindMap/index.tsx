@@ -2,10 +2,10 @@ import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
-  elementActiveStore,
   elementHoverActiveStore,
   pageActiveStore,
   pptStore,
+  useElementActiveStore,
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
@@ -14,7 +14,6 @@ import { register } from "@antv/x6-react-shape";
 import { MindmapMap } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Spin } from "antd";
-import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
@@ -145,7 +144,7 @@ Shape.Edge.registry.register(
   true
 );
 
-const Component: FC<IMindMapProps> = observer((props) => {
+const Component: FC<IMindMapProps> = (props) => {
   const {
     mode = "edit",
     id,
@@ -244,7 +243,9 @@ const Component: FC<IMindMapProps> = observer((props) => {
     }, 300);
   });
 
-  const isSelected = elementActiveStore.isElementActive(id);
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const elementActive = useElementActiveStore((state) => state.elementActive);
+  const isSelected = elementActive === id;
   const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 获取通用菜单
@@ -296,7 +297,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
       }),
       ...commonMenu,
     ];
-    contextMenuStore.showMenu(menuItems, e);
+    contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
   };
 
   useEffect(() => {
@@ -578,7 +579,7 @@ const Component: FC<IMindMapProps> = observer((props) => {
       )}
     </div>
   );
-});
+};
 
 export const MindMap = memo(Component);
 

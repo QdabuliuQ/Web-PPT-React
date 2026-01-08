@@ -1,24 +1,26 @@
 import { PanelLargeButton } from "@/components";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { AddOne, ColorFilter, Delete } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Button, ColorPicker, Popover } from "antd";
-import { observer } from "mobx-react-lite";
 import { type FC } from "react";
 import type { IChartProps } from "../index";
 
-export const ColorPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const ColorPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 color 配置，如果没有则使用默认值
   const defaultColors = [
@@ -34,18 +36,19 @@ export const ColorPanel: FC = observer(() => {
   ];
 
   // 处理 color 类型，确保是 string[]
-  const optionColor = chartInfo.option?.color;
+  const optionColor = chartInfo?.option?.color;
   const colorArray: string[] = Array.isArray(optionColor)
     ? optionColor.map((c) => (typeof c === "string" ? c : String(c)))
     : defaultColors;
 
   // 更新 color 配置
   const handleColorChange = useMemoizedFn((colors: string[]) => {
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedOption = {
       ...chartInfo.option,
       color: colors,
     };
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -81,6 +84,8 @@ export const ColorPanel: FC = observer(() => {
     const newColors = colorArray.filter((_, i) => i !== index);
     handleColorChange(newColors);
   });
+
+  if (!pageId || !elementId || !chartInfo) return null;
 
   const content = (
     <div className="w-[420px] max-h-[600px] overflow-y-auto box-border p-4">
@@ -161,4 +166,4 @@ export const ColorPanel: FC = observer(() => {
       </div>
     </Popover>
   );
-});
+};

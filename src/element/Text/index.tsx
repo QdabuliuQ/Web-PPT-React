@@ -7,12 +7,12 @@ import {
   elementHoverActiveStore,
   pageActiveStore,
   pptStore,
+  useElementActiveStore,
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { Text as TextIcon } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import { PlacementMapped } from "./constant";
@@ -55,7 +55,7 @@ export interface ITextProps extends ICommonElementProps {
     | "right-bottom";
 }
 
-const Component: FC<ITextProps> = observer((props) => {
+const Component: FC<ITextProps> = (props) => {
   const {
     mode = "edit",
     id,
@@ -155,7 +155,9 @@ const Component: FC<ITextProps> = observer((props) => {
     }, 300);
   });
 
-  const isSelected = elementActiveStore.isElementActive(id);
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const elementActive = useElementActiveStore((state) => state.elementActive);
+  const isSelected = elementActive === id;
   const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 获取当前页面ID
@@ -181,7 +183,7 @@ const Component: FC<ITextProps> = observer((props) => {
 
     // 显示右键菜单，合并文本菜单和通用菜单
     const menuItems = [...getTextMenuItems(), ...commonMenu];
-    contextMenuStore.showMenu(menuItems, e);
+    contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -449,7 +451,7 @@ const Component: FC<ITextProps> = observer((props) => {
       </AnimationWrapper>
     </div>
   );
-});
+};
 
 export const Text = memo(Component);
 
@@ -493,27 +495,27 @@ export const CreateText = (props: Partial<ITextProps> = {}) => {
   };
 };
 
-export const TextButton = memo(
-  observer(function TextButton() {
-    const pageId = pageActiveStore.getPageActive() as string;
+function TextButtonComponent() {
+  const pageId = pageActiveStore.getPageActive() as string;
 
-    const clickHandle = useMemoizedFn(() => {
-      const option = CreateText();
-      pptStore.addElementInfo(pageId, option);
-      if (pageActiveStore.getPageActive()) {
-        elementActiveStore.setElementActive(option.id);
-      }
-    });
+  const clickHandle = useMemoizedFn(() => {
+    const option = CreateText();
+    pptStore.addElementInfo(pageId, option);
+    if (pageActiveStore.getPageActive()) {
+      elementActiveStore.setElementActive(option.id);
+    }
+  });
 
-    return (
-      <PanelButton
-        icon={<TextIcon fill="#333" style={{ fontSize: "24px" }} />}
-        title="文本"
-        onClick={clickHandle}
-      />
-    );
-  })
-);
+  return (
+    <PanelButton
+      icon={<TextIcon fill="#333" style={{ fontSize: "24px" }} />}
+      title="文本"
+      onClick={clickHandle}
+    />
+  );
+}
+
+export const TextButton = memo(TextButtonComponent);
 
 export const TextPanelIcon = TextIcon;
 export const Name = "文本";

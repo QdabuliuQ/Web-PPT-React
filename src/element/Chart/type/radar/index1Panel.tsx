@@ -1,28 +1,30 @@
 import { PanelLargeButton, PanelSelect } from "@/components";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { RadarChart } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Collapse, ColorPicker, InputNumber, Popover, Switch } from "antd";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import styles from "../../components/panel.module.less";
 import type { IChartProps } from "../../index";
 
-export const Radar1ChartPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const Radar1ChartPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 radar 配置，如果没有则使用默认值
-  const radarOption = chartInfo.option?.radar;
+  const radarOption = chartInfo?.option?.radar;
   const radarConfig = useMemo(() => {
     return Array.isArray(radarOption)
       ? radarOption[0] || {}
@@ -60,6 +62,7 @@ export const Radar1ChartPanel: FC = observer(() => {
 
   // 更新 radar 配置的函数
   const handleRadarChange = useMemoizedFn((path: string[], value: any) => {
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedRadar = { ...radarConfig };
     let current: any = updatedRadar;
 
@@ -80,7 +83,7 @@ export const Radar1ChartPanel: FC = observer(() => {
       radar: Array.isArray(radarOption) ? [updatedRadar] : updatedRadar,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -672,6 +675,8 @@ export const Radar1ChartPanel: FC = observer(() => {
     </div>
   );
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <Popover
       content={content}
@@ -688,4 +693,4 @@ export const Radar1ChartPanel: FC = observer(() => {
       </div>
     </Popover>
   );
-});
+};

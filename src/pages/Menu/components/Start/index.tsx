@@ -6,10 +6,11 @@ import {
 } from "@/components";
 import {
   elementActiveStore,
-  elementHoverActiveStore,
   menuActiveStore,
-  pageActiveStore,
-  pptStore,
+  useElementActiveStore,
+  useElementHoverActiveStore,
+  usePPTStore,
+  usePageActiveStore,
 } from "@/store";
 import {
   addPageAndActivate,
@@ -45,14 +46,29 @@ import {
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { ColorPicker, Popover, Slider, Tooltip } from "antd";
-import { observer } from "mobx-react-lite";
 import React, { useCallback, useMemo, useRef, type FC } from "react";
 import { textureItems } from "./texture";
 
-export const Start: FC = observer(() => {
+export const Start: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
+  const pageActive = usePageActiveStore((state) => state.pageActive);
+  const pages = usePPTStore((state) => state.pages);
+  const setPages = usePPTStore((state) => state.setPages);
+  const getActivePage = usePPTStore((state) => state.getActivePage);
+  const deletePage = usePPTStore((state) => state.deletePage);
+  const togglePageVisible = usePPTStore((state) => state.togglePageVisible);
+  const getAllElementInfo = usePPTStore((state) => state.getAllElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
+  const setPageActive = usePageActiveStore((state) => state.setPageActive);
+  const setElementActive = useElementActiveStore(
+    (state) => state.setElementActive
+  );
+  const setElementHoverActive = useElementHoverActiveStore(
+    (state) => state.setElementHoverActive
+  );
+
   // 获取当前页面
-  const pageActive = pageActiveStore.getPageActive();
-  const currentPage = pageActive ? pptStore.getActivePage(pageActive) : null;
+  const currentPage = pageActive ? getActivePage(pageActive) : null;
 
   // 获取页面背景属性，设置默认值
   const backgroundType = (currentPage as any)?.backgroundType || "solidColor";
@@ -75,18 +91,18 @@ export const Start: FC = observer(() => {
   // 更新页面属性的通用函数
   const updatePageProperty = useMemoizedFn((property: string, value: any) => {
     if (!pageActive) return;
-    const page = pptStore.getActivePage(pageActive);
+    const page = getActivePage(pageActive);
     if (!page) return;
 
-    const pageIndex = pptStore.getPages().findIndex((p) => p.id === pageActive);
+    const pageIndex = pages.findIndex((p) => p.id === pageActive);
     if (pageIndex === -1) return;
 
-    const newPages = [...pptStore.getPages()];
+    const newPages = [...pages];
     newPages[pageIndex] = {
       ...newPages[pageIndex],
       [property]: value,
     } as any;
-    pptStore.setPages(newPages);
+    setPages(newPages);
   });
 
   // 防抖定时器引用
@@ -111,7 +127,6 @@ export const Start: FC = observer(() => {
 
   // 批量修改所有页面的背景属性（使用当前页面的背景属性）
   const handleBatchUpdate = useMemoizedFn(() => {
-    const pages = pptStore.getPages();
     const newPages = pages.map((page) => ({
       ...page,
       backgroundType: backgroundType,
@@ -121,7 +136,7 @@ export const Start: FC = observer(() => {
       bgOpacity: bgOpacity,
       selectedTexture: selectedTexture,
     }));
-    pptStore.setPages(newPages);
+    setPages(newPages);
   });
 
   // 新建画布（在当前页面后添加新页面）
@@ -139,14 +154,15 @@ export const Start: FC = observer(() => {
   // 删除画布（删除当前页面）
   const handleDeletePage = useMemoizedFn(() => {
     if (!pageActive) return;
-    const success = pptStore.deletePage(pageActive);
+    const success = deletePage(pageActive);
     if (success) {
       elementActiveStore.resetElementActive();
       menuActiveStore.resetMenu();
-      const remainingPages = pptStore.getPages();
+      // 使用最新的 pages 状态
+      const remainingPages = usePPTStore.getState().pages;
       if (remainingPages.length > 0) {
         // 切换到第一个页面
-        pageActiveStore.setPageActive(remainingPages[0].id);
+        setPageActive(remainingPages[0].id);
       }
     }
   });
@@ -154,7 +170,7 @@ export const Start: FC = observer(() => {
   // 隐藏/显示幻灯片（切换当前页面的可见性）
   const handleTogglePageVisible = useMemoizedFn(() => {
     if (!pageActive) return;
-    pptStore.togglePageVisible(pageActive);
+    togglePageVisible(pageActive);
   });
 
   // 重置幻灯片（清空当前页面的所有元素）
@@ -228,13 +244,14 @@ export const Start: FC = observer(() => {
   });
 
   // 获取当前页面的所有元素，按 z-index 降序排序（高的在前）
-  // 不使用 useMemo，让 observer 自动响应 MobX store 的变化
-  const sortedElements = (() => {
+  // 使用 useMemo 来响应 pages 和 pageActive 的变化
+  const sortedElements = useMemo(() => {
     if (!pageActive) return [];
-    const allElements = pptStore.getAllElementInfo(pageActive);
+    const allElements = getAllElementInfo(pageActive);
     // 按 z-index 降序排序（高的在前）
     return [...allElements].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
-  })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageActive, pages]);
 
   // 配置拖拽传感器
   const sensors = useSensors(useSensor(PointerSensor));
@@ -257,7 +274,7 @@ export const Start: FC = observer(() => {
       newOrderedElements.forEach((element, index) => {
         const newZIndex = baseZIndex - index;
         if (element.zIndex !== newZIndex) {
-          pptStore.setElementInfo(pageActive, element.id, {
+          setElementInfo(pageActive, element.id, {
             ...element,
             zIndex: newZIndex,
           } as any);
@@ -286,7 +303,9 @@ export const Start: FC = observer(() => {
       opacity: isDragging ? 0.5 : 1,
     };
 
-    const isSelected = elementActiveStore.getElementActive() === element.id;
+    // 使用 Zustand hook 订阅 elementActive 状态
+    const elementActive = useElementActiveStore((state) => state.elementActive);
+    const isSelected = elementActive === element.id;
 
     return (
       <div
@@ -299,13 +318,13 @@ export const Start: FC = observer(() => {
             : "border border-transparent"
         }`}
         onClick={() => {
-          elementActiveStore.setElementActive(element.id);
+          setElementActive(element.id);
         }}
         onMouseEnter={() => {
-          elementHoverActiveStore.setElementHoverActive(element.id);
+          setElementHoverActive(element.id);
         }}
         onMouseLeave={() => {
-          elementHoverActiveStore.resetElementHoverActive();
+          useElementHoverActiveStore.getState().resetElementHoverActive();
         }}
       >
         <div
@@ -497,7 +516,7 @@ export const Start: FC = observer(() => {
         aspectRatio={false}
         icon={<Delete theme="outline" size="18" fill="#333" />}
         onClick={handleDeletePage}
-        disabled={!pageActive || pptStore.getPages().length <= 1}
+        disabled={!pageActive || pages.length <= 1}
       />
       <PanelLargeButton
         title="重置幻灯片"
@@ -508,4 +527,4 @@ export const Start: FC = observer(() => {
       />
     </div>
   );
-});
+};

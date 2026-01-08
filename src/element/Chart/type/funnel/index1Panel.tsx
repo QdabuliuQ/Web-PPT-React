@@ -1,28 +1,30 @@
 import { PanelNumberOrAuto } from "@/components";
-import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
+import {
+  useElementActiveStore,
+  usePageActiveStore,
+  usePPTStore,
+} from "@/store";
 import { Filter } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { InputNumber } from "antd";
-import { observer } from "mobx-react-lite";
 import { useMemo, type FC } from "react";
 import { ChartStylePanel } from "../../components/chartStylePanel";
 import type { IChartProps } from "../../index";
 
-export const Funnel1ChartPanel: FC = observer(() => {
-  const elementId = elementActiveStore.getElementActive();
-  const pageId = pageActiveStore.getPageActive();
+export const Funnel1ChartPanel: FC = () => {
+  // 使用 Zustand hooks 订阅状态变化
+  const elementId = useElementActiveStore((state) => state.elementActive);
+  const pageId = usePageActiveStore((state) => state.pageActive);
+  const getElementInfo = usePPTStore((state) => state.getElementInfo);
+  const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  if (!pageId || !elementId) return null;
-
-  const chartInfo = pptStore.getElementInfo(
-    pageId,
-    elementId
-  ) as IChartProps | null;
-
-  if (!chartInfo) return null;
+  const chartInfo =
+    pageId && elementId
+      ? (getElementInfo(pageId, elementId) as IChartProps | null)
+      : null;
 
   // 获取 series 配置，如果没有则使用默认值
-  const seriesOption = chartInfo.option?.series;
+  const seriesOption = chartInfo?.option?.series;
   const seriesConfig = Array.isArray(seriesOption)
     ? seriesOption[0] || {}
     : seriesOption || {};
@@ -45,6 +47,7 @@ export const Funnel1ChartPanel: FC = observer(() => {
 
   // 更新 series 配置的函数
   const handleSeriesChange = useMemoizedFn((path: string[], value: any) => {
+    if (!chartInfo || !pageId || !elementId) return;
     const updatedSeries = { ...seriesConfig };
     let current: any = updatedSeries;
 
@@ -65,7 +68,7 @@ export const Funnel1ChartPanel: FC = observer(() => {
       series: Array.isArray(seriesOption) ? [updatedSeries] : updatedSeries,
     };
 
-    pptStore.setElementInfo(pageId, elementId, {
+    setElementInfo(pageId, elementId, {
       ...chartInfo,
       option: updatedOption,
     });
@@ -567,6 +570,8 @@ export const Funnel1ChartPanel: FC = observer(() => {
     ]
   );
 
+  if (!pageId || !elementId || !chartInfo) return null;
+
   return (
     <ChartStylePanel
       title="样式"
@@ -576,4 +581,4 @@ export const Funnel1ChartPanel: FC = observer(() => {
       defaultActiveKey={["basic"]}
     />
   );
-});
+};

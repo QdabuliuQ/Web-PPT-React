@@ -2,15 +2,14 @@ import { AnimationWrapper, MovableWrapper } from "@/components";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
-  elementActiveStore,
   elementHoverActiveStore,
   pageActiveStore,
+  useElementActiveStore,
 } from "@/store";
 import type { ICommonElementProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import * as IconPark from "@icon-park/react";
 import { DiamondThree } from "@icon-park/react";
-import { observer } from "mobx-react-lite";
 import { memo, useEffect, useMemo, useRef, type FC } from "react";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
@@ -29,7 +28,7 @@ export interface IIconProps extends ICommonElementProps {
   strokeWidth: number; // 描边宽度
 }
 
-const Component: FC<IIconProps> = observer((props) => {
+const Component: FC<IIconProps> = (props) => {
   const {
     mode = "edit",
     id,
@@ -81,7 +80,9 @@ const Component: FC<IIconProps> = observer((props) => {
     },
   });
 
-  const isSelected = elementActiveStore.isElementActive(id);
+  // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
+  const elementActive = useElementActiveStore((state) => state.elementActive);
+  const isSelected = elementActive === id;
   const isHoverActive = elementHoverActiveStore.isElementHoverActive(id);
 
   // 获取当前页面ID，确保不为空
@@ -115,9 +116,10 @@ const Component: FC<IIconProps> = observer((props) => {
       onSelect?.();
     }
 
-    // 显示右键菜单，合并图标菜单和通用菜单
-    const menuItems = [...getIconMenuItems(), ...commonMenu];
-    contextMenuStore.showMenu(menuItems, e);
+    // 显示右键菜单，合并图标菜单和通用菜单（直接使用 MenuItem 类型）
+    const iconMenuItems = getIconMenuItems();
+    const menuItems = [...iconMenuItems, ...commonMenu];
+    contextMenuStore.showMenu(e.clientX, e.clientY, menuItems);
   };
 
   useEffect(() => {
@@ -220,7 +222,7 @@ const Component: FC<IIconProps> = observer((props) => {
       </AnimationWrapper>
     </div>
   );
-});
+};
 
 export const Icon = memo(Component);
 export const Name = "图标";
