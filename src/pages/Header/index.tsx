@@ -485,7 +485,7 @@ export const Header: FC = () => {
           />
         </Tooltip>
       </div>
-      <div className="flex items-center gap-[30px] flex-6">
+      <div className="flex items-center gap-[30px] flex-6 select-none">
         {menuItems.map((item) => (
           <div
             className={`text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${

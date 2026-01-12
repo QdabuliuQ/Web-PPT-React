@@ -144,7 +144,6 @@ export function formatKeyForDevice(key: string): string {
   if (isMacDevice()) {
     const macMap: Record<string, string> = {
       ctrl: "⌘",
-      control: "⌘",
       cmd: "⌘",
       command: "⌘",
       meta: "⌘",

@@ -30,9 +30,14 @@ interface IconPickerProps {
   children: ReactNode;
 }
 
+// 每批渲染的图标数量
+const BATCH_SIZE = 200;
+
 export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
   const [open, setOpen] = useState(false);
+  const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const loadingRef = useRef(false);
 
   // 获取所有图标名称
   const iconNames = useMemo(() => getAllIconNames(), []);
@@ -43,6 +48,8 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
       timerRef.current = null;
     }
     setOpen(true);
+    // 重置显示数量
+    setDisplayCount(BATCH_SIZE);
   });
 
   const handleClose = useMemoizedFn(() => {
@@ -56,8 +63,41 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
     setOpen(false);
   });
 
+  // 加载更多图标
+  const loadMore = useMemoizedFn(() => {
+    if (loadingRef.current || displayCount >= iconNames.length) {
+      return;
+    }
+
+    loadingRef.current = true;
+
+    // 使用 requestIdleCallback 在浏览器空闲时加载
+    requestIdleCallback(() => {
+      setDisplayCount((prev) => Math.min(prev + BATCH_SIZE, iconNames.length));
+      loadingRef.current = false;
+    });
+  });
+
+  // 处理滚动事件
+  const handleScroll = useMemoizedFn((instance: any) => {
+    const viewport = instance.elements().viewport;
+
+    if (!viewport) return;
+
+    const scrollTop = viewport.scrollTop;
+    const scrollHeight = viewport.scrollHeight;
+    const clientHeight = viewport.clientHeight;
+
+    // 当滚动到距离底部 200px 时加载更多
+    if (scrollHeight - scrollTop - clientHeight < 200) {
+      loadMore();
+    }
+  });
+
   const content = useMemo(() => {
     const iconParkAny = IconPark as any;
+    const displayedIcons = iconNames.slice(0, displayCount);
+    const hasMore = displayCount < iconNames.length;
 
     return (
       <div
@@ -78,9 +118,13 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
               y: "scroll",
             },
           }}
+          defer
+          events={{
+            scroll: handleScroll,
+          }}
         >
           <div className={styles.iconGrid}>
-            {iconNames.map((iconName) => {
+            {displayedIcons.map((iconName) => {
               const IconComponent = iconParkAny[iconName];
               if (!IconComponent) return null;
 
@@ -95,11 +139,31 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
                 </div>
               );
             })}
+            {hasMore && (
+              <div
+                style={{
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  padding: "10px",
+                  color: "#999",
+                  fontSize: "12px",
+                }}
+              >
+                加载中... ({displayCount} / {iconNames.length})
+              </div>
+            )}
           </div>
         </OverlayScrollbarsComponent>
       </div>
     );
-  }, [iconNames, handleOpen, handleClose, handleIconClick]);
+  }, [
+    iconNames,
+    displayCount,
+    handleOpen,
+    handleClose,
+    handleIconClick,
+    handleScroll,
+  ]);
 
   return (
     <Popover open={open} placement="bottom" content={content}>

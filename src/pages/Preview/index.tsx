@@ -1,10 +1,8 @@
 import {
-  contextMenuStore,
-  elementActiveStore,
-  fullscreenStore,
-  menuActiveStore,
-  pageActiveStore,
-  pptStore,
+  useContextMenuStore,
+  useElementActiveStore,
+  useFullscreenStore,
+  useMenuActiveStore,
   usePageActiveStore,
   usePPTStore,
 } from "@/store";
@@ -99,11 +97,15 @@ const PageItem: FC<{
         </div>
       </div>
       <div className="floatButton absolute bottom-[-12px] right-[13px] z-10 w-[80%] flex items-center justify-between opacity-0 transition-opacity">
-        <div
-          className="flex items-center justify-center w-[26px] h-[26px] bg-[#fff] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
-          onClick={(e) => onPlayPage(page.id, e)}
-        >
-          <PlayOne theme="filled" size="18" fill="#f25f00" />
+        <div>
+          {page.visible && (
+            <div
+              className="flex items-center justify-center w-[26px] h-[26px] bg-[#fff] rounded-[50%] opacity-[0.7] hover:opacity-[1] transition-opacity shadow-[0_0_8px_rgba(0,0,0,0.15)] cursor-pointer"
+              onClick={(e) => onPlayPage(page.id, e)}
+            >
+              <PlayOne theme="filled" size="18" fill="#f25f00" />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-[10px]">
           {index > 0 && (
@@ -138,6 +140,15 @@ const PreviewComponent: FC = () => {
   // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
   const pages = usePPTStore((state) => state.pages);
   const pageActive = usePageActiveStore((state) => state.pageActive);
+  const setPageActive = usePageActiveStore((state) => state.setPageActive);
+  const resetElementActive = useElementActiveStore(
+    (state) => state.resetElementActive
+  );
+  const setActiveMenu = useMenuActiveStore((state) => state.setActiveMenu);
+  const hideMenu = useContextMenuStore((state) => state.hideMenu);
+  const enterFullscreen = useFullscreenStore((state) => state.enterFullscreen);
+  const movePage = usePPTStore((state) => state.movePage);
+  const togglePageVisible = usePPTStore((state) => state.togglePageVisible);
 
   // 直接使用 pages.map 构建渲染数组
   const pagesToRender = pages.map((page, index) => ({
@@ -187,10 +198,14 @@ const PreviewComponent: FC = () => {
   );
 
   const handlePageClick = useMemoizedFn((pageId: string) => {
-    menuActiveStore.resetMenu();
-    elementActiveStore.resetElementActive();
-    pageActiveStore.setPageActive(pageId);
-    contextMenuStore.hideMenu();
+    // 切换到点击的页面
+    setPageActive(pageId);
+    // 清空选中的元素
+    resetElementActive();
+    // 设置 menuActive 为默认值 start
+    setActiveMenu("start");
+    // 隐藏右键菜单
+    hideMenu();
   });
 
   const handleAddPage = useMemoizedFn(() => {
@@ -204,7 +219,7 @@ const PreviewComponent: FC = () => {
   const handlePlayPage = useMemoizedFn(
     (pageId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      fullscreenStore.enterFullscreen(pageId);
+      enterFullscreen(pageId);
     }
   );
 
@@ -220,41 +235,39 @@ const PreviewComponent: FC = () => {
   const handleMovePageUp = useMemoizedFn(
     (pageId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      pptStore.movePage(pageId, "up");
+      movePage(pageId, "up");
     }
   );
 
   const handleMovePageDown = useMemoizedFn(
     (pageId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      pptStore.movePage(pageId, "down");
+      movePage(pageId, "down");
     }
   );
 
   const handleDuplicatePage = useMemoizedFn(() => {
-    duplicatePageAndActivate(pageActiveStore.pageActive, () => {
+    duplicatePageAndActivate(pageActive, () => {
       scrollToBottom();
     });
   });
 
   const handleDeletePage = useMemoizedFn(() => {
-    deletePageAndFallback(pageActiveStore.pageActive);
+    deletePageAndFallback(pageActive);
   });
 
   const handleTogglePageVisible = useMemoizedFn(() => {
-    const pageActive = pageActiveStore.pageActive;
     if (!pageActive) return;
-    pptStore.togglePageVisible(pageActive);
+    togglePageVisible(pageActive);
   });
 
   const handlePlayActivePage = useMemoizedFn(() => {
-    const pageActive = pageActiveStore.pageActive;
     if (!pageActive) return;
-    fullscreenStore.enterFullscreen(pageActive);
+    enterFullscreen(pageActive);
   });
 
   const handleResetPage = useMemoizedFn(() => {
-    resetPageElements(pageActiveStore.pageActive);
+    resetPageElements(pageActive);
   });
 
   const isInputElement = (target: HTMLElement) => {

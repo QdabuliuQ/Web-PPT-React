@@ -79,7 +79,7 @@ export const useMenuActiveStore = create<MenuActiveState>((set, get) => ({
   menuActive: "start",
   setMenuActive: (menuActive) => set({ menuActive }),
   getMenuActive: () => get().menuActive,
-  resetMenu: () => set({ menuActive: null }),
+  resetMenu: () => set({ menuActive: "start" }),
   setActiveMenu: (menuActive) => set({ menuActive }),
   isActive: (menuActive) => get().menuActive === menuActive,
 }));
@@ -96,6 +96,7 @@ class MenuActiveStoreCompat {
     return useMenuActiveStore.getState().getMenuActive();
   };
   resetMenu = () => {
+    console.log("resetMenu");
     useMenuActiveStore.getState().resetMenu();
   };
   setActiveMenu = (menuActive: string | null) => {

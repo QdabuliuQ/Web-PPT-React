@@ -29,8 +29,5 @@ export const getChartMenuItems = (
           },
         ]
       : []),
-    {
-      type: "separator",
-    },
   ];
 };

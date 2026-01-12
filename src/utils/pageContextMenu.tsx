@@ -66,7 +66,7 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         contextMenuStore.hideMenu();
         onScrollToBottom?.();
       },
-      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "C"])} />,
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Control", "C"])} />,
     },
     {
       type: "item" as const,
@@ -77,7 +77,7 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         contextMenuStore.hideMenu();
       },
       disabled: pages.length <= 1,
-      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "D"])} />,
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Control", "D"])} />,
     },
     {
       type: "item" as const,
@@ -91,7 +91,7 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         pptStore.togglePageVisible(pageId);
         contextMenuStore.hideMenu();
       },
-      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "H"])} />,
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Control", "H"])} />,
     },
     {
       type: "separator",
@@ -104,7 +104,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         fullscreenStore.enterFullscreen(pageId);
         contextMenuStore.hideMenu();
       },
-      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "P"])} />,
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Control", "P"])} />,
+      disabled: !isVisible,
     },
     {
       type: "item" as const,
@@ -114,7 +115,7 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
         resetPageElements(pageId);
         contextMenuStore.hideMenu();
       },
-      tip: <KeyboardIcon keys={formatKeysForDevice(["Ctrl", "R"])} />,
+      tip: <KeyboardIcon keys={formatKeysForDevice(["Control", "R"])} />,
     },
     {
       type: "item" as const,

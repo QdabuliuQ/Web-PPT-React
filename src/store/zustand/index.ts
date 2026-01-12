@@ -102,7 +102,7 @@ class PPTStoreCompat {
     return usePPTStore.getState().deletePage(pageId);
   };
 
-  movePage = (pageId: string, direction: "up" | "down") => {
+  movePage = (pageId: string, direction: "up" | "down" | "first" | "last") => {
     usePPTStore.getState().movePage(pageId, direction);
   };
 

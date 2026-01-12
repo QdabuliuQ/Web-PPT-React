@@ -532,12 +532,12 @@ const Component: FC<IMindMapProps> = (props) => {
         ref={moveableRef}
         id={id}
         active={isSelected}
-        bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
         x={x}
         y={y}
         width={width}
         height={height}
         rotate={rotate}
+        onSelect={onSelect}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}

@@ -1,7 +1,7 @@
 import {
-  displayStatusStore,
-  elementActiveStore,
-  pageActiveStore,
+  useDisplayStatusStore,
+  useElementActiveStore,
+  useMenuActiveStore,
   usePageActiveStore,
   usePPTStore,
 } from "@/store";
@@ -16,6 +16,14 @@ const GridComponent: FC = () => {
   // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
   const pages = usePPTStore((state) => state.pages);
   const pageActive = usePageActiveStore((state) => state.pageActive);
+  const setPageActive = usePageActiveStore((state) => state.setPageActive);
+  const resetElementActive = useElementActiveStore(
+    (state) => state.resetElementActive
+  );
+  const setDisplayStatus = useDisplayStatusStore(
+    (state) => state.setDisplayStatus
+  );
+  const setActiveMenu = useMenuActiveStore((state) => state.setActiveMenu);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.2);
 
@@ -48,14 +56,16 @@ const GridComponent: FC = () => {
     }
   );
 
-  // 处理双击切换到编辑模式
-  const handleDoubleClick = useMemoizedFn((pageId: string) => {
+  // 处理单击切换到编辑模式
+  const handleClick = useMemoizedFn((pageId: string) => {
     // 切换到点击的页面
-    pageActiveStore.setPageActive(pageId);
+    setPageActive(pageId);
     // 清空选中的元素
-    elementActiveStore.resetElementActive();
+    resetElementActive();
     // 切换到 default 模式
-    displayStatusStore.setDisplayStatus("default");
+    setDisplayStatus("default");
+    // 设置 menuActive 为默认值 start
+    setActiveMenu("start");
   });
 
   useEffect(() => {
@@ -85,7 +95,7 @@ const GridComponent: FC = () => {
                   ? "ring-2 ring-primary ring-offset-1"
                   : ""
               }`}
-              onDoubleClick={() => handleDoubleClick(page.id)}
+              onClick={() => handleClick(page.id)}
               onContextMenu={(e) => handleContextMenu(e, page.id)}
             >
               <div

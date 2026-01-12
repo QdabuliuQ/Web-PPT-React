@@ -9,6 +9,7 @@ import {
   menuActiveStore,
   useElementActiveStore,
   useElementHoverActiveStore,
+  useMenuActiveStore,
   usePPTStore,
   usePageActiveStore,
 } from "@/store";
@@ -66,6 +67,7 @@ export const Start: FC = () => {
   const setElementHoverActive = useElementHoverActiveStore(
     (state) => state.setElementHoverActive
   );
+  const setActiveMenu = useMenuActiveStore((state) => state.setActiveMenu);
 
   // 获取当前页面
   const currentPage = pageActive ? getActivePage(pageActive) : null;
@@ -143,6 +145,7 @@ export const Start: FC = () => {
   const handleAddPage = useMemoizedFn(() => {
     if (!pageActive) return;
     addPageAndActivate(pageActive);
+    setActiveMenu("start");
   });
 
   // 复制画布（复制当前页面）

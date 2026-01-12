@@ -1109,12 +1109,12 @@ const Component: FC<ITableProps> = (props) => {
         ref={moveableRef}
         id={id}
         active={isSelected && !resizing && !isDragging} // 选中且不在调整状态且不在拖拽选择状态时才激活拖拽
-        bounds={{ left: 0, top: 0, right: 1000, bottom: 700 }}
         x={x}
         y={y}
         width={width}
         height={height}
         rotate={rotate}
+        onSelect={onSelect}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}

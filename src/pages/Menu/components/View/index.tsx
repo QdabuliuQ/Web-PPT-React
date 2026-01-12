@@ -24,6 +24,8 @@ const ViewComponent: FC = () => {
   const gridType = usePPTStore((state) => state.gridType);
   const gridSize = usePPTStore((state) => state.gridSize);
   const guideLineShow = usePPTStore((state) => state.guideLineShow);
+  const horizontalLine = usePPTStore((state) => state.horizontalLine);
+  const verticalLine = usePPTStore((state) => state.verticalLine);
   const setGridType = usePPTStore((state) => state.setGridType);
   const setGridSize = usePPTStore((state) => state.setGridSize);
   const setGuideLineShow = usePPTStore((state) => state.setGuideLineShow);
@@ -124,7 +126,10 @@ const ViewComponent: FC = () => {
           setVerticalLine([]);
         }}
         aspectRatio={false}
-        disabled={gridType !== "line"}
+        disabled={
+          gridType !== "line" ||
+          (horizontalLine.length === 0 && verticalLine.length === 0)
+        }
         icon={<Clear theme="outline" size="18" fill="#333" />}
         title="清除参考线"
       />

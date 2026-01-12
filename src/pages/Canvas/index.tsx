@@ -25,13 +25,22 @@ import type { Elements } from "@/store/ppt";
 import { getRandomId } from "@/utils";
 import { globalEventBus } from "@/utils/eventBus";
 import { initPPTStore } from "@/utils/initStore";
+import { downloadImage, exportPageAsImage } from "@/utils/tool";
 import {
+  Clear,
   Clipboard,
   CloseOne,
+  DividingLineOne,
+  Export,
   GoEnd,
   GoStart,
+  GridTwo,
   Left,
+  Play,
+  PreviewCloseOne,
+  PreviewOpen,
   Right,
+  Ruler,
 } from "@icon-park/react";
 import Guides from "@scena/react-guides";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
@@ -58,6 +67,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   // 使用 Zustand hooks 订阅状态变化
   const pages = usePPTStore((state) => state.pages);
   const pageActive = usePageActiveStore((state) => state.pageActive);
+  const horizontalLineFromStore = usePPTStore((state) => state.horizontalLine);
+  const verticalLineFromStore = usePPTStore((state) => state.verticalLine);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -932,17 +943,194 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
               const canvasX = (e.clientX - canvasRect.left) / scale;
               const canvasY = (e.clientY - canvasRect.top) / scale;
 
-              // 添加粘贴菜单项
-              menuItems.push({
-                type: "item",
-                label: "粘贴",
-                onClick: () => {
-                  handleCanvasPaste(canvasX, canvasY);
-                  closeMenu();
+              // 获取当前页面信息
+              const currentPageId = pageActiveStore.getPageActive();
+              const currentPage = currentPageId
+                ? pptStore.getActivePage(currentPageId)
+                : undefined;
+              const isPageVisible = currentPage?.visible !== false;
+
+              // 构建右键菜单项
+              menuItems.push(
+                // 粘贴
+                {
+                  type: "item",
+                  label: "粘贴",
+                  onClick: () => {
+                    handleCanvasPaste(canvasX, canvasY);
+                    closeMenu();
+                  },
+                  icon: <Clipboard theme="outline" size="13" fill="#333" />,
+                  disabled: !copyElementStore.hasCopiedElement(),
                 },
-                icon: <Clipboard theme="outline" size="13" fill="#333" />,
-                disabled: !copyElementStore.hasCopiedElement(),
-              });
+                // 分隔线
+                {
+                  type: "separator",
+                },
+                // 网格线设置
+                {
+                  type: "submenu",
+                  label: "网格线",
+                  icon: <GridTwo theme="outline" size="13" fill="#333" />,
+                  children: [
+                    {
+                      type: "item",
+                      label: "10×10",
+                      onClick: () => {
+                        pptStore.setGridType("grid");
+                        pptStore.setGridSize(10);
+                        closeMenu();
+                      },
+                      disabled: gridType === "grid" && gridSize === 10,
+                    },
+                    {
+                      type: "item",
+                      label: "20×20",
+                      onClick: () => {
+                        pptStore.setGridType("grid");
+                        pptStore.setGridSize(20);
+                        closeMenu();
+                      },
+                      disabled: gridType === "grid" && gridSize === 20,
+                    },
+                    {
+                      type: "item",
+                      label: "30×30",
+                      onClick: () => {
+                        pptStore.setGridType("grid");
+                        pptStore.setGridSize(30);
+                        closeMenu();
+                      },
+                      disabled: gridType === "grid" && gridSize === 30,
+                    },
+                    {
+                      type: "item",
+                      label: "40×40",
+                      onClick: () => {
+                        pptStore.setGridType("grid");
+                        pptStore.setGridSize(40);
+                        closeMenu();
+                      },
+                      disabled: gridType === "grid" && gridSize === 40,
+                    },
+                  ],
+                },
+                // 标尺
+                {
+                  type: "item",
+                  label: gridType === "line" ? "隐藏标尺" : "显示标尺",
+                  onClick: () => {
+                    if (gridType === "line") {
+                      pptStore.setGridType("none");
+                    } else {
+                      pptStore.setGridType("line");
+                    }
+                    closeMenu();
+                  },
+                  icon: <Ruler theme="outline" size="13" fill="#333" />,
+                },
+                // 参考线
+                {
+                  type: "item",
+                  label: guideLineShow ? "隐藏参考线" : "显示参考线",
+                  onClick: () => {
+                    pptStore.setGuideLineShow(!guideLineShow);
+                    closeMenu();
+                  },
+                  icon: (
+                    <DividingLineOne theme="outline" size="13" fill="#333" />
+                  ),
+                  disabled: gridType !== "line",
+                },
+                // 清除参考线
+                {
+                  type: "item",
+                  label: "清除参考线",
+                  onClick: () => {
+                    pptStore.setHorizontalLine([]);
+                    pptStore.setVerticalLine([]);
+                    closeMenu();
+                  },
+                  icon: <Clear theme="outline" size="13" fill="#333" />,
+                  disabled: gridType !== "line",
+                },
+                // 分隔线
+                {
+                  type: "separator",
+                },
+                // 重置幻灯片
+                {
+                  type: "item",
+                  label: "重置幻灯片",
+                  onClick: () => {
+                    if (currentPageId) {
+                      const pages = [...pptStore.getPages()];
+                      const pageIndex = pages.findIndex(
+                        (p) => p.id === currentPageId
+                      );
+                      if (pageIndex !== -1) {
+                        pages[pageIndex] = {
+                          ...pages[pageIndex],
+                          elements: [],
+                        };
+                        pptStore.setPages(pages);
+                        elementActiveStore.resetElementActive();
+                        menuActiveStore.resetMenu();
+                      }
+                    }
+                    closeMenu();
+                  },
+                  icon: <Clear theme="outline" size="13" fill="#333" />,
+                },
+                // 隐藏/显示幻灯片
+                {
+                  type: "item",
+                  label: isPageVisible ? "隐藏幻灯片" : "显示幻灯片",
+                  onClick: () => {
+                    if (currentPageId) {
+                      pptStore.togglePageVisible(currentPageId);
+                    }
+                    closeMenu();
+                  },
+                  icon: isPageVisible ? (
+                    <PreviewCloseOne theme="outline" size="13" fill="#333" />
+                  ) : (
+                    <PreviewOpen theme="outline" size="13" fill="#333" />
+                  ),
+                },
+                // 播放幻灯片
+                {
+                  type: "item",
+                  label: "播放幻灯片",
+                  onClick: () => {
+                    if (currentPageId) {
+                      fullscreenStore.enterFullscreen(currentPageId);
+                    }
+                    closeMenu();
+                  },
+                  icon: <Play theme="outline" size="13" fill="#333" />,
+                  disabled: !isPageVisible,
+                },
+                // 导出图片
+                {
+                  type: "item",
+                  label: "导出图片",
+                  onClick: async () => {
+                    if (currentPageId) {
+                      const dataUrl = await exportPageAsImage(currentPageId);
+                      if (dataUrl) {
+                        const name = pptStore.getName();
+                        downloadImage(
+                          dataUrl,
+                          `${name || "未命名"}_${currentPageId}.png`
+                        );
+                      }
+                    }
+                    closeMenu();
+                  },
+                  icon: <Export theme="outline" size="13" fill="#333" />,
+                }
+              );
 
               elementActiveStore.resetElementActive();
               menuActiveStore.resetMenu();
@@ -1187,38 +1375,36 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   });
 
   // 计算 canvas-container 的偏移
-  const updateCanvasOffset = useMemoizedFn(() => {
-    const rulerContainer = document.getElementById("ruler-container");
-    const canvasContainer = document.getElementById("canvas-container");
-    if (!rulerContainer || !canvasContainer) return;
-
-    const rulerRect = rulerContainer.getBoundingClientRect();
-    const canvasRect = canvasContainer.getBoundingClientRect();
-
-    // getBoundingClientRect() 返回的是缩放后的实际位置
-    // 画布的左上角实际位置（已考虑缩放）
-    const canvasTopLeftX = canvasRect.left;
-    const canvasTopLeftY = canvasRect.top;
-
-    // 获取画布的缩放比例
-    const computedStyle = window.getComputedStyle(canvasContainer);
-    const transform = computedStyle.transform;
-    let canvasScale = 1;
-
-    if (transform && transform !== "none") {
-      const matrix = new DOMMatrix(transform);
-      canvasScale = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
-    } else {
-      const zoom = computedStyle.zoom;
-      if (zoom && zoom !== "1") {
-        canvasScale = parseFloat(zoom);
-      }
+  const updateCanvasOffset = useMemoizedFn((e?: React.TransitionEvent) => {
+    // 如果是 transitionend 事件，只处理 transform 属性的过渡
+    if (e && e.propertyName !== "transform") {
+      return;
     }
 
-    // 将画布的实际位置转换为逻辑位置（缩放前）
-    // 画布的逻辑左上角位置 = (实际位置 - 标尺容器位置) / 缩放比例
-    const logicalLeft = (canvasTopLeftX - rulerRect.left - 23) / canvasScale;
-    const logicalTop = (canvasTopLeftY - rulerRect.top - 23) / canvasScale;
+    const parentContainer = document.getElementById(
+      `parent-canvas-container-${pageId}`
+    );
+    if (!parentContainer) return;
+
+    const parentRect = parentContainer.getBoundingClientRect();
+
+    // 画布固定尺寸
+    const CANVAS_WIDTH = 1000;
+    const CANVAS_HEIGHT = 700;
+
+    // 使用当前的缩放比例
+    const canvasScale = scale;
+
+    // 计算画布在父容器中的逻辑位置（未缩放前的坐标）
+    // 画布使用 left: 50%, marginLeft: -500px 来居中
+    // 实际位置 = 父容器宽度 / 2 - 500
+    // 逻辑位置（缩放前）= 实际位置 / 缩放比例 = (父容器宽度 / 2 - 500) / scale
+    const parentWidth = parentRect.width;
+    const parentHeight = parentRect.height;
+
+    // 画布逻辑位置（相对于父容器的左上角）
+    const logicalLeft = parentWidth / 2 / canvasScale - CANVAS_WIDTH / 2;
+    const logicalTop = parentHeight / 2 / canvasScale - CANVAS_HEIGHT / 2;
 
     setCanvasOffset((prev) => {
       if (prev.left !== logicalLeft || prev.top !== logicalTop) {
@@ -1231,7 +1417,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const { run: debouncedHandleResizeEnd } = useDebounceFn(
     () => {
       updateRulerSize();
-      updateCanvasOffset();
+      // 等待画布过渡动画结束后再计算偏移
+      setTimeout(() => {
+        updateCanvasOffset();
+      }, 250); // 等待 200ms 动画 + 50ms 缓冲
       setTimeout(() => {
         setShowResizeOverlay(false);
       }, 300);
@@ -1248,7 +1437,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     }
 
     updateRulerSize();
-    updateCanvasOffset();
+
+    // 等待画布过渡动画结束后再计算偏移
+    // 画布有 transition-transform duration-200 的过渡动画
+    const timer = setTimeout(() => {
+      updateCanvasOffset();
+    }, 250); // 等待 200ms 动画 + 50ms 缓冲
 
     const resizeHandle = () => {
       setShowResizeOverlay(true);
@@ -1257,12 +1451,14 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
     window.addEventListener("resize", resizeHandle);
     return () => {
+      clearTimeout(timer);
       window.removeEventListener("resize", resizeHandle);
     };
   }, [
     pageId,
     mode,
     gridType,
+    scale,
     updateRulerSize,
     debouncedHandleResizeEnd,
     updateCanvasOffset,
@@ -1285,9 +1481,15 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     }
   }, [rulerZoom, canvasOffset.top, canvasOffset.left, gridType]);
 
-  // 获取参考线数据并转换为数字数组
-  const horizontalLine = pptStore.getHorizontalLine().map(Number);
-  const verticalLine = pptStore.getVerticalLine().map(Number);
+  // 使用从 store 订阅的参考线数据并转换为数字数组
+  const horizontalLine = useMemo(
+    () => horizontalLineFromStore.map(Number),
+    [horizontalLineFromStore]
+  );
+  const verticalLine = useMemo(
+    () => verticalLineFromStore.map(Number),
+    [verticalLineFromStore]
+  );
 
   // 监听参考线变化，通过 ref 调用 loadGuides 或 setState 更新 Guides 组件
   useEffect(() => {

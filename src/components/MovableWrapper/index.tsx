@@ -217,6 +217,12 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
 
     // 拖拽事件处理
     const handleDragStart = () => {
+      // 拖拽开始时，无论元素是否已选中，都触发选中
+      // 这样可以确保：如果拖拽未选中的元素，会选中它；如果已有其他元素选中，会切换到当前元素
+      if (onSelect) {
+        onSelect();
+      }
+      
       // 在拖拽开始时获取参考线快照
       if (gridType === "line") {
         const horizontalLine = pptStore.getHorizontalLine();
@@ -309,11 +315,6 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
 
     const guideSnapThreshold = snapThreshold;
 
-    // 如果未激活，不渲染 Moveable
-    if (!active) {
-      return null;
-    }
-
     // 确保目标元素存在
     const targetElement = document.getElementById(id);
     if (!targetElement) {
@@ -326,11 +327,11 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
         target={`#${id}`}
         container={document.querySelector("#canvas-container") as HTMLElement}
         className={styles.moveableWrapper}
-        // 功能配置
+        // 功能配置 - 始终允许拖拽，但缩放和旋转只在激活时可用
         draggable={draggable}
-        resizable={resizable}
-        rotatable={rotatable}
-        // 边界限制
+        resizable={active && resizable} // 只有激活时才能缩放
+        rotatable={active && rotatable} // 只有激活时才能旋转
+        // 边界限制 - 如果传入bounds则使用，否则不限制（允许拖出画布）
         bounds={bounds}
         // 事件处理
         onDragStart={handleDragStart}
@@ -359,12 +360,12 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
           gridType === "line" ? snapshotVerticalLine : undefined
         }
         elementGuidelines={snapEnabled ? elementGuidelines : undefined}
-        edge={true} // 启用边框线，但用CSS隐藏并重新绘制
+        edge={active} // 只有激活时才显示边框线
         zoom={1}
         origin={false}
         padding={{ left: 0, top: 0, right: 0, bottom: 0 }} // 添加 padding 避免遮挡节点边框
-        // 自定义渲染方向，只显示控制点
-        renderDirections={["nw", "n", "ne", "w", "e", "sw", "s", "se"]}
+        // 自定义渲染方向 - 只有激活时才显示控制点
+        renderDirections={active ? ["nw", "n", "ne", "w", "e", "sw", "s", "se"] : []}
       />
     );
   }

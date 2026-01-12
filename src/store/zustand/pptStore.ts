@@ -78,7 +78,7 @@ interface PPTState {
   addPage: (afterPageId?: string) => string;
   duplicatePage: (pageId: string) => string | null;
   deletePage: (pageId: string) => boolean;
-  movePage: (pageId: string, direction: "up" | "down") => void;
+  movePage: (pageId: string, direction: "up" | "down" | "first" | "last") => void;
   togglePageVisible: (pageId: string) => void;
 
   updatePageProperty: (
@@ -249,16 +249,19 @@ export const usePPTStore = create<PPTState>((set, get) => ({
     if (index === -1) return;
 
     const newPages = [...currentPages];
+    const [movedPage] = newPages.splice(index, 1);
+
     if (direction === "up" && index > 0) {
-      [newPages[index - 1], newPages[index]] = [
-        newPages[index],
-        newPages[index - 1],
-      ];
-    } else if (direction === "down" && index < newPages.length - 1) {
-      [newPages[index], newPages[index + 1]] = [
-        newPages[index + 1],
-        newPages[index],
-      ];
+      newPages.splice(index - 1, 0, movedPage);
+    } else if (direction === "down" && index < currentPages.length - 1) {
+      newPages.splice(index + 1, 0, movedPage);
+    } else if (direction === "first") {
+      newPages.unshift(movedPage);
+    } else if (direction === "last") {
+      newPages.push(movedPage);
+    } else {
+      // 如果方向不合法或无法移动，恢复原数组
+      newPages.splice(index, 0, movedPage);
     }
 
     set({ pages: newPages });
