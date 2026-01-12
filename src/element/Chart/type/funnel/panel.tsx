@@ -3,11 +3,11 @@ import {
   usePageActiveStore,
   usePPTStore,
 } from "@/store";
-import { type FC } from "react";
+import { memo, type FC } from "react";
 import type { IChartProps } from "../../index";
 import { Funnel1ChartPanel } from "./index1Panel";
 
-export const FunnelChartPanel: FC = () => {
+export const FunnelChartPanel: FC = memo(() => {
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -20,4 +20,4 @@ export const FunnelChartPanel: FC = () => {
   if (!chartInfo) return null;
 
   return <>{chartInfo.chartType === "funnel1" && <Funnel1ChartPanel />}</>;
-};
+});

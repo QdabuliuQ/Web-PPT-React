@@ -3,10 +3,11 @@ import {
   usePageActiveStore,
   usePPTStore,
 } from "@/store";
-import { type FC } from "react";
+import { memo, type FC } from "react";
 import type { IChartProps } from "../../index";
+import { Scatter1ChartPanel } from "./index1Panel";
 
-export const ScatterChartPanel: FC = () => {
+export const ScatterChartPanel: FC = memo(() => {
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -18,5 +19,5 @@ export const ScatterChartPanel: FC = () => {
 
   if (!chartInfo) return null;
 
-  return <></>;
-};
+  return <>{chartInfo.chartType === "scatter1" && <Scatter1ChartPanel />}</>;
+});

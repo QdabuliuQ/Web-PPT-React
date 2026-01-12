@@ -7,11 +7,11 @@ import {
 import { RadarChart } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Collapse, ColorPicker, InputNumber, Popover, Switch } from "antd";
-import { useMemo, type FC } from "react";
+import { memo, useMemo, type FC } from "react";
 import styles from "../../components/panel.module.less";
 import type { IChartProps } from "../../index";
 
-export const Radar1ChartPanel: FC = () => {
+export const Radar1ChartPanel: FC = memo(() => {
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -693,4 +693,4 @@ export const Radar1ChartPanel: FC = () => {
       </div>
     </Popover>
   );
-};
+});

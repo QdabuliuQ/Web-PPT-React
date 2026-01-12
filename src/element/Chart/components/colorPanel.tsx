@@ -7,20 +7,25 @@ import {
 import { AddOne, ColorFilter, Delete } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Button, ColorPicker, Popover } from "antd";
-import { type FC } from "react";
+import { memo, useState, type FC } from "react";
 import type { IChartProps } from "../index";
 
-export const ColorPanel: FC = () => {
+export const ColorPanel: FC = memo(() => {
+  // Popover 打开状态
+  const [open, setOpen] = useState(false);
+
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
-  const getElementInfo = usePPTStore((state) => state.getElementInfo);
   const setElementInfo = usePPTStore((state) => state.setElementInfo);
-
-  const chartInfo =
-    pageId && elementId
-      ? (getElementInfo(pageId, elementId) as IChartProps | null)
-      : null;
+  
+  // 直接订阅 chartInfo，这样当 pages 变化时组件会重新渲染
+  const chartInfo = usePPTStore((state) => {
+    if (!pageId || !elementId) return null;
+    const page = state.pages.find((p) => p.id === pageId);
+    const element = page?.elements.find((el) => el.id === elementId);
+    return (element as IChartProps) || null;
+  });
 
   // 获取 color 配置，如果没有则使用默认值
   const defaultColors = [
@@ -157,13 +162,16 @@ export const ColorPanel: FC = () => {
       trigger="hover"
       placement="bottom"
       overlayInnerStyle={{ padding: 0 }}
+      open={open}
+      onOpenChange={setOpen}
     >
       <div className="h-full">
         <PanelLargeButton
           title="颜色"
           icon={<ColorFilter theme="outline" size="18" fill="#333" />}
+          active={open}
         />
       </div>
     </Popover>
   );
-};
+});

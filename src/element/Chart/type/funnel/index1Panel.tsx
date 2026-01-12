@@ -15,13 +15,15 @@ export const Funnel1ChartPanel: FC = () => {
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
-  const getElementInfo = usePPTStore((state) => state.getElementInfo);
   const setElementInfo = usePPTStore((state) => state.setElementInfo);
-
-  const chartInfo =
-    pageId && elementId
-      ? (getElementInfo(pageId, elementId) as IChartProps | null)
-      : null;
+  
+  // 直接订阅 chartInfo，这样当 pages 变化时组件会重新渲染
+  const chartInfo = usePPTStore((state) => {
+    if (!pageId || !elementId) return null;
+    const page = state.pages.find((p) => p.id === pageId);
+    const element = page?.elements.find((el) => el.id === elementId);
+    return (element as IChartProps) || null;
+  });
 
   // 获取 series 配置，如果没有则使用默认值
   const seriesOption = chartInfo?.option?.series;

@@ -5,22 +5,23 @@ import {
 } from "@/store";
 import { ChartLine } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { useMemo, type FC } from "react";
+import { memo, useMemo, type FC } from "react";
 import { ChartStylePanel } from "../../components/chartStylePanel";
 import type { IChartProps } from "../../index";
 
-export const Line2ChartPanel: FC = () => {
+export const Line2ChartPanel: FC = memo(() => {
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
-  const getElementInfo = usePPTStore((state) => state.getElementInfo);
   const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  // 获取 chartInfo，使用 useMemo 确保依赖正确
-  const chartInfo = useMemo(() => {
+  // 直接订阅 chartInfo，这样当 pages 变化时组件会重新渲染
+  const chartInfo = usePPTStore((state) => {
     if (!pageId || !elementId) return null;
-    return getElementInfo(pageId, elementId) as IChartProps | null;
-  }, [pageId, elementId, getElementInfo]);
+    const page = state.pages.find((p) => p.id === pageId);
+    const element = page?.elements.find((el) => el.id === elementId);
+    return (element as IChartProps) || null;
+  });
 
   // 获取 series 配置，series 是数组
   const seriesArray = useMemo(() => {
@@ -30,10 +31,7 @@ export const Line2ChartPanel: FC = () => {
   }, [chartInfo]);
 
   // 获取第一个 series 的配置作为模板（所有 line 的属性都一样）
-  const seriesConfig = useMemo(
-    () => seriesArray[0] || {},
-    [seriesArray]
-  );
+  const seriesConfig = useMemo(() => seriesArray[0] || {}, [seriesArray]);
 
   // 更新 series 配置的函数
   // 由于所有 line 的属性都一样，更新时需要同步更新数组中所有项
@@ -470,5 +468,4 @@ export const Line2ChartPanel: FC = () => {
       defaultActiveKey={["basic"]}
     />
   );
-};
-
+});

@@ -7,20 +7,22 @@ import {
 import { BackgroundColor } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { ColorPicker } from "antd";
-import { useEffect, useState, type FC } from "react";
+import { memo, useEffect, useState, type FC } from "react";
 import type { IChartProps } from "../index";
 
-export const BackgroundColorPanel: FC = () => {
+export const BackgroundColorPanel: FC = memo(() => {
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
-  const getElementInfo = usePPTStore((state) => state.getElementInfo);
   const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  const chartInfo =
-    pageId && elementId
-      ? (getElementInfo(pageId, elementId) as IChartProps | null)
-      : null;
+  // 直接订阅 chartInfo，这样当 pages 变化时组件会重新渲染
+  const chartInfo = usePPTStore((state) => {
+    if (!pageId || !elementId) return null;
+    const page = state.pages.find((p) => p.id === pageId);
+    const element = page?.elements.find((el) => el.id === elementId);
+    return (element as IChartProps) || null;
+  });
 
   // 获取 backgroundColor 配置，如果没有则使用默认值 "rgba(0,0,0,0)"
   const backgroundColor = chartInfo?.option?.backgroundColor || "rgba(0,0,0,0)";
@@ -29,6 +31,9 @@ export const BackgroundColorPanel: FC = () => {
   const [localColor, setLocalColor] = useState<string>(
     typeof backgroundColor === "string" ? backgroundColor : "rgba(0,0,0,0)"
   );
+
+  // ColorPicker 打开状态
+  const [open, setOpen] = useState(false);
 
   // 当 store 中的值变化时，同步到本地状态
   useEffect(() => {
@@ -86,6 +91,8 @@ export const BackgroundColorPanel: FC = () => {
       value={localColor}
       trigger="hover"
       onChange={handleColorPickerChange}
+      open={open}
+      onOpenChange={setOpen}
       showText={(color) => (
         <div className="flex items-center gap-2 w-full">
           <span className="text-xs text-gray-600 flex-1 truncate">
@@ -98,8 +105,9 @@ export const BackgroundColorPanel: FC = () => {
         <PanelLargeButton
           title="背景"
           icon={<BackgroundColor theme="outline" size="18" fill="#333" />}
+          active={open}
         />
       </div>
     </ColorPicker>
   );
-};
+});
