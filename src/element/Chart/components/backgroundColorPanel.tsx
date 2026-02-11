@@ -8,9 +8,12 @@ import { BackgroundColor } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { ColorPicker } from "antd";
 import { memo, useEffect, useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import type { IChartProps } from "../index";
 
 export const BackgroundColorPanel: FC = memo(() => {
+  const { t } = useTranslation();
+  
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -103,7 +106,7 @@ export const BackgroundColorPanel: FC = memo(() => {
     >
       <div className="h-full">
         <PanelLargeButton
-          title="背景"
+          title={t('chartConfig.backgroundColor.title')}
           icon={<BackgroundColor theme="outline" size="18" fill="#333" />}
           active={open}
         />

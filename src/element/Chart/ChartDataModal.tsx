@@ -1,6 +1,7 @@
 import { useMemoizedFn } from "ahooks";
 import { Modal } from "antd";
 import { useEffect, useMemo, useRef, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import Spreadsheet from "x-data-spreadsheet";
 import "x-data-spreadsheet/dist/locale/zh-cn";
 import "x-data-spreadsheet/dist/xspreadsheet.css";
@@ -182,6 +183,7 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
   chartInfo,
   onSave,
 }) => {
+  const { t } = useTranslation();
   const spreadsheetContainerRef = useRef<HTMLDivElement>(null);
   const spreadsheetInstanceRef = useRef<Spreadsheet | null>(null);
 
@@ -337,12 +339,12 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
 
   return (
     <Modal
-      title="编辑图表数据"
+      title={t("chartDataModal.title")}
       open={open}
       onOk={handleSave}
       onCancel={onClose}
-      okText="保存"
-      cancelText="取消"
+      okText={t("chartDataModal.save")}
+      cancelText={t("chartDataModal.cancel")}
       width={1000}
       centered
       destroyOnClose={true}

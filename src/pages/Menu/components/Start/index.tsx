@@ -48,9 +48,11 @@ import {
 import { useMemoizedFn } from "ahooks";
 import { ColorPicker, Popover, Slider, Tooltip } from "antd";
 import React, { useCallback, useMemo, useRef, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { textureItems } from "./texture";
 
 export const Start: FC = () => {
+  const { t } = useTranslation();
   // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
   const pageActive = usePageActiveStore((state) => state.pageActive);
   const pages = usePPTStore((state) => state.pages);
@@ -351,7 +353,7 @@ export const Start: FC = () => {
             return (
               <>
                 {Icon && <Icon theme="outline" size="14" fill="#666" />}
-                <span>{name}</span>
+                <span>{(t as (key: string) => string)(name)}</span>
               </>
             );
           })()}

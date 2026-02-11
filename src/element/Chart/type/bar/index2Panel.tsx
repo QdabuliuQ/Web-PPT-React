@@ -15,10 +15,12 @@ import {
   Switch,
 } from "antd";
 import { memo, useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "../../components/panel.module.less";
 import type { IChartProps } from "../../index";
 
 export const Bar2ChartPanel: FC = memo(() => {
+  const { t } = useTranslation();
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -267,12 +269,12 @@ export const Bar2ChartPanel: FC = memo(() => {
     () => [
       {
         key: "angleAxisBasic",
-        title: "角度轴基础设置",
+        title: t("chartConfig.polar.angleAxisBasic"),
         configs: [
           {
             type: "inputNumber",
             keys: ["startAngle"],
-            label: "起始角度",
+            label: t("chartConfig.polar.startAngle"),
             defaultValue: 75,
             min: -360,
             max: 360,
@@ -281,23 +283,23 @@ export const Bar2ChartPanel: FC = memo(() => {
       },
       {
         key: "angleAxisLine",
-        title: "角度轴线",
+        title: t("chartConfig.polar.angleAxisLine"),
         configs: [
           {
             type: "switch",
             keys: ["axisLine", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
           },
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: "#666",
           },
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "width"],
-            label: "宽度",
+            label: t("chartConfig.common.width"),
             defaultValue: 1,
             min: 0,
             max: 10,
@@ -305,18 +307,18 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["axisLine", "lineStyle", "type"],
-            label: "样式",
+            label: t("chartConfig.line.style"),
             defaultValue: "solid",
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t("chartConfig.line.solid"), value: "solid" },
+              { label: t("chartConfig.line.dashed"), value: "dashed" },
+              { label: t("chartConfig.line.dotted"), value: "dotted" },
             ],
           },
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "opacity"],
-            label: "透明度",
+            label: t("chartConfig.common.opacity"),
             defaultValue: 1,
             min: 0,
             max: 1,
@@ -325,13 +327,13 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "shadowColor"],
-            label: "阴影颜色",
+            label: t("chartConfig.shadow.color"),
             defaultValue: "transparent",
           },
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowBlur"],
-            label: "阴影模糊",
+            label: t("chartConfig.shadow.blur"),
             defaultValue: 0,
             min: 0,
             max: 50,
@@ -339,7 +341,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t("chartConfig.shadow.offsetX"),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -347,7 +349,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t("chartConfig.shadow.offsetY"),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -356,23 +358,23 @@ export const Bar2ChartPanel: FC = memo(() => {
       },
       {
         key: "angleAxisLabel",
-        title: "角度轴标签",
+        title: t("chartConfig.polar.angleAxisLabel"),
         configs: [
           {
             type: "switch",
             keys: ["axisLabel", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
           },
           {
             type: "colorPicker",
             keys: ["axisLabel", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: "#666",
           },
           {
             type: "inputNumber",
             keys: ["axisLabel", "rotate"],
-            label: "旋转角度",
+            label: t("chartConfig.axis.rotate"),
             defaultValue: 0,
             min: -180,
             max: 180,
@@ -380,7 +382,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "fontSize"],
-            label: "字体大小",
+            label: t("chartConfig.font.fontSize"),
             defaultValue: 12,
             min: 1,
             max: 100,
@@ -388,33 +390,33 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["axisLabel", "fontStyle"],
-            label: "字体样式",
+            label: t("chartConfig.font.fontStyle"),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
+              { label: t("chartConfig.font.styles.normal"), value: "normal" },
+              { label: t("chartConfig.font.styles.italic"), value: "italic" },
             ],
           },
           {
             type: "select",
             keys: ["axisLabel", "fontWeight"],
-            label: "字体粗细",
+            label: t("chartConfig.font.fontWeight"),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
+              { label: t("chartConfig.font.weights.normal"), value: "normal" },
+              { label: t("chartConfig.font.weights.bold"), value: "bold" },
             ],
           },
           {
             type: "colorPicker",
             keys: ["axisLabel", "shadowColor"],
-            label: "阴影颜色",
+            label: t("chartConfig.shadow.color"),
             defaultValue: "transparent",
           },
           {
             type: "inputNumber",
             keys: ["axisLabel", "shadowBlur"],
-            label: "阴影模糊",
+            label: t("chartConfig.shadow.blur"),
             defaultValue: 0,
             min: 0,
             max: 50,
@@ -422,7 +424,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t("chartConfig.shadow.offsetX"),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -430,7 +432,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t("chartConfig.shadow.offsetY"),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -438,13 +440,13 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["axisLabel", "textShadowColor"],
-            label: "文字阴影颜色",
+            label: t("chartConfig.textShadow.color"),
             defaultValue: "transparent",
           },
           {
             type: "inputNumber",
             keys: ["axisLabel", "textShadowBlur"],
-            label: "文字阴影模糊",
+            label: t("chartConfig.textShadow.blur"),
             defaultValue: 0,
             min: 0,
             max: 50,
@@ -452,7 +454,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "textShadowOffsetX"],
-            label: "文字阴影X偏移",
+            label: t("chartConfig.textShadow.offsetX"),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -460,7 +462,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "textShadowOffsetY"],
-            label: "文字阴影Y偏移",
+            label: t("chartConfig.textShadow.offsetY"),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -468,7 +470,7 @@ export const Bar2ChartPanel: FC = memo(() => {
         ],
       },
     ],
-    []
+    [t]
   );
 
   // 获取 series[0].label 配置
@@ -616,23 +618,23 @@ export const Bar2ChartPanel: FC = memo(() => {
     () => [
       {
         key: "basic",
-        title: "字体设置",
+        title: t("chartConfig.polar.fontSettings"),
         configs: [
           {
             type: "switch",
             keys: ["show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
           },
           {
             type: "colorPicker",
             keys: ["color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: "#fff",
           },
           {
             type: "inputNumber",
             keys: ["fontSize"],
-            label: "字体大小",
+            label: t("chartConfig.font.fontSize"),
             defaultValue: 12,
             min: 8,
             max: 72,
@@ -640,7 +642,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["rotate"],
-            label: "旋转角度",
+            label: t("chartConfig.axis.rotate"),
             defaultValue: 0,
             min: -180,
             max: 180,
@@ -648,28 +650,28 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "input",
             keys: ["fontFamily"],
-            label: "字体",
+            label: t("chartConfig.font.fontFamily"),
             defaultValue: "sans-serif",
-            placeholder: "请输入字体",
+            placeholder: t("chartConfig.polar.enterFont"),
           },
           {
             type: "select",
             keys: ["fontStyle"],
-            label: "字体样式",
+            label: t("chartConfig.font.fontStyle"),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
+              { label: t("chartConfig.font.styles.normal"), value: "normal" },
+              { label: t("chartConfig.font.styles.italic"), value: "italic" },
             ],
           },
           {
             type: "select",
             keys: ["fontWeight"],
-            label: "字体粗细",
+            label: t("chartConfig.font.fontWeight"),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
+              { label: t("chartConfig.font.weights.normal"), value: "normal" },
+              { label: t("chartConfig.font.weights.bold"), value: "bold" },
               { label: "100", value: "100" },
               { label: "200", value: "200" },
               { label: "300", value: "300" },
@@ -684,13 +686,13 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["textShadowColor"],
-            label: "阴影颜色",
+            label: t("chartConfig.shadow.color"),
             defaultValue: "transparent",
           },
           {
             type: "inputNumber",
             keys: ["textShadowBlur"],
-            label: "模糊度",
+            label: t("chartConfig.polar.blur"),
             defaultValue: 0,
             min: 0,
             max: 100,
@@ -698,7 +700,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["textShadowOffsetX"],
-            label: "X偏移",
+            label: t("chartConfig.polar.xOffset"),
             defaultValue: 0,
             min: -100,
             max: 100,
@@ -706,7 +708,7 @@ export const Bar2ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["textShadowOffsetY"],
-            label: "Y偏移",
+            label: t("chartConfig.polar.yOffset"),
             defaultValue: 0,
             min: -100,
             max: 100,
@@ -714,7 +716,7 @@ export const Bar2ChartPanel: FC = memo(() => {
         ],
       },
     ],
-    []
+    [t]
   );
 
   const content = (
@@ -723,11 +725,11 @@ export const Bar2ChartPanel: FC = memo(() => {
         items={[
           {
             key: "polar",
-            label: <span style={{ fontSize: "12px" }}>极坐标设置</span>,
+            label: <span style={{ fontSize: "12px" }}>{t("chartConfig.polar.settings")}</span>,
             children: (
               <div className="grid grid-cols-3 gap-[10px]">
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">中心X (%)</label>
+                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.centerX")}</label>
                   <InputNumber
                     value={centerX}
                     onChange={handleCenterXChange}
@@ -741,7 +743,7 @@ export const Bar2ChartPanel: FC = memo(() => {
                   />
                 </div>
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">中心Y (%)</label>
+                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.centerY")}</label>
                   <InputNumber
                     value={centerY}
                     onChange={handleCenterYChange}
@@ -755,7 +757,7 @@ export const Bar2ChartPanel: FC = memo(() => {
                   />
                 </div>
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">内圈 (%)</label>
+                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.innerRing")}</label>
                   <InputNumber
                     value={radiusInner}
                     onChange={handleRadiusInnerChange}
@@ -769,7 +771,7 @@ export const Bar2ChartPanel: FC = memo(() => {
                   />
                 </div>
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">外圈 (%)</label>
+                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.outerRing")}</label>
                   <InputNumber
                     value={radiusOuter}
                     onChange={handleRadiusOuterChange}
@@ -835,7 +837,7 @@ export const Bar2ChartPanel: FC = memo(() => {
     >
       <div className="h-full">
         <PanelLargeButton
-          title="极坐标"
+          title={t("chartConfig.polar.title")}
           icon={<RadarChart theme="outline" size="18" fill="#333" />}
         />
       </div>

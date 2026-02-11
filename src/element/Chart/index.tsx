@@ -357,5 +357,5 @@ export const CreateChart = (props: Partial<IChartProps> = {}) => {
   };
 };
 
-export const Name = "图表";
+export const Name = "elements.chart.title";
 export const ChartPanelIcon = ChartHistogram;

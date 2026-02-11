@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/hooks/useContextMenu";
 import { Download, PreviewOpen } from "@icon-park/react";
+import i18n from "@/i18n";
 
 export interface ImageMenuProps {
   onPreview: () => void;
@@ -10,10 +11,12 @@ export const getImageMenuItems = ({
   onPreview,
   onDownload,
 }: ImageMenuProps): MenuItem[] => {
+  const t = i18n.t.bind(i18n);
+  
   return [
     {
       type: "item",
-      label: "预览",
+      label: t('elements.image.preview'),
       icon: <PreviewOpen theme="outline" size="13" fill="#333" />,
       onClick: () => {
         onPreview();
@@ -21,7 +24,7 @@ export const getImageMenuItems = ({
     },
     {
       type: "item",
-      label: "下载图片",
+      label: t('elements.image.downloadImage'),
       icon: <Download theme="outline" size="13" fill="#333" />,
       onClick: () => {
         onDownload();

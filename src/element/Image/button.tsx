@@ -7,6 +7,7 @@ import { Input, Modal, Radio, Upload, message } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
 import imageCompression from "browser-image-compression";
 import { memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CreateImage } from ".";
 
 const { Dragger } = Upload;
@@ -14,12 +15,13 @@ const { LIST_IGNORE } = Upload;
 
 type UploadMode = "url" | "upload";
 
-const uploadModeOptions = [
-  { label: "图片地址", value: "url" },
-  { label: "上传图片", value: "upload" },
-];
-
 export default function ImageButton() {
+  const { t } = useTranslation();
+  
+  const uploadModeOptions = [
+    { label: t('elements.image.uploadMode.url'), value: "url" },
+    { label: t('elements.image.uploadMode.upload'), value: "upload" },
+  ];
   const [open, setOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<UploadMode>("url");
   const [imageUrl, setImageUrl] = useState("");
@@ -59,7 +61,7 @@ export default function ImageButton() {
         if (success) {
           resolve(data);
         } else {
-          reject(new Error(error || "文件读取失败"));
+          reject(new Error(error || t('elements.image.errors.processFailed')));
         }
       };
 
@@ -109,7 +111,7 @@ export default function ImageButton() {
   const handleOk = useMemoizedFn(async () => {
     const pageId = pageActiveStore.getPageActive();
     if (!pageId) {
-      message.error("请先选择一个页面");
+      message.error(t('elements.image.errors.selectPage'));
       return;
     }
 
@@ -121,13 +123,13 @@ export default function ImageButton() {
       // URL 模式，直接使用输入的 URL
       src = imageUrl.trim();
       if (!src) {
-        message.error("请输入图片地址");
+        message.error(t('elements.image.errors.enterUrl'));
         return;
       }
     } else {
       // 上传模式
       if (fileList.length === 0) {
-        message.error("请上传图片");
+        message.error(t('elements.image.errors.uploadImage'));
         return;
       }
 
@@ -144,7 +146,7 @@ export default function ImageButton() {
           src = await convertFileToBase64(compressedFile);
         } catch {
           setLoading(false);
-          message.error("图片处理失败，请重试");
+          message.error(t('elements.image.errors.processFailed'));
           return;
         }
         setLoading(false);
@@ -155,12 +157,12 @@ export default function ImageButton() {
         // 如果没有原始文件对象但有预览 URL，使用预览 URL
         src = file.thumbUrl;
       } else {
-        message.error("图片上传失败，请重试");
+        message.error(t('elements.image.errors.uploadFailed'));
         return;
       }
 
       if (!src) {
-        message.error("图片上传失败，请重试");
+        message.error(t('elements.image.errors.uploadFailed'));
         return;
       }
     }
@@ -171,7 +173,7 @@ export default function ImageButton() {
     setLoading(false);
 
     if (!dimensions) {
-      message.error("图片地址无效或无法加载，请检查图片链接");
+      message.error(t('elements.image.errors.invalidUrl'));
       return;
     }
 
@@ -239,12 +241,12 @@ export default function ImageButton() {
   const beforeUpload = useMemoizedFn((file: File) => {
     const isImage = file.type.startsWith("image/");
     if (!isImage) {
-      message.error("只能上传图片文件");
+      message.error(t('elements.image.errors.onlyImage'));
       return LIST_IGNORE; // 阻止文件被添加到列表
     }
     const isLt3M = file.size / 1024 / 1024 < 3;
     if (!isLt3M) {
-      message.error("图片大小不能超过 3MB");
+      message.error(t('elements.image.errors.sizeLimit'));
       return LIST_IGNORE; // 阻止文件被添加到列表
     }
     // 返回 false 阻止自动上传，但允许文件被添加到列表
@@ -256,16 +258,16 @@ export default function ImageButton() {
     <>
       <PanelButton
         icon={<Pic theme="outline" size="24" fill="#333" />}
-        title="图片"
+        title={t('elements.image.button')}
         onClick={handleClick}
       />
       <Modal
-        title="插入图片"
+        title={t('elements.image.insertImage')}
         open={open}
         onOk={handleOk}
         onCancel={handleCancel}
-        okText="确定"
-        cancelText="取消"
+        okText={t('common.confirm')}
+        cancelText={t('common.cancel')}
         width={500}
         centered
         confirmLoading={loading}
@@ -284,7 +286,7 @@ export default function ImageButton() {
           {uploadMode === "url" ? (
             <div>
               <Input
-                placeholder="请输入图片 URL"
+                placeholder={t('elements.image.placeholder.url')}
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 onPressEnter={handleOk}
@@ -302,9 +304,9 @@ export default function ImageButton() {
                 <p className="ant-upload-drag-icon">
                   <InboxOutlined />
                 </p>
-                <p className="ant-upload-text">点击或拖拽图片到此区域上传</p>
+                <p className="ant-upload-text">{t('elements.image.uploadHint.dragText')}</p>
                 <p className="ant-upload-hint">
-                  支持单个图片文件，大小不超过 3MB
+                  {t('elements.image.uploadHint.hint')}
                 </p>
               </Dragger>
             </div>

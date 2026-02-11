@@ -7,6 +7,7 @@ import {
   RightBar,
   TopBar,
 } from "@icon-park/react";
+import i18n from "@/i18n";
 
 // 获取表格元素信息的函数
 const getTableElementInfo = () => {
@@ -27,6 +28,8 @@ const getTableElementInfo = () => {
 
 // 导出表格菜单项获取函数
 export const getTableMenuItems = ({ onEdit }): Menu => {
+  const t = i18n.t.bind(i18n);
+  
   // 创建新的空单元格
   const createEmptyCell = () => ({
     fontSize: 14,
@@ -43,7 +46,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
   return [
     {
       type: "item",
-      label: "编辑数据",
+      label: t('elements.table.editData'),
       icon: <EditOne theme="outline" size="13" fill="#333" />,
       onClick: onEdit,
     },
@@ -52,7 +55,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     },
     {
       type: "item",
-      label: "顶部插入一行",
+      label: t('elements.table.insertRow.top'),
       icon: <TopBar theme="outline" size="13" fill="#333" />,
       onClick: () => {
         const tableElement = getTableElementInfo();
@@ -89,7 +92,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     },
     {
       type: "item",
-      label: "底部插入一行",
+      label: t('elements.table.insertRow.bottom'),
       icon: <BottomBar theme="outline" size="13" fill="#333" />,
       onClick: () => {
         const tableElement = getTableElementInfo();
@@ -126,7 +129,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     },
     {
       type: "item",
-      label: "左边插入一列",
+      label: t('elements.table.insertColumn.left'),
       icon: <LeftBar theme="outline" size="13" fill="#333" />,
       onClick: () => {
         const tableElement = getTableElementInfo();
@@ -160,7 +163,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     },
     {
       type: "item",
-      label: "右边插入一列",
+      label: t('elements.table.insertColumn.right'),
       icon: <RightBar theme="outline" size="13" fill="#333" />,
       onClick: () => {
         const tableElement = getTableElementInfo();

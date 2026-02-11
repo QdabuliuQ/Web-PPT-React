@@ -2,6 +2,7 @@ import { PanelLargeButton } from "@/components/PanelLargeButton";
 import { DropShadowDown } from "@icon-park/react";
 import { ColorPicker, Slider } from "antd";
 import { type FC } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.less";
 
 interface IPanelShadowSettingProps {
@@ -35,11 +36,13 @@ export const PanelShadowSetting: FC<IPanelShadowSettingProps> = ({
   onShadowBlurChange,
   onShadowSpreadChange,
 }) => {
+  const { t } = useTranslation();
   const isBoxShadow = shadowType === "box-shadow";
+  
   return (
     <div className="h-full flex items-center gap-[8px] flex-shrink-0">
       <PanelLargeButton
-        title="阴影"
+        title={t('component.shadow.title')}
         active={shadow}
         icon={<DropShadowDown theme="outline" size="18" fill="#333" />}
         onClick={() => onShadowChange(!shadow)}
@@ -77,7 +80,7 @@ export const PanelShadowSetting: FC<IPanelShadowSettingProps> = ({
       {isBoxShadow && (
         <div className="flex flex-col justify-center gap-[10px] ml-[5px]">
           <div className="flex items-center gap-[6px]">
-            <span className="text-[12px] text-gray-500 w-[40px]">模糊</span>
+            <span className="text-[12px] text-gray-500 w-[40px]">{t('component.shadow.blur')}</span>
             <Slider
               style={{ width: 90, margin: 0 }}
               min={0}
@@ -88,7 +91,7 @@ export const PanelShadowSetting: FC<IPanelShadowSettingProps> = ({
             />
           </div>
           <div className="flex items-center gap-[6px]">
-            <span className="text-[12px] text-gray-500 w-[40px]">扩张</span>
+            <span className="text-[12px] text-gray-500 w-[40px]">{t('component.shadow.spread')}</span>
             <Slider
               style={{ width: 90, margin: 0 }}
               min={0}

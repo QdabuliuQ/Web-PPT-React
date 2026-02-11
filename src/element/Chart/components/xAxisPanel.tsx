@@ -6,10 +6,13 @@ import {
 import { ChartHistogram } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { memo, useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import type { IChartProps } from "../index";
 import { ChartStylePanel } from "./chartStylePanel";
 
 export const XAxisPanel: FC = memo(() => {
+  const { t } = useTranslation();
+  
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -142,44 +145,44 @@ export const XAxisPanel: FC = memo(() => {
     () => [
       {
         key: "basic",
-        title: "基础设置",
+        title: t('chartConfig.sections.basicSettings'),
         configs: [
           {
             type: "switch",
             keys: ["show"],
-            label: "显示",
+            label: t('chartConfig.common.show'),
             onChange: handleConfigChange,
           },
           {
             type: "input",
             keys: ["name"],
-            label: "名称",
-            placeholder: "请输入坐标轴名称",
+            label: t('chartConfig.common.name'),
+            placeholder: t('chartConfig.common.placeholder.enterAxisName'),
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["nameLocation"],
-            label: "名称位置",
+            label: t('chartConfig.position.namePosition'),
             defaultValue: "end",
             options: [
-              { label: "起始", value: "start" },
-              { label: "居中", value: "center" },
-              { label: "结束", value: "end" },
+              { label: t('chartConfig.position.start'), value: "start" },
+              { label: t('chartConfig.position.center'), value: "center" },
+              { label: t('chartConfig.position.end'), value: "end" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["nameTextStyle", "color"],
-            label: "名称颜色",
+            label: t('chartConfig.font.nameColor'),
             defaultValue: "#666",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["nameTextStyle", "fontSize"],
-            label: "名称字体大小",
+            label: t('chartConfig.font.nameSize'),
             defaultValue: 12,
             min: 1,
             max: 100,
@@ -188,39 +191,39 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["nameTextStyle", "fontStyle"],
-            label: "名称字体样式",
+            label: t('chartConfig.font.nameStyle'),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
-              { label: "倾斜", value: "oblique" },
+              { label: t('chartConfig.font.styles.normal'), value: "normal" },
+              { label: t('chartConfig.font.styles.italic'), value: "italic" },
+              { label: t('chartConfig.font.styles.oblique'), value: "oblique" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["nameTextStyle", "fontWeight"],
-            label: "名称字体粗细",
+            label: t('chartConfig.font.nameWeight'),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
-              { label: "更粗", value: "bolder" },
-              { label: "更细", value: "lighter" },
+              { label: t('chartConfig.font.weights.normal'), value: "normal" },
+              { label: t('chartConfig.font.weights.bold'), value: "bold" },
+              { label: t('chartConfig.font.weights.bolder'), value: "bolder" },
+              { label: t('chartConfig.font.weights.lighter'), value: "lighter" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["nameTextStyle", "textShadowColor"],
-            label: "名称文字阴影颜色",
+            label: t('chartConfig.textShadow.color'),
             defaultValue: "transparent",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["nameTextStyle", "textShadowBlur"],
-            label: "名称文字阴影模糊",
+            label: t('chartConfig.textShadow.blur'),
             defaultValue: 0,
             min: 0,
             max: 50,
@@ -229,7 +232,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["nameTextStyle", "textShadowOffsetX"],
-            label: "名称文字阴影X偏移",
+            label: t('chartConfig.textShadow.offsetX'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -238,7 +241,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["nameTextStyle", "textShadowOffsetY"],
-            label: "名称文字阴影Y偏移",
+            label: t('chartConfig.textShadow.offsetY'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -248,25 +251,25 @@ export const XAxisPanel: FC = memo(() => {
       },
       {
         key: "axisLine",
-        title: "坐标轴线",
+        title: t('chartConfig.sections.axisLine'),
         configs: [
           {
             type: "switch",
             keys: ["axisLine", "show"],
-            label: "显示",
+            label: t('chartConfig.common.show'),
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "color"],
-            label: "颜色",
+            label: t('chartConfig.common.color'),
             defaultValue: "#666",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "width"],
-            label: "宽度",
+            label: t('chartConfig.common.width'),
             defaultValue: 1,
             min: 0,
             max: 10,
@@ -275,19 +278,19 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["axisLine", "lineStyle", "type"],
-            label: "样式",
+            label: t('chartConfig.line.style'),
             defaultValue: "solid",
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t('chartConfig.line.solid'), value: "solid" },
+              { label: t('chartConfig.line.dashed'), value: "dashed" },
+              { label: t('chartConfig.line.dotted'), value: "dotted" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "slider",
             keys: ["axisLine", "lineStyle", "opacity"],
-            label: "透明度",
+            label: t('chartConfig.common.opacity'),
             defaultValue: 1,
             min: 0,
             max: 1,
@@ -297,14 +300,14 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "shadowColor"],
-            label: "阴影颜色",
+            label: t('chartConfig.shadow.color'),
             defaultValue: "transparent",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowBlur"],
-            label: "阴影模糊",
+            label: t('chartConfig.shadow.blur'),
             defaultValue: 0,
             min: 0,
             max: 50,
@@ -313,7 +316,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t('chartConfig.shadow.offsetX'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -322,7 +325,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t('chartConfig.shadow.offsetY'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -332,25 +335,25 @@ export const XAxisPanel: FC = memo(() => {
       },
       {
         key: "axisLabel",
-        title: "坐标轴标签",
+        title: t('chartConfig.sections.axisLabel'),
         configs: [
           {
             type: "switch",
             keys: ["axisLabel", "show"],
-            label: "显示",
+            label: t('chartConfig.common.show'),
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLabel", "color"],
-            label: "颜色",
+            label: t('chartConfig.common.color'),
             defaultValue: "#666",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["axisLabel", "rotate"],
-            label: "旋转角度",
+            label: t('chartConfig.axis.rotate'),
             defaultValue: 0,
             min: -180,
             max: 180,
@@ -359,7 +362,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "fontSize"],
-            label: "字体大小",
+            label: t('chartConfig.font.fontSize'),
             defaultValue: 12,
             min: 1,
             max: 100,
@@ -368,39 +371,39 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["axisLabel", "fontStyle"],
-            label: "字体样式",
+            label: t('chartConfig.font.fontStyle'),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
-              { label: "倾斜", value: "oblique" },
+              { label: t('chartConfig.font.styles.normal'), value: "normal" },
+              { label: t('chartConfig.font.styles.italic'), value: "italic" },
+              { label: t('chartConfig.font.styles.oblique'), value: "oblique" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["axisLabel", "fontWeight"],
-            label: "字体粗细",
+            label: t('chartConfig.font.fontWeight'),
             defaultValue: "normal",
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
-              { label: "更粗", value: "bolder" },
-              { label: "更细", value: "lighter" },
+              { label: t('chartConfig.font.weights.normal'), value: "normal" },
+              { label: t('chartConfig.font.weights.bold'), value: "bold" },
+              { label: t('chartConfig.font.weights.bolder'), value: "bolder" },
+              { label: t('chartConfig.font.weights.lighter'), value: "lighter" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["axisLabel", "shadowColor"],
-            label: "阴影颜色",
+            label: t('chartConfig.shadow.color'),
             defaultValue: "transparent",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["axisLabel", "shadowBlur"],
-            label: "阴影模糊",
+            label: t('chartConfig.shadow.blur'),
             defaultValue: 0,
             min: 0,
             max: 50,
@@ -409,7 +412,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t('chartConfig.shadow.offsetX'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -418,7 +421,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t('chartConfig.shadow.offsetY'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -427,14 +430,14 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["axisLabel", "textShadowColor"],
-            label: "文字阴影颜色",
+            label: t('chartConfig.textShadow.color'),
             defaultValue: "transparent",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["axisLabel", "textShadowBlur"],
-            label: "文字阴影模糊",
+            label: t('chartConfig.textShadow.blur'),
             defaultValue: 0,
             min: 0,
             max: 50,
@@ -443,7 +446,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "textShadowOffsetX"],
-            label: "文字阴影X偏移",
+            label: t('chartConfig.textShadow.offsetX'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -452,7 +455,7 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLabel", "textShadowOffsetY"],
-            label: "文字阴影Y偏移",
+            label: t('chartConfig.textShadow.offsetY'),
             defaultValue: 0,
             min: -50,
             max: 50,
@@ -462,18 +465,18 @@ export const XAxisPanel: FC = memo(() => {
       },
       {
         key: "axisTick",
-        title: "坐标轴刻度",
+        title: t('chartConfig.sections.axisTick'),
         configs: [
           {
             type: "switch",
             keys: ["axisTick", "show"],
-            label: "显示",
+            label: t('chartConfig.common.show'),
             onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["axisTick", "length"],
-            label: "长度",
+            label: t('chartConfig.axis.length'),
             defaultValue: 5,
             min: 0,
             max: 50,
@@ -482,14 +485,14 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["axisTick", "lineStyle", "color"],
-            label: "颜色",
+            label: t('chartConfig.common.color'),
             defaultValue: "#ccc",
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["axisTick", "lineStyle", "width"],
-            label: "宽度",
+            label: t('chartConfig.common.width'),
             defaultValue: 1,
             min: 0,
             max: 10,
@@ -498,19 +501,19 @@ export const XAxisPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["axisTick", "lineStyle", "type"],
-            label: "样式",
+            label: t('chartConfig.line.style'),
             defaultValue: "solid",
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t('chartConfig.line.solid'), value: "solid" },
+              { label: t('chartConfig.line.dashed'), value: "dashed" },
+              { label: t('chartConfig.line.dotted'), value: "dotted" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "slider",
             keys: ["axisTick", "lineStyle", "opacity"],
-            label: "透明度",
+            label: t('chartConfig.common.opacity'),
             defaultValue: 1,
             min: 0,
             max: 1,
@@ -521,7 +524,7 @@ export const XAxisPanel: FC = memo(() => {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleColorConfigChange, handleConfigChange, xAxisConfig]
+    [t, handleColorConfigChange, handleConfigChange, xAxisConfig]
   );
 
   // 根据配置获取值
@@ -540,7 +543,7 @@ export const XAxisPanel: FC = memo(() => {
 
   return (
     <ChartStylePanel
-      title="X轴"
+      title={t('chartConfig.sections.xAxis')}
       icon={<ChartHistogram theme="outline" size="18" fill="#333" />}
       panelConfigs={panelConfigs}
       getValue={getValue}

@@ -20,6 +20,7 @@ import {
 } from "@icon-park/react";
 import { message } from "antd";
 import { type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { PanelDropdownButton } from "../PanelDropdownButton";
 import { PanelLargeButton } from "../PanelLargeButton";
 interface IPanelCommonSettingProps {
@@ -30,6 +31,8 @@ interface IPanelCommonSettingProps {
 
 export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
   (props) => {
+    const { t } = useTranslation();
+    
     // 如果没有传入 onOperationChange，则使用 hook
     const handleOperation = (key: string) => {
       if (props.onOperationChange) {
@@ -38,15 +41,15 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
         switch (key) {
           case "copy":
             copyActiveElement();
-            message.success("复制成功");
+            message.success(t('component.operation.copySuccess'));
             break;
           case "cut":
             cutActiveElement();
-            message.success("剪切成功");
+            message.success(t('component.operation.cutSuccess'));
             break;
           case "delete":
             deleteActiveElement();
-            message.success("删除成功");
+            message.success(t('component.operation.deleteSuccess'));
             break;
         }
       }
@@ -56,21 +59,21 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
       <div className="h-full flex gap-[5px]">
         <div className="h-full flex flex-col gap-[5px]">
           <PanelLargeButton
-            title="复制"
+            title={t('component.operation.copy')}
             icon={<Copy theme="outline" size="18" fill="#333" />}
             onClick={() => handleOperation("copy")}
           />
         </div>
         <div className="h-full flex flex-col gap-[5px]">
           <PanelLargeButton
-            title="剪切"
+            title={t('component.operation.cut')}
             icon={<CuttingOne theme="outline" size="18" fill="#333" />}
             onClick={() => handleOperation("cut")}
           />
         </div>
         <div className="h-full flex flex-col gap-[5px]">
           <PanelLargeButton
-            title="删除"
+            title={t('component.operation.delete')}
             icon={<Delete theme="outline" size="18" fill="#333" />}
             onClick={() => handleOperation("delete")}
           />
@@ -83,34 +86,34 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
             items: [
               {
                 key: "left",
-                label: "左对齐",
+                label: t('component.alignment.left'),
                 icon: <AlignLeft theme="outline" size="13" fill="#333" />,
               },
               {
                 key: "right",
-                label: "右对齐",
+                label: t('component.alignment.right'),
                 icon: <AlignRight theme="outline" size="13" fill="#333" />,
               },
               {
                 key: "center",
-                label: "水平垂直对齐",
+                label: t('component.alignment.centerHorizontalVertical'),
                 icon: <AlignVertically theme="outline" size="13" fill="#333" />,
               },
               {
                 key: "top",
-                label: "上对齐",
+                label: t('component.alignment.top'),
                 icon: <AlignTop theme="outline" size="13" fill="#333" />,
               },
               {
                 key: "bottom",
-                label: "下对齐",
+                label: t('component.alignment.bottom'),
                 icon: <AlignBottom theme="outline" size="13" fill="#333" />,
               },
             ],
           }}
           button={
             <PanelLargeButton
-              title="对齐"
+              title={t('component.alignment.align')}
               type="text"
               icon={<AlignLeftOne theme="outline" size="18" fill="#333" />}
             />
@@ -121,17 +124,17 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
             onSelect={(key) => {
               props.onZIndexChange(key);
             }}
-            title="上移"
+            title={t('component.zIndex.moveUp')}
             menu={{
               items: [
                 {
                   key: "sendForward",
-                  label: "上移一层",
+                  label: t('component.zIndex.bringForward'),
                   icon: <BringForward theme="outline" size="13" fill="#333" />,
                 },
                 {
                   key: "toFront",
-                  label: "移至顶层",
+                  label: t('component.zIndex.bringToFront'),
                   icon: <BringToFront theme="outline" size="13" fill="#333" />,
                 },
               ],
@@ -139,7 +142,7 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
             icon={<BringForward theme="outline" size="13" fill="#333" />}
           />
           <PanelDropdownButton
-            title="下移"
+            title={t('component.zIndex.moveDown')}
             onSelect={(key) => {
               props.onZIndexChange(key);
             }}
@@ -147,12 +150,12 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
               items: [
                 {
                   key: "sendBackward",
-                  label: "下移一层",
+                  label: t('component.zIndex.sendBackward'),
                   icon: <SendBackward theme="outline" size="13" fill="#333" />,
                 },
                 {
                   key: "toBack",
-                  label: "移至底层",
+                  label: t('component.zIndex.sendToBack'),
                   icon: <SentToBack theme="outline" size="13" fill="#333" />,
                 },
               ],

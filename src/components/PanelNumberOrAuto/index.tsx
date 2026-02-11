@@ -1,6 +1,7 @@
 import { HorizontallyCentered } from "@icon-park/react";
 import { InputNumber } from "antd";
 import { type FC, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.less";
 
 export interface IPanelNumberOrAutoProps {
@@ -42,6 +43,8 @@ export const PanelNumberOrAuto: FC<IPanelNumberOrAutoProps> = ({
   formatter,
   parser,
 }) => {
+  const { t } = useTranslation();
+  
   // 判断当前是否为 "center" 模式
   const isCenter = value === "center";
 
@@ -83,7 +86,7 @@ export const PanelNumberOrAuto: FC<IPanelNumberOrAutoProps> = ({
         className={`${styles.autoButton} ${isCenter ? styles.autoButtonActive : ""}`}
         onClick={handleCenterToggle}
         disabled={disabled}
-        title={isCenter ? "点击取消自动居中" : "点击开启自动居中"}
+        title={isCenter ? t('component.autoCenter.disable') : t('component.autoCenter.enable')}
       >
         <HorizontallyCentered
           theme="outline"

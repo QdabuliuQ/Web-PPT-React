@@ -1,4 +1,6 @@
+import { LanguageSwitcher } from "@/components";
 import { ChartPanelKey, ChartPanelTitle } from "@/element/Chart";
+import { useTranslation } from "react-i18next";
 import { IconPanelKey, IconPanelTitle } from "@/element/Icon";
 import { ImagePanelKey, ImagePanelTitle } from "@/element/Image";
 import { MindMapPanelKey, MindMapPanelTitle } from "@/element/MindMap";
@@ -46,6 +48,7 @@ const MenuMapped = {
 };
 
 export const Header: FC = () => {
+  const { t } = useTranslation();
   const menuItems = useMemo(
     () => [
       {
@@ -81,7 +84,7 @@ export const Header: FC = () => {
 
   const [elementPanel, setElementPanel] = useState<{
     key: string;
-    title: string;
+    title: string | (() => React.ReactNode);
   } | null>(null);
 
   // 使用 ref 跟踪上一次的 elementActive，用于判断元素是否刚被选中或切换
@@ -520,11 +523,15 @@ export const Header: FC = () => {
             }`}
             onClick={otherPanelClick}
           >
-            {elementPanel.title}
+            {typeof elementPanel.title === "function"
+              ? elementPanel.title()
+              : (t as (key: string) => string)(elementPanel.title)}
           </div>
         )}
       </div>
-      <div className="flex-2">12</div>
+      <div className="flex-2 flex justify-end">
+        <LanguageSwitcher />
+      </div>
     </div>
   );
 };

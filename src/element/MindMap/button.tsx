@@ -3,9 +3,11 @@ import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { MindmapMap } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { CreateMindMap } from ".";
 
 export default function MindMapButton() {
+  const { t } = useTranslation();
   const pageId = pageActiveStore.getPageActive() as string;
 
   const handleCreateMindMap = useMemoizedFn(() => {
@@ -19,7 +21,7 @@ export default function MindMapButton() {
   return (
     <PanelButton 
       icon={<MindmapMap theme="outline" size="24" fill="#333" />}
-      title="思维导图"
+      title={t('elements.mindMap.button')}
       onClick={handleCreateMindMap}
     />
   );

@@ -22,6 +22,7 @@ import {
 } from "react";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
+import i18n from "@/i18n";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
 import { getImageMenuItems } from "./menu";
@@ -338,7 +339,7 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
         )}
         {imageError && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 text-sm select-none text-center">
-            图片加载失败
+            {i18n.t("elements.image.errors.loadFailed")}
           </div>
         )}
       </>
@@ -505,5 +506,5 @@ export const CreateImage = (props: Partial<IImageProps> = {}) => {
   };
 };
 
-export const Name = "图片";
+export const Name = "elements.image.title";
 export const ImagePanelIcon = Pic;

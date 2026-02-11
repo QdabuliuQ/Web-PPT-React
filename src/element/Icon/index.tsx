@@ -225,7 +225,7 @@ const Component: FC<IIconProps> = (props) => {
 };
 
 export const Icon = memo(Component);
-export const Name = "图标";
+export const Name = "elements.icon.title";
 export const IconPanelIcon = DiamondThree;
 
 export const CreateIcon = (props: Partial<IIconProps> = {}) => {

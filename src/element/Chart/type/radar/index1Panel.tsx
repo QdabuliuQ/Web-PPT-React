@@ -8,10 +8,12 @@ import { RadarChart } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Collapse, ColorPicker, InputNumber, Popover, Switch } from "antd";
 import { memo, useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "../../components/panel.module.less";
 import type { IChartProps } from "../../index";
 
 export const Radar1ChartPanel: FC = memo(() => {
+  const { t } = useTranslation();
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -269,12 +271,12 @@ export const Radar1ChartPanel: FC = memo(() => {
     return [
       {
         key: "basic",
-        title: "基础设置",
+        title: t("chartConfig.sections.basicSettings"),
         configs: [
           {
             type: "inputNumber",
             keys: ["radius"],
-            label: "半径",
+            label: t("chartConfig.chartTypes.radar.radius"),
             defaultValue: (() => {
               const val = getDefaultValue(["radius"]);
               return typeof val === "string"
@@ -300,7 +302,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["center", "0"],
-            label: "中心X",
+            label: t("chartConfig.chartTypes.radar.centerX"),
             defaultValue: (() => {
               const center = getDefaultValue(["center"]);
               const val = Array.isArray(center) ? center[0] : center;
@@ -327,7 +329,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["center", "1"],
-            label: "中心Y",
+            label: t("chartConfig.chartTypes.radar.centerY"),
             defaultValue: (() => {
               const center = getDefaultValue(["center"]);
               const val = Array.isArray(center) ? center[1] : center;
@@ -355,24 +357,24 @@ export const Radar1ChartPanel: FC = memo(() => {
       },
       {
         key: "axisName",
-        title: "轴名称",
+        title: t("chartConfig.chartTypes.radarExt.axisName"),
         configs: [
           {
             type: "switch",
             keys: ["axisName", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
             defaultValue: getDefaultValue(["axisName", "show"]),
           },
           {
             type: "colorPicker",
             keys: ["axisName", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: getDefaultValue(["axisName", "color"]),
           },
           {
             type: "inputNumber",
             keys: ["axisName", "fontSize"],
-            label: "字体大小",
+            label: t("chartConfig.font.fontSize"),
             defaultValue: getDefaultValue(["axisName", "fontSize"]),
             min: 8,
             max: 72,
@@ -381,36 +383,36 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["axisName", "fontStyle"],
-            label: "字体样式",
+            label: t("chartConfig.font.fontStyle"),
             defaultValue: getDefaultValue(["axisName", "fontStyle"]),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
-              { label: "倾斜", value: "oblique" },
+              { label: t("chartConfig.font.styles.normal"), value: "normal" },
+              { label: t("chartConfig.font.styles.italic"), value: "italic" },
+              { label: t("chartConfig.font.styles.oblique"), value: "oblique" },
             ],
           },
           {
             type: "select",
             keys: ["axisName", "fontWeight"],
-            label: "字体粗细",
+            label: t("chartConfig.font.fontWeight"),
             defaultValue: getDefaultValue(["axisName", "fontWeight"]),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
-              { label: "更粗", value: "bolder" },
-              { label: "更细", value: "lighter" },
+              { label: t("chartConfig.font.weights.normal"), value: "normal" },
+              { label: t("chartConfig.font.weights.bold"), value: "bold" },
+              { label: t("chartConfig.font.weights.bolder"), value: "bolder" },
+              { label: t("chartConfig.font.weights.lighter"), value: "lighter" },
             ],
           },
           {
             type: "colorPicker",
             keys: ["axisName", "textShadowColor"],
-            label: "文字阴影颜色",
+            label: t("chartConfig.textShadow.color"),
             defaultValue: getDefaultValue(["axisName", "textShadowColor"]),
           },
           {
             type: "inputNumber",
             keys: ["axisName", "textShadowBlur"],
-            label: "文字阴影模糊",
+            label: t("chartConfig.textShadow.blur"),
             defaultValue: getDefaultValue(["axisName", "textShadowBlur"]),
             min: 0,
             max: 50,
@@ -418,7 +420,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisName", "textShadowOffsetX"],
-            label: "文字阴影X偏移",
+            label: t("chartConfig.textShadow.offsetX"),
             defaultValue: getDefaultValue(["axisName", "textShadowOffsetX"]),
             min: -50,
             max: 50,
@@ -426,7 +428,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisName", "textShadowOffsetY"],
-            label: "文字阴影Y偏移",
+            label: t("chartConfig.textShadow.offsetY"),
             defaultValue: getDefaultValue(["axisName", "textShadowOffsetY"]),
             min: -50,
             max: 50,
@@ -435,24 +437,24 @@ export const Radar1ChartPanel: FC = memo(() => {
       },
       {
         key: "splitLine",
-        title: "分割线",
+        title: t("chartConfig.chartTypes.radarExt.splitLine"),
         configs: [
           {
             type: "switch",
             keys: ["splitLine", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
             defaultValue: getDefaultValue(["splitLine", "show"]),
           },
           {
             type: "colorPicker",
             keys: ["splitLine", "lineStyle", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: getDefaultValue(["splitLine", "lineStyle", "color"]),
           },
           {
             type: "inputNumber",
             keys: ["splitLine", "lineStyle", "width"],
-            label: "宽度",
+            label: t("chartConfig.common.width"),
             defaultValue: getDefaultValue(["splitLine", "lineStyle", "width"]),
             min: 0,
             max: 20,
@@ -461,18 +463,18 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["splitLine", "lineStyle", "type"],
-            label: "样式",
+            label: t("chartConfig.line.style"),
             defaultValue: getDefaultValue(["splitLine", "lineStyle", "type"]),
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t("chartConfig.line.solid"), value: "solid" },
+              { label: t("chartConfig.line.dashed"), value: "dashed" },
+              { label: t("chartConfig.line.dotted"), value: "dotted" },
             ],
           },
           {
             type: "inputNumber",
             keys: ["splitLine", "lineStyle", "opacity"],
-            label: "透明度",
+            label: t("chartConfig.common.opacity"),
             defaultValue: getDefaultValue([
               "splitLine",
               "lineStyle",
@@ -486,18 +488,18 @@ export const Radar1ChartPanel: FC = memo(() => {
       },
       {
         key: "splitArea",
-        title: "分割区域",
+        title: t("chartConfig.chartTypes.radarExt.splitArea"),
         configs: [
           {
             type: "switch",
             keys: ["splitArea", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
             defaultValue: getDefaultValue(["splitArea", "show"]),
           },
           {
             type: "colorPicker",
             keys: ["splitArea", "areaStyle", "color", "0"],
-            label: "颜色1",
+            label: t("chartConfig.chartTypes.radarExt.color1"),
             defaultValue: getDefaultValue([
               "splitArea",
               "areaStyle",
@@ -524,7 +526,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["splitArea", "areaStyle", "color", "1"],
-            label: "颜色2",
+            label: t("chartConfig.chartTypes.radarExt.color2"),
             defaultValue: getDefaultValue([
               "splitArea",
               "areaStyle",
@@ -552,18 +554,18 @@ export const Radar1ChartPanel: FC = memo(() => {
       },
       {
         key: "axisLine",
-        title: "轴线",
+        title: t("chartConfig.chartTypes.radarExt.axisLine"),
         configs: [
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: getDefaultValue(["axisLine", "lineStyle", "color"]),
           },
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "width"],
-            label: "宽度",
+            label: t("chartConfig.common.width"),
             defaultValue: getDefaultValue(["axisLine", "lineStyle", "width"]),
             min: 0,
             max: 20,
@@ -572,18 +574,18 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["axisLine", "lineStyle", "type"],
-            label: "样式",
+            label: t("chartConfig.line.style"),
             defaultValue: getDefaultValue(["axisLine", "lineStyle", "type"]),
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t("chartConfig.line.solid"), value: "solid" },
+              { label: t("chartConfig.line.dashed"), value: "dashed" },
+              { label: t("chartConfig.line.dotted"), value: "dotted" },
             ],
           },
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "opacity"],
-            label: "透明度",
+            label: t("chartConfig.common.opacity"),
             defaultValue: getDefaultValue(["axisLine", "lineStyle", "opacity"]),
             min: 0,
             max: 1,
@@ -592,7 +594,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["axisLine", "lineStyle", "shadowColor"],
-            label: "阴影颜色",
+            label: t("chartConfig.shadow.color"),
             defaultValue: getDefaultValue([
               "axisLine",
               "lineStyle",
@@ -602,7 +604,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowBlur"],
-            label: "阴影模糊",
+            label: t("chartConfig.shadow.blur"),
             defaultValue: getDefaultValue([
               "axisLine",
               "lineStyle",
@@ -614,7 +616,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t("chartConfig.shadow.offsetX"),
             defaultValue: getDefaultValue([
               "axisLine",
               "lineStyle",
@@ -626,7 +628,7 @@ export const Radar1ChartPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["axisLine", "lineStyle", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t("chartConfig.shadow.offsetY"),
             defaultValue: getDefaultValue([
               "axisLine",
               "lineStyle",
@@ -639,6 +641,7 @@ export const Radar1ChartPanel: FC = memo(() => {
       },
     ];
   }, [
+    t,
     radius,
     handleRadiusChange,
     centerX,
@@ -686,7 +689,7 @@ export const Radar1ChartPanel: FC = memo(() => {
     >
       <div className="h-full">
         <PanelLargeButton
-          title="样式"
+          title={t("chartConfig.line.style")}
           aspectRatio
           icon={<RadarChart theme="outline" size="18" fill="#333" />}
         />

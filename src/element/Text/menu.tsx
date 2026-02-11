@@ -16,9 +16,11 @@ import {
   TextItalic,
   TextUnderline,
 } from "@icon-park/react";
+import i18n from "@/i18n";
 import type { ITextProps } from "./index";
 
 export const getTextMenuItems = (): MenuItem[] => {
+  const t = i18n.t.bind(i18n);
   const pageId = pageActiveStore.getPageActive();
   const elementId = elementActiveStore.getElementActive();
 
@@ -31,12 +33,12 @@ export const getTextMenuItems = (): MenuItem[] => {
   return [
     {
       type: "submenu",
-      label: "文字样式",
+      label: t('elements.text.style'),
       icon: <FontSize theme="outline" size="13" fill="#333" />,
       children: [
         {
           type: "item",
-          label: "粗体",
+          label: t('elements.text.format.bold'),
           icon: <TextBold theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -47,7 +49,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "斜体",
+          label: t('elements.text.format.italic'),
           icon: <TextItalic theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -58,7 +60,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "下划线",
+          label: t('elements.text.format.underline'),
           icon: <TextUnderline theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -69,7 +71,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "删除线",
+          label: t('elements.text.format.strikethrough'),
           icon: <Strikethrough theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -82,12 +84,12 @@ export const getTextMenuItems = (): MenuItem[] => {
     },
     {
       type: "submenu",
-      label: "文字对齐",
+      label: t('elements.text.alignment'),
       icon: <AlignmentHorizontalCenter theme="outline" size="13" fill="#333" />,
       children: [
         {
           type: "item",
-          label: "左上对齐",
+          label: t('component.alignment.leftTop'),
           icon: <AlignmentLeftTop theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -98,7 +100,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "左中对齐",
+          label: t('component.alignment.leftCenter'),
           icon: <AlignmentLeftCenter theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -109,7 +111,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "左下对齐",
+          label: t('component.alignment.leftBottom'),
           icon: <AlignmentLeftBottom theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -123,7 +125,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "中上对齐",
+          label: t('component.alignment.centerTop'),
           icon: (
             <AlignmentHorizontalTop theme="outline" size="13" fill="#333" />
           ),
@@ -136,7 +138,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "水平垂直居中",
+          label: t('component.alignment.centerCenter'),
           icon: (
             <AlignmentHorizontalCenter theme="outline" size="13" fill="#333" />
           ),
@@ -149,7 +151,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "中下对齐",
+          label: t('component.alignment.centerBottom'),
           icon: (
             <AlignmentHorizontalBottom theme="outline" size="13" fill="#333" />
           ),
@@ -165,7 +167,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "右上对齐",
+          label: t('component.alignment.rightTop'),
           icon: <AlignmentRightTop theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -176,7 +178,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "右中对齐",
+          label: t('component.alignment.rightCenter'),
           icon: <AlignmentRightCenter theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {
@@ -187,7 +189,7 @@ export const getTextMenuItems = (): MenuItem[] => {
         },
         {
           type: "item",
-          label: "右下对齐",
+          label: t('component.alignment.rightBottom'),
           icon: <AlignmentRightBottom theme="outline" size="13" fill="#333" />,
           onClick: () => {
             pptStore.setElementInfo(pageId, elementId, {

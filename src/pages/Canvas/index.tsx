@@ -1,13 +1,8 @@
 import SearchSvg from "@/assets/images/search.svg";
 import { GlobalContextMenu } from "@/components";
-import { Chart } from "@/element/Chart";
-import { Icon } from "@/element/Icon";
-import { Image } from "@/element/Image";
-import { MindMap } from "@/element/MindMap";
-import { Table } from "@/element/Table";
-import { Text } from "@/element/Text";
 import type { MenuItem } from "@/hooks/useContextMenu";
 import { textureItems } from "@/pages/Menu/components/Start/texture";
+import { ElementRenderer } from "@/utils/elementRenderer";
 import {
   contextMenuStore,
   copyElementStore,
@@ -498,88 +493,17 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
   const canvasStyle = getCanvasStyle();
 
-  // 渲染元素列表（复用函数）
+  // 渲染元素列表（使用 json-render 简化渲染逻辑）
   const renderElements = useMemoizedFn((isEditMode: boolean) => {
     if (!currentPage) return null;
 
-    return currentPage.elements
-      .map((element) => {
-        if (element.type === "text") {
-          return (
-            <Text
-              key={element.id}
-              {...element}
-              type="text"
-              mode={mode}
-              {...(isEditMode && {
-                onSelect: () => handleElementSelect(element.id),
-              })}
-            />
-          );
-        } else if (element.type === "table") {
-          return (
-            <Table
-              key={element.id}
-              {...element}
-              type="table"
-              mode={mode}
-              {...(isEditMode && {
-                onSelect: () => handleElementSelect(element.id),
-              })}
-            />
-          );
-        } else if (element.type === "icon") {
-          return (
-            <Icon
-              key={element.id}
-              {...element}
-              type="icon"
-              mode={mode}
-              {...(isEditMode && {
-                onSelect: () => handleElementSelect(element.id),
-              })}
-            />
-          );
-        } else if (element.type === "image") {
-          return (
-            <Image
-              key={element.id}
-              {...element}
-              type="image"
-              mode={mode}
-              {...(isEditMode && {
-                onSelect: () => handleElementSelect(element.id),
-              })}
-            />
-          );
-        } else if (element.type === "mindmap") {
-          return (
-            <MindMap
-              key={element.id}
-              {...element}
-              type="mindmap"
-              mode={mode}
-              {...(isEditMode && {
-                onSelect: () => handleElementSelect(element.id),
-              })}
-            />
-          );
-        } else if (element.type === "chart") {
-          return (
-            <Chart
-              key={element.id}
-              {...element}
-              type="chart"
-              mode={mode}
-              {...(isEditMode && {
-                onSelect: () => handleElementSelect(element.id),
-              })}
-            />
-          );
-        }
-        return null;
-      })
-      .filter(Boolean);
+    return (
+      <ElementRenderer
+        elements={currentPage.elements}
+        mode={mode}
+        onElementSelect={isEditMode ? handleElementSelect : undefined}
+      />
+    );
   });
 
   // 播放模式右键菜单处理

@@ -1,7 +1,8 @@
 import type { Menu } from "@/hooks/useContextMenu";
 import { elementActiveStore, pageActiveStore, pptStore } from "@/store";
 import { AllApplication } from "@icon-park/react";
-import type { IIconProps } from "./index";
+import i18n from "@/i18n";
+import type { IIconProps} from "./index";
 
 // 获取图标元素信息的函数
 const getIconElementInfo = () => {
@@ -22,15 +23,17 @@ const getIconElementInfo = () => {
 
 // 导出图标菜单项获取函数
 export const getIconMenuItems = (): Menu => {
+  const t = i18n.t.bind(i18n);
+  
   return [
     {
       type: "submenu",
-      label: "图标风格",
+      label: t('elements.icon.style'),
       icon: <AllApplication theme="outline" size="13" fill="#333" />,
       children: [
         {
           type: "item",
-          label: "线性",
+          label: t('elements.icon.themes.outline'),
           onClick: () => {
             const iconElement = getIconElementInfo();
             if (!iconElement) return;
@@ -48,7 +51,7 @@ export const getIconMenuItems = (): Menu => {
         },
         {
           type: "item",
-          label: "填充",
+          label: t('elements.icon.themes.filled'),
           onClick: () => {
             const iconElement = getIconElementInfo();
             if (!iconElement) return;
@@ -66,7 +69,7 @@ export const getIconMenuItems = (): Menu => {
         },
         {
           type: "item",
-          label: "双色",
+          label: t('elements.icon.themes.twoTone'),
           onClick: () => {
             const iconElement = getIconElementInfo();
             if (!iconElement) return;
@@ -84,7 +87,7 @@ export const getIconMenuItems = (): Menu => {
         },
         {
           type: "item",
-          label: "多色",
+          label: t('elements.icon.themes.multiColor'),
           onClick: () => {
             const iconElement = getIconElementInfo();
             if (!iconElement) return;

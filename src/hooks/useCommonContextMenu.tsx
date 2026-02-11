@@ -25,6 +25,7 @@ import {
   Undo,
 } from "@icon-park/react";
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { Menu } from "./useContextMenu";
 import { usePositionElement } from "./usePositionElement";
 import { useZIndexElement } from "./useZIndexElement";
@@ -33,6 +34,7 @@ export default function useCommonContextMenu(
   pageActive: string,
   elementActive: string
 ) {
+  const { t } = useTranslation();
   const { positionHandle } = usePositionElement(pageActive, elementActive);
   const { toFrontHandle, sendForwardHandle, sendBackwardHandle, toBackHandle } =
     useZIndexElement(pageActive, elementActive);
@@ -68,7 +70,7 @@ export default function useCommonContextMenu(
     () => [
       {
         type: "item",
-        label: "复制",
+        label: t('hooks.contextMenu.copy'),
         icon: <Copy theme="outline" size="13" fill="#333" />,
         onClick: () => {
           if (!elementActive) return;
@@ -78,7 +80,7 @@ export default function useCommonContextMenu(
       },
       {
         type: "item",
-        label: "剪切",
+        label: t('hooks.contextMenu.cut'),
         icon: <CuttingOne theme="outline" size="13" fill="#333" />,
         onClick: () => {
           if (!elementActive) return;
@@ -88,7 +90,7 @@ export default function useCommonContextMenu(
       },
       {
         type: "item",
-        label: "删除",
+        label: t('hooks.contextMenu.delete'),
         icon: <Delete theme="outline" size="13" fill="#333" />,
         onClick: () => {
           if (!elementActive) return;
@@ -101,13 +103,13 @@ export default function useCommonContextMenu(
       },
       {
         type: "item",
-        label: "左旋转",
+        label: t('hooks.contextMenu.rotateLeft'),
         icon: <Undo theme="outline" size="13" fill="#333" />,
         onClick: rotateLeftHandle,
       },
       {
         type: "item",
-        label: "右旋转",
+        label: t('hooks.contextMenu.rotateRight'),
         icon: <Redo theme="outline" size="13" fill="#333" />,
         onClick: rotateRightHandle,
       },
@@ -116,36 +118,36 @@ export default function useCommonContextMenu(
       },
       {
         type: "submenu",
-        label: "对齐",
+        label: t('hooks.contextMenu.align'),
         icon: <AlignLeftOne theme="outline" size="13" fill="#333" />,
         children: [
           {
             type: "item",
-            label: "左对齐",
+            label: t('component.alignment.left'),
             icon: <AlignLeft theme="outline" size="13" fill="#333" />,
             onClick: () => positionHandle("left"),
           },
           {
             type: "item",
-            label: "右对齐",
+            label: t('component.alignment.right'),
             icon: <AlignRight theme="outline" size="13" fill="#333" />,
             onClick: () => positionHandle("right"),
           },
           {
             type: "item",
-            label: "水平垂直居中",
+            label: t('component.alignment.centerHorizontalVertical'),
             icon: <AlignVertically theme="outline" size="13" fill="#333" />,
             onClick: () => positionHandle("center"),
           },
           {
             type: "item",
-            label: "上对齐",
+            label: t('component.alignment.top'),
             icon: <AlignTop theme="outline" size="13" fill="#333" />,
             onClick: () => positionHandle("top"),
           },
           {
             type: "item",
-            label: "下对齐",
+            label: t('component.alignment.bottom'),
             icon: <AlignBottom theme="outline" size="13" fill="#333" />,
             onClick: () => positionHandle("bottom"),
           },
@@ -153,30 +155,30 @@ export default function useCommonContextMenu(
       },
       {
         type: "submenu",
-        label: "层级",
+        label: t('hooks.contextMenu.layer'),
         icon: <Layers theme="outline" size="13" fill="#333" />,
         children: [
           {
             type: "item",
-            label: "上移一层",
+            label: t('component.zIndex.bringForward'),
             icon: <BringForward theme="outline" size="13" fill="#333" />,
             onClick: sendForwardHandle,
           },
           {
             type: "item",
-            label: "移至顶层",
+            label: t('component.zIndex.bringToFront'),
             icon: <BringToFront theme="outline" size="13" fill="#333" />,
             onClick: toFrontHandle,
           },
           {
             type: "item",
-            label: "下移一层",
+            label: t('component.zIndex.sendBackward'),
             icon: <SendBackward theme="outline" size="13" fill="#333" />,
             onClick: sendBackwardHandle,
           },
           {
             type: "item",
-            label: "移至底层",
+            label: t('component.zIndex.sendToBack'),
             icon: <SentToBack theme="outline" size="13" fill="#333" />,
             onClick: toBackHandle,
           },
@@ -184,6 +186,7 @@ export default function useCommonContextMenu(
       },
     ],
     [
+      t,
       positionHandle,
       rotateLeftHandle,
       rotateRightHandle,

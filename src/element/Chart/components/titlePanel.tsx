@@ -6,11 +6,14 @@ import {
 import { H } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { memo, useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { getTitleDefaultOption } from "../common";
 import type { IChartProps } from "../index";
 import { ChartStylePanel } from "./chartStylePanel";
 
 export const TitlePanel: FC = memo(() => {
+  const { t } = useTranslation();
+
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -332,7 +335,7 @@ export const TitlePanel: FC = memo(() => {
 
   return (
     <ChartStylePanel
-      title="标题"
+      title={t("chartConfig.sections.title")}
       icon={<H theme="outline" size="18" fill="#333" />}
       panelConfigs={panelConfigs}
       getValue={getValue}

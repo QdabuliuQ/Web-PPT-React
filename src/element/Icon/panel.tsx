@@ -13,13 +13,16 @@ import { Redo, Switch, Undo } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { ColorPicker, InputNumber, Tooltip } from "antd";
 import { useEffect, useMemo, useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { IconPicker } from "./IconPicker";
 import type { IIconProps } from "./index";
 
 export const IconPanelKey = "icon";
-export const IconPanelTitle = "图标";
+export const IconPanelTitle = "elements.icon.panel";
 
 const IconPanelComponent: FC = () => {
+  const { t } = useTranslation();
+
   // 使用本地状态存储需要即时响应的属性
   const [strokeWidth, setStrokeWidth] = useState<number | null>(null);
 
@@ -129,16 +132,19 @@ const IconPanelComponent: FC = () => {
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
       <div className="flex flex-col h-full gap-[5px]">
-        <Tooltip title="图标风格">
+        <Tooltip title={t("elements.icon.style")}>
           <PanelSelect
             size="small"
             value={iconInfo.theme}
             style={{ width: 80 }}
             options={[
-              { label: "线性", value: "outline" },
-              { label: "填充", value: "filled" },
-              { label: "双色", value: "two-tone" },
-              { label: "多色", value: "multi-color" },
+              { label: t("elements.icon.themes.outline"), value: "outline" },
+              { label: t("elements.icon.themes.filled"), value: "filled" },
+              { label: t("elements.icon.themes.twoTone"), value: "two-tone" },
+              {
+                label: t("elements.icon.themes.multiColor"),
+                value: "multi-color",
+              },
             ]}
             onChange={(value) => {
               let newFill: string[];
@@ -165,7 +171,7 @@ const IconPanelComponent: FC = () => {
           />
         </Tooltip>
 
-        <Tooltip title="线段粗细" placement="bottom">
+        <Tooltip title={t("elements.icon.strokeWidth")} placement="bottom">
           <InputNumber
             value={strokeWidth}
             onChange={handleStrokeWidthChange}
@@ -179,7 +185,9 @@ const IconPanelComponent: FC = () => {
       <PanelSplitLine />
       <div className="h-full flex flex-col justify-between">
         <div className="h-[24px] flex items-center">
-          <span className="text-[12px]">外部描边颜色：</span>
+          <span className="text-[12px]">
+            {t("elements.icon.colors.outerStroke")}：
+          </span>
           <ColorPicker
             value={iconInfo.fill?.[0] || "#333333"}
             onChange={(value) => {
@@ -190,7 +198,9 @@ const IconPanelComponent: FC = () => {
           />
         </div>
         <div className="h-[24px] flex items-center">
-          <span className="text-[12px]">外部填充颜色：</span>
+          <span className="text-[12px]">
+            {t("elements.icon.colors.outerFill")}：
+          </span>
           <ColorPicker
             value={iconInfo.fill?.[1] || "#2F88FF"}
             onChange={(value) => {
@@ -204,7 +214,9 @@ const IconPanelComponent: FC = () => {
       <PanelSplitLine />
       <div className="h-full flex flex-col justify-between">
         <div className="h-[24px] flex items-center">
-          <span className="text-[12px]">内部描边颜色：</span>
+          <span className="text-[12px]">
+            {t("elements.icon.colors.innerStroke")}：
+          </span>
           <ColorPicker
             value={iconInfo.fill?.[2] || "#ffffff"}
             onChange={(value) => {
@@ -215,7 +227,9 @@ const IconPanelComponent: FC = () => {
           />
         </div>
         <div className="h-[24px] flex items-center">
-          <span className="text-[12px]">内部填充颜色：</span>
+          <span className="text-[12px]">
+            {t("elements.icon.colors.innerFill")}：
+          </span>
           <ColorPicker
             value={iconInfo.fill?.[3] || "#43CCF8"}
             onChange={(value) => {
@@ -229,18 +243,18 @@ const IconPanelComponent: FC = () => {
       <PanelSplitLine />
       <div className="h-full flex gap-[5px]">
         <PanelLargeButton
-          title="左旋转"
+          title={t("elements.icon.actions.rotateLeft")}
           icon={<Undo theme="outline" size="20" fill="#333" />}
           onClick={() => handleRotate(-90)}
         />
         <PanelLargeButton
-          title="右旋转"
+          title={t("elements.icon.actions.rotateRight")}
           icon={<Redo theme="outline" size="20" fill="#333" />}
           onClick={() => handleRotate(90)}
         />
         <IconPicker onIconSelect={handleIconSelect}>
           <PanelLargeButton
-            title="切换"
+            title={t("elements.icon.actions.switch")}
             icon={<Switch theme="outline" size="20" fill="#333" />}
           />
         </IconPicker>

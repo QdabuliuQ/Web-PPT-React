@@ -8,46 +8,48 @@ import { ChartHistogram } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Popover } from "antd";
 import { memo, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CreateChart } from ".";
 
-// 图表类型配置（按分类组织）
-const chartCategories = [
-  {
-    category: "柱状图",
-    charts: [
-      { type: "bar1", name: "柱状图" },
-      { type: "bar2", name: "极坐标柱状图" },
-      { type: "bar3", name: "切向极坐标柱状图" },
-      { type: "bar4", name: "横向柱状图" },
-    ],
-  },
-  {
-    category: "折线图",
-    charts: [
-      { type: "line1", name: "折线图" },
-      { type: "line2", name: "堆叠折线图" },
-      { type: "line3", name: "面积图" },
-      { type: "line4", name: "阶梯折线图" },
-    ],
-  },
-  {
-    category: "饼图",
-    charts: [
-      { type: "pie1", name: "饼图" },
-      { type: "pie2", name: "环形图" },
-    ],
-  },
-  {
-    category: "其他",
-    charts: [
-      { type: "scatter1", name: "散点图" },
-      { type: "radar1", name: "雷达图" },
-      { type: "funnel1", name: "漏斗图" },
-    ],
-  },
-];
-
 export default function ChartButton() {
+  const { t } = useTranslation();
+  
+  // 图表类型配置（按分类组织）
+  const chartCategories = useMemo(() => [
+    {
+      category: t('elements.chart.categories.bar'),
+      charts: [
+        { type: "bar1", name: t('elements.chart.types.bar1') },
+        { type: "bar2", name: t('elements.chart.types.bar2') },
+        { type: "bar3", name: t('elements.chart.types.bar3') },
+        { type: "bar4", name: t('elements.chart.types.bar4') },
+      ],
+    },
+    {
+      category: t('elements.chart.categories.line'),
+      charts: [
+        { type: "line1", name: t('elements.chart.types.line1') },
+        { type: "line2", name: t('elements.chart.types.line2') },
+        { type: "line3", name: t('elements.chart.types.line3') },
+        { type: "line4", name: t('elements.chart.types.line4') },
+      ],
+    },
+    {
+      category: t('elements.chart.categories.pie'),
+      charts: [
+        { type: "pie1", name: t('elements.chart.types.pie1') },
+        { type: "pie2", name: t('elements.chart.types.pie2') },
+      ],
+    },
+    {
+      category: t('elements.chart.categories.other'),
+      charts: [
+        { type: "scatter1", name: t('elements.chart.types.scatter1') },
+        { type: "radar1", name: t('elements.chart.types.radar1') },
+        { type: "funnel1", name: t('elements.chart.types.funnel1') },
+      ],
+    },
+  ], [t]);
   // 使用 Zustand hooks 订阅状态变化
   const pageId = usePageActiveStore((state) => state.pageActive) || "";
   const addElement = usePPTStore((state) => state.addElement);
@@ -120,7 +122,7 @@ export default function ChartButton() {
         </div>
       </div>
     ),
-    [handleOpen, handleClose, handleCreateChart]
+    [handleOpen, handleClose, handleCreateChart, chartCategories]
   );
 
   return (
@@ -128,7 +130,7 @@ export default function ChartButton() {
       <div onMouseEnter={handleOpen} onMouseLeave={handleClose}>
         <PanelButton
           icon={<ChartHistogram theme="outline" size="24" fill="#333" />}
-          title="图表"
+          title={t('elements.chart.button')}
         />
       </div>
     </Popover>

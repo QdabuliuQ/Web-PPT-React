@@ -32,14 +32,6 @@ export const GlobalContextMenu: FC<{ parentSelector?: string }> = ({
   // 监听 store 的变化，当需要显示菜单时调用 show
   useEffect(() => {
     if (visible && position && menuItemsRef.current.length > 0) {
-      console.log("GlobalContextMenu: 准备显示菜单", {
-        visible,
-        position,
-        menuItemsCount: menuItemsRef.current.length,
-        menuItems: menuItemsRef.current,
-      });
-
-      // 创建一个模拟的 event 对象
       const mockEvent = {
         clientX: position.x,
         clientY: position.y,
@@ -49,22 +41,12 @@ export const GlobalContextMenu: FC<{ parentSelector?: string }> = ({
 
       // 延迟到下一个事件循环，避免在 React 渲染过程中同步调用 flushSync
       const timer = setTimeout(() => {
-        console.log("GlobalContextMenu: 调用 show", {
-          mockEvent,
-          menuItems: menuItemsRef.current,
-        });
         show({ event: mockEvent });
       }, 0);
 
       return () => {
         clearTimeout(timer);
       };
-    } else {
-      console.log("GlobalContextMenu: 不显示菜单", {
-        visible,
-        position,
-        menuItemsCount: menuItemsRef.current.length,
-      });
     }
     // 使用 positionKey 和 visible 作为依赖项，menuItems 通过 ref 访问
     // eslint-disable-next-line react-hooks/exhaustive-deps

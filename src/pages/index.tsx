@@ -1,5 +1,6 @@
 import { GlobalContextMenu } from "@/components/GlobalContextMenu";
 import { useDisplayStatusStore, useFullscreenStore } from "@/store";
+import { Splitter } from "antd";
 import { Canvas } from "./Canvas";
 import { Footer } from "./Footer";
 import { Grid } from "./Grid";
@@ -28,10 +29,22 @@ export default function Index() {
           {displayStatus === "default" && (
             <div
               id="main-container"
-              className={`${styles.mainContainerClass} flex w-[calc(100%-20px)] ml-[20px]`}
+              className={`${styles.mainContainerClass} w-[calc(100%-20px)] ml-[20px]`}
             >
-              <Preview />
-              <Canvas />
+              <Splitter style={{ height: "100%", width: "100%" }}>
+                <Splitter.Panel
+                  collapsible={{ start: true, end: true, showCollapsibleIcon: true }}
+                  defaultSize={230}
+                  min={200}
+                  max={300}
+                  resizable
+                >
+                  <Preview />
+                </Splitter.Panel>
+                <Splitter.Panel resizable>
+                  <Canvas />
+                </Splitter.Panel>
+              </Splitter>
             </div>
           )}
           {displayStatus === "grid" && <Grid />}

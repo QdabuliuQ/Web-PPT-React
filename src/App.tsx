@@ -2,6 +2,9 @@ import Index from "@/pages/index";
 import { initPPTStore } from "@/utils/initStore";
 import "animate.css";
 import { ConfigProvider } from "antd";
+import zhCN from 'antd/locale/zh_CN';
+import enUS from 'antd/locale/en_US';
+import { useTranslation } from 'react-i18next';
 import "react-contexify/dist/ReactContexify.css";
 import "./App.css";
 
@@ -9,8 +12,14 @@ import "./App.css";
 initPPTStore();
 
 function App() {
+  const { i18n } = useTranslation();
+  
+  // 根据当前语言选择antd的语言包
+  const antdLocale = i18n.language === 'zh-CN' ? zhCN : enUS;
+
   return (
     <ConfigProvider
+      locale={antdLocale}
       theme={{
         token: {
           colorPrimary: "#f25f00", // 主题色

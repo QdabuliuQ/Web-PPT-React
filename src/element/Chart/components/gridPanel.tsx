@@ -6,10 +6,13 @@ import {
 import { GridFour } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { memo, useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import type { IChartProps } from "../index";
 import { ChartStylePanel } from "./chartStylePanel";
 
 export const GridPanel: FC = memo(() => {
+  const { t } = useTranslation();
+  
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -96,19 +99,19 @@ export const GridPanel: FC = memo(() => {
     () => [
       {
         key: "basic",
-        title: "基础设置",
+        title: t('chartConfig.sections.basicSettings'),
         configs: [
           {
             type: "switch",
             keys: ["show"],
-            label: "显示",
+            label: t('chartConfig.common.show'),
             defaultValue: getValue(["show"], true),
             onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["left"],
-            label: "左边距",
+            label: t('chartConfig.position.left'),
             defaultValue: getValue(["left"], 20),
             min: 0,
             max: 500,
@@ -117,7 +120,7 @@ export const GridPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["right"],
-            label: "右边距",
+            label: t('chartConfig.position.right'),
             defaultValue: getValue(["right"], 20),
             min: 0,
             max: 500,
@@ -126,7 +129,7 @@ export const GridPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["top"],
-            label: "上边距",
+            label: t('chartConfig.position.top'),
             defaultValue: getValue(["top"], 40),
             min: 0,
             max: 500,
@@ -135,7 +138,7 @@ export const GridPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["bottom"],
-            label: "下边距",
+            label: t('chartConfig.position.bottom'),
             defaultValue: getValue(["bottom"], 20),
             min: 0,
             max: 500,
@@ -144,7 +147,7 @@ export const GridPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["backgroundColor"],
-            label: "背景颜色",
+            label: t('chartConfig.common.backgroundColor'),
             defaultValue: getValue(["backgroundColor"], "#fff"),
             onChange: handleColorConfigChange,
           },
@@ -152,19 +155,19 @@ export const GridPanel: FC = memo(() => {
       },
       {
         key: "shadow",
-        title: "阴影设置",
+        title: t('chartConfig.sections.shadowSettings'),
         configs: [
           {
             type: "colorPicker",
             keys: ["shadowColor"],
-            label: "阴影颜色",
+            label: t('chartConfig.shadow.color'),
             defaultValue: getValue(["shadowColor"], "rgba(0, 0, 0, 0.5)"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["shadowBlur"],
-            label: "阴影模糊",
+            label: t('chartConfig.shadow.blur'),
             defaultValue: getValue(["shadowBlur"], 10),
             min: 0,
             max: 100,
@@ -173,7 +176,7 @@ export const GridPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t('chartConfig.shadow.offsetX'),
             defaultValue: getValue(["shadowOffsetX"], 0),
             min: -100,
             max: 100,
@@ -182,7 +185,7 @@ export const GridPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t('chartConfig.shadow.offsetY'),
             defaultValue: getValue(["shadowOffsetY"], 0),
             min: -100,
             max: 100,
@@ -192,14 +195,14 @@ export const GridPanel: FC = memo(() => {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleConfigChange, handleColorConfigChange, getValue, gridConfig]
+    [t, handleConfigChange, handleColorConfigChange, getValue, gridConfig]
   );
 
   if (!pageId || !elementId || !chartInfo) return null;
 
   return (
     <ChartStylePanel
-      title="网格"
+      title={t('chartConfig.sections.grid')}
       icon={<GridFour theme="outline" size="18" fill="#333" />}
       panelConfigs={panelConfigs}
       getValue={getValue}

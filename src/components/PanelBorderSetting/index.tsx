@@ -3,6 +3,7 @@ import { PanelSelect } from "@/components/PanelSelect";
 import { Square } from "@icon-park/react";
 import { ColorPicker, InputNumber, Popover, Tooltip } from "antd";
 import { type FC } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.less";
 
 interface IPanelBorderSettingProps {
@@ -16,13 +17,6 @@ interface IPanelBorderSettingProps {
   onBorderColorChange: (value: string) => void;
 }
 
-const borderOptions = [
-  { label: "实线", value: "solid" },
-  { label: "虚线", value: "dashed" },
-  { label: "点线", value: "dotted" },
-  { label: "双线", value: "double" },
-];
-
 export const PanelBorderSetting: FC<IPanelBorderSettingProps> = ({
   border,
   borderWidth,
@@ -33,17 +27,26 @@ export const PanelBorderSetting: FC<IPanelBorderSettingProps> = ({
   onBorderStyleChange,
   onBorderColorChange,
 }) => {
+  const { t } = useTranslation();
+  
+  const borderOptions = [
+    { label: t('component.border.solid'), value: "solid" },
+    { label: t('component.border.dashed'), value: "dashed" },
+    { label: t('component.border.dotted'), value: "dotted" },
+    { label: t('component.border.double'), value: "double" },
+  ];
+
   return (
     <div className="h-full flex justify-center gap-[10px] flex-shrink-0">
       <PanelLargeButton
-        title="边框"
+        title={t('component.border.title')}
         active={border}
         icon={<Square theme="outline" size="18" fill="#333" />}
         onClick={() => onBorderChange(!border)}
       />
       <div className="flex gap-[8px]">
         <div className="flex h-full flex-col justify-between">
-          <Tooltip title="边框宽度" placement="top">
+          <Tooltip title={t('component.border.width')} placement="top">
             <InputNumber
               value={borderWidth}
               style={{ width: "85px" }}
@@ -52,7 +55,7 @@ export const PanelBorderSetting: FC<IPanelBorderSettingProps> = ({
               disabled={!border}
             />
           </Tooltip>
-          <Tooltip title="边框样式" placement="top">
+          <Tooltip title={t('component.border.style')} placement="top">
             <PanelSelect
               value={borderStyle}
               style={{ width: "85px" }}

@@ -1,0 +1,603 @@
+{
+  "common": {
+    "confirm": "确认",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "save": "保存",
+    "close": "关闭",
+    "add": "添加",
+    "search": "搜索",
+    "reset": "重置",
+    "submit": "提交",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "loading": "加载中...",
+    "success": "操作成功",
+    "error": "操作失败",
+    "warning": "警告",
+    "info": "提示"
+  },
+  "menu": {
+    "file": "文件",
+    "edit": "编辑",
+    "insert": "插入",
+    "view": "查看",
+    "play": "播放",
+    "animation": "动画",
+    "start": "开始",
+    "toggle": "切换"
+  },
+  "element": {
+    "text": "文本",
+    "image": "图片",
+    "chart": "图表",
+    "table": "表格",
+    "icon": "图标",
+    "mindMap": "思维导图"
+  },
+  "chart": {
+    "bar": "柱状图",
+    "line": "折线图",
+    "pie": "饼图",
+    "radar": "雷达图",
+    "scatter": "散点图",
+    "funnel": "漏斗图",
+    "title": "标题",
+    "legend": "图例",
+    "xAxis": "X轴",
+    "yAxis": "Y轴",
+    "grid": "网格",
+    "backgroundColor": "背景色",
+    "chartStyle": "图表样式",
+    "chartData": "图表数据"
+  },
+  "panel": {
+    "commonSetting": "常规设置",
+    "borderSetting": "边框设置",
+    "shadowSetting": "阴影设置",
+    "position": "位置",
+    "size": "尺寸",
+    "rotation": "旋转",
+    "opacity": "透明度",
+    "zIndex": "层级",
+    "alignment": "对齐方式",
+    "distribution": "分布方式"
+  },
+  "toolbar": {
+    "undo": "撤销",
+    "redo": "重做",
+    "copy": "复制",
+    "paste": "粘贴",
+    "cut": "剪切",
+    "duplicate": "复制",
+    "lock": "锁定",
+    "unlock": "解锁",
+    "group": "组合",
+    "ungroup": "取消组合",
+    "bringToFront": "置于顶层",
+    "sendToBack": "置于底层",
+    "bringForward": "上移一层",
+    "sendBackward": "下移一层"
+  },
+  "preview": {
+    "fullscreen": "全屏",
+    "exitFullscreen": "退出全屏",
+    "previousSlide": "上一页",
+    "nextSlide": "下一页",
+    "slideshow": "幻灯片放映"
+  },
+  "settings": {
+    "language": "语言",
+    "theme": "主题",
+    "preference": "偏好设置"
+  },
+  "component": {
+    "colorPanel": {
+      "noColor": "无颜色"
+    },
+    "border": {
+      "title": "边框",
+      "width": "边框宽度",
+      "style": "边框样式",
+      "solid": "实线",
+      "dashed": "虚线",
+      "dotted": "点线",
+      "double": "双线"
+    },
+    "operation": {
+      "copy": "复制",
+      "cut": "剪切",
+      "delete": "删除",
+      "copySuccess": "复制成功",
+      "cutSuccess": "剪切成功",
+      "deleteSuccess": "删除成功"
+    },
+    "alignment": {
+      "align": "对齐",
+      "left": "左对齐",
+      "right": "右对齐",
+      "centerHorizontalVertical": "水平垂直对齐",
+      "top": "上对齐",
+      "bottom": "下对齐",
+      "leftTop": "左上对齐",
+      "leftCenter": "左中对齐",
+      "leftBottom": "左下对齐",
+      "centerTop": "中上对齐",
+      "centerCenter": "水平垂直居中",
+      "centerBottom": "中下对齐",
+      "rightTop": "右上对齐",
+      "rightCenter": "右中对齐",
+      "rightBottom": "右下对齐"
+    },
+    "zIndex": {
+      "moveUp": "上移",
+      "moveDown": "下移",
+      "bringForward": "上移一层",
+      "bringToFront": "移至顶层",
+      "sendBackward": "下移一层",
+      "sendToBack": "移至底层"
+    },
+    "shadow": {
+      "title": "阴影",
+      "blur": "模糊",
+      "spread": "扩张"
+    },
+    "autoCenter": {
+      "enable": "点击开启自动居中",
+      "disable": "点击取消自动居中"
+    }
+  },
+  "elements": {
+    "chart": {
+      "title": "图表",
+      "button": "图表",
+      "panel": "图表",
+      "data": "数据",
+      "downloadImage": "下载图片",
+      "editData": "编辑数据",
+      "categories": {
+        "bar": "柱状图",
+        "line": "折线图",
+        "pie": "饼图",
+        "other": "其他"
+      },
+      "types": {
+        "bar1": "柱状图",
+        "bar2": "极坐标柱状图",
+        "bar3": "切向极坐标柱状图",
+        "bar4": "横向柱状图",
+        "line1": "折线图",
+        "line2": "堆叠折线图",
+        "line3": "面积图",
+        "line4": "阶梯折线图",
+        "pie1": "饼图",
+        "pie2": "环形图",
+        "scatter1": "散点图",
+        "radar1": "雷达图",
+        "funnel1": "漏斗图"
+      }
+    },
+    "icon": {
+      "title": "图标",
+      "button": "图标",
+      "panel": "图标",
+      "style": "图标风格",
+      "strokeWidth": "线段粗细",
+      "themes": {
+        "outline": "线性",
+        "filled": "填充",
+        "twoTone": "双色",
+        "multiColor": "多色"
+      },
+      "colors": {
+        "outerStroke": "外部描边颜色",
+        "outerFill": "外部填充颜色",
+        "innerStroke": "内部描边颜色",
+        "innerFill": "内部填充颜色"
+      },
+      "actions": {
+        "rotateLeft": "左旋转",
+        "rotateRight": "右旋转",
+        "switch": "切换"
+      }
+    },
+    "image": {
+      "title": "图片",
+      "button": "图片",
+      "panel": "图片",
+      "insertImage": "插入图片",
+      "preview": "预览",
+      "downloadImage": "下载图片",
+      "uploadMode": {
+        "url": "图片地址",
+        "upload": "上传图片"
+      },
+      "placeholder": {
+        "url": "请输入图片 URL"
+      },
+      "uploadHint": {
+        "dragText": "点击或拖拽图片到此区域上传",
+        "hint": "支持单个图片文件，大小不超过 3MB"
+      },
+      "errors": {
+        "selectPage": "请先选择一个页面",
+        "enterUrl": "请输入图片地址",
+        "uploadImage": "请上传图片",
+        "processFailed": "图片处理失败，请重试",
+        "uploadFailed": "图片上传失败，请重试",
+        "invalidUrl": "图片地址无效或无法加载，请检查图片链接",
+        "onlyImage": "只能上传图片文件",
+        "sizeLimit": "图片大小不能超过 3MB",
+        "loadFailed": "图片加载失败"
+      },
+      "panel": {
+        "opacity": "透明度",
+        "borderRadius": "圆角",
+        "keepRatio": "等比例",
+        "colorFilter": "色彩",
+        "downloading": "下载中",
+        "downloadImage": "下载图片",
+        "filters": {
+          "brightness": "亮度",
+          "brightnessTip": "调整图片的整体亮度",
+          "contrast": "对比度",
+          "contrastTip": "调整图片的明暗对比",
+          "saturate": "饱和度",
+          "saturateTip": "调整颜色的鲜艳程度",
+          "grayscale": "灰度",
+          "grayscaleTip": "将图片转换为灰度（黑白）",
+          "hueRotate": "色相",
+          "hueRotateTip": "旋转色相环，改变整体色调",
+          "invert": "反色",
+          "invertTip": "反转所有颜色",
+          "sepia": "怀旧",
+          "sepiaTip": "应用棕褐色调，营造老照片效果"
+        }
+      }
+    },
+    "text": {
+      "title": "文本",
+      "button": "文本",
+      "panel": "文本",
+      "style": "文字样式",
+      "alignment": "文字对齐",
+      "fontSize": "字号",
+      "lineHeight": "行高",
+      "letterSpacing": "字间距",
+      "fill": "填充",
+      "stroke": "描边",
+      "textShadow": "文字阴影",
+      "format": {
+        "bold": "粗体",
+        "italic": "斜体",
+        "underline": "下划线",
+        "strikethrough": "删除线"
+      },
+      "increaseSize": "增大",
+      "decreaseSize": "减小",
+      "autoHeight": "自动高度"
+    },
+    "table": {
+      "title": "表格",
+      "button": "表格",
+      "panel": "表格",
+      "insertTable": "插入表格",
+      "editData": "编辑数据",
+      "insertRow": {
+        "top": "顶部插入一行",
+        "bottom": "底部插入一行"
+      },
+      "insertColumn": {
+        "left": "左边插入一列",
+        "right": "右边插入一列"
+      },
+      "tableDimension": "{row}行 * {col}列 表格"
+    },
+    "mindMap": {
+      "title": "思维导图",
+      "button": "思维导图",
+      "panel": "思维导图"
+    }
+  },
+  "hooks": {
+    "contextMenu": {
+      "copy": "复制",
+      "cut": "剪切",
+      "delete": "删除",
+      "rotateLeft": "左旋转",
+      "rotateRight": "右旋转",
+      "align": "对齐",
+      "layer": "层级"
+    }
+  },
+  "chartConfig": {
+    "common": {
+      "show": "显示",
+      "color": "颜色",
+      "backgroundColor": "背景颜色",
+      "width": "宽度",
+      "height": "高度",
+      "opacity": "透明度",
+      "name": "名称",
+      "placeholder": {
+        "enterName": "请输入名称",
+        "enterTitle": "请输入主标题",
+        "enterSubtitle": "请输入副标题",
+        "enterAxisName": "请输入坐标轴名称"
+      }
+    },
+    "position": {
+      "left": "左边距",
+      "right": "右边距",
+      "top": "上边距",
+      "bottom": "下边距",
+      "namePosition": "名称位置",
+      "start": "起始",
+      "center": "居中",
+      "end": "结束"
+    },
+    "font": {
+      "fontFamily": "字体",
+      "fontSize": "字体大小",
+      "fontStyle": "字体样式",
+      "fontWeight": "字体粗细",
+      "nameSize": "名称字体大小",
+      "nameStyle": "名称字体样式",
+      "nameWeight": "名称字体粗细",
+      "nameColor": "名称颜色",
+      "styles": {
+        "normal": "正常",
+        "italic": "斜体",
+        "oblique": "倾斜"
+      },
+      "weights": {
+        "normal": "正常",
+        "bold": "粗体",
+        "bolder": "更粗",
+        "lighter": "更细"
+      }
+    },
+    "shadow": {
+      "color": "阴影颜色",
+      "blur": "阴影模糊",
+      "offsetX": "阴影X偏移",
+      "offsetY": "阴影Y偏移"
+    },
+    "textShadow": {
+      "color": "文字阴影颜色",
+      "blur": "文字阴影模糊",
+      "offsetX": "文字阴影X偏移",
+      "offsetY": "文字阴影Y偏移"
+    },
+    "line": {
+      "style": "样式",
+      "solid": "实线",
+      "dashed": "虚线",
+      "dotted": "点线"
+    },
+    "sections": {
+      "basicSettings": "基础设置",
+      "textStyle": "文字样式",
+      "shadowSettings": "阴影设置",
+      "title": "标题",
+      "mainTitle": "主标题",
+      "mainTitleStyle": "主标题样式",
+      "subtitle": "副标题",
+      "subtitleStyle": "副标题样式",
+      "legend": "图例",
+      "legendItemStyle": "图例项样式",
+      "grid": "网格",
+      "xAxis": "X轴",
+      "yAxis": "Y轴",
+      "axisLine": "坐标轴线",
+      "axisLabel": "坐标轴标签",
+      "axisTick": "坐标轴刻度",
+      "label": "标签",
+      "labelLine": "标签线",
+      "itemStyle": "图形样式",
+      "emphasis": "高亮样式"
+    },
+    "legend": {
+      "shape": "形状",
+      "itemWidth": "图例项宽度",
+      "itemHeight": "图例项高度",
+      "borderColor": "边框颜色",
+      "borderWidth": "边框宽度",
+      "borderStyle": "边框样式",
+      "shapes": {
+        "roundRect": "圆角矩形",
+        "rect": "矩形",
+        "circle": "圆形",
+        "triangle": "三角形",
+        "diamond": "菱形",
+        "pin": "大头针",
+        "arrow": "箭头",
+        "none": "无"
+      }
+    },
+    "axis": {
+      "rotate": "旋转角度",
+      "length": "长度"
+    },
+    "label": {
+      "position": "位置",
+      "positionOutside": "外侧",
+      "positionInside": "内侧",
+      "positionInner": "内部",
+      "positionCenter": "中心",
+      "formatter": "格式化"
+    },
+    "emphasis": {
+      "scale": "缩放",
+      "scaleSize": "缩放大小"
+    },
+    "color": {
+      "config": "颜色配置",
+      "cycleTip": "当颜色少于数据项的时候，会循环使用颜色",
+      "add": "添加",
+      "noColor": "暂无颜色，请添加颜色",
+      "title": "颜色"
+    },
+    "backgroundColor": {
+      "title": "背景颜色"
+    },
+    "chartTypes": {
+      "pie": {
+        "title": "饼图",
+        "innerRadius": "内半径",
+        "outerRadius": "外半径",
+        "radius": "半径",
+        "centerX": "圆心X",
+        "centerY": "圆心Y",
+        "roseType": "玫瑰图类型",
+        "roseTypeNone": "无",
+        "roseTypeRadius": "半径模式",
+        "roseTypeArea": "面积模式"
+      },
+      "radar": {
+        "title": "雷达图",
+        "radius": "半径",
+        "centerX": "中心X",
+        "centerY": "中心Y",
+        "shape": "形状",
+        "shapePolygon": "多边形",
+        "shapeCircle": "圆形",
+        "splitNumber": "分割段数"
+      },
+      "radarExt": {
+        "basicSettings": "基础设置",
+        "axisName": "轴名称",
+        "splitLine": "分割线",
+        "splitArea": "分割区域",
+        "axisLine": "轴线",
+        "color1": "颜色1",
+        "color2": "颜色2"
+      },
+      "bar": {
+        "title": "柱状图",
+        "barWidth": "柱宽度",
+        "barGap": "柱间距",
+        "barCategoryGap": "类目间距"
+      },
+      "line": {
+        "title": "折线图",
+        "smooth": "平滑曲线",
+        "step": "阶梯线",
+        "stepNone": "无",
+        "stepStart": "起始",
+        "stepMiddle": "中间",
+        "stepEnd": "结束"
+      },
+      "scatter": {
+        "title": "散点图",
+        "symbolSize": "标记大小"
+      },
+      "funnel": {
+        "title": "漏斗图",
+        "min": "最小值",
+        "max": "最大值",
+        "minSize": "最小尺寸",
+        "maxSize": "最大尺寸",
+        "sort": "排序",
+        "sortAscending": "升序",
+        "sortDescending": "降序",
+        "sortNone": "无",
+        "gap": "间距"
+      }
+    },
+    "pieExt": {
+      "itemGap": "图形间距",
+      "borderRadius": "边框圆角"
+    },
+    "polar": {
+      "title": "极坐标",
+      "settings": "极坐标设置",
+      "centerX": "中心X (%)",
+      "centerY": "中心Y (%)",
+      "innerRing": "内圈 (%)",
+      "outerRing": "外圈 (%)",
+      "angleAxisBasic": "角度轴基础设置",
+      "startAngle": "起始角度",
+      "angleAxisLine": "角度轴线",
+      "angleAxisLabel": "角度轴标签",
+      "fontSettings": "字体设置",
+      "enterFont": "请输入字体",
+      "blur": "模糊度",
+      "xOffset": "X偏移",
+      "yOffset": "Y偏移"
+    },
+    "funnelExt": {
+      "horizontalPosition": "水平位置",
+      "verticalPosition": "垂直位置",
+      "inside": "内部",
+      "outside": "外部",
+      "left": "左侧",
+      "right": "右侧",
+      "top": "上侧",
+      "bottom": "下侧",
+      "insideRight": "内部右侧",
+      "insideLeft": "内部左侧",
+      "leftTop": "左侧上部",
+      "leftBottom": "左侧下部",
+      "rightTop": "右侧上部",
+      "rightBottom": "右侧下部",
+      "inner": "内部(同inside)",
+      "center": "居中(同inside)",
+      "length": "长度"
+    }
+  },
+  "textPanel": {
+    "bold": "加粗",
+    "italic": "斜体",
+    "underline": "下划线",
+    "strikethrough": "删除线",
+    "fontSize": "文本字体大小",
+    "increaseFontSize": "增大字号",
+    "decreaseFontSize": "减小字号",
+    "lineHeight": "行高",
+    "increaseLineHeight": "增大行高",
+    "decreaseLineHeight": "减小行高",
+    "stroke": "描边",
+    "title": "文本工具"
+  },
+  "tablePanel": {
+    "bold": "加粗",
+    "italic": "斜体",
+    "underline": "下划线",
+    "strikethrough": "删除线",
+    "fontSize": "文本字体大小",
+    "increaseFontSize": "增大字号",
+    "decreaseFontSize": "减小字号",
+    "insertRowAbove": "在上方插入行",
+    "insertRowBelow": "在下方插入行",
+    "insertColumnLeft": "在左边插入列",
+    "insertColumnRight": "在右边插入列",
+    "borderWidth": "边框宽度",
+    "borderStyle": "边框样式",
+    "borderColor": "边框颜色",
+    "title": "表格"
+  },
+  "mindMapPanel": {
+    "edit": "编辑",
+    "downloadImage": "下载图片",
+    "title": "思维导图"
+  },
+  "chartDataModal": {
+    "title": "编辑图表数据",
+    "save": "保存",
+    "cancel": "取消"
+  },
+  "chartExport": {
+    "chartNotFound": "未找到图表元素",
+    "chartInstanceNotFound": "未找到图表实例",
+    "generateImageFailed": "生成图片数据失败",
+    "imageLoadFailed": "图片加载失败",
+    "canvasContextFailed": "无法创建 Canvas 上下文",
+    "canvasBlobFailed": "Canvas 转换 Blob 失败",
+    "imageDataEmpty": "生成的图片数据为空",
+    "exportSuccess": "图片导出成功",
+    "exportFailed": "导出图表图片失败"
+  }
+}

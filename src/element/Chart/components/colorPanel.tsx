@@ -8,9 +8,12 @@ import { AddOne, ColorFilter, Delete } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { Button, ColorPicker, Popover } from "antd";
 import { memo, useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import type { IChartProps } from "../index";
 
 export const ColorPanel: FC = memo(() => {
+  const { t } = useTranslation();
+  
   // Popover 打开状态
   const [open, setOpen] = useState(false);
 
@@ -97,9 +100,9 @@ export const ColorPanel: FC = memo(() => {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between pb-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">
-            颜色配置
+            {t('chartConfig.color.config')}
             <label className="text-xs text-gray-500 ml-[5px]">
-              当颜色少于数据项的时候，会循环使用颜色
+              {t('chartConfig.color.cycleTip')}
             </label>
           </span>
           <Button
@@ -109,7 +112,7 @@ export const ColorPanel: FC = memo(() => {
             icon={<AddOne theme="outline" size="14" />}
             className="text-xs h-7 flex items-center gap-1"
           >
-            添加
+            {t('chartConfig.color.add')}
           </Button>
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -149,7 +152,7 @@ export const ColorPanel: FC = memo(() => {
         </div>
         {colorArray.length === 0 && (
           <div className="text-center py-10 px-5 text-gray-400 text-xs">
-            暂无颜色，请添加颜色
+            {t('chartConfig.color.noColor')}
           </div>
         )}
       </div>
@@ -167,7 +170,7 @@ export const ColorPanel: FC = memo(() => {
     >
       <div className="h-full">
         <PanelLargeButton
-          title="颜色"
+          title={t('chartConfig.color.title')}
           icon={<ColorFilter theme="outline" size="18" fill="#333" />}
           active={open}
         />

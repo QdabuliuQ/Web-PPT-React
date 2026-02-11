@@ -6,11 +6,14 @@ import {
 import { Text } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { memo, useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { getLegendDefaultOption } from "../common";
 import type { IChartProps } from "../index";
 import { ChartStylePanel } from "./chartStylePanel";
 
 export const LegendPanel: FC = memo(() => {
+  const { t } = useTranslation();
+  
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -102,36 +105,36 @@ export const LegendPanel: FC = memo(() => {
     return [
       {
         key: "basic",
-        title: "基础设置",
+        title: t('chartConfig.sections.basicSettings'),
         configs: [
           {
             type: "switch",
             keys: ["show"],
-            label: "显示",
+            label: t('chartConfig.common.show'),
             defaultValue: getConfigValue(["show"]),
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["icon"],
-            label: "形状",
+            label: t('chartConfig.legend.shape'),
             defaultValue: getConfigValue(["icon"]),
             options: [
-              { label: "圆角矩形", value: "roundRect" },
-              { label: "矩形", value: "rect" },
-              { label: "圆形", value: "circle" },
-              { label: "三角形", value: "triangle" },
-              { label: "菱形", value: "diamond" },
-              { label: "大头针", value: "pin" },
-              { label: "箭头", value: "arrow" },
-              { label: "无", value: "none" },
+              { label: t('chartConfig.legend.shapes.roundRect'), value: "roundRect" },
+              { label: t('chartConfig.legend.shapes.rect'), value: "rect" },
+              { label: t('chartConfig.legend.shapes.circle'), value: "circle" },
+              { label: t('chartConfig.legend.shapes.triangle'), value: "triangle" },
+              { label: t('chartConfig.legend.shapes.diamond'), value: "diamond" },
+              { label: t('chartConfig.legend.shapes.pin'), value: "pin" },
+              { label: t('chartConfig.legend.shapes.arrow'), value: "arrow" },
+              { label: t('chartConfig.legend.shapes.none'), value: "none" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "numberOrAuto",
             keys: ["left"],
-            label: "左边距",
+            label: t('chartConfig.position.left'),
             defaultValue: getConfigValue(["left"]),
             min: 0,
             max: 2000,
@@ -140,7 +143,7 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "numberOrAuto",
             keys: ["top"],
-            label: "上边距",
+            label: t('chartConfig.position.top'),
             defaultValue: getConfigValue(["top"]),
             min: 0,
             max: 2000,
@@ -149,7 +152,7 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["itemWidth"],
-            label: "图例项宽度",
+            label: t('chartConfig.legend.itemWidth'),
             defaultValue: getConfigValue(["itemWidth"]),
             min: 0,
             max: 200,
@@ -158,7 +161,7 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["itemHeight"],
-            label: "图例项高度",
+            label: t('chartConfig.legend.itemHeight'),
             defaultValue: getConfigValue(["itemHeight"]),
             min: 0,
             max: 200,
@@ -168,19 +171,19 @@ export const LegendPanel: FC = memo(() => {
       },
       {
         key: "textStyle",
-        title: "文字样式",
+        title: t('chartConfig.sections.textStyle'),
         configs: [
           {
             type: "colorPicker",
             keys: ["textStyle", "color"],
-            label: "颜色",
+            label: t('chartConfig.common.color'),
             defaultValue: getConfigValue(["textStyle", "color"]),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["textStyle", "fontSize"],
-            label: "字体大小",
+            label: t('chartConfig.font.fontSize'),
             defaultValue: getConfigValue(["textStyle", "fontSize"]),
             min: 1,
             max: 100,
@@ -189,39 +192,39 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["textStyle", "fontStyle"],
-            label: "字体样式",
+            label: t('chartConfig.font.fontStyle'),
             defaultValue: getConfigValue(["textStyle", "fontStyle"]),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
-              { label: "倾斜", value: "oblique" },
+              { label: t('chartConfig.font.styles.normal'), value: "normal" },
+              { label: t('chartConfig.font.styles.italic'), value: "italic" },
+              { label: t('chartConfig.font.styles.oblique'), value: "oblique" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["textStyle", "fontWeight"],
-            label: "字体粗细",
+            label: t('chartConfig.font.fontWeight'),
             defaultValue: getConfigValue(["textStyle", "fontWeight"]),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
-              { label: "更粗", value: "bolder" },
-              { label: "更细", value: "lighter" },
+              { label: t('chartConfig.font.weights.normal'), value: "normal" },
+              { label: t('chartConfig.font.weights.bold'), value: "bold" },
+              { label: t('chartConfig.font.weights.bolder'), value: "bolder" },
+              { label: t('chartConfig.font.weights.lighter'), value: "lighter" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["textStyle", "textShadowColor"],
-            label: "文字阴影颜色",
+            label: t('chartConfig.textShadow.color'),
             defaultValue: getConfigValue(["textStyle", "textShadowColor"]),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["textStyle", "textShadowBlur"],
-            label: "文字阴影模糊",
+            label: t('chartConfig.textShadow.blur'),
             defaultValue: getConfigValue(["textStyle", "textShadowBlur"]),
             min: 0,
             max: 50,
@@ -230,7 +233,7 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["textStyle", "textShadowOffsetX"],
-            label: "文字阴影X偏移",
+            label: t('chartConfig.textShadow.offsetX'),
             defaultValue: getConfigValue(["textStyle", "textShadowOffsetX"]),
             min: -50,
             max: 50,
@@ -239,7 +242,7 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["textStyle", "textShadowOffsetY"],
-            label: "文字阴影Y偏移",
+            label: t('chartConfig.textShadow.offsetY'),
             defaultValue: getConfigValue(["textStyle", "textShadowOffsetY"]),
             min: -50,
             max: 50,
@@ -249,19 +252,19 @@ export const LegendPanel: FC = memo(() => {
       },
       {
         key: "itemStyle",
-        title: "图例项样式",
+        title: t('chartConfig.sections.legendItemStyle'),
         configs: [
           {
             type: "colorPicker",
             keys: ["itemStyle", "borderColor"],
-            label: "边框颜色",
+            label: t('chartConfig.legend.borderColor'),
             defaultValue: getConfigValue(["itemStyle", "borderColor"]),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "borderWidth"],
-            label: "边框宽度",
+            label: t('chartConfig.legend.borderWidth'),
             defaultValue: getConfigValue(["itemStyle", "borderWidth"]),
             min: 0,
             max: 20,
@@ -270,19 +273,19 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "select",
             keys: ["itemStyle", "borderType"],
-            label: "边框样式",
+            label: t('chartConfig.legend.borderStyle'),
             defaultValue: getConfigValue(["itemStyle", "borderType"]),
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t('chartConfig.line.solid'), value: "solid" },
+              { label: t('chartConfig.line.dashed'), value: "dashed" },
+              { label: t('chartConfig.line.dotted'), value: "dotted" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "slider",
             keys: ["itemStyle", "opacity"],
-            label: "透明度",
+            label: t('chartConfig.common.opacity'),
             defaultValue: getConfigValue(["itemStyle", "opacity"]),
             min: 0,
             max: 1,
@@ -292,14 +295,14 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "colorPicker",
             keys: ["itemStyle", "shadowColor"],
-            label: "阴影颜色",
+            label: t('chartConfig.shadow.color'),
             defaultValue: getConfigValue(["itemStyle", "shadowColor"]),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowBlur"],
-            label: "阴影模糊",
+            label: t('chartConfig.shadow.blur'),
             defaultValue: getConfigValue(["itemStyle", "shadowBlur"]),
             min: 0,
             max: 50,
@@ -308,7 +311,7 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t('chartConfig.shadow.offsetX'),
             defaultValue: getConfigValue(["itemStyle", "shadowOffsetX"]),
             min: -50,
             max: 50,
@@ -317,7 +320,7 @@ export const LegendPanel: FC = memo(() => {
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t('chartConfig.shadow.offsetY'),
             defaultValue: getConfigValue(["itemStyle", "shadowOffsetY"]),
             min: -50,
             max: 50,
@@ -326,7 +329,7 @@ export const LegendPanel: FC = memo(() => {
         ],
       },
     ];
-  }, [legendConfig, handleConfigChange, handleColorConfigChange]);
+  }, [t, legendConfig, handleConfigChange, handleColorConfigChange]);
 
   // 根据配置获取值
   const getValue = useMemoizedFn((keys: string[], defaultValue?: any) => {
@@ -344,7 +347,7 @@ export const LegendPanel: FC = memo(() => {
 
   return (
     <ChartStylePanel
-      title="图例"
+      title={t('chartConfig.sections.legend')}
       icon={<Text theme="outline" size="18" fill="#333" />}
       panelConfigs={panelConfigs}
       getValue={getValue}

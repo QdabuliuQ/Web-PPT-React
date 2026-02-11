@@ -1,5 +1,6 @@
 import { message } from "antd";
 import * as echarts from "echarts";
+import i18n from "@/i18n";
 
 /**
  * 导出 ECharts 图表为图片
@@ -16,13 +17,13 @@ export async function exportChartAsImage(
   try {
     const chartElement = document.getElementById(`dom_${elementId}`);
     if (!chartElement) {
-      message.warning("未找到图表元素");
+      message.warning(i18n.t("chartExport.chartNotFound"));
       return false;
     }
 
     const chartInstance = echarts.getInstanceByDom(chartElement);
     if (!chartInstance) {
-      message.warning("未找到图表实例");
+      message.warning(i18n.t("chartExport.chartInstanceNotFound"));
       return false;
     }
 
@@ -32,7 +33,7 @@ export async function exportChartAsImage(
     });
 
     if (!dataURL || typeof dataURL !== "string") {
-      message.error("生成图片数据失败");
+      message.error(i18n.t("chartExport.generateImageFailed"));
       return false;
     }
 
@@ -41,7 +42,8 @@ export async function exportChartAsImage(
 
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
-      img.onerror = () => reject(new Error("图片加载失败"));
+      img.onerror = () =>
+        reject(new Error(i18n.t("chartExport.imageLoadFailed")));
       img.src = dataURL;
     });
 
@@ -50,7 +52,7 @@ export async function exportChartAsImage(
     canvas.height = img.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
-      message.error("无法创建 Canvas 上下文");
+      message.error(i18n.t("chartExport.canvasContextFailed"));
       return false;
     }
 
@@ -67,7 +69,7 @@ export async function exportChartAsImage(
           if (blob) {
             resolve(blob);
           } else {
-            reject(new Error("Canvas 转换 Blob 失败"));
+            reject(new Error(i18n.t("chartExport.canvasBlobFailed")));
           }
         },
         mimeType,
@@ -76,7 +78,7 @@ export async function exportChartAsImage(
     });
 
     if (!blob || blob.size === 0) {
-      message.error("生成的图片数据为空");
+      message.error(i18n.t("chartExport.imageDataEmpty"));
       return false;
     }
 
@@ -94,11 +96,11 @@ export async function exportChartAsImage(
       URL.revokeObjectURL(url);
     }, 100);
 
-    message.success("图片导出成功");
+    message.success(i18n.t("chartExport.exportSuccess"));
     return true;
   } catch (error) {
-    console.error("导出图表图片失败:", error);
-    message.error("导出图表图片失败");
+    console.error(i18n.t("chartExport.exportFailed"), error);
+    message.error(i18n.t("chartExport.exportFailed"));
     return false;
   }
 }

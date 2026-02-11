@@ -8,10 +8,15 @@ import { Filter } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { InputNumber } from "antd";
 import { useMemo, type FC } from "react";
-import { ChartStylePanel } from "../../components/chartStylePanel";
+import { useTranslation } from "react-i18next";
+import {
+  ChartStylePanel,
+  type PanelConfig,
+} from "../../components/chartStylePanel";
 import type { IChartProps } from "../../index";
 
 export const Funnel1ChartPanel: FC = () => {
+  const { t } = useTranslation();
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -151,12 +156,12 @@ export const Funnel1ChartPanel: FC = () => {
     () => [
       {
         key: "basic",
-        title: "基础设置",
+        title: t("chartConfig.sections.basicSettings"),
         configs: [
           {
             type: "numberOrAuto",
             keys: ["left"],
-            label: "水平位置",
+            label: t("chartConfig.funnelExt.horizontalPosition"),
             defaultValue: parsePositionValue(getValue(["left"], "center")),
             min: 0,
             max: 100,
@@ -182,7 +187,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "numberOrAuto",
             keys: ["top"],
-            label: "垂直位置",
+            label: t("chartConfig.funnelExt.verticalPosition"),
             defaultValue: parsePositionValue(getValue(["top"], "center")),
             min: 0,
             max: 100,
@@ -206,7 +211,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["width"],
-            label: "宽度",
+            label: t("chartConfig.common.width"),
             defaultValue: width,
             min: 0,
             max: 100,
@@ -233,7 +238,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["height"],
-            label: "高度",
+            label: t("chartConfig.common.height"),
             defaultValue: height,
             min: 0,
             max: 100,
@@ -260,7 +265,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["min"],
-            label: "最小值",
+            label: t("chartConfig.chartTypes.funnel.min"),
             defaultValue: getValue(["min"], 0),
             min: 0,
             max: 1000,
@@ -270,7 +275,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["max"],
-            label: "最大值",
+            label: t("chartConfig.chartTypes.funnel.max"),
             defaultValue: getValue(["max"], 100),
             min: 0,
             max: 1000,
@@ -280,7 +285,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["gap"],
-            label: "间距",
+            label: t("chartConfig.chartTypes.funnel.gap"),
             defaultValue: getValue(["gap"], 2),
             min: 0,
             max: 50,
@@ -290,12 +295,12 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "select",
             keys: ["sort"],
-            label: "排序",
+            label: t("chartConfig.chartTypes.funnel.sort"),
             defaultValue: getValue(["sort"], "descending"),
             options: [
-              { label: "降序", value: "descending" },
-              { label: "升序", value: "ascending" },
-              { label: "无", value: "none" },
+              { label: t("chartConfig.chartTypes.funnel.sortDescending"), value: "descending" },
+              { label: t("chartConfig.chartTypes.funnel.sortAscending"), value: "ascending" },
+              { label: t("chartConfig.chartTypes.funnel.sortNone"), value: "none" },
             ],
             onChange: handleConfigChange,
           },
@@ -303,48 +308,48 @@ export const Funnel1ChartPanel: FC = () => {
       },
       {
         key: "label",
-        title: "标签",
+        title: t("chartConfig.sections.label"),
         configs: [
           {
             type: "switch",
             keys: ["label", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["label", "position"],
-            label: "位置",
+            label: t("chartConfig.label.position"),
             defaultValue: getValue(["label", "position"], "inside"),
             options: [
-              { label: "内部", value: "inside" },
-              { label: "外部", value: "outside" },
-              { label: "左侧", value: "left" },
-              { label: "右侧", value: "right" },
-              { label: "上侧", value: "top" },
-              { label: "下侧", value: "bottom" },
-              { label: "内部右侧", value: "insideRight" },
-              { label: "内部左侧", value: "insideLeft" },
-              { label: "左侧上部", value: "leftTop" },
-              { label: "左侧下部", value: "leftBottom" },
-              { label: "右侧上部", value: "rightTop" },
-              { label: "右侧下部", value: "rightBottom" },
-              { label: "内部(同inside)", value: "inner" },
-              { label: "居中(同inside)", value: "center" },
+              { label: t("chartConfig.funnelExt.inside"), value: "inside" },
+              { label: t("chartConfig.funnelExt.outside"), value: "outside" },
+              { label: t("chartConfig.funnelExt.left"), value: "left" },
+              { label: t("chartConfig.funnelExt.right"), value: "right" },
+              { label: t("chartConfig.funnelExt.top"), value: "top" },
+              { label: t("chartConfig.funnelExt.bottom"), value: "bottom" },
+              { label: t("chartConfig.funnelExt.insideRight"), value: "insideRight" },
+              { label: t("chartConfig.funnelExt.insideLeft"), value: "insideLeft" },
+              { label: t("chartConfig.funnelExt.leftTop"), value: "leftTop" },
+              { label: t("chartConfig.funnelExt.leftBottom"), value: "leftBottom" },
+              { label: t("chartConfig.funnelExt.rightTop"), value: "rightTop" },
+              { label: t("chartConfig.funnelExt.rightBottom"), value: "rightBottom" },
+              { label: t("chartConfig.funnelExt.inner"), value: "inner" },
+              { label: t("chartConfig.funnelExt.center"), value: "center" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["label", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: getValue(["label", "color"], "#fff"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["label", "fontSize"],
-            label: "字体大小",
+            label: t("chartConfig.font.fontSize"),
             defaultValue: getValue(["label", "fontSize"], 12),
             min: 8,
             max: 72,
@@ -354,39 +359,39 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "select",
             keys: ["label", "fontStyle"],
-            label: "字体样式",
+            label: t("chartConfig.font.fontStyle"),
             defaultValue: getValue(["label", "fontStyle"], "normal"),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
-              { label: "倾斜", value: "oblique" },
+              { label: t("chartConfig.font.styles.normal"), value: "normal" },
+              { label: t("chartConfig.font.styles.italic"), value: "italic" },
+              { label: t("chartConfig.font.styles.oblique"), value: "oblique" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["label", "fontWeight"],
-            label: "字体粗细",
+            label: t("chartConfig.font.fontWeight"),
             defaultValue: getValue(["label", "fontWeight"], "normal"),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
-              { label: "加粗", value: "bolder" },
-              { label: "细体", value: "lighter" },
+              { label: t("chartConfig.font.weights.normal"), value: "normal" },
+              { label: t("chartConfig.font.weights.bold"), value: "bold" },
+              { label: t("chartConfig.font.weights.bolder"), value: "bolder" },
+              { label: t("chartConfig.font.weights.lighter"), value: "lighter" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["label", "textShadowColor"],
-            label: "文字阴影颜色",
+            label: t("chartConfig.textShadow.color"),
             defaultValue: getValue(["label", "textShadowColor"], "transparent"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["label", "textShadowBlur"],
-            label: "文字阴影模糊",
+            label: t("chartConfig.textShadow.blur"),
             defaultValue: getValue(["label", "textShadowBlur"], 0),
             min: 0,
             max: 50,
@@ -396,7 +401,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["label", "textShadowOffsetX"],
-            label: "文字阴影X偏移",
+            label: t("chartConfig.textShadow.offsetX"),
             defaultValue: getValue(["label", "textShadowOffsetX"], 0),
             min: -50,
             max: 50,
@@ -406,7 +411,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["label", "textShadowOffsetY"],
-            label: "文字阴影Y偏移",
+            label: t("chartConfig.textShadow.offsetY"),
             defaultValue: getValue(["label", "textShadowOffsetY"], 0),
             min: -50,
             max: 50,
@@ -417,18 +422,18 @@ export const Funnel1ChartPanel: FC = () => {
       },
       {
         key: "labelLine",
-        title: "标签线",
+        title: t("chartConfig.sections.labelLine"),
         configs: [
           {
             type: "switch",
             keys: ["labelLine", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
             onChange: handleConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["labelLine", "length"],
-            label: "长度",
+            label: t("chartConfig.funnelExt.length"),
             defaultValue: getValue(["labelLine", "length"], 10),
             min: 0,
             max: 100,
@@ -438,14 +443,14 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "colorPicker",
             keys: ["labelLine", "lineStyle", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: getValue(["labelLine", "lineStyle", "color"], "#000"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["labelLine", "lineStyle", "width"],
-            label: "宽度",
+            label: t("chartConfig.common.width"),
             defaultValue: getValue(["labelLine", "lineStyle", "width"], 1),
             min: 0,
             max: 10,
@@ -455,19 +460,19 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "select",
             keys: ["labelLine", "lineStyle", "type"],
-            label: "线条样式",
+            label: t("chartConfig.line.style"),
             defaultValue: getValue(["labelLine", "lineStyle", "type"], "solid"),
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t("chartConfig.line.solid"), value: "solid" },
+              { label: t("chartConfig.line.dashed"), value: "dashed" },
+              { label: t("chartConfig.line.dotted"), value: "dotted" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "slider",
             keys: ["labelLine", "lineStyle", "opacity"],
-            label: "透明度",
+            label: t("chartConfig.common.opacity"),
             defaultValue: getValue(["labelLine", "lineStyle", "opacity"], 1),
             min: 0,
             max: 1,
@@ -478,19 +483,19 @@ export const Funnel1ChartPanel: FC = () => {
       },
       {
         key: "itemStyle",
-        title: "样式",
+        title: t("chartConfig.sections.textStyle"),
         configs: [
           {
             type: "colorPicker",
             keys: ["itemStyle", "borderColor"],
-            label: "边框颜色",
+            label: t("chartConfig.legend.borderColor"),
             defaultValue: getValue(["itemStyle", "borderColor"], "#fff"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "borderWidth"],
-            label: "边框宽度",
+            label: t("chartConfig.legend.borderWidth"),
             defaultValue: getValue(["itemStyle", "borderWidth"], 1),
             min: 0,
             max: 20,
@@ -500,19 +505,19 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "select",
             keys: ["itemStyle", "borderType"],
-            label: "边框样式",
+            label: t("chartConfig.legend.borderStyle"),
             defaultValue: getValue(["itemStyle", "borderType"], "solid"),
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t("chartConfig.line.solid"), value: "solid" },
+              { label: t("chartConfig.line.dashed"), value: "dashed" },
+              { label: t("chartConfig.line.dotted"), value: "dotted" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "slider",
             keys: ["itemStyle", "opacity"],
-            label: "透明度",
+            label: t("chartConfig.common.opacity"),
             defaultValue: getValue(["itemStyle", "opacity"], 1),
             min: 0,
             max: 1,
@@ -522,14 +527,14 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "colorPicker",
             keys: ["itemStyle", "shadowColor"],
-            label: "阴影颜色",
+            label: t("chartConfig.shadow.color"),
             defaultValue: getValue(["itemStyle", "shadowColor"], "transparent"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowBlur"],
-            label: "阴影模糊",
+            label: t("chartConfig.shadow.blur"),
             defaultValue: getValue(["itemStyle", "shadowBlur"], 0),
             min: 0,
             max: 50,
@@ -539,7 +544,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t("chartConfig.shadow.offsetX"),
             defaultValue: getValue(["itemStyle", "shadowOffsetX"], 0),
             min: -50,
             max: 50,
@@ -549,7 +554,7 @@ export const Funnel1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t("chartConfig.shadow.offsetY"),
             defaultValue: getValue(["itemStyle", "shadowOffsetY"], 0),
             min: -50,
             max: 50,
@@ -569,6 +574,7 @@ export const Funnel1ChartPanel: FC = () => {
       handleChangeWithCallback,
       handleConfigChange,
       handleColorConfigChange,
+      t,
     ]
   );
 
@@ -576,9 +582,9 @@ export const Funnel1ChartPanel: FC = () => {
 
   return (
     <ChartStylePanel
-      title="样式"
+      title={t("chartConfig.sections.textStyle")}
       icon={<Filter theme="outline" size="18" fill="#333" />}
-      panelConfigs={panelConfigs}
+      panelConfigs={panelConfigs as PanelConfig[]}
       getValue={getValue}
       defaultActiveKey={["basic"]}
     />

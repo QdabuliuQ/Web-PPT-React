@@ -11,6 +11,7 @@ import {
   AlignmentRightTop,
 } from "@icon-park/react";
 import { type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { PanelDropdownButton } from "../PanelDropdownButton";
 interface IPanelPlacementButtonProps {
   value?: string;
@@ -23,9 +24,11 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
   onSelect,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
+  
   return (
     <PanelDropdownButton
-      title="对齐"
+      title={t('component.alignment.align')}
       value={value}
       icon={
         <AlignTextLeft
@@ -44,28 +47,28 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
           : [
               {
                 key: "left-top",
-                label: "左上对齐",
+                label: t('component.alignment.leftTop'),
                 icon: (
                   <AlignmentLeftTop theme="outline" size="15" fill="#333" />
                 ),
               },
               {
                 key: "left-center",
-                label: "左中对齐",
+                label: t('component.alignment.leftCenter'),
                 icon: (
                   <AlignmentLeftCenter theme="outline" size="15" fill="#333" />
                 ),
               },
               {
                 key: "left-bottom",
-                label: "左下对齐",
+                label: t('component.alignment.leftBottom'),
                 icon: (
                   <AlignmentLeftBottom theme="outline" size="15" fill="#333" />
                 ),
               },
               {
                 key: "center-top",
-                label: "中上对齐",
+                label: t('component.alignment.centerTop'),
                 icon: (
                   <AlignmentHorizontalTop
                     theme="outline"
@@ -76,7 +79,7 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
               },
               {
                 key: "center-center",
-                label: "水平垂直居中",
+                label: t('component.alignment.centerCenter'),
                 icon: (
                   <AlignmentHorizontalCenter
                     theme="outline"
@@ -87,7 +90,7 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
               },
               {
                 key: "center-bottom",
-                label: "中下对齐",
+                label: t('component.alignment.centerBottom'),
                 icon: (
                   <AlignmentHorizontalBottom
                     theme="outline"
@@ -98,21 +101,21 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
               },
               {
                 key: "right-top",
-                label: "右上对齐",
+                label: t('component.alignment.rightTop'),
                 icon: (
                   <AlignmentRightTop theme="outline" size="15" fill="#333" />
                 ),
               },
               {
                 key: "right-center",
-                label: "右中对齐",
+                label: t('component.alignment.rightCenter'),
                 icon: (
                   <AlignmentRightCenter theme="outline" size="15" fill="#333" />
                 ),
               },
               {
                 key: "right-bottom",
-                label: "右下对齐",
+                label: t('component.alignment.rightBottom'),
                 icon: (
                   <AlignmentRightBottom theme="outline" size="15" fill="#333" />
                 ),

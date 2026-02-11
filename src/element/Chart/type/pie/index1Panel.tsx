@@ -7,15 +7,21 @@ import { ChartPie } from "@icon-park/react";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import { InputNumber } from "antd";
 import { useMemo, type FC } from "react";
-import { ChartStylePanel } from "../../components/chartStylePanel";
+import { useTranslation } from "react-i18next";
+import {
+  ChartStylePanel,
+  type PanelConfig,
+} from "../../components/chartStylePanel";
 import type { IChartProps } from "../../index";
 
 export const Pie1ChartPanel: FC = () => {
+  const { t } = useTranslation();
+
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
   const setElementInfo = usePPTStore((state) => state.setElementInfo);
-  
+
   // 直接订阅 chartInfo，这样当 pages 变化时组件会重新渲染
   const chartInfo = usePPTStore((state) => {
     if (!pageId || !elementId) return null;
@@ -163,8 +169,6 @@ export const Pie1ChartPanel: FC = () => {
 
   // 通用的 onChange 处理函数（用于非 customRender 的配置项）
   const handleConfigChange = useMemoizedFn((value: any, keys: string[]) => {
-    console.log(keys, value);
-
     handleSeriesChange(keys, value);
   });
 
@@ -180,7 +184,7 @@ export const Pie1ChartPanel: FC = () => {
     () => [
       {
         key: "basic",
-        title: "基础设置",
+        title: t("chartConfig.sections.basicSettings"),
         configs: [
           // 根据是否为环形图显示不同的输入框
           ...(isDonutChart
@@ -188,7 +192,7 @@ export const Pie1ChartPanel: FC = () => {
                 {
                   type: "inputNumber",
                   keys: ["radius", "0"],
-                  label: "内半径",
+                  label: t("chartConfig.chartTypes.pie.innerRadius"),
                   defaultValue: getValue(["radius", "0"], 40),
                   min: 0,
                   max: 100,
@@ -227,7 +231,7 @@ export const Pie1ChartPanel: FC = () => {
                 {
                   type: "inputNumber",
                   keys: ["radius", "1"],
-                  label: "外半径",
+                  label: t("chartConfig.chartTypes.pie.outerRadius"),
                   defaultValue: getValue(["radius", "1"], 70),
                   min: 0,
                   max: 100,
@@ -268,7 +272,7 @@ export const Pie1ChartPanel: FC = () => {
                 {
                   type: "inputNumber",
                   keys: ["radius"],
-                  label: "半径",
+                  label: t("chartConfig.chartTypes.pie.radius"),
                   defaultValue: getValue(["radius"], 60),
                   min: 0,
                   max: 100,
@@ -298,7 +302,7 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["center", "0"],
-            label: "中心X",
+            label: t("chartConfig.chartTypes.pie.centerX"),
             defaultValue: getValue(["center", "0"], 50),
             min: 0,
             max: 100,
@@ -328,7 +332,7 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["center", "1"],
-            label: "中心Y",
+            label: t("chartConfig.chartTypes.pie.centerY"),
             defaultValue: getValue(["center", "1"], 50),
             min: 0,
             max: 100,
@@ -359,25 +363,25 @@ export const Pie1ChartPanel: FC = () => {
       },
       {
         key: "label",
-        title: "标签",
+        title: t("chartConfig.sections.label"),
         configs: [
           {
             type: "switch",
             keys: ["label", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["label", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: getValue(["label", "color"], "#333"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["label", "fontSize"],
-            label: "字体大小",
+            label: t("chartConfig.font.fontSize"),
             defaultValue: getValue(["label", "fontSize"], 12),
             min: 8,
             max: 72,
@@ -387,52 +391,55 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "select",
             keys: ["label", "position"],
-            label: "位置",
+            label: t("chartConfig.label.position"),
             defaultValue: getValue(["label", "position"], "outside"),
             options: [
-              { label: "外侧", value: "outside" },
-              { label: "内侧", value: "inside" },
-              { label: "内部", value: "inner" },
-              { label: "中心", value: "center" },
+              {
+                label: t("chartConfig.label.positionOutside"),
+                value: "outside",
+              },
+              { label: t("chartConfig.label.positionInside"), value: "inside" },
+              { label: t("chartConfig.label.positionInner"), value: "inner" },
+              { label: t("chartConfig.label.positionCenter"), value: "center" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["label", "fontStyle"],
-            label: "字体样式",
+            label: t("chartConfig.font.fontStyle"),
             defaultValue: getValue(["label", "fontStyle"], "normal"),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "斜体", value: "italic" },
-              { label: "倾斜", value: "oblique" },
+              { label: t("chartConfig.font.styles.normal"), value: "normal" },
+              { label: t("chartConfig.font.styles.italic"), value: "italic" },
+              { label: t("chartConfig.font.styles.oblique"), value: "oblique" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "select",
             keys: ["label", "fontWeight"],
-            label: "字体粗细",
+            label: t("chartConfig.font.fontWeight"),
             defaultValue: getValue(["label", "fontWeight"], "normal"),
             options: [
-              { label: "正常", value: "normal" },
-              { label: "粗体", value: "bold" },
-              { label: "加粗", value: "bolder" },
-              { label: "细体", value: "lighter" },
+              { label: t("chartConfig.font.weights.normal"), value: "normal" },
+              { label: t("chartConfig.font.weights.bold"), value: "bold" },
+              { label: t("chartConfig.font.weights.bolder"), value: "bolder" },
+              { label: t("chartConfig.font.weights.lighter"), value: "lighter" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["label", "textShadowColor"],
-            label: "文字阴影颜色",
+            label: t("chartConfig.textShadow.color"),
             defaultValue: getValue(["label", "textShadowColor"], "transparent"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["label", "textShadowBlur"],
-            label: "文字阴影模糊",
+            label: t("chartConfig.textShadow.blur"),
             defaultValue: getValue(["label", "textShadowBlur"], 0),
             min: 0,
             max: 50,
@@ -442,7 +449,7 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["label", "textShadowOffsetX"],
-            label: "文字阴影X偏移",
+            label: t("chartConfig.textShadow.offsetX"),
             defaultValue: getValue(["label", "textShadowOffsetX"], 0),
             min: -50,
             max: 50,
@@ -452,7 +459,7 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["label", "textShadowOffsetY"],
-            label: "文字阴影Y偏移",
+            label: t("chartConfig.textShadow.offsetY"),
             defaultValue: getValue(["label", "textShadowOffsetY"], 0),
             min: -50,
             max: 50,
@@ -463,25 +470,25 @@ export const Pie1ChartPanel: FC = () => {
       },
       {
         key: "labelLine",
-        title: "标签线",
+        title: t("chartConfig.sections.labelLine"),
         configs: [
           {
             type: "switch",
             keys: ["labelLine", "show"],
-            label: "显示",
+            label: t("chartConfig.common.show"),
             onChange: handleConfigChange,
           },
           {
             type: "colorPicker",
             keys: ["labelLine", "lineStyle", "color"],
-            label: "颜色",
+            label: t("chartConfig.common.color"),
             defaultValue: getValue(["labelLine", "lineStyle", "color"], "#666"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["labelLine", "lineStyle", "width"],
-            label: "宽度",
+            label: t("chartConfig.common.width"),
             defaultValue: getValue(["labelLine", "lineStyle", "width"], 1),
             min: 0,
             max: 10,
@@ -491,19 +498,19 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "select",
             keys: ["labelLine", "lineStyle", "type"],
-            label: "线条样式",
+            label: t("chartConfig.line.style"),
             defaultValue: getValue(["labelLine", "lineStyle", "type"], "solid"),
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t("chartConfig.line.solid"), value: "solid" },
+              { label: t("chartConfig.line.dashed"), value: "dashed" },
+              { label: t("chartConfig.line.dotted"), value: "dotted" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "slider",
             keys: ["labelLine", "lineStyle", "opacity"],
-            label: "透明度",
+            label: t("chartConfig.common.opacity"),
             defaultValue: getValue(["labelLine", "lineStyle", "opacity"], 1),
             min: 0,
             max: 1,
@@ -514,12 +521,12 @@ export const Pie1ChartPanel: FC = () => {
       },
       {
         key: "itemStyle",
-        title: "图形样式",
+        title: t("chartConfig.sections.itemStyle"),
         configs: [
           {
             type: "inputNumber",
             keys: ["padAngle"],
-            label: "图形间距",
+            label: t("chartConfig.pieExt.itemGap"),
             defaultValue: getValue(["padAngle"], 0),
             min: 0,
             max: 500,
@@ -529,7 +536,7 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["itemStyle", "borderRadius"],
-            label: "边框圆角",
+            label: t("chartConfig.pieExt.borderRadius"),
             defaultValue: getValue(["itemStyle", "borderRadius"], 0),
             min: 0,
             max: 1000,
@@ -539,14 +546,14 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "colorPicker",
             keys: ["itemStyle", "borderColor"],
-            label: "边框颜色",
+            label: t("chartConfig.legend.borderColor"),
             defaultValue: getValue(["itemStyle", "borderColor"], "#000"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "borderWidth"],
-            label: "边框宽度",
+            label: t("chartConfig.legend.borderWidth"),
             defaultValue: getValue(["itemStyle", "borderWidth"], 0),
             min: 0,
             max: 20,
@@ -556,19 +563,19 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "select",
             keys: ["itemStyle", "borderType"],
-            label: "边框样式",
+            label: t("chartConfig.legend.borderStyle"),
             defaultValue: getValue(["itemStyle", "borderType"], "solid"),
             options: [
-              { label: "实线", value: "solid" },
-              { label: "虚线", value: "dashed" },
-              { label: "点线", value: "dotted" },
+              { label: t("chartConfig.line.solid"), value: "solid" },
+              { label: t("chartConfig.line.dashed"), value: "dashed" },
+              { label: t("chartConfig.line.dotted"), value: "dotted" },
             ],
             onChange: handleConfigChange,
           },
           {
             type: "slider",
             keys: ["itemStyle", "opacity"],
-            label: "透明度",
+            label: t("chartConfig.common.opacity"),
             defaultValue: getValue(["itemStyle", "opacity"], 1),
             min: 0,
             max: 1,
@@ -578,14 +585,14 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "colorPicker",
             keys: ["itemStyle", "shadowColor"],
-            label: "阴影颜色",
+            label: t("chartConfig.shadow.color"),
             defaultValue: getValue(["itemStyle", "shadowColor"], "transparent"),
             onChange: handleColorConfigChange,
           },
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowBlur"],
-            label: "阴影模糊",
+            label: t("chartConfig.shadow.blur"),
             defaultValue: getValue(["itemStyle", "shadowBlur"], 0),
             min: 0,
             max: 50,
@@ -595,7 +602,7 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetX"],
-            label: "阴影X偏移",
+            label: t("chartConfig.shadow.offsetX"),
             defaultValue: getValue(["itemStyle", "shadowOffsetX"], 0),
             min: -50,
             max: 50,
@@ -605,7 +612,7 @@ export const Pie1ChartPanel: FC = () => {
           {
             type: "inputNumber",
             keys: ["itemStyle", "shadowOffsetY"],
-            label: "阴影Y偏移",
+            label: t("chartConfig.shadow.offsetY"),
             defaultValue: getValue(["itemStyle", "shadowOffsetY"], 0),
             min: -50,
             max: 50,
@@ -616,21 +623,22 @@ export const Pie1ChartPanel: FC = () => {
       },
     ],
     [
+      t,
       isDonutChart,
+      getValue,
+      handleConfigChange,
+      handleColorConfigChange,
       innerRadius,
-      outerRadius,
-      handleRadiusChange,
+      seriesConfig,
       handleInnerRadiusChange,
+      outerRadius,
       handleOuterRadiusChange,
+      handleRadiusChange,
       centerX,
+      centerValue,
       handleCenterXChange,
       centerY,
       handleCenterYChange,
-      getValue,
-      centerValue,
-      seriesConfig,
-      handleConfigChange,
-      handleColorConfigChange,
     ]
   );
 
@@ -638,9 +646,9 @@ export const Pie1ChartPanel: FC = () => {
 
   return (
     <ChartStylePanel
-      title="样式"
+      title={t("chartConfig.chartTypes.pie.title")}
       icon={<ChartPie theme="outline" size="18" fill="#333" />}
-      panelConfigs={panelConfigs}
+      panelConfigs={panelConfigs as PanelConfig[]}
       getValue={getValue}
       defaultActiveKey={["basic", "label", "labelLine", "itemStyle"]}
     />

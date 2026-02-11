@@ -1,5 +1,6 @@
 import { memo, type FC } from "react";
 import { HexColorPicker } from "react-colorful";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.less";
 
 interface IColorPanelProps {
@@ -90,6 +91,8 @@ const presetColors = [
 
 export const ColorPanel: FC<IColorPanelProps> = memo(
   ({ value = "#000000", onChange }) => {
+    const { t } = useTranslation();
+    
     const handleColorChange = (color: string) => {
       onChange?.(color);
     };
@@ -132,14 +135,14 @@ export const ColorPanel: FC<IColorPanelProps> = memo(
                     : "hover:shadow-md"
                 }`}
                 onClick={() => handlePresetClick("transparent")}
-                title="无颜色"
+                title={t('component.colorPanel.noColor')}
                 style={{
                   background: "white",
                   position: "relative",
                 }}
               >
                 <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-gray-600">
-                  无颜色
+                  {t('component.colorPanel.noColor')}
                 </span>
                 {(value === "transparent" || value === "") && (
                   <div className="absolute inset-0 rounded border-2 border-white shadow-inner" />

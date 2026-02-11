@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { CloseOne, Drag } from "@icon-park/react";
 import type { ComponentType } from "react";
 import { useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface SortableItemProps {
   element: any;
@@ -27,6 +28,7 @@ export const SortableItem: FC<SortableItemProps> = ({
   onDelete,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   // 使用 Zustand hook 获取方法
   const setElementHoverActive = useElementHoverActiveStore(
     (state) => state.setElementHoverActive
@@ -130,7 +132,7 @@ export const SortableItem: FC<SortableItemProps> = ({
         />
       )}
       <span className="flex-1 line-clamp-1 cursor-pointer">
-        {elementInfo.name} -{" "}
+        {(t as (key: string) => string)(elementInfo.name)} -{" "}
         {getAnimationDisplayName(element.animationName || "")}
       </span>
       {elementActive === element.id && (

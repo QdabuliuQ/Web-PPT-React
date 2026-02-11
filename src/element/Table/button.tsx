@@ -4,6 +4,7 @@ import { TableFile } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Popover } from "antd";
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CreateTable } from ".";
 import styles from "./button.module.less";
 
@@ -11,6 +12,7 @@ const GirdRowCount = 10;
 const GridColumnCount = 10;
 
 export default function TableButton() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [indexs, setIndexs] = useState([-1, -1]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -92,8 +94,8 @@ export default function TableButton() {
       >
         <div className={styles.title}>
           {indexs[0] === -1 && indexs[1] === -1
-            ? "插入表格"
-            : `${indexs[0] + 1}行 * ${indexs[1] + 1}列 表格`}
+            ? t('elements.table.insertTable')
+            : t('elements.table.tableDimension', { row: indexs[0] + 1, col: indexs[1] + 1 })}
         </div>
         <div className={styles.gridContainer}>
           {Array.from({ length: GirdRowCount }).map((_, rowIndex) => (
@@ -127,7 +129,7 @@ export default function TableButton() {
       <div onMouseEnter={handleOpen} onMouseLeave={handleClose}>
         <PanelButton
           icon={<TableFile theme="outline" size="22" fill="#333" />}
-          title="表格"
+          title={t('elements.table.button')}
         />
       </div>
     </Popover>

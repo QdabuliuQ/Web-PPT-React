@@ -11,15 +11,17 @@ import {
 import { Download, Editor } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import type { IMindMapProps } from "./index";
 import { MindMapModal } from "./MindMapModal";
 import { useMindMapModal } from "./useMindMapModal";
 import { downloadMindMapImage } from "./utils";
 
 export const MindMapPanelKey = "mindmap";
-export const MindMapPanelTitle = "思维导图";
 
 const MindMapPanelComponent: FC = () => {
+  const { t } = useTranslation();
+
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -85,12 +87,12 @@ const MindMapPanelComponent: FC = () => {
       <div className="h-[53px] flex gap-[10px] items-center">
         <PanelLargeButton
           icon={<Editor theme="outline" size="16" fill="#333" />}
-          title="编辑"
+          title={t("mindMapPanel.edit")}
           onClick={handleEdit}
         />
         <PanelLargeButton
           icon={<Download theme="outline" size="16" fill="#333" />}
-          title="下载图片"
+          title={t("mindMapPanel.downloadImage")}
           onClick={handleDownloadImage}
           aspectRatio={false}
         />
@@ -106,3 +108,9 @@ const MindMapPanelComponent: FC = () => {
 };
 
 export const MindMapPanel = MindMapPanelComponent;
+
+// 导出动态标题
+export const MindMapPanelTitle = () => {
+  const { t } = useTranslation();
+  return t("mindMapPanel.title");
+};

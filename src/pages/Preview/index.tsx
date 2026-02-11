@@ -379,7 +379,8 @@ const PreviewComponent: FC = () => {
   return (
     <div
       ref={containerRef}
-      className="w-[230px] min-w-[230px] box-border border-r border-[#e0e0e0] flex flex-col pb-[15px] pt-[15px]"
+      className="w-full h-full box-border border-r border-[#e0e0e0] flex flex-col pb-[15px] pt-[15px]"
+      style={{ minWidth: 0, overflow: "hidden" }}
     >
       <OverlayScrollbarsComponent
         ref={scrollContainerRef}

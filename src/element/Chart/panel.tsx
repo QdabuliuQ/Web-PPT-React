@@ -10,6 +10,7 @@ import {
 import { globalEventBus } from "@/utils/eventBus";
 import { Download, EditOne } from "@icon-park/react";
 import { useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { ChartDataModal } from "./chartDataModal";
 import { BackgroundColorPanel } from "./components/backgroundColorPanel";
 import { ColorPanel } from "./components/colorPanel";
@@ -27,9 +28,11 @@ import { useChartDataModal } from "./useChartDataModal";
 import { exportChartAsImage } from "./utils";
 
 export const ChartPanelKey = "chart";
-export const ChartPanelTitle = "图表";
+export const ChartPanelTitle = "elements.chart.panel";
 
 const ChartPanelComponent: FC = () => {
+  const { t } = useTranslation();
+
   // 使用 Zustand hooks 订阅状态变化
   const elementId = useElementActiveStore((state) => state.elementActive);
   const pageId = usePageActiveStore((state) => state.pageActive);
@@ -127,12 +130,12 @@ const ChartPanelComponent: FC = () => {
         <ColorPanel />
         {TypePanel}
         <PanelLargeButton
-          title="数据"
+          title={t("elements.chart.data")}
           icon={<EditOne theme="outline" size="18" fill="#333" />}
           onClick={handleOpenDataModalFromPanel}
         />
         <PanelLargeButton
-          title="下载图片"
+          title={t("elements.chart.downloadImage")}
           icon={<Download theme="outline" size="18" fill="#333" />}
           onClick={handleExportChartImage}
           aspectRatio={false}

@@ -1,0 +1,603 @@
+{
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "close": "Close",
+    "add": "Add",
+    "search": "Search",
+    "reset": "Reset",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "success": "Operation successful",
+    "error": "Operation failed",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "menu": {
+    "file": "File",
+    "edit": "Edit",
+    "insert": "Insert",
+    "view": "View",
+    "play": "Play",
+    "animation": "Animation",
+    "start": "Start",
+    "toggle": "Toggle"
+  },
+  "element": {
+    "text": "Text",
+    "image": "Image",
+    "chart": "Chart",
+    "table": "Table",
+    "icon": "Icon",
+    "mindMap": "Mind Map"
+  },
+  "chart": {
+    "bar": "Bar Chart",
+    "line": "Line Chart",
+    "pie": "Pie Chart",
+    "radar": "Radar Chart",
+    "scatter": "Scatter Chart",
+    "funnel": "Funnel Chart",
+    "title": "Title",
+    "legend": "Legend",
+    "xAxis": "X Axis",
+    "yAxis": "Y Axis",
+    "grid": "Grid",
+    "backgroundColor": "Background Color",
+    "chartStyle": "Chart Style",
+    "chartData": "Chart Data"
+  },
+  "panel": {
+    "commonSetting": "Common Settings",
+    "borderSetting": "Border Settings",
+    "shadowSetting": "Shadow Settings",
+    "position": "Position",
+    "size": "Size",
+    "rotation": "Rotation",
+    "opacity": "Opacity",
+    "zIndex": "Z-Index",
+    "alignment": "Alignment",
+    "distribution": "Distribution"
+  },
+  "toolbar": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "copy": "Copy",
+    "paste": "Paste",
+    "cut": "Cut",
+    "duplicate": "Duplicate",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "group": "Group",
+    "ungroup": "Ungroup",
+    "bringToFront": "Bring to Front",
+    "sendToBack": "Send to Back",
+    "bringForward": "Bring Forward",
+    "sendBackward": "Send Backward"
+  },
+  "preview": {
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit Fullscreen",
+    "previousSlide": "Previous Slide",
+    "nextSlide": "Next Slide",
+    "slideshow": "Slideshow"
+  },
+  "settings": {
+    "language": "Language",
+    "theme": "Theme",
+    "preference": "Preferences"
+  },
+  "component": {
+    "colorPanel": {
+      "noColor": "No Color"
+    },
+    "border": {
+      "title": "Border",
+      "width": "Border Width",
+      "style": "Border Style",
+      "solid": "Solid",
+      "dashed": "Dashed",
+      "dotted": "Dotted",
+      "double": "Double"
+    },
+    "operation": {
+      "copy": "Copy",
+      "cut": "Cut",
+      "delete": "Delete",
+      "copySuccess": "Copied successfully",
+      "cutSuccess": "Cut successfully",
+      "deleteSuccess": "Deleted successfully"
+    },
+    "alignment": {
+      "align": "Align",
+      "left": "Align Left",
+      "right": "Align Right",
+      "centerHorizontalVertical": "Center Horizontal & Vertical",
+      "top": "Align Top",
+      "bottom": "Align Bottom",
+      "leftTop": "Left Top",
+      "leftCenter": "Left Center",
+      "leftBottom": "Left Bottom",
+      "centerTop": "Center Top",
+      "centerCenter": "Center Horizontal & Vertical",
+      "centerBottom": "Center Bottom",
+      "rightTop": "Right Top",
+      "rightCenter": "Right Center",
+      "rightBottom": "Right Bottom"
+    },
+    "zIndex": {
+      "moveUp": "Move Up",
+      "moveDown": "Move Down",
+      "bringForward": "Bring Forward",
+      "bringToFront": "Bring to Front",
+      "sendBackward": "Send Backward",
+      "sendToBack": "Send to Back"
+    },
+    "shadow": {
+      "title": "Shadow",
+      "blur": "Blur",
+      "spread": "Spread"
+    },
+    "autoCenter": {
+      "enable": "Click to enable auto center",
+      "disable": "Click to disable auto center"
+    }
+  },
+  "elements": {
+    "chart": {
+      "title": "Chart",
+      "button": "Chart",
+      "panel": "Chart",
+      "data": "Data",
+      "downloadImage": "Download Image",
+      "editData": "Edit Data",
+      "categories": {
+        "bar": "Bar Chart",
+        "line": "Line Chart",
+        "pie": "Pie Chart",
+        "other": "Other"
+      },
+      "types": {
+        "bar1": "Bar Chart",
+        "bar2": "Polar Bar Chart",
+        "bar3": "Tangential Polar Bar Chart",
+        "bar4": "Horizontal Bar Chart",
+        "line1": "Line Chart",
+        "line2": "Stacked Line Chart",
+        "line3": "Area Chart",
+        "line4": "Step Line Chart",
+        "pie1": "Pie Chart",
+        "pie2": "Donut Chart",
+        "scatter1": "Scatter Chart",
+        "radar1": "Radar Chart",
+        "funnel1": "Funnel Chart"
+      }
+    },
+    "icon": {
+      "title": "Icon",
+      "button": "Icon",
+      "panel": "Icon",
+      "style": "Icon Style",
+      "strokeWidth": "Stroke Width",
+      "themes": {
+        "outline": "Outline",
+        "filled": "Filled",
+        "twoTone": "Two-tone",
+        "multiColor": "Multi-color"
+      },
+      "colors": {
+        "outerStroke": "Outer Stroke Color",
+        "outerFill": "Outer Fill Color",
+        "innerStroke": "Inner Stroke Color",
+        "innerFill": "Inner Fill Color"
+      },
+      "actions": {
+        "rotateLeft": "Rotate Left",
+        "rotateRight": "Rotate Right",
+        "switch": "Switch"
+      }
+    },
+    "image": {
+      "title": "Image",
+      "button": "Image",
+      "panel": "Image",
+      "insertImage": "Insert Image",
+      "preview": "Preview",
+      "downloadImage": "Download Image",
+      "uploadMode": {
+        "url": "Image URL",
+        "upload": "Upload Image"
+      },
+      "placeholder": {
+        "url": "Please enter image URL"
+      },
+      "uploadHint": {
+        "dragText": "Click or drag image to this area to upload",
+        "hint": "Support single image file, size no more than 3MB"
+      },
+      "errors": {
+        "selectPage": "Please select a page first",
+        "enterUrl": "Please enter image URL",
+        "uploadImage": "Please upload image",
+        "processFailed": "Image processing failed, please try again",
+        "uploadFailed": "Image upload failed, please try again",
+        "invalidUrl": "Invalid image URL or unable to load, please check the image link",
+        "onlyImage": "Only image files can be uploaded",
+        "sizeLimit": "Image size must be less than 3MB",
+        "loadFailed": "Failed to load image"
+      },
+      "panel": {
+        "opacity": "Opacity",
+        "borderRadius": "Border Radius",
+        "keepRatio": "Keep Ratio",
+        "colorFilter": "Color",
+        "downloading": "Downloading",
+        "downloadImage": "Download Image",
+        "filters": {
+          "brightness": "Brightness",
+          "brightnessTip": "Adjust overall image brightness",
+          "contrast": "Contrast",
+          "contrastTip": "Adjust light and dark contrast",
+          "saturate": "Saturation",
+          "saturateTip": "Adjust color vividness",
+          "grayscale": "Grayscale",
+          "grayscaleTip": "Convert to grayscale (black and white)",
+          "hueRotate": "Hue",
+          "hueRotateTip": "Rotate hue ring, change overall tone",
+          "invert": "Invert",
+          "invertTip": "Invert all colors",
+          "sepia": "Sepia",
+          "sepiaTip": "Apply sepia tone for vintage effect"
+        }
+      }
+    },
+    "text": {
+      "title": "Text",
+      "button": "Text",
+      "panel": "Text",
+      "style": "Text Style",
+      "alignment": "Text Alignment",
+      "fontSize": "Font Size",
+      "lineHeight": "Line Height",
+      "letterSpacing": "Letter Spacing",
+      "fill": "Fill",
+      "stroke": "Stroke",
+      "textShadow": "Text Shadow",
+      "format": {
+        "bold": "Bold",
+        "italic": "Italic",
+        "underline": "Underline",
+        "strikethrough": "Strikethrough"
+      },
+      "increaseSize": "Increase",
+      "decreaseSize": "Decrease",
+      "autoHeight": "Auto Height"
+    },
+    "table": {
+      "title": "Table",
+      "button": "Table",
+      "panel": "Table",
+      "insertTable": "Insert Table",
+      "editData": "Edit Data",
+      "insertRow": {
+        "top": "Insert Row at Top",
+        "bottom": "Insert Row at Bottom"
+      },
+      "insertColumn": {
+        "left": "Insert Column at Left",
+        "right": "Insert Column at Right"
+      },
+      "tableDimension": "{row} Row(s) * {col} Column(s) Table"
+    },
+    "mindMap": {
+      "title": "Mind Map",
+      "button": "Mind Map",
+      "panel": "Mind Map"
+    }
+  },
+  "hooks": {
+    "contextMenu": {
+      "copy": "Copy",
+      "cut": "Cut",
+      "delete": "Delete",
+      "rotateLeft": "Rotate Left",
+      "rotateRight": "Rotate Right",
+      "align": "Align",
+      "layer": "Layer"
+    }
+  },
+  "chartConfig": {
+    "common": {
+      "show": "Show",
+      "color": "Color",
+      "backgroundColor": "Background Color",
+      "width": "Width",
+      "height": "Height",
+      "opacity": "Opacity",
+      "name": "Name",
+      "placeholder": {
+        "enterName": "Enter name",
+        "enterTitle": "Enter main title",
+        "enterSubtitle": "Enter subtitle",
+        "enterAxisName": "Enter axis name"
+      }
+    },
+    "position": {
+      "left": "Left",
+      "right": "Right",
+      "top": "Top",
+      "bottom": "Bottom",
+      "namePosition": "Name Position",
+      "start": "Start",
+      "center": "Center",
+      "end": "End"
+    },
+    "font": {
+      "fontFamily": "Font",
+      "fontSize": "Font Size",
+      "fontStyle": "Font Style",
+      "fontWeight": "Font Weight",
+      "nameSize": "Name Font Size",
+      "nameStyle": "Name Font Style",
+      "nameWeight": "Name Font Weight",
+      "nameColor": "Name Color",
+      "styles": {
+        "normal": "Normal",
+        "italic": "Italic",
+        "oblique": "Oblique"
+      },
+      "weights": {
+        "normal": "Normal",
+        "bold": "Bold",
+        "bolder": "Bolder",
+        "lighter": "Lighter"
+      }
+    },
+    "shadow": {
+      "color": "Shadow Color",
+      "blur": "Shadow Blur",
+      "offsetX": "Shadow X Offset",
+      "offsetY": "Shadow Y Offset"
+    },
+    "textShadow": {
+      "color": "Text Shadow Color",
+      "blur": "Text Shadow Blur",
+      "offsetX": "Text Shadow X Offset",
+      "offsetY": "Text Shadow Y Offset"
+    },
+    "line": {
+      "style": "Style",
+      "solid": "Solid",
+      "dashed": "Dashed",
+      "dotted": "Dotted"
+    },
+    "sections": {
+      "basicSettings": "Basic Settings",
+      "textStyle": "Text Style",
+      "shadowSettings": "Shadow Settings",
+      "title": "Title",
+      "mainTitle": "Main Title",
+      "mainTitleStyle": "Main Title Style",
+      "subtitle": "Subtitle",
+      "subtitleStyle": "Subtitle Style",
+      "legend": "Legend",
+      "legendItemStyle": "Legend Item Style",
+      "grid": "Grid",
+      "xAxis": "X Axis",
+      "yAxis": "Y Axis",
+      "axisLine": "Axis Line",
+      "axisLabel": "Axis Label",
+      "axisTick": "Axis Tick",
+      "label": "Label",
+      "labelLine": "Label Line",
+      "itemStyle": "Item Style",
+      "emphasis": "Emphasis"
+    },
+    "legend": {
+      "shape": "Shape",
+      "itemWidth": "Item Width",
+      "itemHeight": "Item Height",
+      "borderColor": "Border Color",
+      "borderWidth": "Border Width",
+      "borderStyle": "Border Style",
+      "shapes": {
+        "roundRect": "Round Rectangle",
+        "rect": "Rectangle",
+        "circle": "Circle",
+        "triangle": "Triangle",
+        "diamond": "Diamond",
+        "pin": "Pin",
+        "arrow": "Arrow",
+        "none": "None"
+      }
+    },
+    "axis": {
+      "rotate": "Rotation",
+      "length": "Length"
+    },
+    "label": {
+      "position": "Position",
+      "positionOutside": "Outside",
+      "positionInside": "Inside",
+      "positionInner": "Inner",
+      "positionCenter": "Center",
+      "formatter": "Formatter"
+    },
+    "emphasis": {
+      "scale": "Scale",
+      "scaleSize": "Scale Size"
+    },
+    "color": {
+      "config": "Color Configuration",
+      "cycleTip": "Colors will be cycled when there are fewer colors than data items",
+      "add": "Add",
+      "noColor": "No colors, please add colors",
+      "title": "Color"
+    },
+    "backgroundColor": {
+      "title": "Background Color"
+    },
+    "chartTypes": {
+      "pie": {
+        "title": "Pie Chart",
+        "innerRadius": "Inner Radius",
+        "outerRadius": "Outer Radius",
+        "radius": "Radius",
+        "centerX": "Center X",
+        "centerY": "Center Y",
+        "roseType": "Rose Type",
+        "roseTypeNone": "None",
+        "roseTypeRadius": "Radius",
+        "roseTypeArea": "Area"
+      },
+      "radar": {
+        "title": "Radar Chart",
+        "radius": "Radius",
+        "centerX": "Center X",
+        "centerY": "Center Y",
+        "shape": "Shape",
+        "shapePolygon": "Polygon",
+        "shapeCircle": "Circle",
+        "splitNumber": "Split Number"
+      },
+      "radarExt": {
+        "basicSettings": "Basic Settings",
+        "axisName": "Axis Name",
+        "splitLine": "Split Line",
+        "splitArea": "Split Area",
+        "axisLine": "Axis Line",
+        "color1": "Color 1",
+        "color2": "Color 2"
+      },
+      "bar": {
+        "title": "Bar Chart",
+        "barWidth": "Bar Width",
+        "barGap": "Bar Gap",
+        "barCategoryGap": "Category Gap"
+      },
+      "line": {
+        "title": "Line Chart",
+        "smooth": "Smooth",
+        "step": "Step",
+        "stepNone": "None",
+        "stepStart": "Start",
+        "stepMiddle": "Middle",
+        "stepEnd": "End"
+      },
+      "scatter": {
+        "title": "Scatter Chart",
+        "symbolSize": "Symbol Size"
+      },
+      "funnel": {
+        "title": "Funnel Chart",
+        "min": "Min",
+        "max": "Max",
+        "minSize": "Min Size",
+        "maxSize": "Max Size",
+        "sort": "Sort",
+        "sortAscending": "Ascending",
+        "sortDescending": "Descending",
+        "sortNone": "None",
+        "gap": "Gap"
+      }
+    },
+    "pieExt": {
+      "itemGap": "Item Gap",
+      "borderRadius": "Border Radius"
+    },
+    "polar": {
+      "title": "Polar",
+      "settings": "Polar Settings",
+      "centerX": "Center X (%)",
+      "centerY": "Center Y (%)",
+      "innerRing": "Inner Ring (%)",
+      "outerRing": "Outer Ring (%)",
+      "angleAxisBasic": "Angle Axis Basic Settings",
+      "startAngle": "Start Angle",
+      "angleAxisLine": "Angle Axis Line",
+      "angleAxisLabel": "Angle Axis Label",
+      "fontSettings": "Font Settings",
+      "enterFont": "Enter font",
+      "blur": "Blur",
+      "xOffset": "X Offset",
+      "yOffset": "Y Offset"
+    },
+    "funnelExt": {
+      "horizontalPosition": "Horizontal Position",
+      "verticalPosition": "Vertical Position",
+      "inside": "Inside",
+      "outside": "Outside",
+      "left": "Left",
+      "right": "Right",
+      "top": "Top",
+      "bottom": "Bottom",
+      "insideRight": "Inside Right",
+      "insideLeft": "Inside Left",
+      "leftTop": "Left Top",
+      "leftBottom": "Left Bottom",
+      "rightTop": "Right Top",
+      "rightBottom": "Right Bottom",
+      "inner": "Inner (same as inside)",
+      "center": "Center (same as inside)",
+      "length": "Length"
+    }
+  },
+  "textPanel": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strikethrough": "Strikethrough",
+    "fontSize": "Text Font Size",
+    "increaseFontSize": "Increase Font Size",
+    "decreaseFontSize": "Decrease Font Size",
+    "lineHeight": "Line Height",
+    "increaseLineHeight": "Increase Line Height",
+    "decreaseLineHeight": "Decrease Line Height",
+    "stroke": "Stroke",
+    "title": "Text Tools"
+  },
+  "tablePanel": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strikethrough": "Strikethrough",
+    "fontSize": "Text Font Size",
+    "increaseFontSize": "Increase Font Size",
+    "decreaseFontSize": "Decrease Font Size",
+    "insertRowAbove": "Insert Row Above",
+    "insertRowBelow": "Insert Row Below",
+    "insertColumnLeft": "Insert Column on Left",
+    "insertColumnRight": "Insert Column on Right",
+    "borderWidth": "Border Width",
+    "borderStyle": "Border Style",
+    "borderColor": "Border Color",
+    "title": "Table"
+  },
+  "mindMapPanel": {
+    "edit": "Edit",
+    "downloadImage": "Download Image",
+    "title": "Mind Map"
+  },
+  "chartDataModal": {
+    "title": "Edit Chart Data",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "chartExport": {
+    "chartNotFound": "Chart element not found",
+    "chartInstanceNotFound": "Chart instance not found",
+    "generateImageFailed": "Failed to generate image data",
+    "imageLoadFailed": "Failed to load image",
+    "canvasContextFailed": "Failed to create Canvas context",
+    "canvasBlobFailed": "Failed to convert Canvas to Blob",
+    "imageDataEmpty": "Generated image data is empty",
+    "exportSuccess": "Image exported successfully",
+    "exportFailed": "Failed to export chart image"
+  }
+}
