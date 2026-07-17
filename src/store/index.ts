@@ -10,6 +10,7 @@ export {
   useMenuActiveStore,
   useRemarkEditActiveStore,
   useCopyElementStore,
+  useCanvasZoomStore,
 } from "./zustand";
 
 export type { Page, Elements } from "./zustand";

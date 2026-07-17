@@ -18,7 +18,7 @@ export const PanelButton: FC<IPanelButtonProps> = ({
   return (
     <div
       onClick={clickHandle}
-      className="flex flex-col items-center justify-center text-[12px] text-gray-500 cursor-pointer w-[60px] h-[60px] hover:bg-[#f0f0f0] rounded-[10px]"
+      className="flex flex-col items-center justify-center text-[12px] text-[#595959] cursor-pointer w-[56px] h-[56px] hover:bg-[#fff2e6] hover:text-primary rounded-[6px] transition-colors"
     >
       <span className="mb-[3px]">{icon}</span>
       {title}

@@ -206,7 +206,6 @@
     "image": {
       "title": "Image",
       "button": "Image",
-      "panel": "Image",
       "insertImage": "Insert Image",
       "preview": "Preview",
       "downloadImage": "Download Image",

@@ -1,7 +1,17 @@
 # Dependencies
 node_modules
 
+# Next.js
+.next/
+out/
+next-env.d.ts
+
 # Cypress
 cypress/videos
 cypress/screenshots
 cypress/downloads
+
+# Build / misc
+dist
+*.log
+.DS_Store

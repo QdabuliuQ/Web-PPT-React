@@ -1,0 +1,104 @@
+.sidebar {
+  height: 100%;
+  background: transparent;
+  border-right: none;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.pageItem {
+  padding-right: 14px;
+  padding-left: 4px;
+
+  &:hover {
+    :global(.floatButton) {
+      opacity: 1;
+    }
+  }
+}
+
+.addPageWrap {
+  padding-top: 4px;
+}
+
+.addPageBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 9px 12px;
+  margin: 0 12px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  color: #f25f00;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+
+  &:hover {
+    background: #fff2e6;
+    border-color: #ffd8b8;
+    color: #f25f00;
+    box-shadow: 0 1px 4px rgba(242, 95, 0, 0.1);
+  }
+
+  &:active {
+    background: #ffe8d1;
+  }
+}
+
+.pageIndex {
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.thumbWrap {
+  flex: 1;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  transition: box-shadow 0.15s ease;
+}
+
+.thumbActive {
+  box-shadow: 0 0 0 2.5px #f25f00;
+}
+
+.thumbInactive {
+  box-shadow: 0 0 0 1px #e8e8e8;
+
+  &:hover {
+    box-shadow: 0 0 0 1px #d9d9d9;
+  }
+}
+
+.floatAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  opacity: 0.85;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}

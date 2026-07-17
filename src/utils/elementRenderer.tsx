@@ -10,12 +10,6 @@ import { MindMap } from "@/element/MindMap";
 import { Table } from "@/element/Table";
 import { Text } from "@/element/Text";
 import { createCatalog } from "@json-render/core";
-import {
-  Renderer,
-  ActionProvider,
-  DataProvider,
-  VisibilityProvider,
-} from "@json-render/react";
 import type { FC } from "react";
 import { z } from "zod";
 
@@ -127,27 +121,27 @@ export const pptElementCatalog = createCatalog({
 // 2. 注册 React 组件映射（json-render registry 格式）
 export const pptComponentRegistry = {
   Text: ({ element }: any) => {
-    console.log('Rendering Text with element:', element);
+    console.log("Rendering Text with element:", element);
     return <Text {...element.props} type="text" />;
   },
   Table: ({ element }: any) => {
-    console.log('Rendering Table with element:', element);
+    console.log("Rendering Table with element:", element);
     return <Table {...element.props} type="table" />;
   },
   Icon: ({ element }: any) => {
-    console.log('Rendering Icon with element:', element);
+    console.log("Rendering Icon with element:", element);
     return <Icon {...element.props} type="icon" />;
   },
   Image: ({ element }: any) => {
-    console.log('Rendering Image with element:', element);
+    console.log("Rendering Image with element:", element);
     return <Image {...element.props} type="image" />;
   },
   MindMap: ({ element }: any) => {
-    console.log('Rendering MindMap with element:', element);
+    console.log("Rendering MindMap with element:", element);
     return <MindMap {...element.props} type="mindmap" />;
   },
   Chart: ({ element }: any) => {
-    console.log('Rendering Chart with element:', element);
+    console.log("Rendering Chart with element:", element);
     return <Chart {...element.props} type="chart" />;
   },
 };
@@ -219,8 +213,8 @@ export const ElementRendererDirect: FC<ElementRendererProps> = ({
   mode,
   onElementSelect,
 }) => {
-  console.log('ElementRendererDirect - rendering', elements.length, 'elements');
-  
+  console.log("ElementRendererDirect - rendering", elements.length, "elements");
+
   return (
     <>
       {elements.map((element) => {
@@ -228,7 +222,9 @@ export const ElementRendererDirect: FC<ElementRendererProps> = ({
           key: element.id,
           ...element,
           mode,
-          ...(onElementSelect && { onSelect: () => onElementSelect(element.id) }),
+          ...(onElementSelect && {
+            onSelect: () => onElementSelect(element.id),
+          }),
         };
 
         if (element.type === "text") {
@@ -257,16 +253,22 @@ export const ElementRenderer: FC<ElementRendererProps> = ({
   onElementSelect,
 }) => {
   const trees = convertElementsToTrees(elements, mode, onElementSelect);
-  
+
   // 调试日志
-  console.log('ElementRenderer - elements count:', elements.length);
-  console.log('ElementRenderer - trees count:', trees.length);
+  console.log("ElementRenderer - elements count:", elements.length);
+  console.log("ElementRenderer - trees count:", trees.length);
   if (trees.length > 0) {
-    console.log('ElementRenderer - first tree:', trees[0]);
+    console.log("ElementRenderer - first tree:", trees[0]);
   }
 
   // 临时：直接使用简化版本
-  return <ElementRendererDirect elements={elements} mode={mode} onElementSelect={onElementSelect} />;
+  return (
+    <ElementRendererDirect
+      elements={elements}
+      mode={mode}
+      onElementSelect={onElementSelect}
+    />
+  );
 
   // json-render 版本（暂时禁用）
   /*

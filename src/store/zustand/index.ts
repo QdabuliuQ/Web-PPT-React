@@ -26,6 +26,8 @@ export {
   useRemarkEditActiveStore,
 } from "./allStores";
 
+export { useCanvasZoomStore } from "./canvasZoomStore";
+
 // Create compatibility layer for existing code
 class PageActiveStoreCompat {
   get pageActive() {

@@ -1,6 +1,6 @@
 import { useMemoizedFn } from "ahooks";
 import { Button, type ButtonProps } from "antd";
-import { cloneElement, isValidElement, useMemo, type FC } from "react";
+import { cloneElement, isValidElement, useMemo, type FC, type ReactElement } from "react";
 interface IPanelLargeButtonProps {
   title: string;
   icon: React.ReactNode;
@@ -49,9 +49,9 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
     if (active) {
       return {
         ...baseStyles,
-        backgroundColor: "#f0f0f0",
-        color: "#333",
-        border: "1px solid #d9d9d9",
+        backgroundColor: "#fff2e6",
+        color: "#f25f00",
+        border: "1px solid transparent",
         borderRadius: "6px",
       };
     }
@@ -59,6 +59,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
     return {
       ...baseStyles,
       borderRadius: "6px",
+      border: "1px solid transparent",
     };
   }, [active, aspectRatio]);
 
@@ -68,8 +69,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
 
     // 如果是禁用状态，修改icon的fill颜色为灰色
     if (disabled) {
-      return cloneElement(icon, {
-        ...icon.props,
+      return cloneElement(icon as ReactElement<{ fill?: string }>, {
         fill: "#bbb", // 禁用状态的灰色
       });
     }

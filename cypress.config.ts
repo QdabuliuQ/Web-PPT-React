@@ -1,5 +1,4 @@
 import { defineConfig } from "cypress";
-import viteConfig from "./vite.config";
 
 export default defineConfig({
   e2e: {
@@ -7,7 +6,7 @@ export default defineConfig({
     specPattern: "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}",
     // 支持文件扩展名
     supportFile: "cypress/support/e2e.ts",
-    // 基础 URL
+    // 基础 URL（与 next dev -p 5174 一致）
     baseUrl: "http://localhost:5174",
     // 视口大小
     viewportWidth: 1920,
@@ -47,14 +46,5 @@ export default defineConfig({
     },
     // 阻止导航到 about:blank
     chromeWebSecurity: false,
-  },
-  component: {
-    devServer: {
-      framework: "react",
-      bundler: "vite",
-      viteConfig: viteConfig as any,
-    },
-    specPattern: "cypress/component/**/*.cy.{js,jsx,ts,tsx}",
-    supportFile: "cypress/support/component.tsx",
   },
 });

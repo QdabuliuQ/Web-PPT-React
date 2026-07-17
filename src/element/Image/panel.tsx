@@ -22,7 +22,7 @@ import type { IImageProps } from "./index";
 import { downloadImageFile } from "./utils";
 
 export const ImagePanelKey = "image";
-export const ImagePanelTitle = "elements.image.panel";
+export const ImagePanelTitle = "elements.image.title";
 
 const getFilterProperty = (t: (key: string) => string) => [
   {

@@ -18,7 +18,7 @@ import { getIconMenuItems } from "./menu";
 export { IconButtonComponent as IconButton } from "./button";
 export { IconPicker } from "./IconPicker";
 export { getIconMenuItems } from "./menu";
-export { IconPanel, IconPanelKey, IconPanelTitle } from "./panel.tsx";
+export { IconPanel, IconPanelKey, IconPanelTitle } from "./panel";
 
 export interface IIconProps extends ICommonElementProps {
   type: "icon";

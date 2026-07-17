@@ -1,8 +1,58 @@
+import {
+  ChartPanelIcon,
+  ChartPanelKey,
+  Name as ChartName,
+} from "@/element/Chart";
+import {
+  IconPanelIcon,
+  IconPanelKey,
+  Name as IconName,
+} from "@/element/Icon";
+import {
+  ImagePanelIcon,
+  ImagePanelKey,
+  Name as ImageName,
+} from "@/element/Image";
+import {
+  MindMapPanelIcon,
+  MindMapPanelKey,
+  Name as MindMapName,
+} from "@/element/MindMap";
+import {
+  Name as TableName,
+  TablePanelIcon,
+  TablePanelKey,
+} from "@/element/Table";
 import { PlacementMapped } from "@/element/Text/constant";
+import {
+  Name as TextName,
+  TextPanelIcon,
+  TextPanelKey,
+} from "@/element/Text";
 import { snapdom } from "@zumer/snapdom";
 import * as _ from "lodash";
 import type { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
+
+/**
+ * 元素面板信息类型
+ */
+export interface ElementPanelInfo {
+  key: string;
+  name: string;
+  // icon-park / antd icons have varied prop types; keep loose for registry
+  icon?: ComponentType<any>;
+}
+
+/** 显式注册所有元素面板（替代 Vite import.meta.glob） */
+const ELEMENT_PANEL_REGISTRY: ElementPanelInfo[] = [
+  { key: ChartPanelKey, name: ChartName, icon: ChartPanelIcon },
+  { key: IconPanelKey, name: IconName, icon: IconPanelIcon },
+  { key: ImagePanelKey, name: ImageName, icon: ImagePanelIcon },
+  { key: MindMapPanelKey, name: MindMapName, icon: MindMapPanelIcon },
+  { key: TablePanelKey, name: TableName, icon: TablePanelIcon },
+  { key: TextPanelKey, name: TextName, icon: TextPanelIcon },
+];
 
 /**
  * 深拷贝对象
@@ -37,79 +87,19 @@ export function placementConvey(placement: keyof typeof PlacementMapped) {
 }
 
 /**
- * 元素面板信息类型
- */
-export interface ElementPanelInfo {
-  key: string;
-  name: string;
-  icon?: ComponentType<unknown>;
-}
-
-/**
- * 动态获取 element 目录下所有组件的面板信息
- * 自动扫描 element 目录下的所有组件，提取 PanelKey、Name 和 PanelIcon（如果存在）
+ * 获取 element 目录下所有组件的面板信息（显式 registry，兼容 Next.js）
  *
  * @returns 返回包含所有组件面板信息的数组，按 key 排序
- *
- * @example
- * ```ts
- * const panels = getAllElementPanelInfo();
- * // [
- * //   { key: 'icon', name: '图标' },
- * //   { key: 'image', name: '图片' },
- * //   { key: 'mindmap', name: '思维导图' },
- * //   { key: 'table', name: '表格' },
- * //   { key: 'text', name: '文本', icon: TextIcon }
- * // ]
- * ```
  */
 export function getAllElementPanelInfo(): ElementPanelInfo[] {
-  const elementPanels: ElementPanelInfo[] = [];
+  const elementPanels: ElementPanelInfo[] = ELEMENT_PANEL_REGISTRY.map(
+    ({ key, name, icon }) => ({
+      key,
+      name,
+      ...(icon && { icon }),
+    })
+  );
 
-  // 使用 import.meta.glob 自动扫描 element 目录下的所有 index.tsx 文件
-  const elementModules = import.meta.glob<{
-    Name?: string;
-    [key: string]: unknown;
-  }>("@/element/*/index.tsx", { eager: true });
-
-  // 遍历所有模块
-  for (const [path, module] of Object.entries(elementModules)) {
-    try {
-      // 提取组件名称（从路径中获取，例如 "@/element/Text/index.tsx" -> "Text"）
-      const componentName = path.match(/\/element\/([^/]+)\/index\.tsx$/)?.[1];
-      if (!componentName) continue;
-
-      // 尝试获取 PanelKey（可能是 TextPanelKey, TablePanelKey 等）
-      // 首字母大写的组件名 + PanelKey
-      const panelKeyName = `${componentName.charAt(0).toUpperCase() + componentName.slice(1)}PanelKey`;
-      const panelKey = module[panelKeyName] as string | undefined;
-
-      // 获取 Name
-      const name = module.Name as string | undefined;
-
-      // 如果缺少必要的字段，跳过
-      if (!panelKey || !name) {
-        console.warn(
-          `Missing required exports in ${componentName}: PanelKey=${!!panelKey}, Name=${!!name}`
-        );
-        continue;
-      }
-
-      // 尝试获取 PanelIcon（可选）
-      const panelIconName = `${componentName.charAt(0).toUpperCase() + componentName.slice(1)}PanelIcon`;
-      const icon = module[panelIconName] as ComponentType<unknown> | undefined;
-
-      elementPanels.push({
-        key: panelKey,
-        name,
-        ...(icon && { icon }),
-      });
-    } catch (error) {
-      console.warn(`Failed to process element module ${path}:`, error);
-    }
-  }
-
-  // 按 key 排序，确保返回顺序一致
   return elementPanels.sort((a, b) => a.key.localeCompare(b.key));
 }
 
@@ -195,9 +185,8 @@ export async function exportPageAsImage(
   pageId: string
 ): Promise<string | null> {
   try {
-    // 延迟导入 pptStore 和 Canvas，避免循环依赖
+    // 延迟导入 pptStore / PreviewCanvas，避免循环依赖
     const { pptStore } = await import("@/store");
-    const { Canvas } = await import("@/pages/Canvas");
     const page = pptStore.getActivePage(pageId);
     if (!page) {
       console.error("页面不存在");
@@ -226,9 +215,10 @@ export async function exportPageAsImage(
     canvasWrapper.style.backgroundColor = "#fff";
     tempContainer.appendChild(canvasWrapper);
 
-    // 使用React createRoot渲染Canvas组件
+    // 使用React createRoot渲染轻量 PreviewCanvas
+    const { PreviewCanvas } = await import("@/views/Canvas/PreviewCanvas");
     const root = createRoot(canvasWrapper);
-    root.render(<Canvas mode="preview" page={page} />);
+    root.render(<PreviewCanvas page={page} />);
 
     // 等待Canvas渲染完成
     const dataUrl = await new Promise<string | null>((resolve) => {
