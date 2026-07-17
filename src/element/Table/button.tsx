@@ -121,6 +121,7 @@ export default function TableButton() {
       handleOpen,
       handleClose,
       indexs,
+      t,
     ]
   );
 

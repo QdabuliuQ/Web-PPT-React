@@ -317,6 +317,14 @@ const AnimationComponent: FC = () => {
         animatedElements: [],
       };
     }
+    // 依赖 pages，确保 store 页面数据变化时重新计算
+    if (!pages.some((page) => page.id === pageActive)) {
+      return {
+        defaultElements: [],
+        clickElements: [],
+        animatedElements: [],
+      };
+    }
     const allElements = getAllElementInfo(pageActive);
     const filtered = allElements.filter(
       (element) => element.animationName && element.animationName !== ""
@@ -347,7 +355,7 @@ const AnimationComponent: FC = () => {
       clickElements: sortedClickEls,
       animatedElements: animatedEls,
     };
-  }, [pageActive, pages]);
+  }, [pageActive, pages, getAllElementInfo]);
 
   // 获取元素类型的中文名称
   const getElementTypeName = useMemoizedFn((type: string) => {
@@ -573,6 +581,7 @@ const AnimationComponent: FC = () => {
     handleDeleteElementAnimation,
     handleSelectAnimationElement,
     sensors,
+    getElementInfo,
   ]);
 
   return (

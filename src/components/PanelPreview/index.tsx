@@ -6,21 +6,21 @@ interface IPanelPreviewProps {
 }
 
 export const PanelPreview: FC<IPanelPreviewProps> = (props) => {
-  const commonStyle = {
-    underline: false,
-    strikethrough: false,
-    italic: false,
-    stroke: false,
-    strokeColor: "#000000",
-    strokeWidth: 0,
-    shadow: false,
-    shadowColor: "#000000",
-    shadowOffsetX: 0,
-    shadowOffsetY: 0,
-  };
+  const selectItem = useMemo<Array<Partial<ITextProps>>>(() => {
+    const commonStyle = {
+      underline: false,
+      strikethrough: false,
+      italic: false,
+      stroke: false,
+      strokeColor: "#000000",
+      strokeWidth: 0,
+      shadow: false,
+      shadowColor: "#000000",
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+    };
 
-  const selectItem = useMemo<Array<Partial<ITextProps>>>(
-    () => [
+    return [
       {
         ...commonStyle,
         color: "#000000",
@@ -63,9 +63,8 @@ export const PanelPreview: FC<IPanelPreviewProps> = (props) => {
         shadowOffsetX: 0,
         shadowOffsetY: 0,
       },
-    ],
-    []
-  );
+    ];
+  }, []);
 
   return (
     <div className="h-full box-border rounded border border-[gray-200] p-[3px] flex gap-[2px]">
