@@ -13,6 +13,7 @@ export const Border = [
   },
 ];
 
+/** placement key = `水平-垂直`；值仅作类型/文档，实际样式由 placementConvey 计算 */
 export const PlacementMapped = {
   "left-top": "flex-start flex-start",
   "left-center": "center flex-start",

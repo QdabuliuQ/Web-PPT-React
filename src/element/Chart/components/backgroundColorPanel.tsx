@@ -98,7 +98,7 @@ export const BackgroundColorPanel: FC = memo(() => {
       onOpenChange={setOpen}
       showText={(color) => (
         <div className="flex items-center gap-2 w-full">
-          <span className="text-xs text-gray-600 flex-1 truncate">
+          <span className="text-xs text-chrome-text flex-1 truncate">
             {color.toHexString()}
           </span>
         </div>

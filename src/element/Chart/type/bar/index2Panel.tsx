@@ -729,7 +729,7 @@ export const Bar2ChartPanel: FC = memo(() => {
             children: (
               <div className="grid grid-cols-3 gap-[10px]">
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.centerX")}</label>
+                  <label className="text-[12px] text-chrome-text">{t("chartConfig.polar.centerX")}</label>
                   <InputNumber
                     value={centerX}
                     onChange={handleCenterXChange}
@@ -743,7 +743,7 @@ export const Bar2ChartPanel: FC = memo(() => {
                   />
                 </div>
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.centerY")}</label>
+                  <label className="text-[12px] text-chrome-text">{t("chartConfig.polar.centerY")}</label>
                   <InputNumber
                     value={centerY}
                     onChange={handleCenterYChange}
@@ -757,7 +757,7 @@ export const Bar2ChartPanel: FC = memo(() => {
                   />
                 </div>
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.innerRing")}</label>
+                  <label className="text-[12px] text-chrome-text">{t("chartConfig.polar.innerRing")}</label>
                   <InputNumber
                     value={radiusInner}
                     onChange={handleRadiusInnerChange}
@@ -771,7 +771,7 @@ export const Bar2ChartPanel: FC = memo(() => {
                   />
                 </div>
                 <div className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">{t("chartConfig.polar.outerRing")}</label>
+                  <label className="text-[12px] text-chrome-text">{t("chartConfig.polar.outerRing")}</label>
                   <InputNumber
                     value={radiusOuter}
                     onChange={handleRadiusOuterChange}
@@ -794,7 +794,7 @@ export const Bar2ChartPanel: FC = memo(() => {
               <div className="grid grid-cols-3 gap-[10px]">
                 {panel.configs.map((config, index) => (
                   <div key={index} className="flex flex-col gap-[5px]">
-                    <label className="text-[12px] text-gray-600">
+                    <label className="text-[12px] text-chrome-text">
                       {config.label}
                     </label>
                     {renderAngleAxisConfigItem(config)}
@@ -810,7 +810,7 @@ export const Bar2ChartPanel: FC = memo(() => {
               <div className="grid grid-cols-3 gap-[10px]">
                 {panel.configs.map((config, index) => (
                   <div key={index} className="flex flex-col gap-[5px]">
-                    <label className="text-[12px] text-gray-600">
+                    <label className="text-[12px] text-chrome-text">
                       {config.label}
                     </label>
                     {renderLabelConfigItem(config)}

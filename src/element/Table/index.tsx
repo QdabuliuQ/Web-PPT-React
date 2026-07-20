@@ -1056,6 +1056,7 @@ const Component: FC<ITableProps> = (props) => {
                               {/* 列调整句柄 - 只有在表格被选中且不在最后一列时显示 */}
                               {isSelected && colIndex < row.length - 1 && (
                                 <div
+                                  data-no-drag
                                   className={`${styles.columnResizeHandle} ${
                                     resizing?.type === "column" &&
                                     resizing.index === colIndex
@@ -1074,6 +1075,7 @@ const Component: FC<ITableProps> = (props) => {
                               {isSelected &&
                                 rowIndex < tableData.length - 1 && (
                                   <div
+                                    data-no-drag
                                     className={`${styles.rowResizeHandle} ${
                                       resizing?.type === "row" &&
                                       resizing.index === rowIndex
@@ -1120,7 +1122,8 @@ const Component: FC<ITableProps> = (props) => {
       <MovableWrapper
         ref={moveableRef}
         id={id}
-        active={isSelected && !resizing && !isDragging} // 选中且不在调整状态且不在拖拽选择状态时才激活拖拽
+        active={isSelected && !resizing && !isDragging}
+        draggable={!resizing && !isDragging}
         x={x}
         y={y}
         width={width}

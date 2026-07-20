@@ -80,11 +80,16 @@ export function parseColor(
   return { hex: fallback, opacity: 1 };
 }
 
+/**
+ * 与 PlacementMapped / placementConvey 同源：
+ * key 为 `水平-垂直`（如 left-center）
+ */
 export function parsePlacement(placement?: string): {
   align: "left" | "center" | "right";
   valign: "top" | "middle" | "bottom";
 } {
-  const [h = "left", v = "top"] = (placement || "left-top").split("-");
+  const key = placement || "left-top";
+  const [h = "left", v = "top"] = key.split("-");
   const align =
     h === "center" ? "center" : h === "right" ? "right" : "left";
   const valign =

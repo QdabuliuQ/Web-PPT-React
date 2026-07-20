@@ -77,13 +77,25 @@ export function getRandomId() {
   );
 }
 
+/**
+ * 与 PPT 段落对齐一致：水平用 textAlign，垂直用 column flex。
+ * PlacementMapped key = `水平-垂直`（如 left-center）
+ */
 export function placementConvey(placement: keyof typeof PlacementMapped) {
-  const mapped = PlacementMapped[placement as keyof typeof PlacementMapped];
-  const [align, justify] = mapped.split(" ");
+  const key = (placement in PlacementMapped
+    ? placement
+    : "left-top") as keyof typeof PlacementMapped;
+  const [h = "left", v = "top"] = key.split("-");
+  const textAlign =
+    h === "center" ? "center" : h === "right" ? "right" : "left";
+  const justifyContent =
+    v === "center" ? "center" : v === "bottom" ? "flex-end" : "flex-start";
   return {
     display: "flex",
-    alignItems: align,
-    justifyContent: justify,
+    flexDirection: "column" as const,
+    justifyContent,
+    alignItems: "stretch" as const,
+    textAlign: textAlign as "left" | "center" | "right",
   };
 }
 

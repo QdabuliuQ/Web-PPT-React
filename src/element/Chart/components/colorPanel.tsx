@@ -101,7 +101,7 @@ export const ColorPanel: FC = memo(() => {
         <div className="flex items-center justify-between pb-3 border-b border-gray-200">
           <span className="text-sm font-semibold text-gray-800">
             {t('chartConfig.color.config')}
-            <label className="text-xs text-gray-500 ml-[5px]">
+            <label className="text-xs text-chrome-secondary ml-[5px]">
               {t('chartConfig.color.cycleTip')}
             </label>
           </span>
@@ -126,7 +126,7 @@ export const ColorPanel: FC = memo(() => {
                 onChange={(c) => handleColorPickerChange.run(index, c)}
                 showText={(color) => (
                   <div className="flex items-center gap-2 w-full">
-                    <span className="text-xs text-gray-600 flex-1 truncate">
+                    <span className="text-xs text-chrome-text flex-1 truncate">
                       {color.toHexString()}
                     </span>
                     <Delete

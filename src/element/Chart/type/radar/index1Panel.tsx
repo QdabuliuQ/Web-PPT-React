@@ -662,7 +662,7 @@ export const Radar1ChartPanel: FC = memo(() => {
             <div className="grid grid-cols-3 gap-[10px]">
               {panel.configs.map((config, index) => (
                 <div key={index} className="flex flex-col gap-[5px]">
-                  <label className="text-[12px] text-gray-600">
+                  <label className="text-[12px] text-chrome-text">
                     {config.label}
                   </label>
                   {config.customRender

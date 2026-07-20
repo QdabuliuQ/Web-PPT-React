@@ -216,13 +216,23 @@ const MovableWrapperComponent = forwardRef<any, MovableWrapperProps>(
     ]);
 
     // 拖拽事件处理
-    const handleDragStart = () => {
+    const handleDragStart = (e: {
+      inputEvent?: Event;
+      stopDrag: () => void;
+    }) => {
+      const inputTarget = e.inputEvent?.target as HTMLElement | null;
+      // 表格行列调整句柄等标记了 data-no-drag 的区域，禁止整体拖拽
+      if (inputTarget?.closest?.("[data-no-drag]")) {
+        e.stopDrag();
+        return;
+      }
+
       // 拖拽开始时，无论元素是否已选中，都触发选中
       // 这样可以确保：如果拖拽未选中的元素，会选中它；如果已有其他元素选中，会切换到当前元素
       if (onSelect) {
         onSelect();
       }
-      
+
       // 在拖拽开始时获取参考线快照
       if (gridType === "line") {
         const horizontalLine = pptStore.getHorizontalLine();

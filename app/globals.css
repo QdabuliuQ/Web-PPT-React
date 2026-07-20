@@ -198,6 +198,11 @@ body {
   box-shadow: var(--panel-shadow);
 }
 
+/* 暗黑模式：面板下 Popover 正文字色 */
+html.dark .ant-popover .ant-popover-inner {
+  color: var(--text-primary);
+}
+
 /* 编辑弹窗（图表/表格数据）实底，避免玻璃主题透出画布 */
 .ant-modal-content {
   background: var(--panel-bg-solid) !important;

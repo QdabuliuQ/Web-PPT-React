@@ -307,12 +307,20 @@ const Component: FC<ITextProps> = (props) => {
   }, [isSelected, mode, onUnSelect]);
 
   const placementConvey = useMemoizedFn((placement) => {
-    const mapped = PlacementMapped[placement as keyof typeof PlacementMapped];
-    const [align, justify] = mapped.split(" ");
+    const key = (
+      placement && placement in PlacementMapped ? placement : "left-top"
+    ) as keyof typeof PlacementMapped;
+    const [h = "left", v = "top"] = key.split("-");
+    const textAlign =
+      h === "center" ? "center" : h === "right" ? "right" : "left";
+    const justifyContent =
+      v === "center" ? "center" : v === "bottom" ? "flex-end" : "flex-start";
     return {
       display: "flex",
-      alignItems: align,
-      justifyContent: justify,
+      flexDirection: "column" as const,
+      justifyContent,
+      alignItems: "stretch" as const,
+      textAlign: textAlign as "left" | "center" | "right",
     };
   });
 
