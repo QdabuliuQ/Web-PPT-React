@@ -10,6 +10,7 @@ declare module "@scena/react-guides" {
     unit?: number;
     zoom?: number;
     displayDragPos?: boolean;
+    direction?: "start" | "end" | "center";
     backgroundColor?: string;
     lineColor?: string;
     textOffset?: [number, number] | number;

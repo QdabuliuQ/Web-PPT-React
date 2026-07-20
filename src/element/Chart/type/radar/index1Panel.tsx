@@ -690,8 +690,7 @@ export const Radar1ChartPanel: FC = memo(() => {
       <div className="h-full">
         <PanelLargeButton
           title={t("chartConfig.line.style")}
-          aspectRatio
-          icon={<RadarChart theme="outline" size="18" fill="#333" />}
+          icon={<RadarChart theme="outline" size="18" fill="var(--icon-color)" />}
         />
       </div>
     </Popover>

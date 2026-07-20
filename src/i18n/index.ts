@@ -3,11 +3,21 @@ import { initReactI18next } from 'react-i18next';
 import zhCN from './locales/zh-CN.json';
 import enUS from './locales/en-US.json';
 
-// 从 localStorage 获取保存的语言设置，默认为中文
-const savedLanguage = localStorage.getItem('language') || 'zh-CN';
+function getSavedLanguage(): string {
+  if (typeof window === 'undefined') return 'zh-CN';
+  try {
+    const saved = localStorage.getItem('language');
+    if (saved === 'en-US' || saved === 'zh-CN') return saved;
+  } catch {
+    // ignore
+  }
+  return 'zh-CN';
+}
+
+const savedLanguage = getSavedLanguage();
 
 i18n
-  .use(initReactI18next) // 将 i18n 传递给 react-i18next
+  .use(initReactI18next)
   .init({
     resources: {
       'zh-CN': {
@@ -17,11 +27,16 @@ i18n
         translation: enUS,
       },
     },
-    lng: savedLanguage, // 默认语言
-    fallbackLng: 'zh-CN', // 回退语言
+    lng: savedLanguage,
+    fallbackLng: 'zh-CN',
+    supportedLngs: ['zh-CN', 'en-US'],
     interpolation: {
-      escapeValue: false, // React 已经做了转义
+      escapeValue: false,
     },
   });
+
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = savedLanguage;
+}
 
 export default i18n;

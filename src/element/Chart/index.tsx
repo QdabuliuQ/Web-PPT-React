@@ -1,4 +1,5 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
+import { getCenteredElementPosition } from "@/constants/canvas";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import type { MenuItem } from "@/hooks/useContextMenu";
 import {
@@ -337,15 +338,16 @@ export const CreateChart = (props: Partial<IChartProps> = {}) => {
 
   // 根据 chartType 调用对应的配置函数获取 option
   const chartOption = getChartOptionByType(chartType);
+  const width = props.width ?? 500;
+  const height = props.height ?? 300;
 
   const defaultProps: Omit<IChartProps, "type" | "id"> = {
     mode: "edit",
     chartType: chartType,
     option: chartOption,
-    x: 100,
-    y: 100,
-    width: 500,
-    height: 300,
+    ...getCenteredElementPosition(width, height),
+    width,
+    height,
     rotate: 0,
     zIndex: 0,
   };

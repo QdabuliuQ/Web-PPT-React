@@ -15,9 +15,10 @@ import {
 import { useMemoizedFn } from "ahooks";
 import { message } from "antd";
 import { type FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export const PlayComponent: FC = () => {
-  // 使用 Zustand hooks 订阅状态变化
+  const { t } = useTranslation();
   const pages = usePPTStore((state) => state.pages);
   const pageActive = usePageActiveStore((state) => state.pageActive);
   const getActivePage = usePPTStore((state) => state.getActivePage);
@@ -32,16 +33,15 @@ export const PlayComponent: FC = () => {
 
   const handleStartPlay = useMemoizedFn(() => {
     if (pages.length === 0) {
-      message.error("没有可播放的页面");
+      message.error(t("playPanel.noPages"));
       return;
     }
     enterFullscreen(pages[0].id);
   });
 
   const handleCurrentPlay = useMemoizedFn(() => {
-    // 获取当前页面 ID
     if (!pageActive) {
-      message.error("未找到当前页面");
+      message.error(t("playPanel.noCurrentPage"));
       return;
     }
     enterFullscreen(pageActive);
@@ -61,34 +61,38 @@ export const PlayComponent: FC = () => {
   return (
     <div className="h-[53px] flex items-center gap-[10px]">
       <PanelLargeButton
-        title="从头开始"
-        aspectRatio={false}
-        icon={<SlideTwo theme="outline" size="18" fill="#333" />}
+        title={t("playPanel.fromStart")}
+        icon={<SlideTwo theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleStartPlay}
       />
       <PanelLargeButton
-        title="当前开始"
-        aspectRatio={false}
-        icon={<PlayIcon theme="outline" size="18" fill="#333" />}
+        title={t("playPanel.fromCurrent")}
+        icon={<PlayIcon theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleCurrentPlay}
       />
       <PanelSplitLine />
       <PanelLargeButton
-        title={(page?.visible ? "隐藏" : "显示") + "幻灯片"}
-        aspectRatio={false}
+        title={
+          page?.visible
+            ? t("contextMenu.hideSlide")
+            : t("contextMenu.showSlide")
+        }
         icon={
           page?.visible ? (
-            <PreviewCloseOne theme="outline" size="18" fill="#333" />
+            <PreviewCloseOne theme="outline" size="18" fill="var(--icon-color)" />
           ) : (
-            <PreviewOpen theme="outline" size="18" fill="#333" />
+            <PreviewOpen theme="outline" size="18" fill="var(--icon-color)" />
           )
         }
         onClick={handleTogglePageVisible}
       />
       <PanelLargeButton
-        title={remarkEditActive ? "关闭备注" : "开启备注"}
-        aspectRatio={false}
-        icon={<Notes theme="outline" size="18" fill="#333" />}
+        title={
+          remarkEditActive
+            ? t("playPanel.closeRemark")
+            : t("playPanel.openRemark")
+        }
+        icon={<Notes theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleToggleRemark}
       />
     </div>

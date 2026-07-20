@@ -1,11 +1,8 @@
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
 import { pptStore } from "@/store";
 import { useMemoizedFn } from "ahooks";
 
 export type Position = "top" | "bottom" | "left" | "right" | "center";
-
-// 画布尺寸常量（与Canvas组件保持一致）
-const CANVAS_WIDTH = 1000;
-const CANVAS_HEIGHT = 700;
 
 export const usePositionElement = (pageId: string, elementId: string) => {
   const positionHandle = useMemoizedFn((position: Position) => {

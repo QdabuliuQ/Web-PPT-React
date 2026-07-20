@@ -219,7 +219,6 @@ export const ElementRendererDirect: FC<ElementRendererProps> = ({
     <>
       {elements.map((element) => {
         const commonProps: any = {
-          key: element.id,
           ...element,
           mode,
           ...(onElementSelect && {
@@ -228,17 +227,17 @@ export const ElementRendererDirect: FC<ElementRendererProps> = ({
         };
 
         if (element.type === "text") {
-          return <Text {...commonProps} type="text" />;
+          return <Text key={element.id} {...commonProps} type="text" />;
         } else if (element.type === "table") {
-          return <Table {...commonProps} type="table" />;
+          return <Table key={element.id} {...commonProps} type="table" />;
         } else if (element.type === "icon") {
-          return <Icon {...commonProps} type="icon" />;
+          return <Icon key={element.id} {...commonProps} type="icon" />;
         } else if (element.type === "image") {
-          return <Image {...commonProps} type="image" />;
+          return <Image key={element.id} {...commonProps} type="image" />;
         } else if (element.type === "mindmap") {
-          return <MindMap {...commonProps} type="mindmap" />;
+          return <MindMap key={element.id} {...commonProps} type="mindmap" />;
         } else if (element.type === "chart") {
-          return <Chart {...commonProps} type="chart" />;
+          return <Chart key={element.id} {...commonProps} type="chart" />;
         }
         return null;
       })}

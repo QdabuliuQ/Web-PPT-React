@@ -1,4 +1,5 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
+import { getCenteredElementPosition } from "@/constants/canvas";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   elementActiveStore,
@@ -814,62 +815,73 @@ const Component: FC<ITableProps> = (props) => {
     preparedDataRef.current = null;
   });
 
-  // 监听Modal打开状态，初始化Spreadsheet
-  useEffect(() => {
-    if (isModalOpen) {
-      // 使用 setTimeout 确保Modal渲染完成后再初始化
-      const timer = setTimeout(() => {
-        if (
-          spreadsheetContainerRef.current &&
-          !spreadsheetInstanceRef.current
-        ) {
-          // 创建 spreadsheet 实例
-          spreadsheetInstanceRef.current = new Spreadsheet(
-            spreadsheetContainerRef.current,
-            {
-              mode: "edit",
-              showToolbar: false,
-              showGrid: true,
-              showContextmenu: false,
-              showBottomBar: false,
-              view: {
-                height: () => 500,
-                width: () => {
-                  const container = spreadsheetContainerRef.current;
-                  if (container) {
-                    return container.clientWidth;
-                  }
-                  return 900;
-                },
-              },
-              // 设置最大行数和列数
-              row: {
-                len: 50, // 最大行数50
-                height: 40, // 默认行高
-              },
-              col: {
-                len: 50, // 最大列数50
-                width: 100, // 默认列宽
-                indexWidth: 60, // 行号列宽度
-                minWidth: 60, // 最小列宽
-              },
-            }
-          );
+  const initSpreadsheet = useMemoizedFn(() => {
+    if (!spreadsheetContainerRef.current || spreadsheetInstanceRef.current) {
+      return;
+    }
 
-          // 加载双击时准备的数据
-          const data = preparedDataRef.current || convertToXSpreadsheetData();
-          spreadsheetInstanceRef.current.loadData(data);
-        }
-      }, 100);
+    const container = spreadsheetContainerRef.current;
+    // dist IIFE exports via window.x_spreadsheet; default import is often {}
+    let SpreadsheetCtor: any = Spreadsheet;
+    for (
+      let i = 0;
+      i < 3 && SpreadsheetCtor && typeof SpreadsheetCtor !== "function";
+      i += 1
+    ) {
+      SpreadsheetCtor = SpreadsheetCtor.default;
+    }
+    if (typeof SpreadsheetCtor !== "function") {
+      SpreadsheetCtor =
+        typeof window !== "undefined"
+          ? (window as any).x_spreadsheet
+          : undefined;
+    }
+    if (typeof SpreadsheetCtor !== "function") {
+      throw new Error("x-data-spreadsheet constructor not found");
+    }
+    const initialWidth = container.clientWidth || 900;
 
-      return () => {
-        clearTimeout(timer);
-        cleanupSpreadsheet();
-      };
+    spreadsheetInstanceRef.current = new SpreadsheetCtor(container, {
+      mode: "edit",
+      showToolbar: false,
+      showGrid: true,
+      showContextmenu: false,
+      showBottomBar: false,
+      view: {
+        height: () => 500,
+        width: () => container.clientWidth || initialWidth,
+      },
+      row: {
+        len: 50,
+        height: 40,
+      },
+      col: {
+        len: 50,
+        width: 100,
+        indexWidth: 60,
+        minWidth: 60,
+      },
+    });
+
+    const data = preparedDataRef.current || convertToXSpreadsheetData();
+    spreadsheetInstanceRef.current.loadData(data);
+  });
+
+  const handleAfterOpenChange = useMemoizedFn((visible: boolean) => {
+    if (visible) {
+      requestAnimationFrame(() => {
+        initSpreadsheet();
+      });
     } else {
       cleanupSpreadsheet();
     }
-  }, [isModalOpen, convertToXSpreadsheetData, cleanupSpreadsheet]);
+  });
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      cleanupSpreadsheet();
+    }
+  }, [isModalOpen, cleanupSpreadsheet]);
 
   const dynamicStyle = useMemo(
     () => ({
@@ -1130,16 +1142,24 @@ const Component: FC<ITableProps> = (props) => {
         open={isModalOpen}
         onOk={handleSaveAndClose}
         onCancel={handleCloseModal}
+        afterOpenChange={handleAfterOpenChange}
         okText="保存"
         cancelText="取消"
         width={1000}
         centered
-        destroyOnClose={true}
+        destroyOnHidden
+        zIndex={2000}
+        styles={{
+          content: { background: "var(--panel-bg-solid)" },
+          header: { background: "var(--panel-bg-solid)" },
+          body: { background: "var(--panel-bg-solid)" },
+          footer: { background: "var(--panel-bg-solid)" },
+        }}
       >
         <div className="py-[10px]">
           <div
             ref={spreadsheetContainerRef}
-            className="h-[500px] w-full border border-gray-300 rounded overflow-hidden"
+            className="h-[500px] w-full rounded overflow-hidden border border-[var(--border-default)] bg-[var(--panel-bg-solid)]"
           />
         </div>
       </Modal>
@@ -1152,6 +1172,8 @@ const Component: FC<ITableProps> = (props) => {
 export const Table = Component;
 
 export const CreateTable = (props: Partial<ITableProps> = {}) => {
+  const width = props.width ?? 300;
+  const height = props.height ?? 150;
   const defaultProps: Omit<ITableProps, "type" | "id"> = {
     dataSource: [
       [
@@ -1300,21 +1322,29 @@ export const CreateTable = (props: Partial<ITableProps> = {}) => {
     fontSize: 14,
     fontFamily: "Arial, sans-serif",
     mode: "edit",
-    x: 0,
-    y: 0,
-    width: 300,
-    height: 150,
+    width,
+    height,
     rotate: 0,
     zIndex: 0,
   };
+  const pos =
+    props.x != null && props.y != null
+      ? { x: props.x, y: props.y }
+      : getCenteredElementPosition(
+          props.width ?? width,
+          props.height ?? height
+        );
   return {
     ...defaultProps,
     ...props,
+    ...pos,
+    width: props.width ?? width,
+    height: props.height ?? height,
     id: `table_${getRandomId()}`,
     type: "table" as const,
   };
 };
 
 export const TableButton = TableButtonComponent;
-export const Name = "表格";
+export const Name = "elements.table.title";
 export const TablePanelIcon = TableFile;

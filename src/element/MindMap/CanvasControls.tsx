@@ -83,9 +83,9 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
             onClick={onToggleMode}
             icon={
               mode === "pan" ? (
-                <Move theme="outline" size="16" fill="#333" />
+                <Move theme="outline" size="16" fill="var(--icon-color)" />
               ) : (
-                <Click theme="outline" size="16" fill="#333" />
+                <Click theme="outline" size="16" fill="var(--icon-color)" />
               )
             }
           />
@@ -95,21 +95,21 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
         <Button
           type="text"
           onClick={onZoomOut}
-          icon={<Minus theme="outline" size="16" fill="#333" />}
+          icon={<Minus theme="outline" size="16" fill="var(--icon-color)" />}
         />
       </Tooltip>
       <Tooltip title="放大画布" placement="top">
         <Button
           type="text"
           onClick={onZoomIn}
-          icon={<Plus theme="outline" size="16" fill="#333" />}
+          icon={<Plus theme="outline" size="16" fill="var(--icon-color)" />}
         />
       </Tooltip>
       <Tooltip title="居中画布" placement="top">
         <Button
           type="text"
           onClick={onCenter}
-          icon={<HorizontallyCentered theme="outline" size="16" fill="#333" />}
+          icon={<HorizontallyCentered theme="outline" size="16" fill="var(--icon-color)" />}
         />
       </Tooltip>
       <Tooltip title="复制节点" placement="top">
@@ -118,7 +118,7 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
           onClick={onCopy}
           disabled={isDisabledCopy}
           className={`${isDisabledCopy ? "opacity-30 cursor-not-allowed" : ""}`}
-          icon={<Copy theme="outline" size="16" fill="#333" />}
+          icon={<Copy theme="outline" size="16" fill="var(--icon-color)" />}
         />
       </Tooltip>
       <Tooltip title="添加子节点" placement="top">
@@ -127,7 +127,7 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
           onClick={onAddChild}
           disabled={isDisabledAddChild}
           className={`${isDisabledAddChild ? "opacity-30 cursor-not-allowed" : ""}`}
-          icon={<AddSubset theme="outline" size="16" fill="#333" />}
+          icon={<AddSubset theme="outline" size="16" fill="var(--icon-color)" />}
         />
       </Tooltip>
       <Tooltip title="自动排列" placement="top">
@@ -149,7 +149,7 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
           <Button
             type="text"
             onClick={onRefreshLayout}
-            icon={<FormatBrush theme="outline" size="16" fill="#333" />}
+            icon={<FormatBrush theme="outline" size="16" fill="var(--icon-color)" />}
           />
         </Tooltip>
       )}
@@ -159,14 +159,14 @@ export const CanvasControls: FC<CanvasControlsProps> = ({
           onClick={onDeleteNode}
           disabled={isDisabledDeleteNode}
           className={`${isDisabledDeleteNode ? "opacity-30 cursor-not-allowed" : ""}`}
-          icon={<Delete theme="outline" size="16" fill="#333" />}
+          icon={<Delete theme="outline" size="16" fill="var(--icon-color)" />}
         />
       </Tooltip>
       {(onExportSvg || onExportPng || onExportJpg) && (
         <Dropdown menu={{ items: exportMenuItems }} placement="top">
           <Button
             type="text"
-            icon={<DownPicture theme="outline" size="16" fill="#333" />}
+            icon={<DownPicture theme="outline" size="16" fill="var(--icon-color)" />}
           />
         </Dropdown>
       )}

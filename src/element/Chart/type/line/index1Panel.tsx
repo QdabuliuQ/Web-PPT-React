@@ -452,7 +452,7 @@ export const Line1ChartPanel: FC = memo(() => {
   return (
     <ChartStylePanel
       title="样式"
-      icon={<ChartLine theme="outline" size="18" fill="#333" />}
+      icon={<ChartLine theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
       defaultActiveKey={["basic"]}

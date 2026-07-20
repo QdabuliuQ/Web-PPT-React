@@ -177,6 +177,33 @@ function getDataConverter(chartType: string | undefined) {
   return null;
 }
 
+/**
+ * x-data-spreadsheet dist is a webpack IIFE that assigns `window.x_spreadsheet`
+ * (factory), not a proper CJS/ESM export. Bundler default import is often `{}`.
+ */
+function getSpreadsheetConstructor(): new (
+  el: HTMLElement,
+  options?: object
+) => Spreadsheet {
+  let mod: unknown = Spreadsheet;
+  for (let i = 0; i < 3 && mod && typeof mod !== "function"; i += 1) {
+    mod = (mod as { default?: unknown }).default;
+  }
+  if (typeof mod === "function") {
+    return mod as new (el: HTMLElement, options?: object) => Spreadsheet;
+  }
+  const fromWindow =
+    typeof window !== "undefined"
+      ? (window as unknown as { x_spreadsheet?: unknown }).x_spreadsheet
+      : undefined;
+  if (typeof fromWindow === "function") {
+    return fromWindow as new (el: HTMLElement, options?: object) => Spreadsheet;
+  }
+  throw new Error("x-data-spreadsheet constructor not found");
+}
+
+const modalSolidBg = "var(--panel-bg-solid)";
+
 export const ChartDataModal: FC<ChartDataModalProps> = ({
   open,
   onClose,
@@ -186,8 +213,10 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
   const { t } = useTranslation();
   const spreadsheetContainerRef = useRef<HTMLDivElement>(null);
   const spreadsheetInstanceRef = useRef<Spreadsheet | null>(null);
+  const chartInfoRef = useRef(chartInfo);
+  chartInfoRef.current = chartInfo;
 
-  // 获取数据转换器
+  // 获取数据转换器（仅随图表类型变化）
   const converter = useMemo(
     () => getDataConverter(chartInfo.chartType),
     [chartInfo.chartType]
@@ -196,11 +225,9 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
   // 清理Spreadsheet
   const cleanupSpreadsheet = useMemoizedFn(() => {
     if (spreadsheetInstanceRef.current) {
-      // 清理DOM内容
       if (spreadsheetContainerRef.current) {
         spreadsheetContainerRef.current.innerHTML = "";
       }
-      // 清理实例引用
       spreadsheetInstanceRef.current = null;
     }
   });
@@ -209,81 +236,75 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
   const prepareSpreadsheetData = useMemoizedFn(() => {
     if (!converter) return null;
 
-    // 直接将整个 option 传递给 getDataToExcel，让各个图表类型自行提取数据
-    const excelData = converter.getDataToExcel(chartInfo.option);
+    const excelData = converter.getDataToExcel(chartInfoRef.current.option);
 
-    // 确保有数据
     if (!excelData || excelData.length === 0) {
       return null;
     }
 
-    // 转换为 x-data-spreadsheet 格式
-    const spreadsheetData = convertToXSpreadsheetData(excelData);
-
-    return spreadsheetData;
+    return convertToXSpreadsheetData(excelData);
   });
 
-  // 监听Modal打开状态，初始化Spreadsheet
-  useEffect(() => {
-    if (open) {
-      // 使用 setTimeout 确保Modal渲染完成后再初始化
-      const timer = setTimeout(() => {
-        if (
-          spreadsheetContainerRef.current &&
-          !spreadsheetInstanceRef.current &&
-          converter
-        ) {
-          // 准备数据
-          const data = prepareSpreadsheetData();
-          if (!data) {
-            return;
-          }
+  const initSpreadsheet = useMemoizedFn(() => {
+    if (
+      !spreadsheetContainerRef.current ||
+      spreadsheetInstanceRef.current ||
+      !converter
+    ) {
+      return;
+    }
 
-          // 创建 spreadsheet 实例
-          spreadsheetInstanceRef.current = new Spreadsheet(
-            spreadsheetContainerRef.current,
-            {
-              mode: "edit",
-              showToolbar: false,
-              showGrid: true,
-              showContextmenu: false,
-              showBottomBar: false,
-              view: {
-                height: () => 500,
-                width: () => {
-                  const container = spreadsheetContainerRef.current;
-                  if (container) {
-                    return container.clientWidth;
-                  }
-                  return 900;
-                },
-              },
-              row: {
-                len: 100,
-                height: 40,
-              },
-              col: {
-                len: 20,
-                width: 120,
-                indexWidth: 60,
-                minWidth: 60,
-              },
-            }
-          );
+    const data = prepareSpreadsheetData();
+    if (!data) {
+      return;
+    }
 
-          // 加载数据
-          spreadsheetInstanceRef.current.loadData(data);
-        }
-      }, 100);
+    const container = spreadsheetContainerRef.current;
+    const SpreadsheetCtor = getSpreadsheetConstructor();
+    const initialWidth = container.clientWidth || 900;
 
-      return () => {
-        clearTimeout(timer);
-        cleanupSpreadsheet();
-      };
+    spreadsheetInstanceRef.current = new SpreadsheetCtor(container, {
+      mode: "edit",
+      showToolbar: false,
+      showGrid: true,
+      showContextmenu: false,
+      showBottomBar: false,
+      view: {
+        height: () => 500,
+        width: () => container.clientWidth || initialWidth,
+      },
+      row: {
+        len: 100,
+        height: 40,
+      },
+      col: {
+        len: 20,
+        width: 120,
+        indexWidth: 60,
+        minWidth: 60,
+      },
+    });
+
+    spreadsheetInstanceRef.current.loadData(data);
+  });
+
+  // Modal 完全打开后再挂载 spreadsheet，避免 destroyOnHidden + 父级重渲染打断初始化
+  const handleAfterOpenChange = useMemoizedFn((visible: boolean) => {
+    if (visible) {
+      requestAnimationFrame(() => {
+        initSpreadsheet();
+      });
     } else {
       cleanupSpreadsheet();
     }
-  }, [open, converter, prepareSpreadsheetData, cleanupSpreadsheet, chartInfo]);
+  });
+
+  // open 变为 false 时兜底清理（不依赖 afterOpenChange）
+  useEffect(() => {
+    if (!open) {
+      cleanupSpreadsheet();
+    }
+  }, [open, cleanupSpreadsheet]);
 
   // 保存数据
   const handleSave = useMemoizedFn(() => {
@@ -293,46 +314,35 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
     }
 
     try {
-      // 获取 spreadsheet 数据
       const spreadsheetData = spreadsheetInstanceRef.current.getData();
-
-      // 转换为 Excel 格式
       const excelData = convertFromXSpreadsheetData(spreadsheetData);
 
-      // 清理 chartInfo.option，确保它是可序列化的
-      // 因为 setDataFromExcel 内部会调用 cloneDeep，需要确保 option 是可序列化的
       let cleanOption: any;
       try {
-        cleanOption = JSON.parse(JSON.stringify(chartInfo.option));
+        cleanOption = JSON.parse(
+          JSON.stringify(chartInfoRef.current.option)
+        );
       } catch (jsonError) {
-        // 如果 JSON 序列化失败，使用原始 option
         console.warn("Failed to clean option, using original:", jsonError);
-        cleanOption = chartInfo.option;
+        cleanOption = chartInfoRef.current.option;
       }
 
-      // 转换为图表数据格式
       const updatedConfig = converter.setDataFromExcel(excelData, cleanOption);
 
-      // 确保返回的数据是可序列化的，避免 structuredClone 错误
-      // 使用 JSON 序列化/反序列化来清理不可序列化的内容
       let serializableConfig: any;
       try {
         serializableConfig = JSON.parse(JSON.stringify(updatedConfig));
       } catch (jsonError) {
-        // 如果 JSON 序列化失败，尝试手动清理
         console.warn(
           "JSON serialization failed, using original config:",
           jsonError
         );
         serializableConfig = updatedConfig;
       }
-      console.log(serializableConfig, "serializableConfig");
 
-      // 调用保存回调
       onSave(serializableConfig);
       onClose();
     } catch (err) {
-      // 静默处理错误
       console.error("Failed to save chart data:", err);
     }
   });
@@ -343,16 +353,25 @@ export const ChartDataModal: FC<ChartDataModalProps> = ({
       open={open}
       onOk={handleSave}
       onCancel={onClose}
+      afterOpenChange={handleAfterOpenChange}
       okText={t("chartDataModal.save")}
       cancelText={t("chartDataModal.cancel")}
       width={1000}
       centered
-      destroyOnClose={true}
+      destroyOnHidden
+      // 高于 Moveable 控制点 (1001+)，避免画布选中框穿透弹窗
+      zIndex={2000}
+      styles={{
+        content: { background: modalSolidBg },
+        header: { background: modalSolidBg },
+        body: { background: modalSolidBg },
+        footer: { background: modalSolidBg },
+      }}
     >
       <div className="py-[10px]">
         <div
           ref={spreadsheetContainerRef}
-          className="h-[500px] w-full border border-gray-300 rounded overflow-hidden"
+          className="h-[500px] w-full rounded overflow-hidden border border-[var(--border-default)] bg-[var(--panel-bg-solid)]"
         />
       </div>
     </Modal>

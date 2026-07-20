@@ -34,7 +34,7 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
         <AlignTextLeft
           theme="outline"
           size="14"
-          fill={disabled ? "#bbb" : "#333"}
+          fill={disabled ? "var(--text-disabled)" : "currentColor"}
         />
       }
       onSelect={(key) => {
@@ -49,21 +49,21 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
                 key: "left-top",
                 label: t('component.alignment.leftTop'),
                 icon: (
-                  <AlignmentLeftTop theme="outline" size="15" fill="#333" />
+                  <AlignmentLeftTop theme="outline" size="15" fill="var(--icon-color)" />
                 ),
               },
               {
                 key: "left-center",
                 label: t('component.alignment.leftCenter'),
                 icon: (
-                  <AlignmentLeftCenter theme="outline" size="15" fill="#333" />
+                  <AlignmentLeftCenter theme="outline" size="15" fill="var(--icon-color)" />
                 ),
               },
               {
                 key: "left-bottom",
                 label: t('component.alignment.leftBottom'),
                 icon: (
-                  <AlignmentLeftBottom theme="outline" size="15" fill="#333" />
+                  <AlignmentLeftBottom theme="outline" size="15" fill="var(--icon-color)" />
                 ),
               },
               {
@@ -73,7 +73,7 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
                   <AlignmentHorizontalTop
                     theme="outline"
                     size="15"
-                    fill="#333"
+                    fill="var(--icon-color)"
                   />
                 ),
               },
@@ -84,7 +84,7 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
                   <AlignmentHorizontalCenter
                     theme="outline"
                     size="15"
-                    fill="#333"
+                    fill="var(--icon-color)"
                   />
                 ),
               },
@@ -95,7 +95,7 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
                   <AlignmentHorizontalBottom
                     theme="outline"
                     size="15"
-                    fill="#333"
+                    fill="var(--icon-color)"
                   />
                 ),
               },
@@ -103,21 +103,21 @@ export const PanelPlacementButton: FC<IPanelPlacementButtonProps> = ({
                 key: "right-top",
                 label: t('component.alignment.rightTop'),
                 icon: (
-                  <AlignmentRightTop theme="outline" size="15" fill="#333" />
+                  <AlignmentRightTop theme="outline" size="15" fill="var(--icon-color)" />
                 ),
               },
               {
                 key: "right-center",
                 label: t('component.alignment.rightCenter'),
                 icon: (
-                  <AlignmentRightCenter theme="outline" size="15" fill="#333" />
+                  <AlignmentRightCenter theme="outline" size="15" fill="var(--icon-color)" />
                 ),
               },
               {
                 key: "right-bottom",
                 label: t('component.alignment.rightBottom'),
                 icon: (
-                  <AlignmentRightBottom theme="outline" size="15" fill="#333" />
+                  <AlignmentRightBottom theme="outline" size="15" fill="var(--icon-color)" />
                 ),
               },
             ],

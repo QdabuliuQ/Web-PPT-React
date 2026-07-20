@@ -14,9 +14,10 @@ import {
 } from "@icon-park/react";
 import { Dropdown, type MenuProps } from "antd";
 import { useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 
 const ViewComponent: FC = () => {
-  // 使用 Zustand hooks 订阅状态变化
+  const { t } = useTranslation();
   const displayStatus = useDisplayStatusStore((state) => state.displayStatus);
   const setDisplayStatus = useDisplayStatusStore(
     (state) => state.setDisplayStatus
@@ -34,22 +35,10 @@ const ViewComponent: FC = () => {
 
   const gridLineMenuItems: MenuProps["items"] = useMemo(
     () => [
-      {
-        key: 10,
-        label: "10px × 10px",
-      },
-      {
-        key: 20,
-        label: "20px × 20px",
-      },
-      {
-        key: 30,
-        label: "30px × 30px",
-      },
-      {
-        key: 40,
-        label: "40px × 40px",
-      },
+      { key: 10, label: "10px × 10px" },
+      { key: 20, label: "20px × 20px" },
+      { key: 30, label: "30px × 30px" },
+      { key: 40, label: "40px × 40px" },
     ],
     []
   );
@@ -61,9 +50,8 @@ const ViewComponent: FC = () => {
           setDisplayStatus("default");
         }}
         active={displayStatus === "default"}
-        aspectRatio={false}
-        icon={<Column theme="outline" size="18" fill="#333" />}
-        title="普通视图"
+        icon={<Column theme="outline" size="18" fill="var(--icon-color)" />}
+        title={t("viewPanel.normalView")}
       />
       <PanelLargeButton
         onClick={() => {
@@ -71,9 +59,8 @@ const ViewComponent: FC = () => {
           setDisplayStatus("grid");
         }}
         active={displayStatus === "grid"}
-        aspectRatio={false}
-        icon={<ViewGridCard theme="outline" size="18" fill="#333" />}
-        title="幻灯片预览"
+        icon={<ViewGridCard theme="outline" size="18" fill="var(--icon-color)" />}
+        title={t("viewPanel.slidePreview")}
       />
       <PanelSplitLine />
       <Dropdown
@@ -98,8 +85,8 @@ const ViewComponent: FC = () => {
               setGridType(gridType === "grid" ? "none" : "grid");
             }}
             active={gridType === "grid"}
-            icon={<GridTwo theme="outline" size="18" fill="#333" />}
-            title="网格线"
+            icon={<GridTwo theme="outline" size="18" fill="var(--icon-color)" />}
+            title={t("viewPanel.gridLines")}
           />
         </div>
       </Dropdown>
@@ -108,8 +95,8 @@ const ViewComponent: FC = () => {
           setGridType(gridType === "line" ? "none" : "line");
         }}
         active={gridType === "line"}
-        icon={<Ruler theme="outline" size="18" fill="#333" />}
-        title="标尺"
+        icon={<Ruler theme="outline" size="18" fill="var(--icon-color)" />}
+        title={t("viewPanel.ruler")}
       />
       <PanelLargeButton
         onClick={() => {
@@ -117,21 +104,21 @@ const ViewComponent: FC = () => {
         }}
         active={guideLineShow}
         disabled={gridType !== "line"}
-        icon={<DividingLineOne theme="outline" size="18" fill="#333" />}
-        title="参考线"
+        icon={<DividingLineOne theme="outline" size="18" fill="var(--icon-color)" />}
+        title={t("viewPanel.guides")}
       />
       <PanelLargeButton
         onClick={() => {
           setHorizontalLine([]);
           setVerticalLine([]);
         }}
-        aspectRatio={false}
+
         disabled={
           gridType !== "line" ||
           (horizontalLine.length === 0 && verticalLine.length === 0)
         }
-        icon={<Clear theme="outline" size="18" fill="#333" />}
-        title="清除参考线"
+        icon={<Clear theme="outline" size="18" fill="var(--icon-color)" />}
+        title={t("viewPanel.clearGuides")}
       />
     </div>
   );

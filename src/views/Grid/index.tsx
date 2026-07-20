@@ -90,10 +90,10 @@ const GridComponent: FC = () => {
             className="flex flex-col items-center cursor-pointer group"
           >
             <div
-              className={`grid-card relative w-full bg-white rounded-[6px] overflow-hidden transition-shadow ${
+              className={`grid-card relative w-full bg-chrome-thumb rounded-[6px] overflow-hidden transition-shadow ${
                 pageActive === page.id
-                  ? "shadow-[0_0_0_2px_#f25f00]"
-                  : "shadow-[0_0_0_1px_#e8e8e8] group-hover:shadow-[0_0_0_1px_#d9d9d9]"
+                  ? "shadow-[0_0_0_2px_var(--primary-color)]"
+                  : "shadow-[0_0_0_1px_var(--thumb-border)] group-hover:shadow-[0_0_0_1px_var(--thumb-border-hover)]"
               }`}
               style={{ aspectRatio: CANVAS_ASPECT_RATIO_CSS }}
               onClick={() => handleClick(page.id)}
@@ -111,7 +111,11 @@ const GridComponent: FC = () => {
               </div>
               {page.visible === false && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                  <PreviewCloseOne theme="outline" size="24" fill="#333" />
+                  <PreviewCloseOne
+                    theme="outline"
+                    size="24"
+                    fill="var(--icon-color)"
+                  />
                 </div>
               )}
             </div>
@@ -119,7 +123,7 @@ const GridComponent: FC = () => {
               className={`mt-[8px] text-[13px] ${
                 pageActive === page.id
                   ? "text-primary font-semibold"
-                  : "text-[#8c8c8c]"
+                  : "text-chrome-muted"
               }`}
             >
               幻灯片 {index + 1}

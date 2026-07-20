@@ -348,7 +348,7 @@ export const LegendPanel: FC = memo(() => {
   return (
     <ChartStylePanel
       title={t('chartConfig.sections.legend')}
-      icon={<Text theme="outline" size="18" fill="#333" />}
+      icon={<Text theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
       defaultActiveKey={["basic"]}

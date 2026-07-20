@@ -6,8 +6,12 @@ import {
   shadowFromOffsets,
   toHexColor,
   mapBorderDash,
+  pxToPt,
 } from "./helpers";
 
+/**
+ * 文本 → PPTX（字号/阴影按画布 px 换算为 pptxgenjs 的 pt）
+ */
 export function addTextElement(
   slide: PptxGenJS.Slide,
   el: ITextProps
@@ -18,7 +22,7 @@ export function addTextElement(
   const options: PptxGenJS.TextPropsOptions = {
     ...pos,
     fontFace: el.fontFamily?.split(",")[0]?.trim() || "Arial",
-    fontSize: el.fontSize,
+    fontSize: pxToPt(el.fontSize),
     color: toHexColor(el.color),
     bold: el.bold,
     italic: el.italic,
@@ -28,6 +32,8 @@ export function addTextElement(
     valign,
     wrap: true,
     isTextBox: true,
+    // 与网页一致：文本框无内边距
+    margin: 0,
   };
 
   if (el.lineHeight && el.fontSize) {
@@ -42,15 +48,8 @@ export function addTextElement(
     const dashType = mapBorderDash(el.borderStyle);
     options.line = {
       color: toHexColor(el.borderColor, "000000"),
-      width: el.borderWidth || 1,
+      width: pxToPt(el.borderWidth || 1),
       ...(dashType ? { dashType } : { type: "none" as const }),
-    };
-  }
-
-  if (el.stroke) {
-    options.outline = {
-      size: el.strokeWidth || 1,
-      color: toHexColor(el.strokeColor, "000000"),
     };
   }
 
@@ -59,10 +58,10 @@ export function addTextElement(
     offsetX: el.shadowOffsetX,
     offsetY: el.shadowOffsetY,
     color: el.shadowColor,
+    blur: el.shadowBlur ?? 4,
   });
   if (shadow) options.shadow = shadow;
 
-  // 旋转已在 position 中带上；pptx 文本 rotate 单位是度
   if (el.rotate) {
     options.rotate = el.rotate;
   }

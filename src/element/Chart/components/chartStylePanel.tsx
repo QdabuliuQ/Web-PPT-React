@@ -208,7 +208,6 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
         <div className="h-full">
           <PanelLargeButton
             title={title}
-            aspectRatio
             icon={icon}
             active={open}
           />

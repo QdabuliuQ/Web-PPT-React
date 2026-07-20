@@ -1,6 +1,13 @@
 import { Down } from "@icon-park/react";
 import { Button, Dropdown, type DropDownProps } from "antd";
-import { type FC } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useMemo,
+  type FC,
+  type ReactElement,
+} from "react";
+
 interface IPanelDropdownButtonProps {
   icon?: React.ReactNode;
   title?: string;
@@ -46,8 +53,8 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
                   ...item.style,
                   ...(item.key === value
                     ? {
-                        backgroundColor: "#fff2e6", // 主题色 #f25f00 的浅色版本
-                        color: "#f25f00", // 主题色
+                        backgroundColor: "var(--primary-soft)",
+                        color: "var(--primary-color)",
                         fontWeight: 600,
                       }
                     : {}),
@@ -63,17 +70,40 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
       ? { dropdownRender }
       : { menu: enhancedMenu };
 
+  // 禁用时用禁用色；其余用 currentColor，随按钮 color / hover 主题色变化
+  const renderIcon = useMemo(() => {
+    if (!icon || !isValidElement(icon)) return icon;
+
+    return cloneElement(icon as ReactElement<{ fill?: string }>, {
+      fill: disabled ? "var(--text-disabled)" : "currentColor",
+    });
+  }, [icon, disabled]);
+
   return (
     <Dropdown {...dropdownProps}>
       <div className="inline-block">
         {button ? (
           button
         ) : (
-          <Button size="small" type="text" disabled={disabled}>
+          <Button
+            size="small"
+            type="text"
+            disabled={disabled}
+            className="hover:!text-[var(--primary-color)]"
+            style={{
+              color: disabled
+                ? "var(--text-disabled)"
+                : "var(--text-secondary)",
+            }}
+          >
             <div className="flex items-center gap-[4px]">
-              {icon}
+              {renderIcon}
               <span>{title}</span>
-              <Down theme="outline" size="10" fill="#333" />
+              <Down
+                theme="outline"
+                size="10"
+                fill={disabled ? "var(--text-disabled)" : "currentColor"}
+              />
             </div>
           </Button>
         )}

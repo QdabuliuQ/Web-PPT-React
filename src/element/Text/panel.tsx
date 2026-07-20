@@ -26,11 +26,10 @@ import {
   Strikethrough,
   TextBold,
   TextItalic,
-  TextStyle,
   TextUnderline,
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { Button, ColorPicker, Popover, Slider, Tooltip } from "antd";
+import { Button, Popover, Tooltip } from "antd";
 import {
   useCallback,
   useEffect,
@@ -41,7 +40,7 @@ import {
 } from "react";
 import type { ITextProps } from ".";
 import { FontSize } from "./constant";
-import styles from "./panel.module.less";
+
 interface ITextPanelProps {
   title?: string;
 }
@@ -54,9 +53,9 @@ export const TextPanel: FC<ITextPanelProps> = () => {
   // 使用本地状态存储需要即时响应的属性
   const [fontSize, setFontSize] = useState<number | null>(null);
   const [lineHeight, setLineHeight] = useState<number | null>(null);
-  const [strokeWidth, setStrokeWidth] = useState<number | null>(null);
   const [shadowOffsetX, setShadowOffsetX] = useState<number | null>(null);
   const [shadowOffsetY, setShadowOffsetY] = useState<number | null>(null);
+  const [shadowBlur, setShadowBlur] = useState<number | null>(null);
   const [borderWidth, setBorderWidth] = useState<number | null>(null);
 
   // 使用 Zustand hooks 订阅状态变化
@@ -82,16 +81,16 @@ export const TextPanel: FC<ITextPanelProps> = () => {
     if (currentElement) {
       setFontSize(currentElement.fontSize ?? null);
       setLineHeight(currentElement.lineHeight ?? null);
-      setStrokeWidth(currentElement.strokeWidth ?? null);
       setShadowOffsetX(currentElement.shadowOffsetX ?? null);
       setShadowOffsetY(currentElement.shadowOffsetY ?? null);
+      setShadowBlur(currentElement.shadowBlur ?? 4);
       setBorderWidth(currentElement.borderWidth ?? null);
     } else {
       setFontSize(null);
       setLineHeight(null);
-      setStrokeWidth(null);
       setShadowOffsetX(null);
       setShadowOffsetY(null);
+      setShadowBlur(null);
       setBorderWidth(null);
     }
   }, [currentElement]);
@@ -167,22 +166,22 @@ export const TextPanel: FC<ITextPanelProps> = () => {
       {
         title: "加粗",
         key: "bold",
-        icon: <TextBold theme="outline" size="18" fill="#333" />,
+        icon: <TextBold theme="outline" size="18" fill="var(--icon-color)" />,
       },
       {
         title: "斜体",
         key: "italic",
-        icon: <TextItalic theme="outline" size="18" fill="#333" />,
+        icon: <TextItalic theme="outline" size="18" fill="var(--icon-color)" />,
       },
       {
         title: "下划线",
         key: "underline",
-        icon: <TextUnderline theme="outline" size="18" fill="#333" />,
+        icon: <TextUnderline theme="outline" size="18" fill="var(--icon-color)" />,
       },
       {
         title: "删除线",
         key: "strikethrough",
-        icon: <Strikethrough theme="outline" size="18" fill="#333" />,
+        icon: <Strikethrough theme="outline" size="18" fill="var(--icon-color)" />,
       },
     ];
   }, []);
@@ -255,7 +254,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
                 setFontSize(newValue);
                 debouncedPropertyChange("fontSize", newValue);
               }}
-              icon={<Add theme="outline" size="13" fill="#333" />}
+              icon={<Add theme="outline" size="13" fill="var(--icon-color)" />}
             />
           </Tooltip>
           <Tooltip title="减小字号">
@@ -267,7 +266,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
                 setFontSize(newValue);
                 debouncedPropertyChange("fontSize", newValue);
               }}
-              icon={<Reduce theme="outline" size="13" fill="#333" />}
+              icon={<Reduce theme="outline" size="13" fill="var(--icon-color)" />}
             />
           </Tooltip>
           <PanelPlacementButton
@@ -303,7 +302,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
           <Popover
             content={
               <ColorPanel
-                value={currentElement?.backgroundColor || "#ffffff"}
+                value={currentElement?.backgroundColor || "transparent"}
                 onChange={debouncedColorChange("backgroundColor")}
               />
             }
@@ -315,13 +314,13 @@ export const TextPanel: FC<ITextPanelProps> = () => {
             <Button
               type="text"
               size="small"
-              icon={<BackgroundColor theme="outline" size="15" fill="#333" />}
+              icon={<BackgroundColor theme="outline" size="15" fill="var(--icon-color)" />}
             />
           </Popover>
           <PanelDropdownButton
             title="行高"
             value={lineHeight?.toString() || "1"}
-            icon={<AutoHeightOne theme="outline" size="14" fill="#333" />}
+            icon={<AutoHeightOne theme="outline" size="14" fill="var(--icon-color)" />}
             onSelect={(key) => {
               const newValue = parseFloat(key);
               setLineHeight(newValue);
@@ -357,7 +356,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
                 setLineHeight(newValue);
                 debouncedPropertyChange("lineHeight", newValue);
               }}
-              icon={<Add theme="outline" size="13" fill="#333" />}
+              icon={<Add theme="outline" size="13" fill="var(--icon-color)" />}
             />
           </Tooltip>
           <Tooltip title="减小行高" placement="bottom">
@@ -369,7 +368,7 @@ export const TextPanel: FC<ITextPanelProps> = () => {
                 setLineHeight(newValue);
                 debouncedPropertyChange("lineHeight", newValue);
               }}
-              icon={<Reduce theme="outline" size="13" fill="#333" />}
+              icon={<Reduce theme="outline" size="13" fill="var(--icon-color)" />}
             />
           </Tooltip>
         </div>
@@ -380,7 +379,8 @@ export const TextPanel: FC<ITextPanelProps> = () => {
         shadowOffsetX={shadowOffsetX ?? 0}
         shadowOffsetY={shadowOffsetY ?? 0}
         shadowColor={currentElement?.shadowColor || "#000000"}
-        shadowType="text-shadow"
+        shadowType="box-shadow"
+        shadowBlur={shadowBlur ?? 4}
         onShadowChange={(value) => propertyChangeHandle("shadow", value)}
         onShadowOffsetXChange={(value) => {
           setShadowOffsetX(value);
@@ -389,6 +389,10 @@ export const TextPanel: FC<ITextPanelProps> = () => {
         onShadowOffsetYChange={(value) => {
           setShadowOffsetY(value);
           debouncedPropertyChange("shadowOffsetY", value);
+        }}
+        onShadowBlurChange={(value) => {
+          setShadowBlur(value);
+          debouncedPropertyChange("shadowBlur", value);
         }}
         onShadowColorChange={(color) =>
           debouncedColorChange("shadowColor")(color)
@@ -406,43 +410,15 @@ export const TextPanel: FC<ITextPanelProps> = () => {
           debouncedPropertyChange("borderWidth", value);
         }}
         onBorderStyleChange={(value) =>
-          propertyChangeHandle("borderStyle", value)
+          propertyChangeHandle(
+            "borderStyle",
+            value as ITextProps["borderStyle"]
+          )
         }
         onBorderColorChange={(color) =>
           debouncedColorChange("borderColor")(color)
         }
       />
-      <PanelSplitLine />
-      <div className="h-full flex gap-[10px]">
-        <PanelLargeButton
-          active={currentElement?.stroke}
-          icon={<TextStyle theme="outline" size="18" fill="#333" />}
-          title="描边"
-          onClick={() => {
-            propertyChangeHandle("stroke", !currentElement?.stroke);
-          }}
-        />
-        <div className="flex flex-col gap-[15px]">
-          <Slider
-            style={{ width: 90, margin: 0 }}
-            min={0}
-            max={10}
-            value={strokeWidth ?? 0}
-            onChange={(value) => {
-              setStrokeWidth(value);
-              debouncedPropertyChange("strokeWidth", value);
-            }}
-            disabled={!currentElement?.stroke}
-          />
-          <ColorPicker
-            value={currentElement?.strokeColor}
-            onChange={debouncedColorChange("strokeColor") as any}
-            className={`${styles.colorPicker} ${styles.colorPickerRotate}`}
-            size="small"
-            disabled={!currentElement?.stroke}
-          />
-        </div>
-      </div>
       <PanelSplitLine />
       <PanelPreview onSelect={handlePreviewSelect} />
       <PanelSplitLine />
@@ -454,5 +430,5 @@ export const TextPanel: FC<ITextPanelProps> = () => {
   );
 };
 
-export const TextPanelTitle = "文本工具";
+export const TextPanelTitle = "textPanel.title";
 export const TextPanelKey = "text";

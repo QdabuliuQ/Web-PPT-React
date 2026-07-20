@@ -1,4 +1,5 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
+import { getCenteredElementPosition } from "@/constants/canvas";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
@@ -229,16 +230,17 @@ export const Name = "elements.icon.title";
 export const IconPanelIcon = DiamondThree;
 
 export const CreateIcon = (props: Partial<IIconProps> = {}) => {
+  const width = props.width ?? 100;
+  const height = props.height ?? 100;
   const defaultProps: Omit<IIconProps, "type" | "id"> = {
     mode: "edit",
     iconName: "Home",
     fill: ["#000000"],
     theme: "outline",
     strokeWidth: 3,
-    x: 100,
-    y: 100,
-    width: 100,
-    height: 100,
+    ...getCenteredElementPosition(width, height),
+    width,
+    height,
     rotate: 0,
     zIndex: 0,
   };

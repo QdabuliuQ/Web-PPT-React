@@ -1,4 +1,5 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
+import { getCenteredElementPosition } from "@/constants/canvas";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
@@ -15,7 +16,7 @@ import { MindmapMap } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Spin } from "antd";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
-import { PhotoProvider, PhotoView } from "react-photo-view";
+import { PhotoSlider } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import styles from "./index.module.less";
@@ -185,8 +186,8 @@ const Component: FC<IMindMapProps> = (props) => {
       : (props as any)?.mindMapBackgroundColor || "#F2F7FA";
 
   const moveableRef = useRef<any>(null);
-  const photoViewRef = useRef<HTMLImageElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   // 跟踪表格是否真正被拖拽移动过（用于防止误触发双击）
   const hasDraggedRef = useRef(false);
@@ -438,9 +439,8 @@ const Component: FC<IMindMapProps> = (props) => {
 
   // 打开预览
   const openPreview = useMemoizedFn(() => {
-    if (previewImage && photoViewRef.current) {
-      // 触发 PhotoView 的预览
-      photoViewRef.current.click();
+    if (previewImage) {
+      setPreviewVisible(true);
     }
   });
 
@@ -504,27 +504,22 @@ const Component: FC<IMindMapProps> = (props) => {
             animationTrigger={animationTrigger}
             className="w-full h-full relative"
           >
-            <PhotoProvider>
-              <div
-                className={`${styles.mindMapImageWrapper} w-full h-full`}
-                style={{ backgroundColor }}
-              >
-                <PhotoView src={previewImage} overlay={<div />}>
-                  <img
-                    ref={photoViewRef}
-                    src={previewImage}
-                    alt="思维导图预览"
-                    className="w-full h-full object-contain"
-                    style={{ pointerEvents: "none" }}
-                    onClick={(e) => {
-                      // 阻止单击触发预览，只允许通过菜单或双击
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                  />
-                </PhotoView>
-              </div>
-            </PhotoProvider>
+            <div
+              className={`${styles.mindMapImageWrapper} w-full h-full`}
+              style={{ backgroundColor }}
+            >
+              <img
+                src={previewImage}
+                alt="思维导图预览"
+                className="w-full h-full object-contain"
+                style={{ pointerEvents: "none" }}
+                onClick={(e) => {
+                  // 阻止单击触发预览，只允许通过菜单或双击
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              />
+            </div>
           </AnimationWrapper>
         )}
       </div>
@@ -549,6 +544,13 @@ const Component: FC<IMindMapProps> = (props) => {
         onRotateEnd={handleRotateEnd}
       />
       <MindMapModal {...modalProps} />
+      {previewImage && (
+        <PhotoSlider
+          images={[{ key: id, src: previewImage, overlay: <div /> }]}
+          visible={previewVisible}
+          onClose={() => setPreviewVisible(false)}
+        />
+      )}
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
@@ -584,14 +586,15 @@ const Component: FC<IMindMapProps> = (props) => {
 export const MindMap = memo(Component);
 
 export const CreateMindMap = (props: Partial<IMindMapProps> = {}) => {
+  const width = props.width ?? 600;
+  const height = props.height ?? 400;
   const defaultProps: Omit<IMindMapProps, "type" | "id"> = {
     mode: "edit",
     data: createDefaultMindMapData(),
     readonly: false,
-    x: 100,
-    y: 100,
-    width: 600,
-    height: 400,
+    ...getCenteredElementPosition(width, height),
+    width,
+    height,
     rotate: 0,
     zIndex: 0,
   };
@@ -603,5 +606,5 @@ export const CreateMindMap = (props: Partial<IMindMapProps> = {}) => {
   };
 };
 
-export const Name = "思维导图";
+export const Name = "elements.mindMap.title";
 export const MindMapPanelIcon = MindmapMap;

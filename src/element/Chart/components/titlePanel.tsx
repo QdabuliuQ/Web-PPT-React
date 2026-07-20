@@ -336,7 +336,7 @@ export const TitlePanel: FC = memo(() => {
   return (
     <ChartStylePanel
       title={t("chartConfig.sections.title")}
-      icon={<H theme="outline" size="18" fill="#333" />}
+      icon={<H theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
       defaultActiveKey={["basic"]}

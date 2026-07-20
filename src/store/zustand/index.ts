@@ -28,6 +28,8 @@ export {
 
 export { useCanvasZoomStore } from "./canvasZoomStore";
 
+export { useThemeStore, type ThemeMode } from "./themeStore";
+
 // Create compatibility layer for existing code
 class PageActiveStoreCompat {
   get pageActive() {
@@ -113,11 +115,11 @@ class PPTStoreCompat {
   };
 
   addElement = (pageId: string, element: any) => {
-    usePPTStore.getState().addElement(pageId, element);
+    return usePPTStore.getState().addElement(pageId, element);
   };
 
   addElementInfo = (pageId: string, element: any) => {
-    usePPTStore.getState().addElement(pageId, element);
+    return usePPTStore.getState().addElement(pageId, element);
   };
 
   deleteElement = (pageId: string, elementId: string) => {

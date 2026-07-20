@@ -1,4 +1,8 @@
+"use client";
+
 import type { Elements } from "@/store/zustand/pptStore";
+import type { IIconProps } from "@/element/Icon";
+import type { IChartProps } from "@/element/Chart";
 import { snapdom } from "@zumer/snapdom";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
@@ -9,7 +13,11 @@ import { MindMap } from "@/element/MindMap";
 import { Table } from "@/element/Table";
 import { Text } from "@/element/Text";
 import type PptxGenJS from "pptxgenjs";
-import { positionFromElement } from "./helpers";
+import { addSnapshotImage, getExportBleedPad } from "./snapshotImage";
+import { exportIconAsDataUrl } from "./exportIcon";
+import { exportChartAsDataUrl } from "./exportChart";
+
+export { addSnapshotImage, getExportBleedPad } from "./snapshotImage";
 
 const ComponentMap = {
   text: Text,
@@ -21,41 +29,43 @@ const ComponentMap = {
 } as const;
 
 /**
- * 将单个元素离屏渲染为 PNG data URL（用于 icon / mindmap 等无原生映射的类型）
+ * 将单个元素离屏渲染为 PNG data URL（用于 icon / mindmap / chart / 带阴影文本等）
+ * 仅浏览器端调用
  */
 export async function exportElementAsDataUrl(
   element: Elements
 ): Promise<string | null> {
+  if (element.type === "icon") {
+    return exportIconAsDataUrl(element as IIconProps);
+  }
+  if (element.type === "chart") {
+    return exportChartAsDataUrl(element as IChartProps);
+  }
+
   const Comp = ComponentMap[element.type as keyof typeof ComponentMap];
   if (!Comp) return null;
 
   const width = Math.max(1, element.width || 100);
   const height = Math.max(1, element.height || 100);
+  const pad = getExportBleedPad(element);
+  const captureW = width + pad * 2;
+  const captureH = height + pad * 2;
 
   const tempContainer = document.createElement("div");
-  tempContainer.style.position = "fixed";
-  tempContainer.style.left = "-9999px";
-  tempContainer.style.top = "0";
-  tempContainer.style.width = `${width}px`;
-  tempContainer.style.height = `${height}px`;
-  tempContainer.style.overflow = "hidden";
-  tempContainer.style.backgroundColor = "transparent";
+  tempContainer.style.cssText = `position:fixed;left:-9999px;top:0;width:${captureW}px;height:${captureH}px;overflow:visible;background:transparent;`;
   document.body.appendChild(tempContainer);
 
   const wrapper = document.createElement("div");
-  wrapper.style.width = `${width}px`;
-  wrapper.style.height = `${height}px`;
-  wrapper.style.position = "relative";
+  wrapper.style.cssText = `width:${captureW}px;height:${captureH}px;position:relative;overflow:visible;background:transparent;`;
   tempContainer.appendChild(wrapper);
 
   const root = createRoot(wrapper);
 
   try {
-    // 放到 (0,0)，避免画布坐标系偏移
     const props = {
       ...element,
-      x: 0,
-      y: 0,
+      x: pad,
+      y: pad,
       mode: "preview" as const,
       readonly: true,
     };
@@ -64,16 +74,15 @@ export async function exportElementAsDataUrl(
 
     await new Promise((r) => setTimeout(r, 600));
 
-    // mindmap / chart 需要更长时间初始化
-    if (element.type === "mindmap" || element.type === "chart") {
+    if (element.type === "mindmap") {
       await new Promise((r) => setTimeout(r, 800));
     }
 
     const canvas = await snapdom.toCanvas(wrapper, {
       scale: 2,
-      backgroundColor: "#ffffff",
-      width,
-      height,
+      backgroundColor: "transparent",
+      width: captureW,
+      height: captureH,
       cache: "disabled",
     });
 
@@ -93,6 +102,5 @@ export async function addElementAsImage(
 ): Promise<void> {
   const dataUrl = await exportElementAsDataUrl(element);
   if (!dataUrl) return;
-  const pos = positionFromElement(element);
-  slide.addImage({ ...pos, data: dataUrl });
+  addSnapshotImage(slide, element, dataUrl);
 }

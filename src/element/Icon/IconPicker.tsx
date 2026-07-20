@@ -1,8 +1,18 @@
+import { useThemeStore } from "@/store";
 import * as IconPark from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Popover } from "antd";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
-import { useMemo, useRef, useState, type FC, type ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import styles from "./button.module.less";
 
 // 获取所有图标名称（排除非组件导出）
@@ -38,6 +48,7 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
   const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const loadingRef = useRef(false);
+  const theme = useThemeStore((state) => state.theme);
 
   // 获取所有图标名称
   const iconNames = useMemo(() => getAllIconNames(), []);
@@ -109,7 +120,7 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
           className={styles.iconContainer}
           options={{
             scrollbars: {
-              theme: "os-theme-light",
+              theme: theme === "dark" ? "os-theme-dark" : "os-theme-light",
               autoHide: "leave",
               autoHideDelay: 300,
             },
@@ -135,7 +146,7 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
                   onClick={() => handleIconClick(iconName)}
                   title={iconName}
                 >
-                  <IconComponent theme="outline" size="20" fill="#333" />
+                  <IconComponent theme="outline" size="20" fill="currentColor" />
                 </div>
               );
             })}
@@ -145,7 +156,7 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
                   gridColumn: "1 / -1",
                   textAlign: "center",
                   padding: "10px",
-                  color: "#999",
+                  color: "var(--text-muted)",
                   fontSize: "12px",
                 }}
               >
@@ -159,6 +170,7 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
   }, [
     iconNames,
     displayCount,
+    theme,
     handleOpen,
     handleClose,
     handleIconClick,
@@ -166,9 +178,23 @@ export const IconPicker: FC<IconPickerProps> = ({ onIconSelect, children }) => {
   ]);
 
   return (
-    <Popover open={open} placement="bottom" content={content}>
+    <Popover
+      open={open}
+      placement="bottom"
+      content={content}
+      styles={{
+        body: {
+          background: "var(--panel-bg-solid)",
+          boxShadow: "var(--panel-shadow)",
+        },
+      }}
+    >
       <div onMouseEnter={handleOpen} onMouseLeave={handleClose}>
-        {children}
+        {isValidElement(children)
+          ? cloneElement(children as ReactElement<{ active?: boolean }>, {
+              active: open,
+            })
+          : children}
       </div>
     </Popover>
   );

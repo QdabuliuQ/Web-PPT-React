@@ -60,21 +60,21 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
         <div className="h-full flex flex-col gap-[5px]">
           <PanelLargeButton
             title={t('component.operation.copy')}
-            icon={<Copy theme="outline" size="18" fill="#333" />}
+            icon={<Copy theme="outline" size="18" fill="var(--icon-color)" />}
             onClick={() => handleOperation("copy")}
           />
         </div>
         <div className="h-full flex flex-col gap-[5px]">
           <PanelLargeButton
             title={t('component.operation.cut')}
-            icon={<CuttingOne theme="outline" size="18" fill="#333" />}
+            icon={<CuttingOne theme="outline" size="18" fill="var(--icon-color)" />}
             onClick={() => handleOperation("cut")}
           />
         </div>
         <div className="h-full flex flex-col gap-[5px]">
           <PanelLargeButton
             title={t('component.operation.delete')}
-            icon={<Delete theme="outline" size="18" fill="#333" />}
+            icon={<Delete theme="outline" size="18" fill="var(--icon-color)" />}
             onClick={() => handleOperation("delete")}
           />
         </div>
@@ -87,27 +87,27 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
               {
                 key: "left",
                 label: t('component.alignment.left'),
-                icon: <AlignLeft theme="outline" size="13" fill="#333" />,
+                icon: <AlignLeft theme="outline" size="13" fill="var(--icon-color)" />,
               },
               {
                 key: "right",
                 label: t('component.alignment.right'),
-                icon: <AlignRight theme="outline" size="13" fill="#333" />,
+                icon: <AlignRight theme="outline" size="13" fill="var(--icon-color)" />,
               },
               {
                 key: "center",
                 label: t('component.alignment.centerHorizontalVertical'),
-                icon: <AlignVertically theme="outline" size="13" fill="#333" />,
+                icon: <AlignVertically theme="outline" size="13" fill="var(--icon-color)" />,
               },
               {
                 key: "top",
                 label: t('component.alignment.top'),
-                icon: <AlignTop theme="outline" size="13" fill="#333" />,
+                icon: <AlignTop theme="outline" size="13" fill="var(--icon-color)" />,
               },
               {
                 key: "bottom",
                 label: t('component.alignment.bottom'),
-                icon: <AlignBottom theme="outline" size="13" fill="#333" />,
+                icon: <AlignBottom theme="outline" size="13" fill="var(--icon-color)" />,
               },
             ],
           }}
@@ -115,7 +115,7 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
             <PanelLargeButton
               title={t('component.alignment.align')}
               type="text"
-              icon={<AlignLeftOne theme="outline" size="18" fill="#333" />}
+              icon={<AlignLeftOne theme="outline" size="18" fill="var(--icon-color)" />}
             />
           }
         />
@@ -130,16 +130,16 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
                 {
                   key: "sendForward",
                   label: t('component.zIndex.bringForward'),
-                  icon: <BringForward theme="outline" size="13" fill="#333" />,
+                  icon: <BringForward theme="outline" size="13" fill="var(--icon-color)" />,
                 },
                 {
                   key: "toFront",
                   label: t('component.zIndex.bringToFront'),
-                  icon: <BringToFront theme="outline" size="13" fill="#333" />,
+                  icon: <BringToFront theme="outline" size="13" fill="var(--icon-color)" />,
                 },
               ],
             }}
-            icon={<BringForward theme="outline" size="13" fill="#333" />}
+            icon={<BringForward theme="outline" size="13" fill="var(--icon-color)" />}
           />
           <PanelDropdownButton
             title={t('component.zIndex.moveDown')}
@@ -151,16 +151,16 @@ export const PanelCommonSetting: FC<IPanelCommonSettingProps> = (
                 {
                   key: "sendBackward",
                   label: t('component.zIndex.sendBackward'),
-                  icon: <SendBackward theme="outline" size="13" fill="#333" />,
+                  icon: <SendBackward theme="outline" size="13" fill="var(--icon-color)" />,
                 },
                 {
                   key: "toBack",
                   label: t('component.zIndex.sendToBack'),
-                  icon: <SentToBack theme="outline" size="13" fill="#333" />,
+                  icon: <SentToBack theme="outline" size="13" fill="var(--icon-color)" />,
                 },
               ],
             }}
-            icon={<SendBackward theme="outline" size="13" fill="#333" />}
+            icon={<SendBackward theme="outline" size="13" fill="var(--icon-color)" />}
           />
         </div>
       </div>

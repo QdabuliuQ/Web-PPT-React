@@ -11,9 +11,10 @@ export {
   useRemarkEditActiveStore,
   useCopyElementStore,
   useCanvasZoomStore,
+  useThemeStore,
 } from "./zustand";
 
-export type { Page, Elements } from "./zustand";
+export type { Page, Elements, ThemeMode } from "./zustand";
 
 // Export compatibility layers (for gradual migration)
 export {

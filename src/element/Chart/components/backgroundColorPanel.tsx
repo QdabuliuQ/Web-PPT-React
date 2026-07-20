@@ -107,7 +107,7 @@ export const BackgroundColorPanel: FC = memo(() => {
       <div className="h-full">
         <PanelLargeButton
           title={t('chartConfig.backgroundColor.title')}
-          icon={<BackgroundColor theme="outline" size="18" fill="#333" />}
+          icon={<BackgroundColor theme="outline" size="18" fill="var(--icon-color)" />}
           active={open}
         />
       </div>

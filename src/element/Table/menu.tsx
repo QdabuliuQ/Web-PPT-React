@@ -47,7 +47,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     {
       type: "item",
       label: t('elements.table.editData'),
-      icon: <EditOne theme="outline" size="13" fill="#333" />,
+      icon: <EditOne theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: onEdit,
     },
     {
@@ -56,7 +56,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     {
       type: "item",
       label: t('elements.table.insertRow.top'),
-      icon: <TopBar theme="outline" size="13" fill="#333" />,
+      icon: <TopBar theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         const tableElement = getTableElementInfo();
         if (!tableElement) return;
@@ -93,7 +93,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     {
       type: "item",
       label: t('elements.table.insertRow.bottom'),
-      icon: <BottomBar theme="outline" size="13" fill="#333" />,
+      icon: <BottomBar theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         const tableElement = getTableElementInfo();
         if (!tableElement) return;
@@ -130,7 +130,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     {
       type: "item",
       label: t('elements.table.insertColumn.left'),
-      icon: <LeftBar theme="outline" size="13" fill="#333" />,
+      icon: <LeftBar theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         const tableElement = getTableElementInfo();
         if (!tableElement) return;
@@ -164,7 +164,7 @@ export const getTableMenuItems = ({ onEdit }): Menu => {
     {
       type: "item",
       label: t('elements.table.insertColumn.right'),
-      icon: <RightBar theme="outline" size="13" fill="#333" />,
+      icon: <RightBar theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         const tableElement = getTableElementInfo();
         if (!tableElement) return;

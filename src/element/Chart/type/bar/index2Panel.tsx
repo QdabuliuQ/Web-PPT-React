@@ -838,7 +838,7 @@ export const Bar2ChartPanel: FC = memo(() => {
       <div className="h-full">
         <PanelLargeButton
           title={t("chartConfig.polar.title")}
-          icon={<RadarChart theme="outline" size="18" fill="#333" />}
+          icon={<RadarChart theme="outline" size="18" fill="var(--icon-color)" />}
         />
       </div>
     </Popover>

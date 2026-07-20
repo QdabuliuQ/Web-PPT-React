@@ -84,22 +84,22 @@ export const TablePanel: FC<ITablePanelProps> = () => {
       {
         title: "加粗",
         key: "bold",
-        icon: <TextBold theme="outline" size="18" fill="#333" />,
+        icon: <TextBold theme="outline" size="18" fill="var(--icon-color)" />,
       },
       {
         title: "斜体",
         key: "italic",
-        icon: <TextItalic theme="outline" size="18" fill="#333" />,
+        icon: <TextItalic theme="outline" size="18" fill="var(--icon-color)" />,
       },
       {
         title: "下划线",
         key: "underline",
-        icon: <TextUnderline theme="outline" size="18" fill="#333" />,
+        icon: <TextUnderline theme="outline" size="18" fill="var(--icon-color)" />,
       },
       {
         title: "删除线",
         key: "strikethrough",
-        icon: <Strikethrough theme="outline" size="18" fill="#333" />,
+        icon: <Strikethrough theme="outline" size="18" fill="var(--icon-color)" />,
       },
     ];
   }, []);
@@ -747,5 +747,5 @@ export const TablePanel: FC<ITablePanelProps> = () => {
   );
 };
 
-export const TablePanelTitle = "表格";
+export const TablePanelTitle = "tablePanel.title";
 export const TablePanelKey = "table";

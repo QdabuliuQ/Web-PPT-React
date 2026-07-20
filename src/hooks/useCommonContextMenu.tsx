@@ -71,7 +71,7 @@ export default function useCommonContextMenu(
       {
         type: "item",
         label: t('hooks.contextMenu.copy'),
-        icon: <Copy theme="outline" size="13" fill="#333" />,
+        icon: <Copy theme="outline" size="13" fill="var(--icon-color)" />,
         onClick: () => {
           if (!elementActive) return;
           copyActiveElement();
@@ -81,7 +81,7 @@ export default function useCommonContextMenu(
       {
         type: "item",
         label: t('hooks.contextMenu.cut'),
-        icon: <CuttingOne theme="outline" size="13" fill="#333" />,
+        icon: <CuttingOne theme="outline" size="13" fill="var(--icon-color)" />,
         onClick: () => {
           if (!elementActive) return;
           cutActiveElement();
@@ -91,7 +91,7 @@ export default function useCommonContextMenu(
       {
         type: "item",
         label: t('hooks.contextMenu.delete'),
-        icon: <Delete theme="outline" size="13" fill="#333" />,
+        icon: <Delete theme="outline" size="13" fill="var(--icon-color)" />,
         onClick: () => {
           if (!elementActive) return;
           deleteActiveElement();
@@ -104,13 +104,13 @@ export default function useCommonContextMenu(
       {
         type: "item",
         label: t('hooks.contextMenu.rotateLeft'),
-        icon: <Undo theme="outline" size="13" fill="#333" />,
+        icon: <Undo theme="outline" size="13" fill="var(--icon-color)" />,
         onClick: rotateLeftHandle,
       },
       {
         type: "item",
         label: t('hooks.contextMenu.rotateRight'),
-        icon: <Redo theme="outline" size="13" fill="#333" />,
+        icon: <Redo theme="outline" size="13" fill="var(--icon-color)" />,
         onClick: rotateRightHandle,
       },
       {
@@ -119,36 +119,36 @@ export default function useCommonContextMenu(
       {
         type: "submenu",
         label: t('hooks.contextMenu.align'),
-        icon: <AlignLeftOne theme="outline" size="13" fill="#333" />,
+        icon: <AlignLeftOne theme="outline" size="13" fill="var(--icon-color)" />,
         children: [
           {
             type: "item",
             label: t('component.alignment.left'),
-            icon: <AlignLeft theme="outline" size="13" fill="#333" />,
+            icon: <AlignLeft theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: () => positionHandle("left"),
           },
           {
             type: "item",
             label: t('component.alignment.right'),
-            icon: <AlignRight theme="outline" size="13" fill="#333" />,
+            icon: <AlignRight theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: () => positionHandle("right"),
           },
           {
             type: "item",
             label: t('component.alignment.centerHorizontalVertical'),
-            icon: <AlignVertically theme="outline" size="13" fill="#333" />,
+            icon: <AlignVertically theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: () => positionHandle("center"),
           },
           {
             type: "item",
             label: t('component.alignment.top'),
-            icon: <AlignTop theme="outline" size="13" fill="#333" />,
+            icon: <AlignTop theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: () => positionHandle("top"),
           },
           {
             type: "item",
             label: t('component.alignment.bottom'),
-            icon: <AlignBottom theme="outline" size="13" fill="#333" />,
+            icon: <AlignBottom theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: () => positionHandle("bottom"),
           },
         ],
@@ -156,30 +156,30 @@ export default function useCommonContextMenu(
       {
         type: "submenu",
         label: t('hooks.contextMenu.layer'),
-        icon: <Layers theme="outline" size="13" fill="#333" />,
+        icon: <Layers theme="outline" size="13" fill="var(--icon-color)" />,
         children: [
           {
             type: "item",
             label: t('component.zIndex.bringForward'),
-            icon: <BringForward theme="outline" size="13" fill="#333" />,
+            icon: <BringForward theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: sendForwardHandle,
           },
           {
             type: "item",
             label: t('component.zIndex.bringToFront'),
-            icon: <BringToFront theme="outline" size="13" fill="#333" />,
+            icon: <BringToFront theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: toFrontHandle,
           },
           {
             type: "item",
             label: t('component.zIndex.sendBackward'),
-            icon: <SendBackward theme="outline" size="13" fill="#333" />,
+            icon: <SendBackward theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: sendBackwardHandle,
           },
           {
             type: "item",
             label: t('component.zIndex.sendToBack'),
-            icon: <SentToBack theme="outline" size="13" fill="#333" />,
+            icon: <SentToBack theme="outline" size="13" fill="var(--icon-color)" />,
             onClick: toBackHandle,
           },
         ],

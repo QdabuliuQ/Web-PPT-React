@@ -583,7 +583,7 @@ export const Funnel1ChartPanel: FC = () => {
   return (
     <ChartStylePanel
       title={t("chartConfig.sections.textStyle")}
-      icon={<Filter theme="outline" size="18" fill="#333" />}
+      icon={<Filter theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs as PanelConfig[]}
       getValue={getValue}
       defaultActiveKey={["basic"]}

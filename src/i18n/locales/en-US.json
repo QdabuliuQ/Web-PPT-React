@@ -19,6 +19,122 @@
     "warning": "Warning",
     "info": "Info"
   },
+  "limits": {
+    "maxPages": "Maximum {{count}} pages allowed",
+    "maxElements": "Maximum {{count}} elements per page"
+  },
+  "startPanel": {
+    "layerArrange": "Arrange Layers",
+    "emptyElements": "No elements on this page",
+    "backgroundType": "Background Type",
+    "solidColor": "Solid",
+    "texture": "Texture",
+    "backgroundColor": "Background Color",
+    "textureBgColor": "Texture Background",
+    "textureFgColor": "Texture Foreground",
+    "opacity": "Opacity",
+    "batchEdit": "Batch Edit",
+    "newCanvas": "New Slide",
+    "duplicateCanvas": "Duplicate Slide",
+    "deleteCanvas": "Delete Slide"
+  },
+  "viewPanel": {
+    "normalView": "Normal View",
+    "slidePreview": "Slide Sorter",
+    "gridLines": "Gridlines",
+    "ruler": "Ruler",
+    "guides": "Guides",
+    "clearGuides": "Clear Guides"
+  },
+  "playPanel": {
+    "fromStart": "From Beginning",
+    "fromCurrent": "From Current",
+    "noPages": "No slides to play",
+    "noCurrentPage": "Current slide not found",
+    "openRemark": "Show Notes",
+    "closeRemark": "Hide Notes"
+  },
+  "header": {
+    "exportConfig": "Export Config",
+    "exportPdf": "Export PDF",
+    "exportImage": "Export Image",
+    "exportPptx": "Export PPTX",
+    "untitled": "Untitled",
+    "longImageSuffix": "long-image",
+    "noExportPages": "No pages to export",
+    "pptxSuccess": "PPTX exported successfully",
+    "pptxFailed": "Failed to export PPTX"
+  },
+  "footer": {
+    "slideCount": "Slide {{current}} / {{total}}",
+    "remark": "Notes",
+    "play": "Play",
+    "playOptions": "Play Options",
+    "fromStart": "From Beginning",
+    "fromCurrent": "From Current"
+  },
+  "togglePanel": {
+    "duration": "Duration",
+    "delay": "Delay",
+    "keyboardToggle": "Keyboard navigation",
+    "autoToggle": "Auto advance:",
+    "applyAll": "Apply to All",
+    "applySuccess": "Applied successfully",
+    "durationOptions": {
+      "faster": "0.5s",
+      "fast": "0.8s",
+      "default": "1s",
+      "slow": "2s",
+      "slower": "3s"
+    },
+    "delayOptions": {
+      "0s": "Default",
+      "2s": "2s",
+      "3s": "3s",
+      "4s": "4s",
+      "5s": "5s"
+    },
+    "animations": {
+      "none": "None",
+      "backInDown": "Back In Down",
+      "backInLeft": "Back In Left",
+      "backInRight": "Back In Right",
+      "backInUp": "Back In Up",
+      "bounceIn": "Bounce In",
+      "bounceInDown": "Bounce In Down",
+      "bounceInLeft": "Bounce In Left",
+      "bounceInRight": "Bounce In Right",
+      "bounceInUp": "Bounce In Up",
+      "fadeIn": "Fade In",
+      "fadeInDown": "Fade In Down",
+      "fadeInDownBig": "Fade In Down (Fast)",
+      "fadeInLeft": "Fade In Left",
+      "fadeInLeftBig": "Fade In Left (Fast)",
+      "fadeInRight": "Fade In Right",
+      "fadeInRightBig": "Fade In Right (Fast)",
+      "fadeInUp": "Fade In Up",
+      "fadeInUpBig": "Fade In Up (Fast)",
+      "fadeInTopLeft": "Fade In Top Left",
+      "fadeInTopRight": "Fade In Top Right",
+      "fadeInBottomLeft": "Fade In Bottom Left",
+      "fadeInBottomRight": "Fade In Bottom Right",
+      "flipInX": "Flip In X",
+      "flipInY": "Flip In Y",
+      "lightSpeedInRight": "Light Speed Right",
+      "lightSpeedInLeft": "Light Speed Left",
+      "rotateInDownLeft": "Rotate In Down Left",
+      "rotateInDownRight": "Rotate In Down Right",
+      "zoomIn": "Zoom In",
+      "zoomInDown": "Zoom In Down",
+      "zoomInLeft": "Zoom In Left",
+      "zoomInRight": "Zoom In Right",
+      "zoomInUp": "Zoom In Up",
+      "slideInDown": "Slide In Down",
+      "slideInLeft": "Slide In Left",
+      "slideInRight": "Slide In Right",
+      "slideInUp": "Slide In Up"
+    }
+  },
   "menu": {
     "file": "File",
     "edit": "Edit",
@@ -292,7 +408,7 @@
         "left": "Insert Column at Left",
         "right": "Insert Column at Right"
       },
-      "tableDimension": "{row} Row(s) * {col} Column(s) Table"
+      "tableDimension": "{{row}} Row(s) * {{col}} Column(s) Table"
     },
     "mindMap": {
       "title": "Mind Map",
@@ -598,5 +714,27 @@
     "imageDataEmpty": "Generated image data is empty",
     "exportSuccess": "Image exported successfully",
     "exportFailed": "Failed to export chart image"
+  },
+  "contextMenu": {
+    "paste": "Paste",
+    "gridLines": "Gridlines",
+    "showRuler": "Show Ruler",
+    "hideRuler": "Hide Ruler",
+    "showGuides": "Show Guides",
+    "hideGuides": "Hide Guides",
+    "clearGuides": "Clear Guides",
+    "resetSlide": "Reset Slide",
+    "hideSlide": "Hide Slide",
+    "showSlide": "Show Slide",
+    "playSlide": "Play Slide",
+    "exportImage": "Export Image",
+    "newSlide": "New Slide",
+    "duplicateSlide": "Duplicate Slide",
+    "deleteSlide": "Delete Slide",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "moveToFirst": "Move to Beginning",
+    "moveToLast": "Move to End",
+    "untitled": "Untitled"
   }
 }

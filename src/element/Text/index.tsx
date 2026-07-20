@@ -1,5 +1,6 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
 import { PanelButton } from "@/components/PanelButton";
+import { getCenteredElementPosition } from "@/constants/canvas";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
@@ -14,15 +15,18 @@ import { getRandomId } from "@/utils";
 import { Text as TextIcon } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { memo, useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import { useMovableElement } from "../../hooks/useMovableElement";
 import { PlacementMapped } from "./constant";
 import styles from "./index.module.less";
 import { getTextMenuItems } from "./menu";
+import { buildTextDropShadow, buildTextGlyphShadow } from "./utils";
 export { TextPanel, TextPanelKey, TextPanelTitle } from "./panel";
 
 export interface ITextProps extends ICommonElementProps {
   type: "text";
   text: string;
+  /** PPTX: fontFace */
   fontSize: number;
   fontFamily: string;
   color: string;
@@ -30,19 +34,22 @@ export interface ITextProps extends ICommonElementProps {
   italic: boolean;
   underline: boolean;
   strikethrough: boolean;
+  /** PPTX: lineSpacingMultiple */
   lineHeight: number;
+  /** 画布：filter drop-shadow（容器轮廓）+ text-shadow（文字）；导出仍为 PPTX 外形阴影 */
   shadow: boolean;
   shadowOffsetX: number;
   shadowOffsetY: number;
+  shadowBlur: number;
   shadowColor: string;
+  /** PPTX: line（文本框边框） */
   border: boolean;
-  borderStyle: string;
+  borderStyle: "solid" | "dashed" | "dotted";
   borderWidth: number;
   borderColor: string;
+  /** PPTX: fill；transparent 表示无填充 */
   backgroundColor: string;
-  stroke: boolean;
-  strokeColor: string;
-  strokeWidth: number;
+  /** PPTX: align + valign */
   placement:
     | "left-top"
     | "left-center"
@@ -75,15 +82,13 @@ const Component: FC<ITextProps> = (props) => {
     shadow,
     shadowOffsetX,
     shadowOffsetY,
+    shadowBlur = 4,
     shadowColor,
     border,
     borderWidth,
     borderStyle,
     borderColor,
     backgroundColor,
-    stroke,
-    strokeColor,
-    strokeWidth,
     placement,
     rotate,
     zIndex,
@@ -311,7 +316,7 @@ const Component: FC<ITextProps> = (props) => {
     };
   });
 
-  // 动态样式（位置、大小、颜色等）
+  // 动态样式：阴影 = 容器 drop-shadow（边框+文字轮廓）+ 文字 text-shadow
   const dynamicStyle = useMemo(
     () => ({
       width,
@@ -325,19 +330,30 @@ const Component: FC<ITextProps> = (props) => {
       textDecoration: `${underline ? "underline" : ""} ${strikethrough ? "line-through" : ""}`,
       lineHeight,
       color,
-      textShadow: shadow
-        ? `${shadowOffsetY}px ${shadowOffsetX}px 5px ${shadowColor}`
-        : "none",
+      filter: buildTextDropShadow(
+        shadow,
+        shadowOffsetX,
+        shadowOffsetY,
+        shadowBlur,
+        shadowColor
+      ),
+      textShadow: buildTextGlyphShadow(
+        shadow,
+        shadowOffsetX,
+        shadowOffsetY,
+        shadowBlur,
+        shadowColor
+      ),
       border:
         border && !isHoverActive
           ? `${borderWidth}px ${borderStyle} ${borderColor}`
           : isHoverActive && !isSelected
             ? "1px solid var(--primary-color, #1890ff)"
             : "none",
-      WebkitTextStroke: stroke ? `${strokeWidth}px ${strokeColor}` : "",
       ...placementConvey(placement),
       cursor: mode === "edit" ? (isSelected ? "text" : "pointer") : "default",
-      backgroundColor,
+      backgroundColor:
+        backgroundColor === "transparent" ? "transparent" : backgroundColor,
     }),
     [
       width,
@@ -357,6 +373,7 @@ const Component: FC<ITextProps> = (props) => {
       shadow,
       shadowOffsetY,
       shadowOffsetX,
+      shadowBlur,
       shadowColor,
       border,
       isHoverActive,
@@ -364,9 +381,6 @@ const Component: FC<ITextProps> = (props) => {
       borderStyle,
       borderColor,
       isSelected,
-      stroke,
-      strokeWidth,
-      strokeColor,
       placementConvey,
       placement,
       mode,
@@ -456,16 +470,17 @@ const Component: FC<ITextProps> = (props) => {
 export const Text = memo(Component);
 
 export const CreateText = (props: Partial<ITextProps> = {}) => {
+  const width = props.width ?? 100;
+  const height = props.height ?? 100;
   const defaultProps: Omit<ITextProps, "type" | "id"> = {
     mode: "edit",
     text: "Hello, world!",
     fontSize: 16,
     fontFamily: "Arial",
     color: "#000000",
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 100,
+    ...getCenteredElementPosition(width, height),
+    width,
+    height,
     rotate: 0,
     zIndex: 0,
     bold: false,
@@ -476,15 +491,14 @@ export const CreateText = (props: Partial<ITextProps> = {}) => {
     shadow: false,
     shadowOffsetX: 0,
     shadowOffsetY: 0,
+    shadowBlur: 4,
     shadowColor: "#000000",
     border: false,
     borderWidth: 0,
     borderStyle: "solid",
     borderColor: "#000000",
-    backgroundColor: "#ffffff",
-    stroke: false,
-    strokeColor: "#000000",
-    strokeWidth: 0,
+    // PPT 文本框默认无填充
+    backgroundColor: "transparent",
     placement: "center-center",
   };
   return {
@@ -496,20 +510,21 @@ export const CreateText = (props: Partial<ITextProps> = {}) => {
 };
 
 function TextButtonComponent() {
+  const { t } = useTranslation();
   const pageId = pageActiveStore.getPageActive() as string;
 
   const clickHandle = useMemoizedFn(() => {
     const option = CreateText();
-    pptStore.addElementInfo(pageId, option);
-    if (pageActiveStore.getPageActive()) {
+    const ok = pptStore.addElementInfo(pageId, option);
+    if (ok && pageActiveStore.getPageActive()) {
       elementActiveStore.setElementActive(option.id);
     }
   });
 
   return (
     <PanelButton
-      icon={<TextIcon fill="#333" style={{ fontSize: "24px" }} />}
-      title="文本"
+      icon={<TextIcon fill="currentColor" style={{ fontSize: "24px" }} />}
+      title={t("elements.text.button")}
       onClick={clickHandle}
     />
   );
@@ -518,4 +533,4 @@ function TextButtonComponent() {
 export const TextButton = memo(TextButtonComponent);
 
 export const TextPanelIcon = TextIcon;
-export const Name = "文本";
+export const Name = "elements.text.title";

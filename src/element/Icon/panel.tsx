@@ -244,18 +244,18 @@ const IconPanelComponent: FC = () => {
       <div className="h-full flex gap-[5px]">
         <PanelLargeButton
           title={t("elements.icon.actions.rotateLeft")}
-          icon={<Undo theme="outline" size="20" fill="#333" />}
+          icon={<Undo theme="outline" size="20" fill="var(--icon-color)" />}
           onClick={() => handleRotate(-90)}
         />
         <PanelLargeButton
           title={t("elements.icon.actions.rotateRight")}
-          icon={<Redo theme="outline" size="20" fill="#333" />}
+          icon={<Redo theme="outline" size="20" fill="var(--icon-color)" />}
           onClick={() => handleRotate(90)}
         />
         <IconPicker onIconSelect={handleIconSelect}>
           <PanelLargeButton
             title={t("elements.icon.actions.switch")}
-            icon={<Switch theme="outline" size="20" fill="#333" />}
+            icon={<Switch theme="outline" size="20" fill="var(--icon-color)" />}
           />
         </IconPicker>
       </div>

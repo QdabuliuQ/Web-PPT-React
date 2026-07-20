@@ -15,6 +15,7 @@ export function addPageAndActivate(
   onSuccess?: (newPageId: string) => void
 ) {
   const newPageId = pptStore.addPage(afterPageId || undefined);
+  if (!newPageId) return null;
   elementActiveStore.resetElementActive();
   menuActiveStore.resetMenu();
   pageActiveStore.setPageActive(newPageId);
@@ -128,5 +129,5 @@ export function pasteCopiedElement(pageId?: string | null) {
 
   const newElement = cloneDeep(copied);
   newElement.id = `${newElement.id.split("_")[0]}_${getRandomId()}`;
-  pptStore.addElementInfo(targetPageId, newElement as any);
+  return pptStore.addElementInfo(targetPageId, newElement as any);
 }

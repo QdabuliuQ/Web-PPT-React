@@ -1,19 +1,19 @@
 /* 自定义 OverlayScrollbars 样式 - 3px滚动条 */
 .os-scrollbar-horizontal .os-scrollbar-track {
-  background: #fff !important;
+  background: var(--scrollbar-track) !important;
   height: 3px !important;
   border-radius: 1.5px !important;
 }
 
 .os-scrollbar-horizontal .os-scrollbar-handle {
-  background: rgba(0, 0, 0, 0.3) !important;
+  background: var(--scrollbar-handle) !important;
   height: 3px !important;
   border-radius: 1.5px !important;
   min-width: 20px !important;
 }
 
 .os-scrollbar-horizontal .os-scrollbar-handle:hover {
-  background: rgba(0, 0, 0, 0.5) !important;
+  background: var(--scrollbar-handle-hover) !important;
 }
 
 /* 调整滚动条位置 - 贴底显示 */

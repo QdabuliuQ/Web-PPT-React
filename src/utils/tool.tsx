@@ -1,3 +1,4 @@
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
 import {
   ChartPanelIcon,
   ChartPanelKey,
@@ -192,9 +193,6 @@ export async function exportPageAsImage(
       console.error("页面不存在");
       return null;
     }
-
-    const CANVAS_WIDTH = 1000;
-    const CANVAS_HEIGHT = 700;
 
     // 创建临时容器
     const tempContainer = document.createElement("div");

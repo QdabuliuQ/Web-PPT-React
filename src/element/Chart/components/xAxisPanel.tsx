@@ -544,7 +544,7 @@ export const XAxisPanel: FC = memo(() => {
   return (
     <ChartStylePanel
       title={t('chartConfig.sections.xAxis')}
-      icon={<ChartHistogram theme="outline" size="18" fill="#333" />}
+      icon={<ChartHistogram theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
       defaultActiveKey={["basic"]}

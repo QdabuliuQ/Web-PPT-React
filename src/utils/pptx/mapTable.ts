@@ -4,6 +4,7 @@ import {
   parsePlacement,
   positionFromElement,
   pxToIn,
+  pxToPt,
   toHexColor,
 } from "./helpers";
 
@@ -44,7 +45,7 @@ export function addTableElement(
       cells.push({
         text: String(cell.value ?? ""),
         options: {
-          fontSize: cell.fontSize || el.fontSize || 12,
+          fontSize: pxToPt(cell.fontSize || el.fontSize || 12),
           fontFace: el.fontFamily?.split(",")[0]?.trim() || "Arial",
           color: toHexColor(cell.color),
           bold: cell.bold,
@@ -66,7 +67,7 @@ export function addTableElement(
       ? undefined
       : {
           type: borderType,
-          pt: borderWidth,
+          pt: pxToPt(borderWidth),
           color: borderColor,
         };
 
@@ -78,6 +79,6 @@ export function addTableElement(
     colW,
     border,
     fontFace: el.fontFamily?.split(",")[0]?.trim() || "Arial",
-    fontSize: el.fontSize || 12,
+    fontSize: pxToPt(el.fontSize || 12),
   });
 }

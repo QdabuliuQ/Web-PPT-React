@@ -203,7 +203,7 @@ export const GridPanel: FC = memo(() => {
   return (
     <ChartStylePanel
       title={t('chartConfig.sections.grid')}
-      icon={<GridFour theme="outline" size="18" fill="#333" />}
+      icon={<GridFour theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
       defaultActiveKey={["basic"]}

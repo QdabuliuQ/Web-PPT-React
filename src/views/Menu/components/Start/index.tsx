@@ -212,7 +212,7 @@ export const Start: FC = () => {
       return (
         <div
           className={`h-full w-[80px] relative ${disabled ? "" : "cursor-pointer"} rounded-[6px] overflow-hidden border ${
-            isSelected ? "border-primary" : "border-[#dfdfdf]"
+            isSelected ? "border-primary" : "border-[var(--border-default)]"
           } flex-shrink-0`}
           style={{
             ...styleWithoutOpacity,
@@ -317,9 +317,9 @@ export const Start: FC = () => {
         ref={setNodeRef}
         style={style}
         {...attributes}
-        className={`flex items-center gap-[8px] text-[12px] text-[#666] hover:bg-white px-[10px] py-[5px] rounded cursor-pointer ${
+        className={`flex items-center gap-[8px] text-[12px] text-chrome-secondary hover:bg-chrome-hover px-[10px] py-[5px] rounded cursor-pointer ${
           isSelected
-            ? "border border-primary bg-white"
+            ? "border border-primary bg-chrome-soft"
             : "border border-transparent"
         }`}
         onClick={() => {
@@ -339,9 +339,9 @@ export const Start: FC = () => {
             e.stopPropagation();
           }}
         >
-          <Drag theme="outline" size="13" fill="#333" />
+          <Drag theme="outline" size="13" fill="var(--icon-color)" />
         </div>
-        <span className="text-[#999] font-semibold">{index + 1}</span>
+        <span className="text-chrome-muted font-semibold">{index + 1}</span>
         <div className="flex-1 flex items-center gap-[6px] line-clamp-1">
           {(() => {
             const { name, icon: IconComponent } = getElementInfo(element.type);
@@ -352,7 +352,7 @@ export const Start: FC = () => {
             }>;
             return (
               <>
-                {Icon && <Icon theme="outline" size="14" fill="#666" />}
+                {Icon && <Icon theme="outline" size="14" fill="var(--text-muted)" />}
                 <span>{(t as (key: string) => string)(name)}</span>
               </>
             );
@@ -365,8 +365,8 @@ export const Start: FC = () => {
   const layerContent = (
     <div className="flex flex-col gap-[10px] w-[200px]">
       {sortedElements.length === 0 ? (
-        <div className="text-[12px] text-[#999] py-[20px] text-center">
-          当前页面没有元素
+        <div className="text-[12px] text-chrome-muted py-[20px] text-center">
+          {t("startPanel.emptyElements")}
         </div>
       ) : (
         <DndContext
@@ -378,7 +378,7 @@ export const Start: FC = () => {
             items={sortedElements.map((el) => el.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex flex-col gap-[5px] min-h-[300px] max-h-[300px] overflow-y-auto bg-gray-50 p-[10px] rounded-sm">
+            <div className="flex flex-col gap-[5px] min-h-[300px] max-h-[300px] overflow-y-auto bg-chrome-guide p-[10px] rounded-sm">
               {sortedElements.map((element, index) => (
                 <LayerItem key={element.id} element={element} index={index} />
               ))}
@@ -394,9 +394,8 @@ export const Start: FC = () => {
       <Popover content={layerContent} placement="bottomLeft">
         <div className="h-full">
           <PanelLargeButton
-            title="层级排列"
-            aspectRatio={false}
-            icon={<Layers theme="outline" size="18" fill="#333" />}
+            title={t("startPanel.layerArrange")}
+            icon={<Layers theme="outline" size="18" fill="var(--icon-color)" />}
             onClick={handleBatchUpdate}
           />
         </div>
@@ -404,18 +403,18 @@ export const Start: FC = () => {
       <PanelSplitLine />
       <div className="flex flex-col justify-between h-full">
         <div className="flex flex-col gap-[4px]">
-          <Tooltip title="背景类型">
+          <Tooltip title={t("startPanel.backgroundType")}>
             <PanelSelect
               style={{ width: "100%" }}
               size="small"
               value={backgroundType}
               options={[
                 {
-                  label: "纯色",
+                  label: t("startPanel.solidColor"),
                   value: "solidColor",
                 },
                 {
-                  label: "纹理",
+                  label: t("startPanel.texture"),
                   value: "texture",
                 },
               ]}
@@ -426,7 +425,9 @@ export const Start: FC = () => {
           </Tooltip>
         </div>
         <div className="flex items-center gap-[4px]">
-          <span className="text-[12px] text-[#666] mr-[5px]">背景颜色</span>
+          <span className="text-[12px] text-chrome-muted mr-[5px]">
+            {t("startPanel.backgroundColor")}
+          </span>
           <ColorPicker
             trigger="hover"
             size="small"
@@ -447,7 +448,9 @@ export const Start: FC = () => {
       <div className="flex flex-col justify-between h-full">
         <div className="flex items-center gap-[10px] h-[28px]">
           <div className="flex items-center gap-[4px]">
-            <span className="text-[12px] text-[#666] mr-[5px]">纹理背景色</span>
+            <span className="text-[12px] text-chrome-muted mr-[5px]">
+              {t("startPanel.textureBgColor")}
+            </span>
             <ColorPicker
               size="small"
               trigger="hover"
@@ -457,7 +460,9 @@ export const Start: FC = () => {
             />
           </div>
           <div className="flex items-center gap-[4px]">
-            <span className="text-[12px] text-[#666] mr-[5px]">纹理前景色</span>
+            <span className="text-[12px] text-chrome-muted mr-[5px]">
+              {t("startPanel.textureFgColor")}
+            </span>
             <ColorPicker
               size="small"
               trigger="hover"
@@ -468,7 +473,9 @@ export const Start: FC = () => {
           </div>
         </div>
         <div className="w-full text-[12px] flex items-center h-[28px]">
-          <span className="mr-[10px] text-[#666]">透明度</span>
+          <span className="mr-[10px] text-chrome-muted">
+            {t("startPanel.opacity")}
+          </span>
           <Slider
             style={{ flex: 1 }}
             className="relative top-[1px]"
@@ -484,49 +491,47 @@ export const Start: FC = () => {
         </div>
       </div>
       <PanelLargeButton
-        title="批量修改"
-        aspectRatio={false}
-        icon={<EditTwo theme="outline" size="18" fill="#333" />}
+        title={t("startPanel.batchEdit")}
+        icon={<EditTwo theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleBatchUpdate}
       />
       <PanelSplitLine />
       <PanelLargeButton
-        title="新建画布"
-        aspectRatio={false}
-        icon={<Add theme="outline" size="18" fill="#333" />}
+        title={t("startPanel.newCanvas")}
+        icon={<Add theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleAddPage}
       />
       <PanelLargeButton
-        title="复制画布"
-        aspectRatio={false}
-        icon={<Copy theme="outline" size="18" fill="#333" />}
+        title={t("startPanel.duplicateCanvas")}
+        icon={<Copy theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleDuplicatePage}
         disabled={!pageActive}
       />
       <PanelLargeButton
-        title={isPageVisible ? "隐藏幻灯片" : "显示幻灯片"}
-        aspectRatio={false}
+        title={
+          isPageVisible
+            ? t("contextMenu.hideSlide")
+            : t("contextMenu.showSlide")
+        }
         icon={
           isPageVisible ? (
-            <PreviewCloseOne theme="outline" size="18" fill="#333" />
+            <PreviewCloseOne theme="outline" size="18" fill="var(--icon-color)" />
           ) : (
-            <PreviewOpen theme="outline" size="18" fill="#333" />
+            <PreviewOpen theme="outline" size="18" fill="var(--icon-color)" />
           )
         }
         onClick={handleTogglePageVisible}
         disabled={!pageActive}
       />
       <PanelLargeButton
-        title="删除画布"
-        aspectRatio={false}
-        icon={<Delete theme="outline" size="18" fill="#333" />}
+        title={t("startPanel.deleteCanvas")}
+        icon={<Delete theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleDeletePage}
         disabled={!pageActive || pages.length <= 1}
       />
       <PanelLargeButton
-        title="重置幻灯片"
-        aspectRatio={false}
-        icon={<Clear theme="outline" size="18" fill="#333" />}
+        title={t("contextMenu.resetSlide")}
+        icon={<Clear theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={handleResetPage}
         disabled={!pageActive}
       />

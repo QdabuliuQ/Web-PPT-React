@@ -178,7 +178,7 @@ export const SelectMenuIitem: FC<SelectMenuIitemProps> = ({
         <Up
           theme="outline"
           size="13"
-          fill="#333"
+          fill="var(--icon-color)"
           className={`transition-transform duration-200 ${
             popoverOpen ? "rotate-180" : ""
           }`}

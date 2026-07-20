@@ -13,8 +13,8 @@ export default function IconButton() {
 
   const handleIconSelect = useMemoizedFn((iconName: string) => {
     const option = CreateIcon({ iconName });
-    pptStore.addElementInfo(pageId, option);
-    if (pageActiveStore.getPageActive()) {
+    const ok = pptStore.addElementInfo(pageId, option);
+    if (ok && pageActiveStore.getPageActive()) {
       elementActiveStore.setElementActive(option.id);
     }
   });
@@ -22,7 +22,7 @@ export default function IconButton() {
   return (
     <IconPicker onIconSelect={handleIconSelect}>
       <PanelButton
-        icon={<DiamondThree theme="outline" size="24" fill="#333" />}
+        icon={<DiamondThree theme="outline" size="24" fill="currentColor" />}
         title={t('elements.icon.button')}
       />
     </IconPicker>

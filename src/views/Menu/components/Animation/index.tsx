@@ -36,7 +36,11 @@ import {
 import { useMemoizedFn } from "ahooks";
 import { Button, Popover, Select } from "antd";
 import { useMemo, useState, type FC } from "react";
-import { toggleInDelayOptions, toggleInDurationOptions } from "../Toggle";
+import { useTranslation } from "react-i18next";
+import {
+  getToggleInDelayOptions,
+  getToggleInDurationOptions,
+} from "../Toggle";
 import { SortableItem } from "./SortableItem";
 
 // 元素动画列表
@@ -203,11 +207,18 @@ const animationTriggerOptions = [
 ];
 
 const AnimationComponent: FC = () => {
+  const { t } = useTranslation();
   const [animationName, setAnimationName] = useState<string>("");
   // 动画列表中选中的元素ID（独立状态）
   const [selectedAnimationElementId, setSelectedAnimationElementId] = useState<
     string | null
   >(null);
+
+  const durationOptions = useMemo(
+    () => getToggleInDurationOptions(t),
+    [t]
+  );
+  const delayOptions = useMemo(() => getToggleInDelayOptions(t), [t]);
 
   // 使用 Zustand hooks 订阅状态变化
   const pageActive = usePageActiveStore((state) => state.pageActive);
@@ -359,13 +370,16 @@ const AnimationComponent: FC = () => {
 
   // 获取元素类型的中文名称
   const getElementTypeName = useMemoizedFn((type: string) => {
-    const typeMap: Record<string, string> = {
-      text: "文本",
-      table: "表格",
-      icon: "图标",
-      image: "图片",
+    const keyMap: Record<string, string> = {
+      text: "element.text",
+      table: "element.table",
+      icon: "element.icon",
+      image: "element.image",
+      chart: "element.chart",
+      mindmap: "element.mindMap",
     };
-    return typeMap[type] || type;
+    const key = keyMap[type];
+    return key ? t(key) : type;
   });
 
   // 获取动画名称的中文显示
@@ -458,10 +472,10 @@ const AnimationComponent: FC = () => {
     return (
       <div className="flex flex-col gap-[10px] w-[200px]">
         <div className="flex items-center justify-between">
-          <div className="text-[12px] text-[#666] mr-[10px]">过渡时间</div>
+          <div className="text-[12px] text-chrome-muted mr-[10px]">过渡时间</div>
           <Select
             value={animationDuration}
-            options={toggleInDurationOptions}
+            options={durationOptions}
             size="small"
             style={{ width: 70 }}
             disabled={!selectedAnimationElementId}
@@ -478,10 +492,10 @@ const AnimationComponent: FC = () => {
           />
         </div>
         <div className="flex items-center justify-between">
-          <div className="text-[12px] text-[#666] mr-[10px]">延迟时间</div>
+          <div className="text-[12px] text-chrome-muted mr-[10px]">延迟时间</div>
           <Select
             value={animationDelay}
-            options={toggleInDelayOptions}
+            options={delayOptions}
             size="small"
             style={{ width: 70 }}
             disabled={!selectedAnimationElementId}
@@ -498,7 +512,7 @@ const AnimationComponent: FC = () => {
           />
         </div>
         <div className="flex items-center justify-between">
-          <div className="text-[12px] text-[#666] mr-[10px]">触发方式</div>
+          <div className="text-[12px] text-chrome-muted mr-[10px]">触发方式</div>
           <Select
             value={animationTrigger}
             options={animationTriggerOptions}
@@ -519,7 +533,7 @@ const AnimationComponent: FC = () => {
         </div>
         <div className="p-[6px] bg-gray-50 rounded-sm">
           {animatedElements.length === 0 ? (
-            <div className="text-[12px] h-[250px] text-[#999] flex items-center justify-center">
+            <div className="text-[12px] h-[250px] text-chrome-muted flex items-center justify-center">
               暂无动画
             </div>
           ) : (
@@ -598,10 +612,10 @@ const AnimationComponent: FC = () => {
       <PanelSplitLine />
       <div className="flex flex-col justify-between mr-[5px]">
         <div className="flex items-center gap-[4px]">
-          <span className="text-[12px] text-[#666] mr-[5px]">过渡时间</span>
+          <span className="text-[12px] text-chrome-muted mr-[5px]">过渡时间</span>
           <PanelSelect
             value={currentAnimationDuration}
-            options={toggleInDurationOptions}
+            options={durationOptions}
             size="small"
             style={{ width: 70 }}
             onChange={(value) => {
@@ -619,10 +633,10 @@ const AnimationComponent: FC = () => {
           />
         </div>
         <div className="flex items-center gap-[4px]">
-          <span className="text-[12px] text-[#666] mr-[5px]">延迟时间</span>
+          <span className="text-[12px] text-chrome-muted mr-[5px]">延迟时间</span>
           <PanelSelect
             value={currentAnimationDelay}
-            options={toggleInDelayOptions}
+            options={delayOptions}
             size="small"
             style={{ width: 70 }}
             onChange={(value) => {
@@ -642,7 +656,7 @@ const AnimationComponent: FC = () => {
       </div>
       <div className="flex flex-col justify-between">
         <div className="flex items-center gap-[4px]">
-          <span className="text-[12px] text-[#666] mr-[5px]">触发方式</span>
+          <span className="text-[12px] text-chrome-muted mr-[5px]">触发方式</span>
           <PanelSelect
             value={currentAnimationTrigger}
             options={animationTriggerOptions}
@@ -666,8 +680,8 @@ const AnimationComponent: FC = () => {
           size="small"
           type="text"
           variant="outlined"
-          icon={<Play theme="outline" size="14" fill="#333" />}
-          className="bg-gray-100 text-[12px]"
+          icon={<Play theme="outline" size="14" fill="currentColor" />}
+          className="bg-gray-100 text-[12px] hover:!text-[var(--primary-color)]"
           onClick={handlePreviewAnimation}
           disabled={!elementActive || !currentAnimationName}
         >
@@ -680,8 +694,7 @@ const AnimationComponent: FC = () => {
           button={
             <PanelLargeButton
               title="删除动画"
-              aspectRatio={false}
-              icon={<CloseOne theme="outline" size="18" fill="#333" />}
+              icon={<CloseOne theme="outline" size="18" fill="var(--icon-color)" />}
             />
           }
           onSelect={handleDeleteAnimation}
@@ -690,12 +703,12 @@ const AnimationComponent: FC = () => {
               {
                 key: "deleteItem",
                 label: "删除当前对象的动画",
-                icon: <DeleteFour theme="outline" size="18" fill="#333" />,
+                icon: <DeleteFour theme="outline" size="18" fill="var(--icon-color)" />,
               },
               {
                 key: "deleteAll",
                 label: "删除当前幻灯片所有对象的动画",
-                icon: <DeleteFive theme="outline" size="18" fill="#333" />,
+                icon: <DeleteFive theme="outline" size="18" fill="var(--icon-color)" />,
               },
             ],
           }}
@@ -704,8 +717,7 @@ const AnimationComponent: FC = () => {
           <div>
             <PanelLargeButton
               title="动画排序"
-              aspectRatio={false}
-              icon={<SortAmountDown theme="outline" size="18" fill="#333" />}
+              icon={<SortAmountDown theme="outline" size="18" fill="var(--icon-color)" />}
             />
           </div>
         </Popover>

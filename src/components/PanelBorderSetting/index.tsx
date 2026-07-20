@@ -41,7 +41,7 @@ export const PanelBorderSetting: FC<IPanelBorderSettingProps> = ({
       <PanelLargeButton
         title={t('component.border.title')}
         active={border}
-        icon={<Square theme="outline" size="18" fill="#333" />}
+        icon={<Square theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={() => onBorderChange(!border)}
       />
       <div className="flex gap-[8px]">

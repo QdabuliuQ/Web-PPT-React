@@ -17,7 +17,7 @@ export const getImageMenuItems = ({
     {
       type: "item",
       label: t('elements.image.preview'),
-      icon: <PreviewOpen theme="outline" size="13" fill="#333" />,
+      icon: <PreviewOpen theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         onPreview();
       },
@@ -25,7 +25,7 @@ export const getImageMenuItems = ({
     {
       type: "item",
       label: t('elements.image.downloadImage'),
-      icon: <Download theme="outline" size="13" fill="#333" />,
+      icon: <Download theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         onDownload();
       },

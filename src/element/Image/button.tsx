@@ -188,8 +188,10 @@ export default function ImageButton() {
       width: targetWidth,
       height: targetHeight,
     });
-    pptStore.addElementInfo(pageId, option);
-    elementActiveStore.setElementActive(option.id);
+    const ok = pptStore.addElementInfo(pageId, option);
+    if (ok) {
+      elementActiveStore.setElementActive(option.id);
+    }
 
     // 重置状态并关闭弹窗
     setImageUrl("");
@@ -257,7 +259,7 @@ export default function ImageButton() {
   return (
     <>
       <PanelButton
-        icon={<Pic theme="outline" size="24" fill="#333" />}
+        icon={<Pic theme="outline" size="24" fill="currentColor" />}
         title={t('elements.image.button')}
         onClick={handleClick}
       />

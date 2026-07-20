@@ -81,8 +81,8 @@ export default function ChartButton() {
     }
 
     const option = CreateChart({ chartType });
-    addElement(pageId, option);
-    if (pageId) {
+    const ok = addElement(pageId, option);
+    if (ok && pageId) {
       setElementActive(option.id);
     }
 
@@ -101,8 +101,8 @@ export default function ChartButton() {
           {chartCategories.map((category) => (
             <div key={category.category} className="flex flex-col">
               <div className="px-[12px] py-[6px] mb-[4px]">
-                <div className="text-[11px] font-medium text-[#f25f00] uppercase tracking-wide relative">
-                  <div className="absolute left-0 top-0 w-[3px] h-full bg-[#f25f00]" />
+                <div className="text-[11px] font-medium text-primary uppercase tracking-wide relative">
+                  <div className="absolute left-0 top-0 w-[3px] h-full bg-primary" />
                   <span className="ml-[10px]">{category.category}</span>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export default function ChartButton() {
                   <div
                     key={chart.type}
                     onClick={() => handleCreateChart(chart.type)}
-                    className="px-[12px] py-[8px] text-[12px] text-gray-700 cursor-pointer rounded-[4px] hover:bg-[#f0f0f0] transition-colors active:bg-[#e0e0e0]"
+                    className="px-[12px] py-[8px] text-[12px] text-chrome-secondary cursor-pointer rounded-[4px] hover:bg-chrome-hover transition-colors active:bg-chrome-soft"
                   >
                     {chart.name}
                   </div>
@@ -126,10 +126,22 @@ export default function ChartButton() {
   );
 
   return (
-    <Popover open={open} placement="bottom" content={content} trigger={[]}>
+    <Popover
+      open={open}
+      placement="bottom"
+      content={content}
+      trigger={[]}
+      styles={{
+        body: {
+          background: "var(--panel-bg-solid)",
+          boxShadow: "var(--panel-shadow)",
+        },
+      }}
+    >
       <div onMouseEnter={handleOpen} onMouseLeave={handleClose}>
         <PanelButton
-          icon={<ChartHistogram theme="outline" size="24" fill="#333" />}
+          active={open}
+          icon={<ChartHistogram theme="outline" size="24" fill="currentColor" />}
           title={t('elements.chart.button')}
         />
       </div>

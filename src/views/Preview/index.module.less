@@ -29,10 +29,10 @@
   cursor: pointer;
   padding: 9px 12px;
   margin: 0 12px;
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  background: var(--panel-bg-solid);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  color: #f25f00;
+  color: var(--primary-color);
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
@@ -44,14 +44,14 @@
     color 0.2s ease;
 
   &:hover {
-    background: #fff2e6;
-    border-color: #ffd8b8;
-    color: #f25f00;
+    background: var(--primary-soft);
+    border-color: rgba(242, 95, 0, 0.35);
+    color: var(--primary-color);
     box-shadow: 0 1px 4px rgba(242, 95, 0, 0.1);
   }
 
   &:active {
-    background: #ffe8d1;
+    background: var(--primary-soft-hover);
   }
 }
 
@@ -60,6 +60,7 @@
   text-align: right;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
 }
 
 .thumbWrap {
@@ -67,19 +68,52 @@
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
+  background: var(--thumb-bg);
   transition: box-shadow 0.15s ease;
 }
 
 .thumbActive {
-  box-shadow: 0 0 0 2.5px #f25f00;
+  box-shadow: 0 0 0 2.5px var(--primary-color);
 }
 
 .thumbInactive {
-  box-shadow: 0 0 0 1px #e8e8e8;
+  box-shadow: 0 0 0 1px var(--thumb-border);
 
   &:hover {
-    box-shadow: 0 0 0 1px #d9d9d9;
+    box-shadow: 0 0 0 1px var(--thumb-border-hover);
+  }
+}
+
+.thumbSkeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-from) 25%,
+    var(--skeleton-mid) 37%,
+    var(--skeleton-from) 63%
+  );
+  background-size: 400% 100%;
+  animation: thumbShimmer 1.2s ease infinite;
+}
+
+.thumbLoading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--thumb-bg) 35%, transparent);
+  backdrop-filter: blur(0.5px);
+}
+
+@keyframes thumbShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
   }
 }
 

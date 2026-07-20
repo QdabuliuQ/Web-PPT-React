@@ -1,5 +1,5 @@
 .iconContainerWrapper {
-  background-color: #fff;
+  background-color: transparent;
   border-radius: 4px;
   width: 400px;
   max-height: 400px;
@@ -26,13 +26,14 @@
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s;
+  color: var(--icon-color);
 
   &:hover {
-    background-color: #f5f5f5;
+    background-color: var(--hover-bg);
     transform: scale(1.1);
   }
 
   &:active {
-    background-color: #e6e6e6;
+    background-color: var(--primary-soft);
   }
 }

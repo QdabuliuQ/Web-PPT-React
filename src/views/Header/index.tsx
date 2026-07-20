@@ -1,4 +1,5 @@
-import { LanguageSwitcher } from "@/components";
+import { LanguageSwitcher, ThemeSwitcher } from "@/components";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
 import { ChartPanelKey, ChartPanelTitle } from "@/element/Chart";
 import { useTranslation } from "react-i18next";
 import { IconPanelKey, IconPanelTitle } from "@/element/Icon";
@@ -12,7 +13,7 @@ import {
   usePageActiveStore,
   usePPTStore,
 } from "@/store";
-import { exportToPptx } from "@/utils/pptx";
+import { downloadPptxFromApi } from "@/services/exportPptx";
 import { exportPageAsImage } from "@/utils/tool";
 import { LoadingOutlined } from "@ant-design/icons";
 import { FileJpg, FilePdf, FilePpt, FileSettings } from "@icon-park/react";
@@ -53,27 +54,27 @@ export const Header: FC = () => {
   const menuItems = useMemo(
     () => [
       {
-        label: "开始",
+        label: t("menu.start"),
         key: "start",
       },
       {
-        label: "插入",
+        label: t("menu.insert"),
         key: "insert",
       },
       {
-        label: "切换",
+        label: t("menu.toggle"),
         key: "toggle",
       },
       {
-        label: "放映",
+        label: t("menu.play"),
         key: "play",
       },
       {
-        label: "视图",
+        label: t("menu.view"),
         key: "view",
       },
     ],
-    []
+    [t]
   );
 
   // 使用 Zustand hook 订阅状态变化，确保组件能够响应状态更新
@@ -85,7 +86,7 @@ export const Header: FC = () => {
 
   const [elementPanel, setElementPanel] = useState<{
     key: string;
-    title: string | (() => React.ReactNode);
+    title: string;
   } | null>(null);
 
   // 使用 ref 跟踪上一次的 elementActive，用于判断元素是否刚被选中或切换
@@ -181,7 +182,7 @@ export const Header: FC = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${name || "未命名"}.json`;
+      link.download = `${name || t("header.untitled")}.json`;
 
       // 触发下载
       document.body.appendChild(link);
@@ -216,16 +217,16 @@ export const Header: FC = () => {
 
       const currentName = getName();
 
-      // 创建PDF实例 (横向，1000x700)
+      // 创建PDF实例 (横向，16:9)
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "px",
-        format: [1000, 700],
+        format: [CANVAS_WIDTH, CANVAS_HEIGHT],
       });
 
       // PDF页面尺寸
-      const pdfWidth = 1000;
-      const pdfHeight = 700;
+      const pdfWidth = CANVAS_WIDTH;
+      const pdfHeight = CANVAS_HEIGHT;
 
       // 遍历每个页面，使用exportPageAsImage导出图片并添加到PDF
       for (let i = 0; i < pages.length; i++) {
@@ -296,7 +297,7 @@ export const Header: FC = () => {
       }
 
       // 保存PDF
-      pdf.save(`${currentName || "未命名"}.pdf`);
+      pdf.save(`${currentName || t("header.untitled")}.pdf`);
     } catch (error) {
       console.error("导出PDF失败:", error);
     } finally {
@@ -314,18 +315,18 @@ export const Header: FC = () => {
     try {
       const pages = getPages().filter((page) => page.visible !== false);
       if (pages.length === 0) {
-        message.warning("没有可导出的页面");
+        message.warning(t("header.noExportPages"));
         return;
       }
 
-      await exportToPptx({
+      await downloadPptxFromApi({
         name: getName(),
         pages,
       });
-      message.success("PPTX 导出成功");
+      message.success(t("header.pptxSuccess"));
     } catch (error) {
       console.error("导出PPTX失败:", error);
-      message.error("导出 PPTX 失败");
+      message.error(t("header.pptxFailed"));
     } finally {
       setTimeout(() => {
         setPptxLoading(false);
@@ -346,8 +347,6 @@ export const Header: FC = () => {
         return;
       }
 
-      const CANVAS_WIDTH = 1000;
-      const CANVAS_HEIGHT = 700;
       const SPACER_HEIGHT = 50; // 黑色间隔的高度
 
       // 导出所有页面的图片
@@ -418,7 +417,7 @@ export const Header: FC = () => {
       const dataUrl = canvas.toDataURL("image/png", 1.0);
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = `${name || "未命名"}_长图.png`;
+      link.download = `${name || t("header.untitled")}_${t("header.longImageSuffix")}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -439,7 +438,7 @@ export const Header: FC = () => {
       <div
         className={`${styles.headerLeft} flex items-center gap-[6px] min-w-0 shrink-0`}
       >
-        <div className="text-[12px] text-[#595959] flex items-center relative min-h-[22px] min-w-0">
+        <div className="text-[12px] text-chrome-secondary flex items-center relative min-h-[22px] min-w-0">
           {/* 文本显示 */}
           <span
             className={`${styles.titleText} cursor-text transition-opacity duration-200 ease-in-out inline-block max-w-[150px] truncate ${
@@ -447,7 +446,7 @@ export const Header: FC = () => {
                 ? "opacity-100 relative pointer-events-auto"
                 : "opacity-0 absolute pointer-events-none"
             }`}
-            title={name || "未命名"}
+            title={name || t("header.untitled")}
             onClick={() => {
               setIsEdit(true);
               requestAnimationFrame(() => {
@@ -455,7 +454,7 @@ export const Header: FC = () => {
               });
             }}
           >
-            {name || "未命名"}
+            {name || t("header.untitled")}
           </span>
           {/* 输入框 */}
           <input
@@ -477,7 +476,7 @@ export const Header: FC = () => {
           />
         </div>
         <div className={`flex items-center gap-[2px] ${styles.exportBtn}`}>
-          <Tooltip placement="bottomLeft" title="导出配置文件">
+          <Tooltip placement="bottomLeft" title={t("header.exportConfig")}>
             <Button
               size="small"
               type="text"
@@ -492,7 +491,7 @@ export const Header: FC = () => {
               onClick={handleExportConfig}
             />
           </Tooltip>
-          <Tooltip placement="bottom" title="导出PDF">
+          <Tooltip placement="bottom" title={t("header.exportPdf")}>
             <Button
               size="small"
               type="text"
@@ -507,22 +506,7 @@ export const Header: FC = () => {
               onClick={handleExportPdf}
             />
           </Tooltip>
-          <Tooltip placement="bottom" title="导出PPTX">
-            <Button
-              size="small"
-              type="text"
-              icon={
-                pptxLoading ? (
-                  <LoadingOutlined spin style={{ color: "#f25f00" }} />
-                ) : (
-                  <FilePpt theme="outline" size="16" fill="currentColor" />
-                )
-              }
-              disabled={pptxLoading}
-              onClick={handleExportPptx}
-            />
-          </Tooltip>
-          <Tooltip placement="bottom" title="导出长图">
+          <Tooltip placement="bottom" title={t("header.exportImage")}>
             <Button
               size="small"
               type="text"
@@ -537,6 +521,21 @@ export const Header: FC = () => {
               onClick={handleExportLongImage}
             />
           </Tooltip>
+          <Tooltip placement="bottom" title={t("header.exportPptx")}>
+            <Button
+              size="small"
+              type="text"
+              icon={
+                pptxLoading ? (
+                  <LoadingOutlined spin style={{ color: "#f25f00" }} />
+                ) : (
+                  <FilePpt theme="outline" size="16" fill="currentColor" />
+                )
+              }
+              disabled={pptxLoading}
+              onClick={handleExportPptx}
+            />
+          </Tooltip>
         </div>
       </div>
       {/* 右侧：占满剩余宽度 */}
@@ -547,7 +546,7 @@ export const Header: FC = () => {
               className={`${styles.navItem} text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${
                 menuActive === item.key
                   ? `text-[var(--primary-color)] ${styles.activeItem}`
-                  : "text-[#595959] hover:text-[var(--primary-color)]"
+                  : "text-chrome-secondary hover:text-[var(--primary-color)]"
               }`}
               key={item.key}
               onClick={() => setActiveMenu(item.key)}
@@ -560,11 +559,11 @@ export const Header: FC = () => {
               className={`${styles.navItem} text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${
                 menuActive === "animation"
                   ? `text-[var(--primary-color)] ${styles.activeItem}`
-                  : "text-[#595959] hover:text-[var(--primary-color)]"
+                  : "text-chrome-secondary hover:text-[var(--primary-color)]"
               }`}
               onClick={() => setActiveMenu("animation")}
             >
-              动画
+              {t("menu.animation")}
             </div>
           )}
           {elementPanel && (
@@ -572,17 +571,16 @@ export const Header: FC = () => {
               className={`${styles.navItem} text-[13px] cursor-pointer transition-colors duration-200 ease-in-out ${
                 menuActive === elementPanel.key
                   ? `text-[var(--primary-color)] ${styles.activeItem}`
-                  : "text-[#595959] hover:text-[var(--primary-color)]"
+                  : "text-chrome-secondary hover:text-[var(--primary-color)]"
               }`}
               onClick={otherPanelClick}
             >
-              {typeof elementPanel.title === "function"
-                ? elementPanel.title()
-                : (t as (key: string) => string)(elementPanel.title)}
+              {t(elementPanel.title)}
             </div>
           )}
         </div>
-        <div className="flex justify-end shrink-0">
+        <div className="flex justify-end shrink-0 items-center gap-[4px]">
+          <ThemeSwitcher />
           <LanguageSwitcher />
         </div>
       </div>

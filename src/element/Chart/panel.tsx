@@ -131,14 +131,14 @@ const ChartPanelComponent: FC = () => {
         {TypePanel}
         <PanelLargeButton
           title={t("elements.chart.data")}
-          icon={<EditOne theme="outline" size="18" fill="#333" />}
+          icon={<EditOne theme="outline" size="18" fill="var(--icon-color)" />}
           onClick={handleOpenDataModalFromPanel}
         />
         <PanelLargeButton
           title={t("elements.chart.downloadImage")}
-          icon={<Download theme="outline" size="18" fill="#333" />}
+          icon={<Download theme="outline" size="18" fill="var(--icon-color)" />}
           onClick={handleExportChartImage}
-          aspectRatio={false}
+
         />
         <PanelSplitLine />
         <PanelCommonSetting

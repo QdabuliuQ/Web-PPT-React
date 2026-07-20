@@ -1,4 +1,5 @@
 import { AnimationWrapper, MovableWrapper } from "@/components";
+import { getCenteredElementPosition } from "@/constants/canvas";
 import useCommonContextMenu from "@/hooks/useCommonContextMenu";
 import {
   contextMenuStore,
@@ -20,7 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { PhotoProvider, PhotoView } from "react-photo-view";
+import { PhotoSlider } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css";
 import i18n from "@/i18n";
 import { useMovableElement } from "../../hooks/useMovableElement";
@@ -101,9 +102,9 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
 
   const imageRef = useRef<HTMLDivElement>(null);
   const moveableRef = useRef<any>(null);
-  const photoViewRef = useRef<HTMLImageElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   // 图片加载完成
   const handleImageLoad = useMemoizedFn(() => {
@@ -198,9 +199,8 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
 
   // 通过函数触发预览
   const openPreview = useMemoizedFn(() => {
-    if (imageLoaded && !imageError && photoViewRef.current) {
-      // 触发 PhotoView 的预览
-      photoViewRef.current.click();
+    if (imageLoaded && !imageError && src) {
+      setPreviewVisible(true);
     }
   });
 
@@ -348,7 +348,6 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
     // 图片元素
     const imageElement = (
       <img
-        ref={photoViewRef}
         src={src}
         alt=""
         className={imageLoaded ? styles.imageVisible : styles.imageHidden}
@@ -368,19 +367,9 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
       />
     );
 
-    // 根据 mode 决定是否使用 PhotoProvider 和 PhotoView
-    const imageWithProvider =
-      mode === "edit" ? (
-        <PhotoProvider>
-          <div className={styles.imageWrapper}>
-            <PhotoView src={src} overlay={<div />}>
-              {imageElement}
-            </PhotoView>
-          </div>
-        </PhotoProvider>
-      ) : (
-        <div className={styles.imageWrapper}>{imageElement}</div>
-      );
+    const imageWithProvider = (
+      <div className={styles.imageWrapper}>{imageElement}</div>
+    );
 
     // 根据 mode 决定是否使用 AnimationWrapper
     const needsAnimation = mode === "edit" || mode === "play";
@@ -457,6 +446,11 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
         onRotate={handleRotate}
         onRotateEnd={handleRotateEnd}
       />
+      <PhotoSlider
+        images={[{ key: id, src, overlay: <div /> }]}
+        visible={previewVisible}
+        onClose={() => setPreviewVisible(false)}
+      />
     </>
   ) : (
     <div id={`preview_${id}`} className={className} style={dynamicStyle}>
@@ -468,6 +462,8 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
 export const Image = memo(Component);
 
 export const CreateImage = (props: Partial<IImageProps> = {}) => {
+  const width = props.width ?? 300;
+  const height = props.height ?? 200;
   const defaultProps: Omit<IImageProps, "type" | "id"> = {
     mode: "edit",
     src: "https://via.placeholder.com/300x200",
@@ -478,10 +474,9 @@ export const CreateImage = (props: Partial<IImageProps> = {}) => {
     borderColor: "#000000",
     borderStyle: "solid",
     keepRatio: true,
-    x: 100,
-    y: 100,
-    width: 300,
-    height: 200,
+    ...getCenteredElementPosition(width, height),
+    width,
+    height,
     rotate: 0,
     zIndex: 0,
     brightness: 1,

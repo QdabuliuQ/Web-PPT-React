@@ -12,10 +12,12 @@ export const useI18n = () => {
    * @param lang 语言代码 ('zh-CN' | 'en-US')
    */
   const changeLanguage = (lang: string) => {
-    i18n.changeLanguage(lang);
     localStorage.setItem('language', lang);
-    // 刷新页面以更新 antd 的语言
-    window.location.reload();
+    // ConfigProvider 已订阅 i18n.language，无需整页刷新
+    void i18n.changeLanguage(lang);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+    }
   };
 
   /**

@@ -4,29 +4,44 @@ import "@ant-design/v5-patch-for-react-19";
 import Index from "@/views/index";
 import { initPPTStore } from "@/utils/initStore";
 import "animate.css";
-import { ConfigProvider } from "antd";
+import { ConfigProvider, theme as antdTheme } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import enUS from "antd/locale/en_US";
 import { useTranslation } from "react-i18next";
 import "react-contexify/dist/ReactContexify.css";
 import "@/i18n";
+import { useThemeStore } from "@/store";
+import { useEffect } from "react";
 
 // 在模块加载时同步初始化数据，确保在组件渲染前完成
 initPPTStore();
 
 function AppShell() {
   const { i18n } = useTranslation();
+  const themeMode = useThemeStore((state) => state.theme);
+  const hydrateTheme = useThemeStore((state) => state.hydrateTheme);
+  const isDark = themeMode === "dark";
 
-  // 根据当前语言选择antd的语言包
-  const antdLocale = i18n.language === "zh-CN" ? zhCN : enUS;
+  useEffect(() => {
+    hydrateTheme();
+  }, [hydrateTheme]);
+
+  // 根据当前语言选择antd的语言包（i18n 变更会触发重渲染，无需整页刷新）
+  const antdLocale = i18n.language?.toLowerCase().startsWith("zh")
+    ? zhCN
+    : enUS;
 
   return (
     <ConfigProvider
       locale={antdLocale}
       theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: "#f25f00", // 主题色
-          fontSizeSM: 12, // small 尺寸字体大小
+          colorPrimary: "#f25f00",
+          fontSizeSM: 12,
+          colorBgContainer: isDark ? "#2a2826" : "#ffffff",
+          colorBgElevated: isDark ? "#2a2826" : "#ffffff",
+          colorBorder: isDark ? "rgba(255,255,255,0.12)" : undefined,
         },
         components: {
           Button: {
@@ -36,11 +51,11 @@ function AppShell() {
           },
           Select: {
             colorPrimary: "#f25f00",
-            fontSize: 12, // 设置 Select 字体大小为 12px
-            optionFontSize: 12, // 设置选项字体大小为 12px
-            optionSelectedBg: "#fff2e6", // 选中项背景色
-            optionSelectedColor: "#f25f00", // 选中项文字颜色 - 主题色
-            optionActiveBg: "#fff2e6", // 激活项背景色
+            fontSize: 12,
+            optionFontSize: 12,
+            optionSelectedBg: isDark ? "rgba(242, 95, 0, 0.18)" : "#fff2e6",
+            optionSelectedColor: "#f25f00",
+            optionActiveBg: isDark ? "rgba(242, 95, 0, 0.12)" : "#fff2e6",
           },
           Input: {
             colorPrimary: "#f25f00",
@@ -51,7 +66,7 @@ function AppShell() {
             colorPrimary: "#f25f00",
             activeBorderColor: "#f25f00",
             hoverBorderColor: "#ff7b33",
-            fontSize: 12, // 设置 InputNumber 字体大小为 12px
+            fontSize: 12,
           },
           Tooltip: {
             fontSize: 12,
@@ -67,12 +82,21 @@ function AppShell() {
           },
           Menu: {
             colorPrimary: "#f25f00",
-            itemSelectedBg: "#fff2e6", // 选中项背景色
-            itemSelectedColor: "#f25f00", // 选中项文字颜色 - 主题色
-            itemActiveBg: "#fff2e6", // 激活项背景色
+            itemSelectedBg: isDark ? "rgba(242, 95, 0, 0.18)" : "#fff2e6",
+            itemSelectedColor: "#f25f00",
+            itemActiveBg: isDark ? "rgba(242, 95, 0, 0.12)" : "#fff2e6",
           },
           Modal: {
             colorPrimary: "#f25f00",
+            contentBg: isDark ? "#2a2826" : "#ffffff",
+            headerBg: isDark ? "#2a2826" : "#ffffff",
+            footerBg: isDark ? "#2a2826" : "#ffffff",
+          },
+          Slider: {
+            colorPrimary: "#f25f00",
+            handleColor: "#f25f00",
+            trackBg: "#f25f00",
+            trackHoverBg: "#ff7b33",
           },
         },
       }}

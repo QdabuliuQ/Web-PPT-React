@@ -5,7 +5,7 @@ Next.js 15 + React 19 PPT 编辑器（客户端单页应用）。
 ## 开发
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 npm run dev
 ```
 

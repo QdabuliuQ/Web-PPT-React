@@ -1,5 +1,6 @@
 import type { IImageProps } from "@/element/Image";
 import type PptxGenJS from "pptxgenjs";
+import { arrayBufferToBase64 } from "./arrayBufferToBase64";
 import { positionFromElement, shadowFromOffsets } from "./helpers";
 
 async function resolveImageData(src: string): Promise<string | null> {
@@ -8,13 +9,9 @@ async function resolveImageData(src: string): Promise<string | null> {
   try {
     const res = await fetch(src);
     if (!res.ok) return null;
-    const blob = await res.blob();
-    return await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    const mime = res.headers.get("content-type") || "image/png";
+    const base64 = arrayBufferToBase64(await res.arrayBuffer());
+    return `data:${mime};base64,${base64}`;
   } catch (err) {
     console.warn("图片拉取失败:", src, err);
     return null;

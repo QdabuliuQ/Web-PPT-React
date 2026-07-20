@@ -1,10 +1,8 @@
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
 import { textureItems } from "@/views/Menu/components/Start/texture";
 import type { Page } from "@/store/ppt";
 import { ElementRenderer } from "@/utils/elementRenderer";
 import { type CSSProperties, type FC, useMemo } from "react";
-
-const CANVAS_WIDTH = 1000;
-const CANVAS_HEIGHT = 700;
 
 function getBackgroundStyle(page: Page): CSSProperties {
   const backgroundType = page.backgroundType || "solidColor";

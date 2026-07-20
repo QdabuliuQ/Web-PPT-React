@@ -53,7 +53,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     reactCompiler: true,
+    // 导出 PPT 可能携带 base64 图片快照，放宽请求体限制
+    serverActions: {
+      bodySizeLimit: "50mb",
+    },
   },
+  serverExternalPackages: ["pptxgenjs"],
   eslint: {
     // Keep build unblocked; run `npm run lint` separately
     ignoreDuringBuilds: true,

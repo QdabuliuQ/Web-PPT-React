@@ -437,7 +437,7 @@ export const Scatter1ChartPanel: FC = memo(() => {
   return (
     <ChartStylePanel
       title="样式"
-      icon={<ChartScatter theme="filled" size="18" fill="#666" />}
+      icon={<ChartScatter theme="filled" size="18" fill="var(--text-muted)" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
       defaultActiveKey={["basic", "label"]}

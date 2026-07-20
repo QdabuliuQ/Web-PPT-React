@@ -92,8 +92,8 @@ export const PanelItemSelect: FC<PanelItemSelectProps> = ({
       <div
         className={`${
           inPopover ? "h-[42px]" : "h-full"
-        } w-[80px] relative text-[12px] ${disabled ? "" : "cursor-pointer"} rounded-[6px] overflow-hidden bg-[#fff] border ${
-          isSelected ? "border-primary" : "border-[#dfdfdf]"
+        } w-[80px] relative text-[12px] ${disabled ? "" : "cursor-pointer"} rounded-[6px] overflow-hidden bg-chrome-panel-solid border ${
+          isSelected ? "border-primary" : "border-[var(--border-default)]"
         } border-dashed flex items-center justify-center flex-shrink-0`}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
@@ -102,7 +102,7 @@ export const PanelItemSelect: FC<PanelItemSelectProps> = ({
         <div className="flex flex-col items-center justify-center">
           <div
             className={`font-bold ${
-              isSelected ? "text-primary" : "text-[#999]"
+              isSelected ? "text-primary" : "text-chrome-muted"
             }`}
           >
             {item.name}
@@ -184,9 +184,17 @@ export const PanelItemSelect: FC<PanelItemSelectProps> = ({
       content={popoverContent}
       trigger={[]}
       overlayClassName="item-select-popover"
+      styles={{
+        body: {
+          background: "var(--panel-bg-solid)",
+          padding: 8,
+          borderRadius: 8,
+          boxShadow: "var(--panel-shadow)",
+        },
+      }}
     >
       <div
-        className={`h-[53px] px-[5px] box-border border border-[#dfdfdf] rounded-[6px] flex items-center gap-[4px] ${
+        className={`h-[53px] px-[5px] box-border border border-[var(--border-default)] rounded-[6px] flex items-center gap-[4px] ${
           disabled ? "opacity-50 cursor-not-allowed" : ""
         }`}
       >
@@ -198,10 +206,10 @@ export const PanelItemSelect: FC<PanelItemSelectProps> = ({
               </div>
             ))}
             <div
-              className={`h-[42px] w-[15px] flex items-center justify-center rounded-[6px] border border-[#dfdfdf] bg-[#f5f5f5] transition-colors ${
+              className={`h-[42px] w-[15px] flex items-center justify-center rounded-[6px] border border-[var(--border-default)] bg-[var(--hover-bg)] transition-colors ${
                 disabled
                   ? "cursor-not-allowed"
-                  : "cursor-pointer hover:bg-[#e8e8e8]"
+                  : "cursor-pointer hover:bg-chrome-divider"
               }`}
               onMouseEnter={handleKeepPopoverOpen}
               onMouseLeave={handleClosePopover}
@@ -209,7 +217,9 @@ export const PanelItemSelect: FC<PanelItemSelectProps> = ({
               <Down
                 theme="outline"
                 size="13"
-                fill={disabled ? "#999" : "#666"}
+                fill={
+                  disabled ? "var(--text-disabled)" : "var(--text-muted)"
+                }
                 className={`transition-transform duration-200 ${
                   popoverOpen ? "rotate-180" : ""
                 }`}

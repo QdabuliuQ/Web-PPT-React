@@ -91,9 +91,9 @@ export const SortableItem: FC<SortableItemProps> = ({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`flex items-center gap-[8px] text-[12px] text-[#666] hover:bg-white px-[10px] py-[5px] rounded ${
+      className={`flex items-center gap-[8px] text-[12px] text-chrome-muted hover:bg-chrome-panel-solid px-[10px] py-[5px] rounded ${
         elementActive === element.id
-          ? "border border-primary bg-white"
+          ? "border border-primary bg-chrome-panel-solid"
           : "border border-transparent"
       }`}
       onClick={() => {
@@ -114,7 +114,7 @@ export const SortableItem: FC<SortableItemProps> = ({
             e.stopPropagation();
           }}
         >
-          <Drag theme="outline" size="13" fill="#333" />
+          <Drag theme="outline" size="13" fill="var(--icon-color)" />
         </div>
       )}
       {disabled && (
@@ -122,12 +122,12 @@ export const SortableItem: FC<SortableItemProps> = ({
           {/* 占位，保持布局一致 */}
         </div>
       )}
-      <span className="text-[#999] font-semibold">{index + 1}</span>
+      <span className="text-chrome-muted font-semibold">{index + 1}</span>
       {ElementIcon && (
         <ElementIcon
           theme="outline"
           size="14"
-          fill="#666"
+          fill="var(--text-muted)"
           className="flex-shrink-0"
         />
       )}
@@ -140,7 +140,7 @@ export const SortableItem: FC<SortableItemProps> = ({
           className="cursor-pointer"
           theme="outline"
           size="12"
-          fill="#333"
+          fill="var(--icon-color)"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(element.id);

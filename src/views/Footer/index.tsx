@@ -18,9 +18,11 @@ import {
 import { useMemoizedFn } from "ahooks";
 import { Dropdown, message, Slider, Tooltip } from "antd";
 import { useMemo, type FC } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./index.module.less";
 
 const FooterComponent: FC = () => {
+  const { t } = useTranslation();
   const pages = usePPTStore((state) => state.pages);
   const pageActive = usePageActiveStore((state) => state.pageActive);
   const displayStatus = useDisplayStatusStore((state) => state.displayStatus);
@@ -45,7 +47,7 @@ const FooterComponent: FC = () => {
 
   const handlePlay = useMemoizedFn(() => {
     if (!pageActive) {
-      message.error("未找到当前页面");
+      message.error(t("playPanel.noCurrentPage"));
       return;
     }
     enterFullscreen(pageActive);
@@ -53,16 +55,15 @@ const FooterComponent: FC = () => {
 
   const handlePlayFromFirst = useMemoizedFn(() => {
     if (pages.length === 0) {
-      message.error("没有可播放的页面");
+      message.error(t("playPanel.noPages"));
       return;
     }
-    const firstPageId = pages[0].id;
-    enterFullscreen(firstPageId);
+    enterFullscreen(pages[0].id);
   });
 
   const handlePlayFromCurrent = useMemoizedFn(() => {
     if (!pageActive) {
-      message.error("未找到当前页面");
+      message.error(t("playPanel.noCurrentPage"));
       return;
     }
     enterFullscreen(pageActive);
@@ -72,40 +73,29 @@ const FooterComponent: FC = () => {
     () => [
       {
         key: "playFirst",
-        label: "从开头开始",
-        icon: <SlideTwo theme="outline" size="15" fill="#333" />,
+        label: t("footer.fromStart"),
+        icon: <SlideTwo theme="outline" size="15" fill="currentColor" />,
         onClick: handlePlayFromFirst,
       },
       {
         key: "playCurrent",
-        label: "从当前开始",
-        icon: <Play theme="outline" size="15" fill="#333" />,
+        label: t("footer.fromCurrent"),
+        icon: <Play theme="outline" size="15" fill="currentColor" />,
         onClick: handlePlayFromCurrent,
       },
     ],
-    [handlePlayFromFirst, handlePlayFromCurrent]
+    [handlePlayFromFirst, handlePlayFromCurrent, t]
   );
 
   return (
     <div className={styles.footer}>
       <div className={styles.left}>
         <div className={styles.slideCount}>
-          幻灯片 {Math.max(pageIndex + 1, 1)} / {pages.length || 1}
+          {t("footer.slideCount", {
+            current: Math.max(pageIndex + 1, 1),
+            total: pages.length || 1,
+          })}
         </div>
-        {displayStatus === "default" && (
-          <div className={styles.zoomControl}>
-            <Slider
-              className={styles.zoomSlider}
-              min={10}
-              max={200}
-              step={1}
-              value={zoomPercent}
-              onChange={setZoomPercent}
-              tooltip={{ formatter: (value) => `${value}%` }}
-            />
-            <span className={styles.zoomLabel}>{zoomPercent}%</span>
-          </div>
-        )}
       </div>
       <div className={styles.actions}>
         <button
@@ -116,27 +106,27 @@ const FooterComponent: FC = () => {
           <Notes
             theme="outline"
             size="14"
-            fill={remarkEditActive ? "#f25f00" : "#595959"}
+            fill={
+              remarkEditActive
+                ? "var(--primary-color)"
+                : "var(--text-secondary)"
+            }
           />
-          <span>备注</span>
+          <span>{t("footer.remark")}</span>
         </button>
 
         <div className={styles.divider} />
 
         <div className={styles.playGroup}>
-          <button
-            type="button"
-            className={styles.playBtn}
-            onClick={handlePlay}
-          >
+          <button type="button" className={styles.playBtn} onClick={handlePlay}>
             <PlayOne theme="filled" size="14" fill="#fff" />
-            <span>播放</span>
+            <span>{t("footer.play")}</span>
           </button>
           <Dropdown placement="topRight" menu={{ items: playDropDownMenu }}>
             <button
               type="button"
               className={styles.playCaret}
-              aria-label="播放选项"
+              aria-label={t("footer.playOptions")}
             >
               <Down theme="outline" size="12" fill="#fff" />
             </button>
@@ -146,7 +136,7 @@ const FooterComponent: FC = () => {
         <div className={styles.divider} />
 
         <div className={styles.viewToggles}>
-          <Tooltip title="普通视图">
+          <Tooltip title={t("viewPanel.normalView")}>
             <button
               type="button"
               className={`${styles.viewBtn} ${displayStatus === "default" ? styles.viewActive : ""}`}
@@ -155,11 +145,15 @@ const FooterComponent: FC = () => {
               <Column
                 theme="outline"
                 size="15"
-                fill={displayStatus === "default" ? "#f25f00" : "#595959"}
+                fill={
+                  displayStatus === "default"
+                    ? "var(--primary-color)"
+                    : "var(--text-secondary)"
+                }
               />
             </button>
           </Tooltip>
-          <Tooltip title="幻灯片预览">
+          <Tooltip title={t("viewPanel.slidePreview")}>
             <button
               type="button"
               className={`${styles.viewBtn} ${displayStatus === "grid" ? styles.viewActive : ""}`}
@@ -168,11 +162,33 @@ const FooterComponent: FC = () => {
               <ViewGridCard
                 theme="outline"
                 size="15"
-                fill={displayStatus === "grid" ? "#f25f00" : "#595959"}
+                fill={
+                  displayStatus === "grid"
+                    ? "var(--primary-color)"
+                    : "var(--text-secondary)"
+                }
               />
             </button>
           </Tooltip>
         </div>
+
+        {displayStatus === "default" && (
+          <>
+            <div className={styles.divider} />
+            <div className={styles.zoomControl}>
+              <Slider
+                className={styles.zoomSlider}
+                min={10}
+                max={200}
+                step={1}
+                value={zoomPercent}
+                onChange={setZoomPercent}
+                tooltip={{ formatter: (value) => `${value}%` }}
+              />
+              <span className={styles.zoomLabel}>{zoomPercent}%</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -30,13 +30,13 @@ export const getMindMapMenuItems = ({
     {
       type: "item",
       label: "编辑",
-      icon: <EditOne theme="outline" size="13" fill="#333" />,
+      icon: <EditOne theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: onEdit,
     },
     {
       type: "item",
       label: "预览",
-      icon: <PreviewOpen theme="outline" size="13" fill="#333" />,
+      icon: <PreviewOpen theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: onPreview,
     },
   ];
@@ -47,7 +47,7 @@ export const getMindMapMenuItems = ({
     menuItems.push({
       type: "item",
       label: "下载图片",
-      icon: <Download theme="outline" size="13" fill="#333" />,
+      icon: <Download theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: onDownload,
     });
   }

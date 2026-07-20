@@ -26,6 +26,7 @@ import {
   getCachedThumbnail,
   scheduleVisibleThumbnails,
   usePageThumbnail,
+  usePageThumbnailLoading,
   usePagesThumbnailSync,
 } from "@/utils/pageThumbnail";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -38,6 +39,7 @@ import {
   Up,
 } from "@icon-park/react";
 import { useKeyPress, useMemoizedFn, useMount } from "ahooks";
+import { Spin } from "antd";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import {
   memo,
@@ -84,6 +86,7 @@ const PageItem: FC<{
   }) => {
     const isActive = pageActive === page.id;
     const thumbnailUrl = usePageThumbnail(page);
+    const isLoading = usePageThumbnailLoading(page);
 
     return (
       <div
@@ -91,7 +94,7 @@ const PageItem: FC<{
       >
         <span
           className={`${styles.pageIndex} text-[12px] mt-[4px] font-medium ${
-            isActive ? "text-primary" : "text-[#8c8c8c]"
+            isActive ? "text-primary" : "text-chrome-muted"
           }`}
         >
           {index + 1}
@@ -102,7 +105,7 @@ const PageItem: FC<{
           onContextMenu={(e) => onContextMenu(e, page.id)}
         >
           <div
-            className="previewCanvas relative w-full rounded-[8px] overflow-hidden pointer-events-none bg-[#f5f5f5]"
+            className="previewCanvas relative w-full rounded-[8px] overflow-hidden pointer-events-none bg-chrome-guide"
             style={{ aspectRatio: CANVAS_ASPECT_RATIO_CSS }}
           >
             {thumbnailUrl ? (
@@ -113,7 +116,12 @@ const PageItem: FC<{
                 draggable={false}
               />
             ) : (
-              <div className="absolute inset-0 animate-pulse bg-[#ebebeb]" />
+              <div className={styles.thumbSkeleton} />
+            )}
+            {!thumbnailUrl && isLoading && (
+              <div className={styles.thumbLoading}>
+                <Spin size="small" />
+              </div>
             )}
             {page.visible === false && (
               <div
@@ -121,7 +129,7 @@ const PageItem: FC<{
                 onClick={() => onPageClick(page.id)}
                 onContextMenu={(e) => onContextMenu(e, page.id)}
               >
-                <PreviewCloseOne theme="outline" size="24" fill="#333" />
+                <PreviewCloseOne theme="outline" size="24" fill="var(--icon-color)" />
               </div>
             )}
           </div>
@@ -130,7 +138,7 @@ const PageItem: FC<{
           <div>
             {page.visible && (
               <div
-                className={`${styles.floatAction} bg-[#fff]`}
+                className={`${styles.floatAction} bg-chrome-panel-solid`}
                 onClick={(e) => onPlayPage(page.id, e)}
               >
                 <PlayOne theme="filled" size="16" fill="#f25f00" />
@@ -506,7 +514,7 @@ const PreviewComponent: FC = () => {
             })}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-[#8c8c8c] text-sm px-[15px]">
+          <div className="flex items-center justify-center h-full text-chrome-muted text-sm px-[15px]">
             暂无页面数据
           </div>
         )}

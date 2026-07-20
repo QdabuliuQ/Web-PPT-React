@@ -29,7 +29,7 @@ export const getIconMenuItems = (): Menu => {
     {
       type: "submenu",
       label: t('elements.icon.style'),
-      icon: <AllApplication theme="outline" size="13" fill="#333" />,
+      icon: <AllApplication theme="outline" size="13" fill="var(--icon-color)" />,
       children: [
         {
           type: "item",

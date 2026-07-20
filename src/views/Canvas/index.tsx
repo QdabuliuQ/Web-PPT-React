@@ -1,5 +1,6 @@
 import SearchSvg from "@/assets/images/search.svg";
 import { GlobalContextMenu } from "@/components";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
 import type { MenuItem } from "@/hooks/useContextMenu";
 import { textureItems } from "@/views/Menu/components/Start/texture";
 import { ElementRenderer } from "@/utils/elementRenderer";
@@ -16,6 +17,7 @@ import {
   usePageActiveStore,
   usePPTStore,
   useRemarkEditActiveStore,
+  useThemeStore,
 } from "@/store";
 import type { Elements, Page } from "@/store/ppt";
 import { getRandomId } from "@/utils";
@@ -48,6 +50,7 @@ import {
   useState,
   type FC,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { PreviewCanvas } from "./PreviewCanvas";
 import { RemarkEdit } from "./RemarkEdit";
 
@@ -61,6 +64,7 @@ interface CanvasProps {
 }
 
 const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
+  const { t } = useTranslation();
   // 使用 Zustand hooks 订阅状态变化
   const pages = usePPTStore((state) => state.pages);
   const pageActive = usePageActiveStore((state) => state.pageActive);
@@ -79,10 +83,19 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const [, forceUpdate] = useState(0); // 用于 play 模式强制重新渲染
   const lastContainerSizeRef = useRef({ width: 0, height: 0 });
   const [showEndMessage, setShowEndMessage] = useState(false); // 是否显示结束提示
-
-  // Canvas 固定尺寸 - 使用常量避免重复声明
-  const CANVAS_WIDTH = useMemo(() => 1000, []);
-  const CANVAS_HEIGHT = useMemo(() => 700, []);
+  /** 放大后拖拽平移（屏幕像素） */
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [spacePressed, setSpacePressed] = useState(false);
+  const panStartRef = useRef<{
+    x: number;
+    y: number;
+    panX: number;
+    panY: number;
+    pointerId: number;
+  } | null>(null);
+  const didPanRef = useRef(false);
+  const canPanCanvas = mode === "edit" && zoomPercent > 100;
 
   // 计算容器适配缩放：由外部容器决定最大等比例尺寸，四周至少保留 20px
   const calculateScale = useMemoizedFn(() => {
@@ -110,7 +123,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     const availableWidth = Math.max(currentSize.width - PADDING * 2, 1);
     const availableHeight = Math.max(currentSize.height - PADDING * 2, 1);
 
-    // 宽高分别计算，取较小值以保持 1000:700 等比例，并默认放到最大
+    // 宽高分别计算，取较小值以保持 16:9 等比例，并默认放到最大
     const scaleX = availableWidth / CANVAS_WIDTH;
     const scaleY = availableHeight / CANVAS_HEIGHT;
     const newFitScale = Math.max(Math.min(scaleX, scaleY), 0.1);
@@ -127,6 +140,45 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   useEffect(() => {
     setTimeout(calculateScale, 0);
   }, [calculateScale]);
+
+  // 缩放回到适配及以下时重置平移
+  useEffect(() => {
+    if (zoomPercent <= 100) {
+      setPanOffset({ x: 0, y: 0 });
+    }
+  }, [zoomPercent]);
+
+  // Space 进入平移模式（放大时）
+  useEffect(() => {
+    if (mode !== "edit") return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+      e.preventDefault();
+      setSpacePressed(true);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        setSpacePressed(false);
+        setIsPanning(false);
+        panStartRef.current = null;
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [mode]);
 
   // 监听全局点击事件，关闭右键菜单
   // 注意：react-contexify 已经内置了点击外部关闭菜单的功能
@@ -303,6 +355,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       return;
     }
 
+    // 平移操作后不触发取消选中
+    if (didPanRef.current) {
+      didPanRef.current = false;
+      return;
+    }
+
     // 检查点击的是否是画布本身（而不是其中的元素）
     if (e.target === e.currentTarget) {
       elementActiveStore.resetElementActive();
@@ -348,8 +406,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       newElement.x = x;
       newElement.y = y;
     }
-    pptStore.addElementInfo(pageActive, newElement as any);
-    elementActiveStore.setElementActive(newElement.id);
+    const ok = pptStore.addElementInfo(pageActive, newElement as any);
+    if (ok) {
+      elementActiveStore.setElementActive(newElement.id);
+    }
   });
 
   // 关闭右键菜单
@@ -483,17 +543,97 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         ...baseStyle,
         zoom: computedScale,
       };
-    } else {
-      // 其他模式使用 transform 进行缩放
-      return {
-        ...baseStyle,
-        transform: `scale(${computedScale})`,
-        transformOrigin: "center center",
-      };
     }
+
+    const panX = mode === "edit" ? panOffset.x : 0;
+    const panY = mode === "edit" ? panOffset.y : 0;
+
+    // translate 在 scale 之后应用（CSS 从右到左），平移使用屏幕像素
+    return {
+      ...baseStyle,
+      transform: `translate(${panX}px, ${panY}px) scale(${computedScale})`,
+      transformOrigin: "center center",
+      transition: isPanning ? "none" : undefined,
+    };
   };
 
   const canvasStyle = getCanvasStyle();
+
+  const clampPan = useMemoizedFn((x: number, y: number) => {
+    const parent = containerRef.current;
+    if (!parent) return { x, y };
+    const { width, height } = parent.getBoundingClientRect();
+    const scaledW = CANVAS_WIDTH * scale;
+    const scaledH = CANVAS_HEIGHT * scale;
+    const maxX = Math.max(40, (scaledW - width) / 2 + 80);
+    const maxY = Math.max(40, (scaledH - height) / 2 + 80);
+    return {
+      x: Math.min(maxX, Math.max(-maxX, x)),
+      y: Math.min(maxY, Math.max(-maxY, y)),
+    };
+  });
+
+  const startPan = useMemoizedFn((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    didPanRef.current = false;
+    panStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      panX: panOffset.x,
+      panY: panOffset.y,
+      pointerId: e.pointerId,
+    };
+    setIsPanning(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  });
+
+  const handlePanPointerDown = useMemoizedFn((e: React.PointerEvent) => {
+    if (!canPanCanvas) return;
+
+    const isMiddle = e.button === 1;
+    const isSpaceLeft = e.button === 0 && spacePressed;
+    const isEmptyParent =
+      e.button === 0 && e.target === e.currentTarget && !spacePressed;
+
+    // 空白父容器 / 中键 / Space+左键 可拖动画布
+    if (!isMiddle && !isSpaceLeft && !isEmptyParent) return;
+
+    startPan(e);
+  });
+
+  const handleCanvasPanPointerDown = useMemoizedFn((e: React.PointerEvent) => {
+    if (!canPanCanvas) return;
+    const isMiddle = e.button === 1;
+    const isSpaceLeft = e.button === 0 && spacePressed;
+    const isEmptyCanvas = e.button === 0 && e.target === e.currentTarget;
+    if (!isMiddle && !isSpaceLeft && !isEmptyCanvas) return;
+    startPan(e);
+  });
+
+  const handlePanPointerMove = useMemoizedFn((e: React.PointerEvent) => {
+    const start = panStartRef.current;
+    if (!start || start.pointerId !== e.pointerId) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+      didPanRef.current = true;
+    }
+    const next = clampPan(start.panX + dx, start.panY + dy);
+    setPanOffset(next);
+  });
+
+  const handlePanPointerUp = useMemoizedFn((e: React.PointerEvent) => {
+    const start = panStartRef.current;
+    if (!start || start.pointerId !== e.pointerId) return;
+    panStartRef.current = null;
+    setIsPanning(false);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  });
 
   // 渲染元素列表（使用 json-render 简化渲染逻辑）
   const renderElements = useMemoizedFn((isEditMode: boolean) => {
@@ -538,7 +678,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(false);
           }
         },
-        icon: <Left theme="outline" size="13" fill="#333" />,
+        icon: <Left theme="outline" size="13" fill="var(--icon-color)" />,
         disabled: currentPageIndex === 0,
       },
       {
@@ -556,7 +696,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(true);
           }
         },
-        icon: <Right theme="outline" size="13" fill="#333" />,
+        icon: <Right theme="outline" size="13" fill="var(--icon-color)" />,
         disabled: currentPageIndex === pages.length - 1,
       },
       {
@@ -570,7 +710,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(false);
           }
         },
-        icon: <GoStart theme="outline" size="13" fill="#333" />,
+        icon: <GoStart theme="outline" size="13" fill="var(--icon-color)" />,
         disabled: currentPageIndex === 0,
       },
       {
@@ -584,7 +724,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             setShowEndMessage(false);
           }
         },
-        icon: <GoEnd theme="outline" size="13" fill="#333" />,
+        icon: <GoEnd theme="outline" size="13" fill="var(--icon-color)" />,
         disabled: currentPageIndex === pages.length - 1,
       },
       {
@@ -840,9 +980,18 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             ...backgroundStyle,
             boxShadow:
               "0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08)",
+            cursor: isPanning
+              ? "grabbing"
+              : canPanCanvas && spacePressed
+                ? "grab"
+                : undefined,
           }}
           onTransitionEnd={updateCanvasOffset}
           onClick={handleCanvasClick}
+          onPointerDown={handleCanvasPanPointerDown}
+          onPointerMove={handlePanPointerMove}
+          onPointerUp={handlePanPointerUp}
+          onPointerCancel={handlePanPointerUp}
           onContextMenu={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -883,12 +1032,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                 // 粘贴
                 {
                   type: "item",
-                  label: "粘贴",
+                  label: t("contextMenu.paste"),
                   onClick: () => {
                     handleCanvasPaste(canvasX, canvasY);
                     closeMenu();
                   },
-                  icon: <Clipboard theme="outline" size="13" fill="#333" />,
+                  icon: <Clipboard theme="outline" size="13" fill="var(--icon-color)" />,
                   disabled: !copyElementStore.hasCopiedElement(),
                 },
                 // 分隔线
@@ -898,8 +1047,8 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                 // 网格线设置
                 {
                   type: "submenu",
-                  label: "网格线",
-                  icon: <GridTwo theme="outline" size="13" fill="#333" />,
+                  label: t("contextMenu.gridLines"),
+                  icon: <GridTwo theme="outline" size="13" fill="var(--icon-color)" />,
                   children: [
                     {
                       type: "item",
@@ -946,7 +1095,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                 // 标尺
                 {
                   type: "item",
-                  label: gridType === "line" ? "隐藏标尺" : "显示标尺",
+                  label:
+                    gridType === "line"
+                      ? t("contextMenu.hideRuler")
+                      : t("contextMenu.showRuler"),
                   onClick: () => {
                     if (gridType === "line") {
                       pptStore.setGridType("none");
@@ -955,31 +1107,33 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                     }
                     closeMenu();
                   },
-                  icon: <Ruler theme="outline" size="13" fill="#333" />,
+                  icon: <Ruler theme="outline" size="13" fill="var(--icon-color)" />,
                 },
                 // 参考线
                 {
                   type: "item",
-                  label: guideLineShow ? "隐藏参考线" : "显示参考线",
+                  label: guideLineShow
+                    ? t("contextMenu.hideGuides")
+                    : t("contextMenu.showGuides"),
                   onClick: () => {
                     pptStore.setGuideLineShow(!guideLineShow);
                     closeMenu();
                   },
                   icon: (
-                    <DividingLineOne theme="outline" size="13" fill="#333" />
+                    <DividingLineOne theme="outline" size="13" fill="var(--icon-color)" />
                   ),
                   disabled: gridType !== "line",
                 },
                 // 清除参考线
                 {
                   type: "item",
-                  label: "清除参考线",
+                  label: t("contextMenu.clearGuides"),
                   onClick: () => {
                     pptStore.setHorizontalLine([]);
                     pptStore.setVerticalLine([]);
                     closeMenu();
                   },
-                  icon: <Clear theme="outline" size="13" fill="#333" />,
+                  icon: <Clear theme="outline" size="13" fill="var(--icon-color)" />,
                   disabled: gridType !== "line",
                 },
                 // 分隔线
@@ -989,7 +1143,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                 // 重置幻灯片
                 {
                   type: "item",
-                  label: "重置幻灯片",
+                  label: t("contextMenu.resetSlide"),
                   onClick: () => {
                     if (currentPageId) {
                       const pages = [...pptStore.getPages()];
@@ -1008,12 +1162,14 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                     }
                     closeMenu();
                   },
-                  icon: <Clear theme="outline" size="13" fill="#333" />,
+                  icon: <Clear theme="outline" size="13" fill="var(--icon-color)" />,
                 },
                 // 隐藏/显示幻灯片
                 {
                   type: "item",
-                  label: isPageVisible ? "隐藏幻灯片" : "显示幻灯片",
+                  label: isPageVisible
+                    ? t("contextMenu.hideSlide")
+                    : t("contextMenu.showSlide"),
                   onClick: () => {
                     if (currentPageId) {
                       pptStore.togglePageVisible(currentPageId);
@@ -1021,28 +1177,28 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                     closeMenu();
                   },
                   icon: isPageVisible ? (
-                    <PreviewCloseOne theme="outline" size="13" fill="#333" />
+                    <PreviewCloseOne theme="outline" size="13" fill="var(--icon-color)" />
                   ) : (
-                    <PreviewOpen theme="outline" size="13" fill="#333" />
+                    <PreviewOpen theme="outline" size="13" fill="var(--icon-color)" />
                   ),
                 },
                 // 播放幻灯片
                 {
                   type: "item",
-                  label: "播放幻灯片",
+                  label: t("contextMenu.playSlide"),
                   onClick: () => {
                     if (currentPageId) {
                       fullscreenStore.enterFullscreen(currentPageId);
                     }
                     closeMenu();
                   },
-                  icon: <Play theme="outline" size="13" fill="#333" />,
+                  icon: <Play theme="outline" size="13" fill="var(--icon-color)" />,
                   disabled: !isPageVisible,
                 },
                 // 导出图片
                 {
                   type: "item",
-                  label: "导出图片",
+                  label: t("contextMenu.exportImage"),
                   onClick: async () => {
                     if (currentPageId) {
                       const dataUrl = await exportPageAsImage(currentPageId);
@@ -1050,13 +1206,13 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
                         const name = pptStore.getName();
                         downloadImage(
                           dataUrl,
-                          `${name || "未命名"}_${currentPageId}.png`
+                          `${name || t("contextMenu.untitled")}_${currentPageId}.png`
                         );
                       }
                     }
                     closeMenu();
                   },
-                  icon: <Export theme="outline" size="13" fill="#333" />,
+                  icon: <Export theme="outline" size="13" fill="var(--icon-color)" />,
                 }
               );
 
@@ -1076,7 +1232,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent ${gridSize - 1}px, #e5e5e5 ${gridSize}px), repeating-linear-gradient(90deg, transparent, transparent ${gridSize - 1}px, #e5e5e5 ${gridSize}px)`,
+                backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent ${gridSize - 1}px, var(--grid-line) ${gridSize}px), repeating-linear-gradient(90deg, transparent, transparent ${gridSize - 1}px, var(--grid-line) ${gridSize}px)`,
                 backgroundSize: `${gridSize}px ${gridSize}px`,
               }}
             />
@@ -1316,23 +1472,19 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
     const parentRect = parentContainer.getBoundingClientRect();
 
-    // 画布固定尺寸
-    const CANVAS_WIDTH = 1000;
-    const CANVAS_HEIGHT = 700;
-
     // 使用当前的缩放比例
     const canvasScale = scale;
 
     // 计算画布在父容器中的逻辑位置（未缩放前的坐标）
-    // 画布使用 left: 50%, marginLeft: -500px 来居中
-    // 实际位置 = 父容器宽度 / 2 - 500
-    // 逻辑位置（缩放前）= 实际位置 / 缩放比例 = (父容器宽度 / 2 - 500) / scale
+    // 画布使用 left: 50%, marginLeft: -CANVAS_WIDTH/2 来居中
     const parentWidth = parentRect.width;
     const parentHeight = parentRect.height;
 
-    // 画布逻辑位置（相对于父容器的左上角）
-    const logicalLeft = parentWidth / 2 / canvasScale - CANVAS_WIDTH / 2;
-    const logicalTop = parentHeight / 2 / canvasScale - CANVAS_HEIGHT / 2;
+    // 画布逻辑位置（相对于父容器的左上角）+ 平移（屏幕像素 / scale）
+    const logicalLeft =
+      parentWidth / 2 / canvasScale - CANVAS_WIDTH / 2 + panOffset.x / canvasScale;
+    const logicalTop =
+      parentHeight / 2 / canvasScale - CANVAS_HEIGHT / 2 + panOffset.y / canvasScale;
 
     setCanvasOffset((prev) => {
       if (prev.left !== logicalLeft || prev.top !== logicalTop) {
@@ -1409,6 +1561,12 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     }
   }, [rulerZoom, canvasOffset.top, canvasOffset.left, gridType]);
 
+  // 平移变化时同步标尺偏移
+  useEffect(() => {
+    if (mode !== "edit" || isPanning) return;
+    updateCanvasOffset();
+  }, [panOffset.x, panOffset.y, mode, isPanning, updateCanvasOffset]);
+
   // 使用从 store 订阅的参考线数据并转换为数字数组
   const horizontalLine = useMemo(
     () => horizontalLineFromStore.map(Number),
@@ -1458,9 +1616,28 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     else return 400;
   }, [scale]);
 
+  const themeMode = useThemeStore((state) => state.theme);
+  const guideColors = useMemo(
+    () =>
+      themeMode === "dark"
+        ? {
+            backgroundColor: "#1e1d1b",
+            lineColor: "#3a3835",
+            textColor: "#7a7670",
+            cornerText: "#6a6560",
+          }
+        : {
+            backgroundColor: "#fafafa",
+            lineColor: "#d9d9d9",
+            textColor: "#999",
+            cornerText: "#ccc",
+          },
+    [themeMode]
+  );
+
   return (
     <div
-      className={`h-full flex-1 relative ${mode === "edit" ? "bg-transparent" : "bg-[#f0f1f3]"}`}
+      className={`h-full flex-1 relative m-0 p-0 ${mode === "edit" ? "bg-transparent" : "bg-chrome-guide"}`}
       id={mode === "edit" ? "ruler-container" : undefined}
     >
       {/* resize 时的蒙层 */}
@@ -1471,7 +1648,9 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             pointerEvents: "none",
             opacity: showResizeOverlay ? 1 : 0,
             background: showResizeOverlay
-              ? "rgba(255, 255, 255, 0.5)"
+              ? themeMode === "dark"
+                ? "rgba(20, 19, 18, 0.55)"
+                : "rgba(255, 255, 255, 0.5)"
               : "transparent",
             zIndex: showResizeOverlay ? 9999 : -1,
             backdropFilter: showResizeOverlay ? "blur(20px)" : "none",
@@ -1494,20 +1673,31 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             unit={computedUnit}
             zoom={rulerZoom}
             displayDragPos={false}
-            backgroundColor="#fafafa"
-            lineColor="#d9d9d9"
-            textColor="#999"
+            direction="end"
+            backgroundColor={guideColors.backgroundColor}
+            lineColor={guideColors.lineColor}
+            textColor={guideColors.textColor}
             font="12px"
             textOffset={[0, 9]}
             snapThreshold={guideSnapThreshold}
             scrollPos={-canvasOffset.left}
+            rulerStyle={{
+              display: "block",
+              width: "100%",
+              height: "100%",
+              margin: 0,
+              padding: 0,
+            }}
             style={{
               position: "absolute",
               top: 0,
               left: 23,
+              margin: 0,
+              padding: 0,
               zIndex: 2,
               height: 23,
               width: "calc(100% - 23px)",
+              backgroundColor: guideColors.backgroundColor,
               pointerEvents: "auto",
             }}
             guides={horizontalLine}
@@ -1525,26 +1715,43 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             unit={computedUnit}
             zoom={rulerZoom}
             displayDragPos={false}
-            backgroundColor="#fafafa"
-            lineColor="#d9d9d9"
-            textColor="#999"
+            direction="end"
+            backgroundColor={guideColors.backgroundColor}
+            lineColor={guideColors.lineColor}
+            textColor={guideColors.textColor}
             font="12px"
             textOffset={[9, 0]}
             snapThreshold={guideSnapThreshold}
             scrollPos={-canvasOffset.top}
+            rulerStyle={{
+              display: "block",
+              width: "100%",
+              height: "100%",
+              margin: 0,
+              padding: 0,
+            }}
             style={{
               position: "absolute",
-              top: "23px",
+              top: 23,
               left: 0,
+              margin: 0,
+              padding: 0,
               zIndex: 2,
-              width: "23px",
+              width: 23,
               height: `calc(100% - 23px - ${remarkEditActive ? 32 : 0}px)`,
+              backgroundColor: guideColors.backgroundColor,
               pointerEvents: "auto",
             }}
             guides={verticalLine}
             onChangeGuides={(v) => pptStore.setVerticalLine(v.guides)}
           />
-          <div className="w-[23px] text-[11px] text-[#ccc] h-[23px] bg-[#fafafa] absolute top-0 left-0 flex items-center justify-center">
+          <div
+            className="w-[23px] text-[11px] leading-[12px] h-[23px] absolute top-0 left-0 flex items-center justify-center m-0 p-0"
+            style={{
+              color: guideColors.cornerText,
+              backgroundColor: guideColors.backgroundColor,
+            }}
+          >
             px
           </div>
         </>
@@ -1555,7 +1762,23 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
           mode !== "preview" ? `parent-canvas-container-${pageId}` : undefined
         }
         className={containerClassName}
-        style={containerStyle}
+        style={{
+          ...containerStyle,
+          cursor: isPanning ? "grabbing" : canPanCanvas ? "grab" : undefined,
+          userSelect: isPanning || spacePressed ? "none" : undefined,
+        }}
+        onPointerDown={mode === "edit" ? handlePanPointerDown : undefined}
+        onPointerMove={mode === "edit" ? handlePanPointerMove : undefined}
+        onPointerUp={mode === "edit" ? handlePanPointerUp : undefined}
+        onPointerCancel={mode === "edit" ? handlePanPointerUp : undefined}
+        onAuxClick={
+          mode === "edit"
+            ? (e) => {
+                // 阻止中键默认自动滚动
+                if (e.button === 1) e.preventDefault();
+              }
+            : undefined
+        }
       >
         {mode === "play" && (
           <GlobalContextMenu

@@ -1,4 +1,9 @@
 import { PanelButton } from "@/components/PanelButton";
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  getCenteredElementPosition,
+} from "@/constants/canvas";
 import { pageActiveStore, pptStore } from "@/store";
 import { TableFile } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
@@ -44,15 +49,25 @@ export default function TableButton() {
 
   const handleGridItemClick = useMemoizedFn(
     (rowIndex: number, columnIndex: number) => {
-      // 清除延迟关闭的定时器
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
 
+      const cols = columnIndex + 1;
+      const rows = rowIndex + 1;
+      const width = Math.min(
+        Math.round(CANVAS_WIDTH * 0.8),
+        Math.max(300, cols * 80)
+      );
+      const height = Math.min(
+        Math.round(CANVAS_HEIGHT * 0.8),
+        Math.max(150, rows * 36)
+      );
+
       const table = CreateTable({
-        dataSource: Array.from({ length: rowIndex + 1 }).map(() =>
-          Array.from({ length: columnIndex + 1 }).map(() => ({
+        dataSource: Array.from({ length: rows }).map(() =>
+          Array.from({ length: cols }).map(() => ({
             fontSize: 14,
             color: "#000000",
             backgroundColor: "#ffffff",
@@ -61,26 +76,22 @@ export default function TableButton() {
             underline: false,
             strikethrough: false,
             value: "",
-            placement: "center-center",
+            placement: "center-center" as const,
           }))
         ),
-        columnWidths: Array.from({ length: columnIndex + 1 }).map(
-          () => 100 / (columnIndex + 1)
-        ),
-        rowHeights: Array.from({ length: rowIndex + 1 }).map(
-          () => 100 / (rowIndex + 1)
-        ),
+        columnWidths: Array.from({ length: cols }).map(() => 100 / cols),
+        rowHeights: Array.from({ length: rows }).map(() => 100 / rows),
+        width,
+        height,
+        ...getCenteredElementPosition(width, height),
       });
 
-      // 添加表格到 mobx store
       const activePageId = pageActiveStore.getPageActive();
       if (activePageId && table) {
         pptStore.addElementInfo(activePageId, table);
       }
 
-      // 立即关闭 Popover
       setOpen(false);
-      // 重置索引
       setIndexs([-1, -1]);
     }
   );
@@ -126,10 +137,21 @@ export default function TableButton() {
   );
 
   return (
-    <Popover open={open} placement="bottom" content={content}>
+    <Popover
+      open={open}
+      placement="bottom"
+      content={content}
+      styles={{
+        body: {
+          background: "var(--panel-bg-solid)",
+          boxShadow: "var(--panel-shadow)",
+        },
+      }}
+    >
       <div onMouseEnter={handleOpen} onMouseLeave={handleClose}>
         <PanelButton
-          icon={<TableFile theme="outline" size="22" fill="#333" />}
+          active={open}
+          icon={<TableFile theme="outline" size="22" fill="currentColor" />}
           title={t('elements.table.button')}
         />
       </div>

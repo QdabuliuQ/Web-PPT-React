@@ -3,8 +3,14 @@ import type { IIconProps } from "@/element/Icon";
 import type { IImageProps } from "@/element/Image";
 import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
+import {
+  MAX_ELEMENTS_PER_PAGE,
+  MAX_PAGES,
+} from "@/constants/limits";
+import i18n from "@/i18n";
 import type { IMindMapProps } from "@/types/element";
 import { getRandomId } from "@/utils";
+import { message } from "antd";
 import { create } from "zustand";
 
 export type Elements =
@@ -75,7 +81,7 @@ interface PPTState {
   getPages: () => IPage;
   resetPages: () => void;
 
-  addPage: (afterPageId?: string) => string;
+  addPage: (afterPageId?: string) => string | null;
   duplicatePage: (pageId: string) => string | null;
   deletePage: (pageId: string) => boolean;
   movePage: (pageId: string, direction: "up" | "down" | "first" | "last") => void;
@@ -88,7 +94,7 @@ interface PPTState {
   ) => void;
 
   // Element operations
-  addElement: (pageId: string, element: Elements) => void;
+  addElement: (pageId: string, element: Elements) => boolean;
   deleteElement: (pageId: string, elementId: string) => void;
   updateElement: (
     pageId: string,
@@ -163,6 +169,11 @@ export const usePPTStore = create<PPTState>((set, get) => ({
 
   // Add page
   addPage: (afterPageId?) => {
+    if (get().pages.length >= MAX_PAGES) {
+      message.warning(i18n.t("limits.maxPages", { count: MAX_PAGES }));
+      return null;
+    }
+
     const newPage: Page = {
       id: `page_${getRandomId()}`,
       elements: [],
@@ -204,6 +215,11 @@ export const usePPTStore = create<PPTState>((set, get) => ({
 
   // Duplicate page
   duplicatePage: (pageId) => {
+    if (get().pages.length >= MAX_PAGES) {
+      message.warning(i18n.t("limits.maxPages", { count: MAX_PAGES }));
+      return null;
+    }
+
     const currentPages = get().pages;
     const pageIndex = currentPages.findIndex((page) => page.id === pageId);
 
@@ -288,12 +304,21 @@ export const usePPTStore = create<PPTState>((set, get) => ({
   // Add element
   addElement: (pageId, element) => {
     const currentPages = get().pages;
-    const newPages = currentPages.map((page) =>
-      page.id === pageId
-        ? { ...page, elements: [...page.elements, element] }
-        : page
+    const page = currentPages.find((p) => p.id === pageId);
+    if (!page) return false;
+
+    if (page.elements.length >= MAX_ELEMENTS_PER_PAGE) {
+      message.warning(
+        i18n.t("limits.maxElements", { count: MAX_ELEMENTS_PER_PAGE })
+      );
+      return false;
+    }
+
+    const newPages = currentPages.map((p) =>
+      p.id === pageId ? { ...p, elements: [...p.elements, element] } : p
     );
     set({ pages: newPages });
+    return true;
   },
 
   // Delete element

@@ -1,5 +1,6 @@
 import KeyboardIcon from "@/components/KeyboardIcon";
 import type { MenuItem } from "@/hooks/useContextMenu";
+import i18n from "@/i18n";
 import { contextMenuStore, fullscreenStore, pptStore } from "@/store";
 import {
   addPageAndActivate,
@@ -46,11 +47,13 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
   const isLastPage = pageIndex === pages.length - 1;
   const isVisible = currentPage?.visible !== false;
 
+  const t = i18n.t.bind(i18n);
+
   const menuItems: MenuItem[] = [
     {
       type: "item" as const,
-      label: "新建幻灯片",
-      icon: <Add theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.newSlide"),
+      icon: <Add theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         addPageAndActivate(pageId);
         contextMenuStore.hideMenu();
@@ -59,8 +62,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "复制幻灯片",
-      icon: <Copy theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.duplicateSlide"),
+      icon: <Copy theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         duplicatePageAndActivate(pageId);
         contextMenuStore.hideMenu();
@@ -70,8 +73,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "删除幻灯片",
-      icon: <Delete theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.deleteSlide"),
+      icon: <Delete theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         deletePageAndFallback(pageId);
         contextMenuStore.hideMenu();
@@ -81,11 +84,13 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: isVisible ? "隐藏幻灯片" : "显示幻灯片",
+      label: isVisible
+        ? t("contextMenu.hideSlide")
+        : t("contextMenu.showSlide"),
       icon: isVisible ? (
-        <PreviewCloseOne theme="outline" size="13" fill="#333" />
+        <PreviewCloseOne theme="outline" size="13" fill="var(--icon-color)" />
       ) : (
-        <PreviewOpen theme="outline" size="13" fill="#333" />
+        <PreviewOpen theme="outline" size="13" fill="var(--icon-color)" />
       ),
       onClick: () => {
         pptStore.togglePageVisible(pageId);
@@ -98,8 +103,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "播放幻灯片",
-      icon: <Play theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.playSlide"),
+      icon: <Play theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         fullscreenStore.enterFullscreen(pageId);
         contextMenuStore.hideMenu();
@@ -109,8 +114,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "重置幻灯片",
-      icon: <Clear theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.resetSlide"),
+      icon: <Clear theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         resetPageElements(pageId);
         contextMenuStore.hideMenu();
@@ -119,13 +124,16 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "导出图片",
-      icon: <Export theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.exportImage"),
+      icon: <Export theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: async () => {
         const dataUrl = await exportPageAsImage(pageId);
         if (dataUrl) {
           const name = pptStore.getName();
-          downloadImage(dataUrl, `${name || "未命名"}_${pageId}.png`);
+          downloadImage(
+            dataUrl,
+            `${name || t("contextMenu.untitled")}_${pageId}.png`
+          );
         }
         contextMenuStore.hideMenu();
       },
@@ -135,8 +143,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "上移",
-      icon: <ArrowUp theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.moveUp"),
+      icon: <ArrowUp theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         pptStore.movePage(pageId, "up");
         contextMenuStore.hideMenu();
@@ -145,8 +153,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "下移",
-      icon: <ArrowDown theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.moveDown"),
+      icon: <ArrowDown theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         pptStore.movePage(pageId, "down");
         contextMenuStore.hideMenu();
@@ -155,8 +163,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "移动到最前",
-      icon: <BringForward theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.moveToFirst"),
+      icon: <BringForward theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         pptStore.movePage(pageId, "first");
         contextMenuStore.hideMenu();
@@ -165,8 +173,8 @@ export const showPageContextMenu = (options: ShowPageContextMenuOptions) => {
     },
     {
       type: "item" as const,
-      label: "移动到最后",
-      icon: <SendBackward theme="outline" size="13" fill="#333" />,
+      label: t("contextMenu.moveToLast"),
+      icon: <SendBackward theme="outline" size="13" fill="var(--icon-color)" />,
       onClick: () => {
         pptStore.movePage(pageId, "last");
         contextMenuStore.hideMenu();

@@ -545,7 +545,7 @@ export const YAxisPanel: FC = memo(() => {
   return (
     <ChartStylePanel
       title={t('chartConfig.sections.yAxis')}
-      icon={<ChartHistogramOne theme="outline" size="18" fill="#333" />}
+      icon={<ChartHistogramOne theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs}
       getValue={getValue}
       defaultActiveKey={["basic"]}

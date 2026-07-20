@@ -1,6 +1,13 @@
 import { useMemoizedFn } from "ahooks";
 import { Button, type ButtonProps } from "antd";
-import { cloneElement, isValidElement, useMemo, type FC, type ReactElement } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useMemo,
+  type FC,
+  type ReactElement,
+} from "react";
+
 interface IPanelLargeButtonProps {
   title: string;
   icon: React.ReactNode;
@@ -8,7 +15,6 @@ interface IPanelLargeButtonProps {
   active?: boolean;
   disabled?: boolean;
   type?: ButtonProps["type"];
-  aspectRatio?: boolean;
 }
 
 export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
@@ -18,7 +24,6 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
   active = false,
   disabled = false,
   type = "text",
-  aspectRatio = true,
 }) => {
   const clickHandle = useMemoizedFn(() => {
     if (!disabled) {
@@ -37,44 +42,30 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
       fontSize: "12px",
       gap: "0px",
       lineHeight: "1",
-      padding: "0px",
+      padding: "0 8px",
+      color: "var(--text-secondary)",
+      borderRadius: "6px",
+      border: "1px solid transparent",
+      flexShrink: 0,
     };
-
-    if (aspectRatio) {
-      baseStyles.aspectRatio = "1/1";
-    } else {
-      baseStyles.padding = "0 8px";
-    }
 
     if (active) {
       return {
         ...baseStyles,
-        backgroundColor: "#fff2e6",
-        color: "#f25f00",
-        border: "1px solid transparent",
-        borderRadius: "6px",
+        backgroundColor: "var(--primary-soft)",
+        color: "var(--primary-color)",
       };
     }
 
-    return {
-      ...baseStyles,
-      borderRadius: "6px",
-      border: "1px solid transparent",
-    };
-  }, [active, aspectRatio]);
+    return baseStyles;
+  }, [active]);
 
-  // 处理禁用状态下的icon颜色
   const renderIcon = useMemo(() => {
     if (!isValidElement(icon)) return icon;
 
-    // 如果是禁用状态，修改icon的fill颜色为灰色
-    if (disabled) {
-      return cloneElement(icon as ReactElement<{ fill?: string }>, {
-        fill: "#bbb", // 禁用状态的灰色
-      });
-    }
-
-    return icon;
+    return cloneElement(icon as ReactElement<{ fill?: string }>, {
+      fill: disabled ? "var(--text-disabled)" : "currentColor",
+    });
   }, [icon, disabled]);
 
   return (
@@ -83,9 +74,10 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
       onClick={clickHandle}
       type={type}
       disabled={disabled}
+      className="hover:!bg-[var(--primary-soft)] hover:!text-[var(--primary-color)]"
     >
       <i className="mb-[6px]">{renderIcon}</i>
-      <span className={`${disabled ? "text-gray-400" : ""} text-[12px]`}>
+      <span className={`${disabled ? "text-chrome-disabled" : ""} text-[12px] whitespace-nowrap`}>
         {title}
       </span>
     </Button>

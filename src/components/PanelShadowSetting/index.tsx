@@ -44,7 +44,7 @@ export const PanelShadowSetting: FC<IPanelShadowSettingProps> = ({
       <PanelLargeButton
         title={t('component.shadow.title')}
         active={shadow}
-        icon={<DropShadowDown theme="outline" size="18" fill="#333" />}
+        icon={<DropShadowDown theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={() => onShadowChange(!shadow)}
       />
       <div className="flex flex-col justify-center gap-[10px]">

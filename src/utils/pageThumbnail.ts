@@ -1,10 +1,8 @@
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
 import type { Page } from "@/store/ppt";
 import { snapdom } from "@zumer/snapdom";
 import { createElement, useEffect, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
-
-const CANVAS_WIDTH = 1000;
-const CANVAS_HEIGHT = 700;
 const DEBOUNCE_MS = 400;
 const CONCURRENCY = 1;
 const SNAP_SCALE = 0.4;
@@ -18,6 +16,8 @@ type CacheEntry = {
 const cache = new Map<string, CacheEntry>();
 const listeners = new Set<() => void>();
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+/** 防抖期间的最新 page 快照，避免反复重置计时器 */
+const debouncePages = new Map<string, Page>();
 const queue: Page[] = [];
 const queuedIds = new Set<string>();
 const generatingIds = new Set<string>();
@@ -28,6 +28,23 @@ let version = 0;
 function notify() {
   version += 1;
   listeners.forEach((listener) => listener());
+}
+
+export function isThumbnailPending(pageId: string): boolean {
+  return (
+    debounceTimers.has(pageId) ||
+    queuedIds.has(pageId) ||
+    generatingIds.has(pageId)
+  );
+}
+
+/**
+ * 仅在「还没有可用缩略图」且正在生成时视为 loading。
+ * 已有缓存图时后台刷新不再转圈，避免图已出来仍一直 loading。
+ */
+export function isThumbnailLoading(page: Page): boolean {
+  if (getCachedThumbnail(page.id)) return false;
+  return isThumbnailPending(page.id);
 }
 
 export function getPageFingerprint(page: Page): string {
@@ -150,6 +167,11 @@ export async function generatePageThumbnail(
 
     const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
     cache.set(page.id, { url: dataUrl, fingerprint });
+    // 生成成功后清掉残留防抖，避免 pending 卡住
+    const timer = debounceTimers.get(page.id);
+    if (timer) clearTimeout(timer);
+    debounceTimers.delete(page.id);
+    debouncePages.delete(page.id);
     notify();
     return dataUrl;
   } catch (error) {
@@ -188,6 +210,7 @@ function enqueue(page: Page, priority: boolean) {
     queue.push(page);
   }
   queuedIds.add(page.id);
+  notify();
   processQueue();
 }
 
@@ -202,12 +225,14 @@ function processQueue() {
 
     activeJobs += 1;
     generatingIds.add(page.id);
+    notify();
 
     generatePageThumbnail(page)
       .catch(() => null)
       .finally(() => {
         activeJobs -= 1;
         generatingIds.delete(page.id);
+        notify();
 
         const pending = pendingRegen.get(page.id);
         if (pending) {
@@ -224,6 +249,7 @@ function processQueue() {
 
 /**
  * 脏页防抖调度：仅 fingerprint 变化时重新生成。
+ * 已在防抖中时只更新 page 快照，不重置计时器（否则会永远 pending）。
  */
 export function scheduleThumbnailUpdate(
   page: Page,
@@ -231,17 +257,33 @@ export function scheduleThumbnailUpdate(
 ) {
   if (isThumbnailFresh(page)) return;
 
-  const wait = options?.immediate ? 0 : DEBOUNCE_MS;
-  const prev = debounceTimers.get(page.id);
-  if (prev) clearTimeout(prev);
+  if (options?.immediate) {
+    const prev = debounceTimers.get(page.id);
+    if (prev) clearTimeout(prev);
+    debounceTimers.delete(page.id);
+    debouncePages.delete(page.id);
+    enqueue(page, Boolean(options?.priority));
+    return;
+  }
+
+  debouncePages.set(page.id, page);
+
+  // 已在防抖窗口内：不重置 timer，避免被频繁 schedule 卡死
+  if (debounceTimers.has(page.id)) {
+    return;
+  }
 
   debounceTimers.set(
     page.id,
     setTimeout(() => {
       debounceTimers.delete(page.id);
-      enqueue(page, Boolean(options?.priority));
-    }, wait)
+      const latest = debouncePages.get(page.id) ?? page;
+      debouncePages.delete(page.id);
+      enqueue(latest, Boolean(options?.priority));
+      notify();
+    }, DEBOUNCE_MS)
   );
+  notify();
 }
 
 /** 优先为可视区页生成缩略图 */
@@ -284,6 +326,16 @@ export function usePageThumbnail(page: Page): string | null {
   }, [page.id, fingerprint]);
 
   return getCachedThumbnail(page.id);
+}
+
+/** 当前页缩略图是否处于加载/重新生成中 */
+export function usePageThumbnailLoading(page: Page): boolean {
+  useSyncExternalStore(
+    subscribeThumbnails,
+    getThumbnailVersion,
+    getThumbnailVersion
+  );
+  return isThumbnailLoading(page);
 }
 
 /** 订阅整表缩略图缓存变更（虚拟列表父级用） */

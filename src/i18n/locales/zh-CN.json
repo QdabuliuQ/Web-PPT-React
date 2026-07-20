@@ -19,12 +19,128 @@
     "warning": "警告",
     "info": "提示"
   },
+  "limits": {
+    "maxPages": "最多支持 {{count}} 页",
+    "maxElements": "每页最多 {{count}} 个元素"
+  },
+  "startPanel": {
+    "layerArrange": "层级排列",
+    "emptyElements": "当前页面没有元素",
+    "backgroundType": "背景类型",
+    "solidColor": "纯色",
+    "texture": "纹理",
+    "backgroundColor": "背景颜色",
+    "textureBgColor": "纹理背景色",
+    "textureFgColor": "纹理前景色",
+    "opacity": "透明度",
+    "batchEdit": "批量修改",
+    "newCanvas": "新建画布",
+    "duplicateCanvas": "复制画布",
+    "deleteCanvas": "删除画布"
+  },
+  "viewPanel": {
+    "normalView": "普通视图",
+    "slidePreview": "幻灯片预览",
+    "gridLines": "网格线",
+    "ruler": "标尺",
+    "guides": "参考线",
+    "clearGuides": "清除参考线"
+  },
+  "playPanel": {
+    "fromStart": "从头开始",
+    "fromCurrent": "当前开始",
+    "noPages": "没有可播放的页面",
+    "noCurrentPage": "未找到当前页面",
+    "openRemark": "开启备注",
+    "closeRemark": "关闭备注"
+  },
+  "header": {
+    "exportConfig": "导出配置文件",
+    "exportPdf": "导出PDF",
+    "exportImage": "导出长图",
+    "exportPptx": "导出PPTX",
+    "untitled": "未命名",
+    "longImageSuffix": "长图",
+    "noExportPages": "没有可导出的页面",
+    "pptxSuccess": "PPTX 导出成功",
+    "pptxFailed": "导出 PPTX 失败"
+  },
+  "footer": {
+    "slideCount": "幻灯片 {{current}} / {{total}}",
+    "remark": "备注",
+    "play": "播放",
+    "playOptions": "播放选项",
+    "fromStart": "从开头开始",
+    "fromCurrent": "从当前开始"
+  },
+  "togglePanel": {
+    "duration": "过渡时间",
+    "delay": "延迟时间",
+    "keyboardToggle": "键盘切换幻灯片",
+    "autoToggle": "自动换片：",
+    "applyAll": "应用全部",
+    "applySuccess": "修改成功",
+    "durationOptions": {
+      "faster": "0.5秒",
+      "fast": "0.8秒",
+      "default": "1秒",
+      "slow": "2秒",
+      "slower": "3秒"
+    },
+    "delayOptions": {
+      "0s": "默认",
+      "2s": "2秒",
+      "3s": "3秒",
+      "4s": "4秒",
+      "5s": "5秒"
+    },
+    "animations": {
+      "none": "无切换",
+      "backInDown": "回弹下",
+      "backInLeft": "回弹左",
+      "backInRight": "回弹右",
+      "backInUp": "回弹上",
+      "bounceIn": "弹跳",
+      "bounceInDown": "弹跳下",
+      "bounceInLeft": "弹跳左",
+      "bounceInRight": "弹跳右",
+      "bounceInUp": "弹跳上",
+      "fadeIn": "淡入",
+      "fadeInDown": "淡入下",
+      "fadeInDownBig": "淡入下(快)",
+      "fadeInLeft": "淡入左",
+      "fadeInLeftBig": "淡入左(快)",
+      "fadeInRight": "淡入右",
+      "fadeInRightBig": "淡入右(快)",
+      "fadeInUp": "淡入上",
+      "fadeInUpBig": "淡入上(快)",
+      "fadeInTopLeft": "淡入左上",
+      "fadeInTopRight": "淡入右上",
+      "fadeInBottomLeft": "淡入左下",
+      "fadeInBottomRight": "淡入右下",
+      "flipInX": "翻转X",
+      "flipInY": "翻转Y",
+      "lightSpeedInRight": "光速右",
+      "lightSpeedInLeft": "光速左",
+      "rotateInDownLeft": "旋转左下",
+      "rotateInDownRight": "旋转右下",
+      "zoomIn": "缩放",
+      "zoomInDown": "缩放下",
+      "zoomInLeft": "缩放左",
+      "zoomInRight": "缩放右",
+      "zoomInUp": "缩放上",
+      "slideInDown": "滑入下",
+      "slideInLeft": "滑入左",
+      "slideInRight": "滑入右",
+      "slideInUp": "滑入上"
+    }
+  },
   "menu": {
     "file": "文件",
     "edit": "编辑",
     "insert": "插入",
-    "view": "查看",
-    "play": "播放",
+    "view": "视图",
+    "play": "放映",
     "animation": "动画",
     "start": "开始",
     "toggle": "切换"
@@ -292,7 +408,7 @@
         "left": "左边插入一列",
         "right": "右边插入一列"
       },
-      "tableDimension": "{row}行 * {col}列 表格"
+      "tableDimension": "{{row}}行 * {{col}}列 表格"
     },
     "mindMap": {
       "title": "思维导图",
@@ -598,5 +714,27 @@
     "imageDataEmpty": "生成的图片数据为空",
     "exportSuccess": "图片导出成功",
     "exportFailed": "导出图表图片失败"
+  },
+  "contextMenu": {
+    "paste": "粘贴",
+    "gridLines": "网格线",
+    "showRuler": "显示标尺",
+    "hideRuler": "隐藏标尺",
+    "showGuides": "显示参考线",
+    "hideGuides": "隐藏参考线",
+    "clearGuides": "清除参考线",
+    "resetSlide": "重置幻灯片",
+    "hideSlide": "隐藏幻灯片",
+    "showSlide": "显示幻灯片",
+    "playSlide": "播放幻灯片",
+    "exportImage": "导出图片",
+    "newSlide": "新建幻灯片",
+    "duplicateSlide": "复制幻灯片",
+    "deleteSlide": "删除幻灯片",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "moveToFirst": "移动到最前",
+    "moveToLast": "移动到最后",
+    "untitled": "未命名"
   }
 }

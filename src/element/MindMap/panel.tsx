@@ -86,15 +86,15 @@ const MindMapPanelComponent: FC = () => {
     <>
       <div className="h-[53px] flex gap-[10px] items-center">
         <PanelLargeButton
-          icon={<Editor theme="outline" size="16" fill="#333" />}
+          icon={<Editor theme="outline" size="16" fill="var(--icon-color)" />}
           title={t("mindMapPanel.edit")}
           onClick={handleEdit}
         />
         <PanelLargeButton
-          icon={<Download theme="outline" size="16" fill="#333" />}
+          icon={<Download theme="outline" size="16" fill="var(--icon-color)" />}
           title={t("mindMapPanel.downloadImage")}
           onClick={handleDownloadImage}
-          aspectRatio={false}
+
         />
         <PanelSplitLine />
         <PanelCommonSetting
@@ -109,8 +109,4 @@ const MindMapPanelComponent: FC = () => {
 
 export const MindMapPanel = MindMapPanelComponent;
 
-// 导出动态标题
-export const MindMapPanelTitle = () => {
-  const { t } = useTranslation();
-  return t("mindMapPanel.title");
-};
+export const MindMapPanelTitle = "mindMapPanel.title";

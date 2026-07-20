@@ -1,4 +1,4 @@
-export { exportToPptx } from "./exportPptx";
+export { buildPptxBuffer } from "./exportPptx";
 export type { ExportPptxOptions } from "./exportPptx";
 export {
   CANVAS_WIDTH,
@@ -10,7 +10,9 @@ export {
 } from "./constants";
 export {
   pxToIn,
+  pxToPt,
   positionFromElement,
   toHexColor,
+  parseColor,
   parsePlacement,
 } from "./helpers";

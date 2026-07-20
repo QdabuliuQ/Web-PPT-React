@@ -252,7 +252,7 @@ const ImagePanelComponent: FC = () => {
       </div>
       <PanelLargeButton
         title={t("elements.image.panel.keepRatio")}
-        icon={<Scale theme="outline" size="18" fill="#333" />}
+        icon={<Scale theme="outline" size="18" fill="var(--icon-color)" />}
         onClick={() => handleChange("keepRatio", !imageInfo.keepRatio)}
         active={imageInfo.keepRatio}
       />
@@ -260,7 +260,7 @@ const ImagePanelComponent: FC = () => {
         <div className="h-full aspect-auto">
           <PanelLargeButton
             title={t("elements.image.panel.colorFilter")}
-            icon={<ColorFilter theme="outline" size="18" fill="#333" />}
+            icon={<ColorFilter theme="outline" size="18" fill="var(--icon-color)" />}
           />
         </div>
       </Popover>
@@ -296,10 +296,9 @@ const ImagePanelComponent: FC = () => {
           loading ? (
             <LoadingOutlined spin />
           ) : (
-            <Download theme="outline" size="18" fill="#333" />
+            <Download theme="outline" size="18" fill="var(--icon-color)" />
           )
         }
-        aspectRatio={false}
         onClick={() => handleDownloadImage()}
         disabled={loading}
       />
