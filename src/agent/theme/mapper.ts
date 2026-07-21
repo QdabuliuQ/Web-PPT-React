@@ -182,7 +182,7 @@ export function fitTextBox(opts: {
 }): { fontSize: number; height: number; lineHeight: number } {
   const { text, width, maxHeight } = opts;
   let fontSize = opts.fontSize;
-  let lineHeight = opts.lineHeight;
+  const lineHeight = opts.lineHeight;
   const content = text || " ";
 
   const estimate = (fs: number, lh: number) => {
