@@ -101,6 +101,14 @@ const Component: FC<ITableProps> = (props) => {
   // 单元格选中状态管理
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const selectedCellsRef = useRef(selectedCells);
+  const isShiftPressedRef = useRef(isShiftPressed);
+  useEffect(() => {
+    selectedCellsRef.current = selectedCells;
+  }, [selectedCells]);
+  useEffect(() => {
+    isShiftPressedRef.current = isShiftPressed;
+  }, [isShiftPressed]);
 
   // 拖拽选择状态管理
   const [isDragging, setIsDragging] = useState(false);
@@ -578,6 +586,28 @@ const Component: FC<ITableProps> = (props) => {
     }
   }, [isSelected, id]);
 
+  // 面板重新挂载时回传当前选中状态，避免控件禁用但单元格仍高亮
+  useEffect(() => {
+    const syncRequestEvent = getTableEventName(
+      BASE_TABLE_EVENTS.CELL_SELECTION_SYNC_REQUEST,
+      id
+    );
+    const handleSyncRequest = () => {
+      const eventName = getTableEventName(
+        BASE_TABLE_EVENTS.CELL_SELECTION_CHANGE,
+        id
+      );
+      globalEventBus.emit(eventName, {
+        selectedCells: selectedCellsRef.current,
+        isShiftPressed: isShiftPressedRef.current,
+      } as CellSelectionChangeData);
+    };
+    globalEventBus.on(syncRequestEvent, handleSyncRequest);
+    return () => {
+      globalEventBus.off(syncRequestEvent, handleSyncRequest);
+    };
+  }, [id]);
+
   // 处理单元格操作
   const handleCellOperationInternal = useMemoizedFn(
     (
@@ -907,6 +937,7 @@ const Component: FC<ITableProps> = (props) => {
     ({ onContextMenu }: { onContextMenu?: (e: React.MouseEvent) => void }) => {
       const className = [
         styles.tableContainer,
+        mode === "edit" ? styles.editMode : "",
         mode === "edit" && isSelected ? "element-selected" : "",
       ]
         .filter(Boolean)
@@ -930,7 +961,7 @@ const Component: FC<ITableProps> = (props) => {
             animationTrigger={animationTrigger}
             className="w-full h-full"
           >
-            <div className="w-full h-full overflow-hidden">
+            <div className={styles.tableContentWrapper}>
               {mode === "preview" ? (
                 <table
                   ref={tableRef}

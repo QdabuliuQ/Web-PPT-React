@@ -12,6 +12,7 @@ export {
   useCopyElementStore,
   useCanvasZoomStore,
   useThemeStore,
+  useChartInspectorStore,
 } from "./zustand";
 
 export type { Page, Elements, ThemeMode } from "./zustand";

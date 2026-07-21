@@ -53,6 +53,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { PreviewCanvas } from "./PreviewCanvas";
 import { RemarkEdit } from "./RemarkEdit";
+import { ElementEdgeGuides } from "./ElementEdgeGuides";
 
 interface CanvasProps {
   mode?: "preview" | "play" | "edit";
@@ -177,6 +178,57 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [mode]);
+
+  // 画布区域滚轮：向上上一页，向下下一页（一次手势只翻一页，忽略惯性）
+  useEffect(() => {
+    if (mode !== "edit") return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    /** 滚轮停稳多久后才允许下一次翻页 */
+    const GESTURE_IDLE_MS = 280;
+    let locked = false;
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const unlockAfterIdle = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        locked = false;
+        idleTimer = null;
+      }, GESTURE_IDLE_MS);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      // 保留 Ctrl/Meta + 滚轮给浏览器缩放
+      if (e.ctrlKey || e.metaKey) return;
+      if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+
+      e.preventDefault();
+
+      // 手势进行中（含惯性尾段）：只延长锁定，不再翻页
+      if (locked) {
+        unlockAfterIdle();
+        return;
+      }
+
+      locked = true;
+      unlockAfterIdle();
+
+      if (e.deltaY > 0) {
+        pageActiveStore.goToNextPage();
+      } else if (e.deltaY < 0) {
+        pageActiveStore.goToPrevPage();
+      }
+      elementActiveStore.resetElementActive();
+      contextMenuStore.hideMenu();
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      if (idleTimer) clearTimeout(idleTimer);
     };
   }, [mode]);
 
@@ -438,6 +490,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
   const fgColor = (currentPage as any)?.fgColor || "#9C92AC";
   const bgOpacity = (currentPage as any)?.bgOpacity ?? 0.4;
   const selectedTexture = (currentPage as any)?.selectedTexture || "";
+  const backgroundImage = (currentPage as any)?.backgroundImage || "";
 
   // 生成背景样式
   const getBackgroundStyle = useMemoizedFn(() => {
@@ -446,7 +499,17 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         backgroundColor: background,
         backgroundImage: "none",
       };
-    } else if (backgroundType === "texture" && selectedTexture) {
+    }
+    if (backgroundType === "image" && backgroundImage) {
+      return {
+        backgroundColor: "#ffffff",
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      };
+    }
+    if (backgroundType === "texture" && selectedTexture) {
       // 从 textureItems 中查找对应的纹理项
       const textureItem = textureItems.find(
         (item) => item.type === selectedTexture
@@ -647,6 +710,11 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
       />
     );
   });
+
+  const canvasElementIds = useMemo(
+    () => currentPage?.elements.map((el) => el.id) ?? [],
+    [currentPage?.elements]
+  );
 
   // 播放模式右键菜单处理
   const handlePlayContextMenu = useMemoizedFn((e: React.MouseEvent) => {
@@ -1238,6 +1306,10 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
             />
           )}
           {renderElements(true)}
+          <ElementEdgeGuides
+            elementIds={canvasElementIds}
+            enabled={!isPanning}
+          />
         </div>
       );
     }
@@ -1289,7 +1361,16 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
         onContextMenu={mode === "play" ? handlePlayContextMenu : undefined}
         onAnimationEnd={mode === "play" ? handleAnimationEnd : undefined}
       >
-        {renderElements(false)}
+        {mode === "play" ? (
+          <div
+            className="absolute inset-0 pointer-events-none [&_*]:!pointer-events-none"
+            aria-hidden
+          >
+            {renderElements(false)}
+          </div>
+        ) : (
+          renderElements(false)
+        )}
         {mode === "play" && showEndMessage && (
           <div className="absolute inset-0 flex items-center justify-center cursor-pointer text-[15px] bg-[#000] text-[#fff] z-[9999]">
             放映结束，单击鼠标退出

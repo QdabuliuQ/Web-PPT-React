@@ -34,6 +34,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
   const styles = useMemo(() => {
     const baseStyles: React.CSSProperties = {
       width: "auto",
+      minWidth: "53px",
       height: "100%",
       display: "flex",
       flexDirection: "column",
@@ -43,7 +44,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
       gap: "0px",
       lineHeight: "1",
       padding: "0 8px",
-      color: "var(--text-secondary)",
+      color: "var(--icon-color)",
       borderRadius: "6px",
       border: "1px solid transparent",
       flexShrink: 0,
@@ -76,7 +77,7 @@ export const PanelLargeButton: FC<IPanelLargeButtonProps> = ({
       disabled={disabled}
       className="hover:!bg-[var(--primary-soft)] hover:!text-[var(--primary-color)]"
     >
-      <i className="mb-[6px]">{renderIcon}</i>
+      <i className="mb-[6px] text-current leading-none">{renderIcon}</i>
       <span className={`${disabled ? "text-chrome-disabled" : ""} text-[12px] whitespace-nowrap`}>
         {title}
       </span>

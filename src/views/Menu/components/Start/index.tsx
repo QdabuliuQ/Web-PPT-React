@@ -42,17 +42,21 @@ import {
   Drag,
   EditTwo,
   Layers,
+  Pic,
   PreviewCloseOne,
   PreviewOpen,
 } from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
-import { ColorPicker, Popover, Slider, Tooltip } from "antd";
+import { ColorPicker, Modal, Popover, Slider, Tooltip } from "antd";
 import React, { useCallback, useMemo, useRef, type FC } from "react";
 import { useTranslation } from "react-i18next";
+import { BackgroundImageStrip } from "./BackgroundImageStrip";
+import styles from "./index.module.less";
 import { textureItems } from "./texture";
 
 export const Start: FC = () => {
   const { t } = useTranslation();
+  const [modal, contextHolder] = Modal.useModal();
   // 使用 Zustand hooks 订阅状态变化，确保组件能够响应状态更新
   const pageActive = usePageActiveStore((state) => state.pageActive);
   const pages = usePPTStore((state) => state.pages);
@@ -81,6 +85,8 @@ export const Start: FC = () => {
   const fgColor = (currentPage as any)?.fgColor || "#9C92AC";
   const bgOpacity = (currentPage as any)?.bgOpacity ?? 0.4;
   const selectedTexture = (currentPage as any)?.selectedTexture || "";
+  const backgroundImage = (currentPage as any)?.backgroundImage || "";
+  const bgFileInputRef = useRef<HTMLInputElement>(null);
 
   // 转换为 SelectItem 格式
   const selectItems = textureItems.map((item) => ({
@@ -129,6 +135,30 @@ export const Start: FC = () => {
     updatePageProperty("selectedTexture", type);
   });
 
+  const handleBackgroundTypeChange = useMemoizedFn((value: string) => {
+    updatePageProperty("backgroundType", value);
+  });
+
+  const handleUploadBackgroundImage = useMemoizedFn(() => {
+    bgFileInputRef.current?.click();
+  });
+
+  const handleBackgroundImageFileChange = useMemoizedFn(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file || !file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        if (!dataUrl) return;
+        updatePageProperty("backgroundImage", dataUrl);
+        updatePageProperty("backgroundType", "image");
+      };
+      reader.readAsDataURL(file);
+    }
+  );
+
   // 批量修改所有页面的背景属性（使用当前页面的背景属性）
   const handleBatchUpdate = useMemoizedFn(() => {
     const newPages = pages.map((page) => ({
@@ -139,6 +169,7 @@ export const Start: FC = () => {
       fgColor: fgColor,
       bgOpacity: bgOpacity,
       selectedTexture: selectedTexture,
+      backgroundImage: backgroundImage,
     }));
     setPages(newPages);
   });
@@ -159,17 +190,26 @@ export const Start: FC = () => {
   // 删除画布（删除当前页面）
   const handleDeletePage = useMemoizedFn(() => {
     if (!pageActive) return;
-    const success = deletePage(pageActive);
-    if (success) {
-      elementActiveStore.resetElementActive();
-      menuActiveStore.resetMenu();
-      // 使用最新的 pages 状态
-      const remainingPages = usePPTStore.getState().pages;
-      if (remainingPages.length > 0) {
-        // 切换到第一个页面
-        setPageActive(remainingPages[0].id);
-      }
-    }
+    modal.confirm({
+      title: t("common.info"),
+      content: t("startPanel.confirmDeleteCanvas"),
+      okText: t("common.confirm"),
+      cancelText: t("common.cancel"),
+      centered: true,
+      onOk: () => {
+        const success = deletePage(pageActive);
+        if (success) {
+          elementActiveStore.resetElementActive();
+          menuActiveStore.resetMenu();
+          // 使用最新的 pages 状态
+          const remainingPages = usePPTStore.getState().pages;
+          if (remainingPages.length > 0) {
+            // 切换到第一个页面
+            setPageActive(remainingPages[0].id);
+          }
+        }
+      },
+    });
   });
 
   // 隐藏/显示幻灯片（切换当前页面的可见性）
@@ -181,7 +221,16 @@ export const Start: FC = () => {
   // 重置幻灯片（清空当前页面的所有元素）
   const handleResetPage = useMemoizedFn(() => {
     if (!pageActive) return;
-    resetPageElements(pageActive);
+    modal.confirm({
+      title: t("common.info"),
+      content: t("startPanel.confirmResetSlide"),
+      okText: t("common.confirm"),
+      cancelText: t("common.cancel"),
+      centered: true,
+      onOk: () => {
+        resetPageElements(pageActive);
+      },
+    });
   });
 
   // 获取当前页面的可见性状态
@@ -391,6 +440,7 @@ export const Start: FC = () => {
 
   return (
     <div className="flex items-center h-[53px] gap-[10px]">
+      {contextHolder}
       <Popover content={layerContent} placement="bottomLeft">
         <div className="h-full">
           <PanelLargeButton
@@ -402,94 +452,127 @@ export const Start: FC = () => {
       </Popover>
       <PanelSplitLine />
       <div className="flex flex-col justify-between h-full">
-        <div className="flex flex-col gap-[4px]">
-          <Tooltip title={t("startPanel.backgroundType")}>
-            <PanelSelect
-              style={{ width: "100%" }}
-              size="small"
-              value={backgroundType}
-              options={[
-                {
-                  label: t("startPanel.solidColor"),
-                  value: "solidColor",
-                },
-                {
-                  label: t("startPanel.texture"),
-                  value: "texture",
-                },
-              ]}
-              onChange={(value) => {
-                updatePageProperty("backgroundType", value);
-              }}
-            />
-          </Tooltip>
-        </div>
-        <div className="flex items-center gap-[4px]">
-          <span className="text-[12px] text-chrome-muted mr-[5px]">
-            {t("startPanel.backgroundColor")}
-          </span>
-          <ColorPicker
-            trigger="hover"
+        <Tooltip title={t("startPanel.backgroundType")}>
+          <PanelSelect
+            style={{ width: 90 }}
             size="small"
-            value={background}
-            disabled={backgroundType === "texture"}
-            onChange={debouncedColorChange("background")}
+            value={backgroundType}
+            options={[
+              {
+                label: t("startPanel.solidColor"),
+                value: "solidColor",
+              },
+              {
+                label: t("startPanel.texture"),
+                value: "texture",
+              },
+              {
+                label: t("startPanel.image"),
+                value: "image",
+              },
+            ]}
+            onChange={handleBackgroundTypeChange}
           />
-        </div>
-      </div>
-      <PanelItemSelect
-        displayItems={displayItems}
-        moreItems={moreItems}
-        selectedValue={selectedTexture}
-        onSelect={handleSelect}
-        renderItem={renderTextureItem}
-        disabled={backgroundType === "solidColor"}
-      />
-      <div className="flex flex-col justify-between h-full">
-        <div className="flex items-center gap-[10px] h-[28px]">
+        </Tooltip>
+        {backgroundType === "solidColor" && (
           <div className="flex items-center gap-[4px]">
             <span className="text-[12px] text-chrome-muted mr-[5px]">
-              {t("startPanel.textureBgColor")}
+              {t("startPanel.backgroundColor")}
             </span>
-            <ColorPicker
-              size="small"
-              trigger="hover"
-              value={bgColor}
-              disabled={backgroundType === "solidColor"}
-              onChange={debouncedColorChange("bgColor")}
-            />
-          </div>
-          <div className="flex items-center gap-[4px]">
-            <span className="text-[12px] text-chrome-muted mr-[5px]">
-              {t("startPanel.textureFgColor")}
+            <span className={styles.colorPickerPlain}>
+              <ColorPicker
+                trigger="hover"
+                size="small"
+                value={background}
+                onChange={debouncedColorChange("background")}
+              />
             </span>
-            <ColorPicker
-              size="small"
-              trigger="hover"
-              value={fgColor}
-              disabled={backgroundType === "solidColor"}
-              onChange={debouncedColorChange("fgColor")}
-            />
           </div>
-        </div>
-        <div className="w-full text-[12px] flex items-center h-[28px]">
-          <span className="mr-[10px] text-chrome-muted">
-            {t("startPanel.opacity")}
-          </span>
-          <Slider
-            style={{ flex: 1 }}
-            className="relative top-[1px]"
-            min={0}
-            max={1}
-            step={0.1}
-            value={bgOpacity}
-            disabled={backgroundType === "solidColor"}
-            onChange={(value) => {
-              updatePageProperty("bgOpacity", value);
-            }}
-          />
-        </div>
+        )}
+        {backgroundType === "image" && backgroundImage ? (
+          <BackgroundImageStrip src={backgroundImage} />
+        ) : null}
       </div>
+
+      {backgroundType === "image" && (
+        <>
+          <input
+            ref={bgFileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleBackgroundImageFileChange}
+          />
+          <PanelLargeButton
+            title={
+              backgroundImage
+                ? t("startPanel.changeBackgroundImage")
+                : t("startPanel.uploadBackgroundImage")
+            }
+            icon={<Pic theme="outline" size="18" fill="var(--icon-color)" />}
+            onClick={handleUploadBackgroundImage}
+          />
+        </>
+      )}
+
+      {backgroundType === "texture" && (
+        <>
+          <PanelItemSelect
+            displayItems={displayItems}
+            moreItems={moreItems}
+            selectedValue={selectedTexture}
+            onSelect={handleSelect}
+            renderItem={renderTextureItem}
+          />
+          <div className="flex flex-col justify-between h-full">
+            <div className="flex items-center gap-[10px] h-[28px]">
+              <div className="flex items-center gap-[4px]">
+                <span className="text-[12px] text-chrome-muted mr-[5px]">
+                  {t("startPanel.textureBgColor")}
+                </span>
+                <span className={styles.colorPickerPlain}>
+                  <ColorPicker
+                    size="small"
+                    trigger="hover"
+                    value={bgColor}
+                    onChange={debouncedColorChange("bgColor")}
+                  />
+                </span>
+              </div>
+              <div className="flex items-center gap-[4px]">
+                <span className="text-[12px] text-chrome-muted mr-[5px]">
+                  {t("startPanel.textureFgColor")}
+                </span>
+                <span className={styles.colorPickerPlain}>
+                  <ColorPicker
+                    size="small"
+                    trigger="hover"
+                    value={fgColor}
+                    onChange={debouncedColorChange("fgColor")}
+                  />
+                </span>
+              </div>
+            </div>
+            <div className="w-full text-[12px] flex items-center h-[28px]">
+              <span className="mr-[10px] text-chrome-muted">
+                {t("startPanel.opacity")}
+              </span>
+              <Slider
+                style={{ flex: 1 }}
+                className="relative top-[1px]"
+                min={0}
+                max={1}
+                step={0.1}
+                value={bgOpacity}
+                onChange={(value) => {
+                  updatePageProperty("bgOpacity", value);
+                }}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
       <PanelLargeButton
         title={t("startPanel.batchEdit")}
         icon={<EditTwo theme="outline" size="18" fill="var(--icon-color)" />}

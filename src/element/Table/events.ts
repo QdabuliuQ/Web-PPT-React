@@ -33,6 +33,8 @@ export function getTableEventName(
 // 基础事件名称常量
 export const BASE_TABLE_EVENTS = {
   CELL_SELECTION_CHANGE: "cell_selection_change",
+  /** 面板重新挂载时请求表格回传当前选中单元格 */
+  CELL_SELECTION_SYNC_REQUEST: "cell_selection_sync_request",
   CELL_OPERATION: "cell_operation",
   CELL_STYLE_CHANGE: "cell_style_change",
 } as const;

@@ -7,6 +7,7 @@ import { Chart } from "@/element/Chart";
 import { Icon } from "@/element/Icon";
 import { Image } from "@/element/Image";
 import { MindMap } from "@/element/MindMap";
+import { Shape } from "@/element/Shape";
 import { Table } from "@/element/Table";
 import { Text } from "@/element/Text";
 import { createCatalog } from "@json-render/core";
@@ -115,6 +116,22 @@ export const pptElementCatalog = createCatalog({
         onSelect: z.function().optional(),
       }),
     },
+    // 形状组件
+    Shape: {
+      props: z.object({
+        id: z.string(),
+        shapeType: z.string(),
+        fill: z.string().optional(),
+        x: z.number(),
+        y: z.number(),
+        width: z.number(),
+        height: z.number(),
+        rotate: z.number().optional(),
+        zIndex: z.number().optional(),
+        mode: z.enum(["preview", "play", "edit"]).optional(),
+        onSelect: z.function().optional(),
+      }),
+    },
   },
 });
 
@@ -144,6 +161,10 @@ export const pptComponentRegistry = {
     console.log("Rendering Chart with element:", element);
     return <Chart {...element.props} type="chart" />;
   },
+  Shape: ({ element }: any) => {
+    console.log("Rendering Shape with element:", element);
+    return <Shape {...element.props} type="shape" />;
+  },
 };
 
 // 兼容旧的导出名称
@@ -163,6 +184,7 @@ export function convertElementToTree(
     image: "Image",
     mindmap: "MindMap",
     chart: "Chart",
+    shape: "Shape",
   };
 
   const componentType = typeMap[element.type];
@@ -238,6 +260,8 @@ export const ElementRendererDirect: FC<ElementRendererProps> = ({
           return <MindMap key={element.id} {...commonProps} type="mindmap" />;
         } else if (element.type === "chart") {
           return <Chart key={element.id} {...commonProps} type="chart" />;
+        } else if (element.type === "shape") {
+          return <Shape key={element.id} {...commonProps} type="shape" />;
         }
         return null;
       })}

@@ -275,9 +275,9 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
       opacity,
       borderRadius: `${borderRadius}px`,
       border:
-        border && !isHoverActive
+        border && !(mode === "edit" && isHoverActive)
           ? `${borderWidth}px ${borderStyle} ${borderColor}`
-          : isHoverActive && !isSelected
+          : mode === "edit" && isHoverActive && !isSelected
             ? "1px solid var(--primary-color, #f25f00)"
             : "none",
       boxSizing: "border-box" as const,
@@ -297,6 +297,7 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
       borderColor,
       isHoverActive,
       isSelected,
+      mode,
       brightness,
       contrast,
       saturate,

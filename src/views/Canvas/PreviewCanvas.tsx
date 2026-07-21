@@ -12,11 +12,23 @@ function getBackgroundStyle(page: Page): CSSProperties {
   const bgOpacity = page.bgOpacity ?? 0.4;
   const selectedTexture = (page as Page & { selectedTexture?: string })
     .selectedTexture;
+  const backgroundImage = (page as Page & { backgroundImage?: string })
+    .backgroundImage;
 
   if (backgroundType === "solidColor") {
     return {
       backgroundColor: background,
       backgroundImage: "none",
+    };
+  }
+
+  if (backgroundType === "image" && backgroundImage) {
+    return {
+      backgroundColor: "#ffffff",
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
     };
   }
 

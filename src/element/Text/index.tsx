@@ -402,7 +402,7 @@ const Component: FC<ITextProps> = (props) => {
     isEditing ? styles.editing : "",
     mode === "edit" && isDragging ? styles.dragging : "",
     mode === "edit" && isSelected && !isEditing ? "element-selected" : "",
-    !text && !isEditing ? styles.empty : "",
+    mode === "edit" && !text && !isEditing ? styles.empty : "",
   ]
     .filter(Boolean)
     .join(" ");

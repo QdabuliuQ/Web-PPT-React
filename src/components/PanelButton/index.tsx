@@ -16,11 +16,12 @@ interface IPanelButtonProps {
   active?: boolean;
 }
 
+/** hover / active：淡色主题背景 + 主题色文字/图标 */
 const activeClassName =
-  "bg-chrome-soft text-[var(--primary-color)] [&_svg]:![color:inherit] [&_path]:![stroke:currentColor] [&_rect]:![stroke:currentColor]";
+  "bg-[var(--primary-soft)] text-[var(--primary-color)] [&_path]:![stroke:currentColor] [&_rect]:![stroke:currentColor] [&_circle]:![stroke:currentColor] [&_line]:![stroke:currentColor]";
 
 const idleClassName =
-  "text-chrome-secondary cursor-pointer hover:bg-chrome-soft hover:text-[var(--primary-color)] [&:hover_svg]:![color:inherit] [&:hover_path]:![stroke:currentColor] [&:hover_rect]:![stroke:currentColor]";
+  "text-chrome-icon cursor-pointer hover:bg-[var(--primary-soft)] hover:text-[var(--primary-color)] [&:hover_path]:![stroke:currentColor] [&:hover_rect]:![stroke:currentColor] [&:hover_circle]:![stroke:currentColor] [&:hover_line]:![stroke:currentColor]";
 
 export const PanelButton: FC<IPanelButtonProps> = ({
   icon,
@@ -47,7 +48,7 @@ export const PanelButton: FC<IPanelButtonProps> = ({
   return (
     <div
       onClick={clickHandle}
-      className={`flex flex-col items-center justify-center text-[12px] h-[56px] px-[8px] w-auto whitespace-nowrap rounded-[6px] transition-colors ${
+      className={`flex flex-col items-center justify-center text-[12px] h-[56px] min-w-[56px] px-[8px] w-auto whitespace-nowrap rounded-[6px] transition-colors ${
         disabled
           ? "text-chrome-disabled cursor-not-allowed"
           : active

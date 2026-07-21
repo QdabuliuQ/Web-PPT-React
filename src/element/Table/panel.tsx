@@ -39,6 +39,7 @@ import {
   getTableEventName,
   type CellSelectionChangeData,
 } from "./events";
+import { TableStylePanel } from "./stylePresets";
 interface ITablePanelProps {
   title?: string;
 }
@@ -53,9 +54,12 @@ export const TablePanel: FC<ITablePanelProps> = () => {
   const pages = usePPTStore((state) => state.pages);
   const setElementInfo = usePPTStore((state) => state.setElementInfo);
 
-  // 监听表格单元格选择状态变化
+  // 监听表格单元格选择状态变化；面板切 tab 重挂后主动同步当前选中
   useEffect(() => {
-    if (!activeElementId) return;
+    if (!activeElementId) {
+      setSelectedCells(new Set());
+      return;
+    }
 
     const eventName = getTableEventName(
       BASE_TABLE_EVENTS.CELL_SELECTION_CHANGE,
@@ -69,14 +73,17 @@ export const TablePanel: FC<ITablePanelProps> = () => {
 
     globalEventBus.on(eventName, handleCellSelectionChange);
 
+    // 订阅后再请求同步，拿到表格组件内仍保留的选中状态
+    globalEventBus.emit(
+      getTableEventName(
+        BASE_TABLE_EVENTS.CELL_SELECTION_SYNC_REQUEST,
+        activeElementId
+      )
+    );
+
     return () => {
       globalEventBus.off(eventName, handleCellSelectionChange);
     };
-  }, [activeElementId]);
-
-  // 当激活元素变化时，清空选择状态
-  useEffect(() => {
-    setSelectedCells(new Set());
   }, [activeElementId]);
 
   const largeButtons = useMemo(() => {
@@ -544,6 +551,8 @@ export const TablePanel: FC<ITablePanelProps> = () => {
 
   return (
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
+      <TableStylePanel />
+      <PanelSplitLine />
       <div className="h-full flex items-center gap-[5px] flex-shrink-0">
         {largeButtons.map((item) => {
           const propertyKey = item.key as
@@ -588,7 +597,11 @@ export const TablePanel: FC<ITablePanelProps> = () => {
                 <Add
                   theme="outline"
                   size="13"
-                  fill={selectedCells.size === 0 ? "#bbb" : "#333"}
+                  fill={
+                    selectedCells.size === 0
+                      ? "var(--text-disabled)"
+                      : "var(--icon-color)"
+                  }
                 />
               }
               disabled={selectedCells.size === 0}
@@ -604,7 +617,11 @@ export const TablePanel: FC<ITablePanelProps> = () => {
                 <Reduce
                   theme="outline"
                   size="13"
-                  fill={selectedCells.size === 0 ? "#bbb" : "#333"}
+                  fill={
+                    selectedCells.size === 0
+                      ? "var(--text-disabled)"
+                      : "var(--icon-color)"
+                  }
                 />
               }
             />
@@ -633,8 +650,13 @@ export const TablePanel: FC<ITablePanelProps> = () => {
                   size="12"
                   fill={
                     selectedCells.size === 0
-                      ? "#bbb"
-                      : ["#333", "#f25f00", "#FFF", "#43CCF8"]
+                      ? "var(--text-disabled)"
+                      : [
+                          "var(--icon-color)",
+                          "var(--primary-color)",
+                          "#FFF",
+                          "#43CCF8",
+                        ]
                   }
                 />
               }
@@ -660,7 +682,11 @@ export const TablePanel: FC<ITablePanelProps> = () => {
                 <BackgroundColor
                   theme="outline"
                   size="15"
-                  fill={selectedCells.size === 0 ? "#bbb" : "#333"}
+                  fill={
+                    selectedCells.size === 0
+                      ? "var(--text-disabled)"
+                      : "var(--icon-color)"
+                  }
                 />
               }
             />
@@ -689,7 +715,10 @@ export const TablePanel: FC<ITablePanelProps> = () => {
                 icon={
                   <span
                     style={{
-                      color: selectedCells.size === 0 ? "#bbb" : "#333",
+                      color:
+                        selectedCells.size === 0
+                          ? "var(--text-disabled)"
+                          : "var(--icon-color)",
                     }}
                   >
                     {button.icon}

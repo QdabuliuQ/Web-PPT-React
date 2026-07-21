@@ -1,6 +1,7 @@
 import type { Elements, Page } from "@/store/zustand/pptStore";
 import type { IChartProps } from "@/element/Chart";
 import type { IImageProps } from "@/element/Image";
+import type { IShapeProps } from "@/element/Shape";
 import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
 import PptxGenJS from "pptxgenjs";
@@ -14,6 +15,7 @@ import {
 import { toHexColor } from "./helpers";
 import { addChartElement } from "./mapChart";
 import { addImageElement } from "./mapImage";
+import { addShapeElement } from "./mapShape";
 import { addTableElement } from "./mapTable";
 import { addTextElement } from "./mapText";
 import { addSnapshotImage } from "./snapshotImage";
@@ -23,19 +25,45 @@ export interface ExportPptxOptions {
   pages: Page[];
   /** 元素 id → PNG data URL（icon / mindmap / funnel 等由前端预栅格化） */
   snapshots?: Record<string, string>;
+  /** 页面 id → 纹理背景 PNG data URL（由前端 prepareExportBackgrounds 生成） */
+  backgrounds?: Record<string, string>;
 }
 
 function sortByZIndex(elements: Elements[]): Elements[] {
   return [...elements].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 }
 
-function applySlideBackground(slide: PptxGenJS.Slide, page: Page): void {
+function toPptxImageData(dataUrl: string): string {
+  // pptxgenjs 接受 `image/png;base64,...` 或完整 data URL
+  if (dataUrl.startsWith("data:")) {
+    return dataUrl.slice("data:".length);
+  }
+  return dataUrl;
+}
+
+function applySlideBackground(
+  slide: PptxGenJS.Slide,
+  page: Page,
+  backgrounds?: Record<string, string>
+): void {
+  const preparedBg = backgrounds?.[page.id];
+  if (preparedBg) {
+    slide.background = { data: toPptxImageData(preparedBg) };
+    return;
+  }
+
+  if (page.backgroundType === "image" && page.backgroundImage) {
+    slide.background = { data: toPptxImageData(page.backgroundImage) };
+    return;
+  }
+
   if (page.backgroundType === "solidColor" || !page.backgroundType) {
     const color = toHexColor(page.background || "#FFFFFF", "FFFFFF");
     slide.background = { color };
     return;
   }
-  // 纹理等复杂背景：用纯色兜底（纹理导出可后续增强）
+
+  // 纹理未预渲染时退回底色
   slide.background = {
     color: toHexColor(page.bgColor || page.background || "#FFFFFF", "FFFFFF"),
   };
@@ -65,6 +93,9 @@ async function addElementToSlide(
       break;
     case "chart":
       await addChartElement(slide, element as IChartProps, pptx, snapshots);
+      break;
+    case "shape":
+      addShapeElement(slide, element as IShapeProps, pptx);
       break;
     case "icon":
     case "mindmap":
@@ -99,7 +130,7 @@ export async function buildPptxBuffer(
 
   for (const page of pages) {
     const slide = pptx.addSlide();
-    applySlideBackground(slide, page);
+    applySlideBackground(slide, page, options.backgrounds);
 
     if (page.remark) {
       slide.addNotes(page.remark);

@@ -57,6 +57,8 @@ export function getPageFingerprint(page: Page): string {
     bgOpacity: page.bgOpacity,
     selectedTexture: (page as Page & { selectedTexture?: string })
       .selectedTexture,
+    backgroundImage: (page as Page & { backgroundImage?: string })
+      .backgroundImage,
     visible: page.visible,
   });
 }

@@ -1,4 +1,5 @@
 import { GlobalContextMenu } from "@/components/GlobalContextMenu";
+import { ChartInspector } from "@/element/Chart/components/ChartInspector";
 import { useDisplayStatusStore, useFullscreenStore } from "@/store";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { Canvas } from "./Canvas";
@@ -135,8 +136,11 @@ export default function Index() {
               </div>
               <div className="flex flex-1 min-w-0 flex-col h-full min-h-0 gap-[15px] overflow-hidden">
                 <Menu />
-                <div className={canvasPaneClass}>
-                  <Canvas />
+                <div className="flex flex-1 min-h-0 min-w-0 gap-[15px] overflow-hidden">
+                  <div className={`${canvasPaneClass} flex-1`}>
+                    <Canvas />
+                  </div>
+                  <ChartInspector />
                 </div>
               </div>
             </div>

@@ -1,15 +1,16 @@
 import { PanelLargeButton, PanelNumberOrAuto, PanelSelect } from "@/components";
+import { useChartInspectorStore } from "@/store/zustand/chartInspectorStore";
 import { useDebounceFn, useMemoizedFn } from "ahooks";
 import {
   Collapse,
   ColorPicker,
   Input,
   InputNumber,
-  Popover,
   Slider,
   Switch,
 } from "antd";
-import { memo, useState, type FC, type ReactNode } from "react";
+import { memo, type FC, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import styles from "./panel.module.less";
 
 export interface PanelConfig {
@@ -33,20 +34,22 @@ export interface ChartStylePanelProps {
   panelConfigs: PanelConfig[];
   getValue?: (keys: string[], defaultValue?: any) => any;
   defaultActiveKey?: string[];
+  /** 右侧面板分区 key，默认使用 title */
+  sectionKey?: string;
 }
 
-export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
+const FULL_WIDTH_TYPES = new Set(["input", "slider", "numberOrAuto"]);
+
+export const ChartStyleForm: FC<{
+  panelConfigs: PanelConfig[];
+  getValue?: (keys: string[], defaultValue?: any) => any;
+  defaultActiveKey?: string[];
+}> = memo(
   ({
-    title,
-    icon,
     panelConfigs,
     getValue: externalGetValue,
     defaultActiveKey = ["basic"],
   }) => {
-    // Popover 打开状态
-    const [open, setOpen] = useState(false);
-
-    // ColorPicker 防抖处理函数
     const handleColorChangeDebounced = useDebounceFn(
       (config: any, color: any) => {
         const colorObj = color.toRgb();
@@ -55,7 +58,6 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
             ? `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, ${colorObj.a})`
             : color.toHexString();
 
-        // 调用配置项的 onChange
         if (config.onChange) {
           config.onChange(colorValue, config.keys);
         }
@@ -63,7 +65,6 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
       { wait: 300 }
     );
 
-    // 渲染配置项组件
     const renderConfigItem = useMemoizedFn((config: any) => {
       const {
         type,
@@ -74,19 +75,15 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
         ...props
       } = config;
 
-      // 优先使用 config 级别的 getValue，然后是外部传入的 getValue
       const getValueFn = configGetValue || externalGetValue;
       const value = getValueFn ? getValueFn(keys, defaultValue) : defaultValue;
 
-      // 统一的 onChange 处理函数
       const handleChange = (newValue: any) => {
-        // 如果配置项有自定义 onChange，调用它
         if (onChange) {
           onChange(newValue, keys);
         }
       };
 
-      // ColorPicker 的特殊处理（需要防抖）
       const handleColorChangeWithCallback = (color: any) => {
         handleColorChangeDebounced.run(config, color);
       };
@@ -161,7 +158,7 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
               max={props.max ?? 1}
               step={props.step ?? 0.1}
               tooltip={{ open: false }}
-              style={{ width: "90%" }}
+              style={{ width: "100%" }}
             />
           );
         default:
@@ -169,17 +166,24 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
       }
     });
 
-    const content = (
-      <div className="w-[400px] max-h-[600px] overflow-y-auto box-border p-[15px]">
+    return (
+      <div className={styles.inspectorForm}>
         <Collapse
           items={panelConfigs.map((panel) => ({
             key: panel.key,
             label: <span className="text-[12px]">{panel.title}</span>,
             children: (
-              <div className="grid grid-cols-3 gap-[10px]">
+              <div className={styles.inspectorFormGrid}>
                 {panel.configs.map((config, index) => (
-                  <div key={index} className="flex flex-col gap-[5px]">
-                    <label className="text-[12px] text-chrome-text">
+                  <div
+                    key={index}
+                    className={`${styles.inspectorFormItem} ${
+                      FULL_WIDTH_TYPES.has(config.type) || config.customRender
+                        ? styles.inspectorFormItemFull
+                        : ""
+                    }`}
+                  >
+                    <label className={styles.inspectorFormLabel}>
                       {config.label}
                     </label>
                     {config.customRender
@@ -195,24 +199,46 @@ export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
         />
       </div>
     );
+  }
+);
+
+export const ChartStylePanel: FC<ChartStylePanelProps> = memo(
+  ({
+    title,
+    icon,
+    panelConfigs,
+    getValue: externalGetValue,
+    defaultActiveKey = ["basic"],
+    sectionKey: sectionKeyProp,
+  }) => {
+    const sectionKey = sectionKeyProp || title;
+    const activeSection = useChartInspectorStore((state) => state.sectionKey);
+    const contentEl = useChartInspectorStore((state) => state.contentEl);
+    const toggleSection = useChartInspectorStore(
+      (state) => state.toggleSection
+    );
+    const isActive = activeSection === sectionKey;
+
+    const form = (
+      <ChartStyleForm
+        panelConfigs={panelConfigs}
+        getValue={externalGetValue}
+        defaultActiveKey={defaultActiveKey}
+      />
+    );
 
     return (
-      <Popover
-        content={content}
-        trigger="hover"
-        placement="bottom"
-        overlayInnerStyle={{ padding: 0 }}
-        open={open}
-        onOpenChange={setOpen}
-      >
+      <>
         <div className="h-full">
           <PanelLargeButton
             title={title}
             icon={icon}
-            active={open}
+            active={isActive}
+            onClick={() => toggleSection(sectionKey, title)}
           />
         </div>
-      </Popover>
+        {isActive && contentEl ? createPortal(form, contentEl) : null}
+      </>
     );
   }
 );

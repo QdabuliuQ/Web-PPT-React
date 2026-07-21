@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/export/pptx
- * body: { name?, pages, snapshots? }
+ * body: { name?, pages, snapshots?, backgrounds? }
  * 返回 .pptx 二进制文件
  */
 export async function POST(request: Request) {
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
       name: body.name,
       pages: body.pages,
       snapshots: body.snapshots,
+      backgrounds: body.backgrounds,
     });
 
     const rawName = (body.name || "未命名").replace(/[/\\?%*:|"<>]/g, "_");

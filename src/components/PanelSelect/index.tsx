@@ -1,5 +1,6 @@
 import { Select, type SelectProps } from "antd";
 import { type FC, useEffect, useRef, useState } from "react";
+import styles from "./index.module.less";
 
 type TriggerType = "click" | "hover";
 
@@ -13,12 +14,13 @@ interface IPanelSelectProps extends Omit<SelectProps, "open" | "onOpenChange"> {
 export const PanelSelect: FC<IPanelSelectProps> = ({
   trigger = "hover",
   hoverDelay = 150,
+  className,
+  variant = "outlined",
   ...selectProps
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  // 组件卸载时清理定时器，防止内存泄漏
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -27,14 +29,12 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
     };
   }, []);
 
-  // 当 value 变化时，关闭下拉框
   useEffect(() => {
     setIsOpen(false);
   }, [selectProps.value]);
 
   const handleMouseEnter = () => {
     if (trigger === "hover") {
-      // 清除可能存在的关闭定时器
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
@@ -44,7 +44,6 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
 
   const handleMouseLeave = () => {
     if (trigger === "hover") {
-      // 延时关闭，给用户时间移动到下拉选项
       timerRef.current = setTimeout(() => {
         setIsOpen(false);
       }, hoverDelay);
@@ -52,12 +51,7 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
   };
 
   const handleOpenChange = (open: boolean) => {
-    // 如果用户点击或选择了选项，立即更新状态并清除定时器
     if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-    // 当下拉框可见状态改变时，清除定时器
-    if (open && timerRef.current) {
       clearTimeout(timerRef.current);
     }
     setIsOpen(open);
@@ -70,7 +64,13 @@ export const PanelSelect: FC<IPanelSelectProps> = ({
 
   return (
     <div {...wrapperProps} style={{ display: "inline-block", lineHeight: 1 }}>
-      <Select {...selectProps} open={isOpen} onOpenChange={handleOpenChange} />
+      <Select
+        {...selectProps}
+        variant={variant}
+        className={[styles.panelSelect, className].filter(Boolean).join(" ")}
+        open={isOpen}
+        onOpenChange={handleOpenChange}
+      />
     </div>
   );
 };

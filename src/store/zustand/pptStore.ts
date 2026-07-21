@@ -1,6 +1,7 @@
 import type { IChartProps } from "@/element/Chart";
 import type { IIconProps } from "@/element/Icon";
 import type { IImageProps } from "@/element/Image";
+import type { IShapeProps } from "@/element/Shape";
 import type { ITableProps } from "@/element/Table";
 import type { ITextProps } from "@/element/Text";
 import {
@@ -19,7 +20,8 @@ export type Elements =
   | IIconProps
   | IImageProps
   | IMindMapProps
-  | IChartProps;
+  | IChartProps
+  | IShapeProps;
 
 export type Page = {
   id: string;
@@ -35,6 +37,10 @@ export type Page = {
   bgColor: string;
   fgColor: string;
   bgOpacity: number;
+  /** 纹理背景选中的纹理 id */
+  selectedTexture?: string;
+  /** 图片背景：base64 / data URL */
+  backgroundImage?: string;
   remark: string;
 };
 

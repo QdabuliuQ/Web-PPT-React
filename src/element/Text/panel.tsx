@@ -294,7 +294,12 @@ export const TextPanel: FC<ITextPanelProps> = () => {
                 <ColorCard
                   theme="multi-color"
                   size="12"
-                  fill={["#333", "#f25f00", "#FFF", "#43CCF8"]}
+                  fill={[
+                    "var(--icon-color)",
+                    "var(--primary-color)",
+                    "#FFF",
+                    "#43CCF8",
+                  ]}
                 />
               }
             />

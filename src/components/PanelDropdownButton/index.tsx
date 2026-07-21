@@ -93,7 +93,7 @@ export const PanelDropdownButton: FC<IPanelDropdownButtonProps> = ({
             style={{
               color: disabled
                 ? "var(--text-disabled)"
-                : "var(--text-secondary)",
+                : "var(--icon-color)",
             }}
           >
             <div className="flex items-center gap-[4px]">

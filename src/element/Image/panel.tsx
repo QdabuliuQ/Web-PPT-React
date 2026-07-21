@@ -189,14 +189,14 @@ const ImagePanelComponent: FC = () => {
           {filterProperty.map((item) => (
             <div key={item.type} className="flex items-center gap-[5px]">
               <div className="flex items-center gap-[2px] w-[55px] flex-shrink-0">
-                <span className="text-[12px] text-gray-500 mr-[3px]">
+                <span className="text-[12px] text-chrome-muted mr-[3px]">
                   {item.name}
                 </span>
                 <Tooltip title={item.tip} placement="top">
                   <Help
                     theme="outline"
                     size="12"
-                    fill="#999"
+                    fill="var(--text-muted)"
                     className="cursor-help"
                   />
                 </Tooltip>
@@ -228,7 +228,7 @@ const ImagePanelComponent: FC = () => {
     <div className="h-[53px] inline-flex items-center gap-[10px] px-[50px] min-w-fit my-[7px]">
       <div className="h-full flex flex-col justify-around mr-[6px]">
         <div className="flex items-center gap-[5px]">
-          <span className="text-[12px] text-gray-500 w-[40px]">{t("elements.image.panel.opacity")}</span>
+          <span className="text-[12px] text-chrome-muted w-[40px]">{t("elements.image.panel.opacity")}</span>
           <Slider
             min={0}
             max={1}
@@ -239,7 +239,7 @@ const ImagePanelComponent: FC = () => {
           />
         </div>
         <div className="flex items-center gap-[5px]">
-          <span className="text-[12px] text-gray-500 w-[40px]">{t("elements.image.panel.borderRadius")}</span>
+          <span className="text-[12px] text-chrome-muted w-[40px]">{t("elements.image.panel.borderRadius")}</span>
           <Slider
             min={0}
             max={200}

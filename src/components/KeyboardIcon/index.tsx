@@ -29,9 +29,9 @@ export default function KeyboardIcon({
       {keys.map((key, index) => (
         <span
           key={`${key}-${index}`}
-          className="inline-flex items-center text-[14px] text-gray-500"
+          className="inline-flex items-center text-[14px] text-gray-500 dark:text-[var(--text-muted)]"
         >
-          <kbd className="text-[14px] text-gray-500 px-[10px] py-[4px] bg-[#efefef] rounded-lg">
+          <kbd className="text-[14px] text-gray-500 dark:text-[var(--text-muted)] px-[10px] py-[4px] bg-[#efefef] dark:bg-[var(--guide-line)] rounded-lg">
             {key}
           </kbd>
           {index < keys.length - 1 && separator()}

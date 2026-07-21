@@ -29,14 +29,20 @@
     "backgroundType": "背景类型",
     "solidColor": "纯色",
     "texture": "纹理",
+    "image": "图片",
     "backgroundColor": "背景颜色",
+    "uploadBackgroundImage": "上传图片",
+    "changeBackgroundImage": "更换图片",
+    "previewBackgroundImage": "点击查看大图",
     "textureBgColor": "纹理背景色",
     "textureFgColor": "纹理前景色",
     "opacity": "透明度",
     "batchEdit": "批量修改",
     "newCanvas": "新建画布",
     "duplicateCanvas": "复制画布",
-    "deleteCanvas": "删除画布"
+    "deleteCanvas": "删除画布",
+    "confirmDeleteCanvas": "确认删除当前画布？删除后无法恢复。",
+    "confirmResetSlide": "确认重置当前幻灯片？将清空页面上的所有元素。"
   },
   "viewPanel": {
     "normalView": "普通视图",
@@ -55,6 +61,10 @@
     "closeRemark": "关闭备注"
   },
   "header": {
+    "importConfig": "导入配置文件",
+    "importSuccess": "导入成功，已覆盖当前 PPT",
+    "importFailed": "导入失败，请检查 JSON 格式",
+    "importInvalidPages": "导入失败：缺少有效页面数据",
     "exportConfig": "导出配置文件",
     "exportPdf": "导出PDF",
     "exportImage": "导出长图",
@@ -151,7 +161,8 @@
     "chart": "图表",
     "table": "表格",
     "icon": "图标",
-    "mindMap": "思维导图"
+    "mindMap": "思维导图",
+    "shape": "形状"
   },
   "chart": {
     "bar": "柱状图",
@@ -317,6 +328,30 @@
         "rotateLeft": "左旋转",
         "rotateRight": "右旋转",
         "switch": "切换"
+      }
+    },
+    "shape": {
+      "title": "形状",
+      "button": "形状",
+      "panel": "形状",
+      "shapeType": "形状类型",
+      "fill": "填充颜色",
+      "types": {
+        "rect": "矩形",
+        "roundedRect": "圆角矩形",
+        "oval": "圆形",
+        "triangle": "三角形",
+        "rightTriangle": "直角三角形",
+        "diamond": "菱形",
+        "pentagon": "五边形",
+        "hexagon": "六边形",
+        "star5": "五角星",
+        "arrowRight": "右箭头",
+        "heart": "心形"
+      },
+      "actions": {
+        "rotateLeft": "左旋转",
+        "rotateRight": "右旋转"
       }
     },
     "image": {
@@ -692,6 +727,10 @@
     "borderWidth": "边框宽度",
     "borderStyle": "边框样式",
     "borderColor": "边框颜色",
+    "style": "样式",
+    "styleOddRows": "单数行着色",
+    "styleEvenRows": "双数行着色",
+    "applyStyle": "应用此样式",
     "title": "表格"
   },
   "mindMapPanel": {

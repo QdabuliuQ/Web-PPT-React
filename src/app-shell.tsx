@@ -56,6 +56,9 @@ function AppShell() {
             optionSelectedBg: isDark ? "rgba(242, 95, 0, 0.18)" : "#fff2e6",
             optionSelectedColor: "#f25f00",
             optionActiveBg: isDark ? "rgba(242, 95, 0, 0.12)" : "#fff2e6",
+            colorBorder: isDark
+              ? "rgba(255, 255, 255, 0.12)"
+              : "#e8e8e8",
           },
           Input: {
             colorPrimary: "#f25f00",

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { IconPanelKey, IconPanelTitle } from "@/element/Icon";
 import { ImagePanelKey, ImagePanelTitle } from "@/element/Image";
 import { MindMapPanelKey, MindMapPanelTitle } from "@/element/MindMap";
+import { ShapePanelKey, ShapePanelTitle } from "@/element/Shape";
 import { TablePanelKey, TablePanelTitle } from "@/element/Table";
 import { TextPanelKey, TextPanelTitle } from "@/element/Text";
 import {
@@ -14,12 +15,19 @@ import {
   usePPTStore,
 } from "@/store";
 import { downloadPptxFromApi } from "@/services/exportPptx";
+import { loadDocument, parsePPTDocumentJSON } from "@/utils/loadDocument";
 import { exportPageAsImage } from "@/utils/tool";
 import { LoadingOutlined } from "@ant-design/icons";
-import { FileJpg, FilePdf, FilePpt, FileSettings } from "@icon-park/react";
+import {
+  FileAddition,
+  FileJpg,
+  FilePdf,
+  FilePpt,
+  FileSettings,
+} from "@icon-park/react";
 import { useMemoizedFn } from "ahooks";
 import { Button, Tooltip, message } from "antd";
-import { useEffect, useMemo, useRef, useState, type FC } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FC } from "react";
 import styles from "./index.module.less";
 
 const MenuMapped = {
@@ -46,6 +54,10 @@ const MenuMapped = {
   chart: {
     key: ChartPanelKey,
     title: ChartPanelTitle,
+  },
+  shape: {
+    key: ShapePanelKey,
+    title: ShapePanelTitle,
   },
 };
 
@@ -154,11 +166,49 @@ export const Header: FC = () => {
   const getName = usePPTStore((state) => state.getName);
   const getPages = usePPTStore((state) => state.getPages);
   const inputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [pptxLoading, setPptxLoading] = useState(false);
+
+  // 导入配置文件（覆盖当前 PPT）
+  const handleImportConfigClick = useMemoizedFn(() => {
+    if (importLoading) return;
+    importInputRef.current?.click();
+  });
+
+  const handleImportConfigChange = useMemoizedFn(
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      // 允许重复选择同一文件
+      e.target.value = "";
+      if (!file || importLoading) return;
+
+      setImportLoading(true);
+      try {
+        const text = await file.text();
+        const doc = parsePPTDocumentJSON(text);
+        loadDocument(doc);
+        message.success(t("header.importSuccess"));
+      } catch (error) {
+        console.error("导入配置文件失败:", error);
+        const code =
+          error instanceof Error ? error.message : "IMPORT_FAILED";
+        if (code === "INVALID_PAGES" || code === "INVALID_FORMAT") {
+          message.error(t("header.importInvalidPages"));
+        } else {
+          message.error(t("header.importFailed"));
+        }
+      } finally {
+        setTimeout(() => {
+          setImportLoading(false);
+        }, 200);
+      }
+    }
+  );
 
   // 导出配置文件
   const handleExportConfig = useMemoizedFn(async () => {
@@ -436,15 +486,15 @@ export const Header: FC = () => {
     >
       {/* 左侧：与预览列表同宽 */}
       <div
-        className={`${styles.headerLeft} flex items-center gap-[6px] min-w-0 shrink-0`}
+        className={`${styles.headerLeft} flex items-center gap-[4px] min-w-0 shrink-0 overflow-hidden`}
       >
-        <div className="text-[12px] text-chrome-secondary flex items-center relative min-h-[22px] min-w-0">
+        <div className={styles.titleWrap}>
           {/* 文本显示 */}
           <span
-            className={`${styles.titleText} cursor-text transition-opacity duration-200 ease-in-out inline-block max-w-[150px] truncate ${
+            className={`${styles.titleText} cursor-text transition-opacity duration-200 ease-in-out block w-full truncate ${
               !isEdit
                 ? "opacity-100 relative pointer-events-auto"
-                : "opacity-0 absolute pointer-events-none"
+                : "opacity-0 absolute inset-y-0 left-0 pointer-events-none"
             }`}
             title={name || t("header.untitled")}
             onClick={() => {
@@ -470,13 +520,39 @@ export const Header: FC = () => {
             style={{
               opacity: isEdit ? 1 : 0,
               position: !isEdit ? "absolute" : "relative",
+              inset: !isEdit ? "0" : undefined,
+              width: !isEdit ? "100%" : undefined,
               pointerEvents: !isEdit ? "none" : "auto",
               transition: "opacity 0.2s ease-in-out",
             }}
           />
         </div>
-        <div className={`flex items-center gap-[2px] ${styles.exportBtn}`}>
-          <Tooltip placement="bottomLeft" title={t("header.exportConfig")}>
+        <div
+          className={`flex items-center gap-[2px] shrink-0 ${styles.exportBtn}`}
+        >
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: "none" }}
+            onChange={handleImportConfigChange}
+          />
+          <Tooltip placement="bottomLeft" title={t("header.importConfig")}>
+            <Button
+              size="small"
+              type="text"
+              icon={
+                importLoading ? (
+                  <LoadingOutlined spin style={{ color: "#f25f00" }} />
+                ) : (
+                  <FileAddition theme="outline" size="16" fill="currentColor" />
+                )
+              }
+              disabled={importLoading}
+              onClick={handleImportConfigClick}
+            />
+          </Tooltip>
+          <Tooltip placement="bottom" title={t("header.exportConfig")}>
             <Button
               size="small"
               type="text"

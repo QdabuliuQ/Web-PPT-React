@@ -1,4 +1,5 @@
 import type { ExportPptxOptions } from "@/utils/pptx/exportPptx";
+import { prepareExportBackgrounds } from "@/utils/pptx/exportTextureBackground";
 import { prepareExportSnapshots } from "@/utils/pptx/prepareExportSnapshots";
 
 function triggerBlobDownload(blob: Blob, fileName: string) {
@@ -23,8 +24,10 @@ export async function downloadPptxFromApi(
     throw new Error("没有可导出的页面");
   }
 
-  const snapshots =
-    options.snapshots ?? (await prepareExportSnapshots(pages));
+  const [snapshots, backgrounds] = await Promise.all([
+    options.snapshots ?? prepareExportSnapshots(pages),
+    options.backgrounds ?? prepareExportBackgrounds(pages),
+  ]);
 
   const res = await fetch("/api/export/pptx", {
     method: "POST",
@@ -33,6 +36,7 @@ export async function downloadPptxFromApi(
       name: options.name,
       pages,
       snapshots,
+      backgrounds,
     }),
   });
 

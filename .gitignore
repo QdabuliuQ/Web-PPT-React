@@ -6,6 +6,11 @@ node_modules
 out/
 next-env.d.ts
 
+# Agent output
+agent-output/
+.agent-output/
+public/agent-assets/
+
 # Cypress
 cypress/videos
 cypress/screenshots
@@ -15,3 +20,8 @@ cypress/downloads
 dist
 *.log
 .DS_Store
+
+# Env
+.env
+.env.local
+.env.*.local

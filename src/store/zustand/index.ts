@@ -28,6 +28,8 @@ export {
 
 export { useCanvasZoomStore } from "./canvasZoomStore";
 
+export { useChartInspectorStore } from "./chartInspectorStore";
+
 export { useThemeStore, type ThemeMode } from "./themeStore";
 
 // Create compatibility layer for existing code

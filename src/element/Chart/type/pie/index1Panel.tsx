@@ -646,6 +646,7 @@ export const Pie1ChartPanel: FC = () => {
 
   return (
     <ChartStylePanel
+      sectionKey="pie"
       title={t("chartConfig.chartTypes.pie.title")}
       icon={<ChartPie theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs as PanelConfig[]}

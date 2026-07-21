@@ -202,6 +202,7 @@ export const GridPanel: FC = memo(() => {
 
   return (
     <ChartStylePanel
+      sectionKey="grid"
       title={t('chartConfig.sections.grid')}
       icon={<GridFour theme="outline" size="18" fill="var(--icon-color)" />}
       panelConfigs={panelConfigs}

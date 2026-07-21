@@ -20,6 +20,11 @@ import {
   Name as MindMapName,
 } from "@/element/MindMap";
 import {
+  Name as ShapeName,
+  ShapePanelIcon,
+  ShapePanelKey,
+} from "@/element/Shape";
+import {
   Name as TableName,
   TablePanelIcon,
   TablePanelKey,
@@ -51,6 +56,7 @@ const ELEMENT_PANEL_REGISTRY: ElementPanelInfo[] = [
   { key: IconPanelKey, name: IconName, icon: IconPanelIcon },
   { key: ImagePanelKey, name: ImageName, icon: ImagePanelIcon },
   { key: MindMapPanelKey, name: MindMapName, icon: MindMapPanelIcon },
+  { key: ShapePanelKey, name: ShapeName, icon: ShapePanelIcon },
   { key: TablePanelKey, name: TableName, icon: TablePanelIcon },
   { key: TextPanelKey, name: TextName, icon: TextPanelIcon },
 ];

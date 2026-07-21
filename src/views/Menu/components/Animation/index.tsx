@@ -377,6 +377,7 @@ const AnimationComponent: FC = () => {
       image: "element.image",
       chart: "element.chart",
       mindmap: "element.mindMap",
+      shape: "element.shape",
     };
     const key = keyMap[type];
     return key ? t(key) : type;
@@ -596,6 +597,8 @@ const AnimationComponent: FC = () => {
     handleSelectAnimationElement,
     sensors,
     getElementInfo,
+    delayOptions,
+    durationOptions,
   ]);
 
   return (

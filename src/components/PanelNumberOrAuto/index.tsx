@@ -91,7 +91,7 @@ export const PanelNumberOrAuto: FC<IPanelNumberOrAutoProps> = ({
         <HorizontallyCentered
           theme="outline"
           size="16"
-          fill={isCenter ? "#fff" : "#333"}
+          fill={isCenter ? "#fff" : "var(--icon-color)"}
           className={styles.icon}
         />
       </button>
