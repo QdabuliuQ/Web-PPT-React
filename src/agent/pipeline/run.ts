@@ -2,6 +2,10 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { repairPageContent, runContentAgent } from "../agents/contentAgent";
 import { runImageAgent } from "../agents/imageAgent";
+import {
+  runPageScoreAgent,
+  scoreToRepairInstruction,
+} from "../agents/scoreAgent";
 import { runThemeAgent } from "../agents/themeAgent";
 import { writePlatformCatalog } from "../catalog/exportCatalog";
 import { compileDocument } from "../compile/engine";
@@ -14,7 +18,7 @@ import {
   runVisualGate,
 } from "../gate/visualGate";
 import { normalizeMetaPages } from "../meta/normalize";
-import type { PipelineResult } from "../types";
+import type { PipelineResult, ScoreReport } from "../types";
 
 export type RunPipelineOptions = {
   userPrompt: string;
@@ -76,7 +80,8 @@ export async function runTemplatePipeline(
   );
 
   let document = compileDocument(normalizeMetaPages(meta), assetMap);
-  let report = runVisualGate(document, 0);
+  const gateOpts = { useDomMeasure: config.useDomMeasure };
+  let report = await runVisualGate(document, 0, gateOpts);
 
   let iter = 0;
   while (!report.ok && iter < config.maxGateIterations) {
@@ -105,7 +110,7 @@ export async function runTemplatePipeline(
       }
       meta = normalizeMetaPages(meta);
       document = compileDocument(meta, assetMap);
-      report = runVisualGate(document, iter);
+      report = await runVisualGate(document, iter, gateOpts);
       // 若只剩对比度 / 无法由 LLM 改坐标的问题，接受并退出
       if (
         !report.ok &&
@@ -125,8 +130,74 @@ export async function runTemplatePipeline(
       );
       meta = before;
       document = compileDocument(normalizeMetaPages(meta), assetMap);
-      report = runVisualGate(document, iter);
+      report = await runVisualGate(document, iter, gateOpts);
       break;
+    }
+  }
+
+  // —— 页面打分：Puppeteer 截图 + VL；<9 分按建议回炉 ——
+  let scoreReport: ScoreReport | undefined;
+  if (config.usePageScore) {
+    let scoreIter = 0;
+    scoreReport = await runPageScoreAgent({
+      config,
+      document,
+      meta,
+      assetMap,
+      outDir,
+      userPrompt: options.userPrompt,
+    });
+    scoreReport.iterations = scoreIter;
+
+    while (
+      scoreReport &&
+      !scoreReport.ok &&
+      scoreIter < config.maxScoreIterations
+    ) {
+      scoreIter += 1;
+      const toFix = scoreReport.pages.filter((p) => p.needOptimize);
+      if (toFix.length === 0) break;
+
+      const before = meta;
+      try {
+        for (const pageScore of toFix) {
+          meta = await repairPageContent({
+            config,
+            meta,
+            pageId: pageScore.pageId,
+            instruction: scoreToRepairInstruction(
+              pageScore,
+              config.scorePassThreshold
+            ),
+          });
+        }
+        meta = normalizeMetaPages(meta);
+        document = compileDocument(meta, assetMap);
+        // 文案变更后快速再跑一次硬门禁（截断等）
+        report = await runVisualGate(document, report.iterations, gateOpts);
+        scoreReport = await runPageScoreAgent({
+          config,
+          document,
+          meta,
+          assetMap,
+          outDir,
+          userPrompt: options.userPrompt,
+        });
+        scoreReport.iterations = scoreIter;
+        console.log(
+          `[pipeline] 打分回炉 #${scoreIter}：低分页 ${
+            scoreReport.pages.filter((p) => p.needOptimize).length
+          }`
+        );
+      } catch (err) {
+        console.warn(
+          `[pipeline] 打分回炉失败，保留上一版:`,
+          err instanceof Error ? err.message : err
+        );
+        meta = before;
+        document = compileDocument(normalizeMetaPages(meta), assetMap);
+        break;
+      }
     }
   }
 
@@ -145,9 +216,16 @@ export async function runTemplatePipeline(
   );
   await writeFile(
     path.join(outDir, "report.json"),
-    JSON.stringify(report, null, 2),
+    JSON.stringify({ ...report, scoreReport }, null, 2),
     "utf-8"
   );
+  if (scoreReport) {
+    await writeFile(
+      path.join(outDir, "score-report.json"),
+      JSON.stringify(scoreReport, null, 2),
+      "utf-8"
+    );
+  }
 
-  return { meta, assetMap, document, report };
+  return { meta, assetMap, document, report, scoreReport };
 }

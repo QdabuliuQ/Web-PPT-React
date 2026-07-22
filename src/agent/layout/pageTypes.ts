@@ -38,7 +38,7 @@ export const PAGE_TYPE_META: Record<
  * 页面类型 → 可选骨架（AI 先选 pageType，再在白名单内选 layoutKey）
  */
 export const PAGE_TYPE_LAYOUTS: Record<PageType, readonly LayoutKey[]> = {
-  hero: ["cover", "cover-center"],
+  hero: ["cover", "cover-center", "cover-left", "cover-right"],
   agenda: ["toc", "toc-cards"],
   problem: ["two-column", "image-text"],
   solution: ["two-column", "image-text"],
@@ -56,6 +56,8 @@ export const PAGE_TYPE_LAYOUTS: Record<PageType, readonly LayoutKey[]> = {
 const LAYOUT_DEFAULT_PAGE_TYPE: Record<LayoutKey, PageType> = {
   cover: "hero",
   "cover-center": "hero",
+  "cover-left": "hero",
+  "cover-right": "hero",
   toc: "agenda",
   "toc-cards": "agenda",
   "two-column": "problem",

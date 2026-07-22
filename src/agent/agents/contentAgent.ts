@@ -70,8 +70,14 @@ function buildDrawTasks(pages: MetaPage[], theme?: ThemeToken): DrawTask[] {
       );
     }
   }
-  if (theme?.globalBgPrompt) {
-    tasks.push(buildGlobalBgDrawTask(theme.globalBgPrompt));
+  if (theme?.globalBgPrompt || theme) {
+    tasks.push(
+      buildGlobalBgDrawTask(
+        theme.globalBgPrompt ||
+          theme.globalDecorPrompt ||
+          "soft abstract editorial atmosphere, muted paper-like texture, subtle gradient, no objects, no text"
+      )
+    );
   }
   return tasks;
 }

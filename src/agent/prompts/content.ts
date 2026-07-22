@@ -51,7 +51,7 @@ ${buildPageTypeConstraintPrompt()}
 
 插图 Prompt：
 - 必须有业务语义；禁抽象纹理装饰
-- hero/close 全幅图偏暗中调留叠字暗区；内页图干净浅亮
+- hero/close 全幅叠字图偏暗中调留暗区；cover-left/cover-right 半幅侧图干净浅亮；内页图干净浅亮
 - 禁止改槽位几何
 
 可用骨架：

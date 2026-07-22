@@ -248,7 +248,7 @@ export const PAGE_FIELDS = {
     "backgroundType=solidColor 时 background 为色值",
     "backgroundType=texture 时配合 selectedTexture + bgColor/fgColor/bgOpacity",
     "backgroundType=image 时配合 backgroundImage（data URL / 本地 /agent-assets/…）",
-    "Agent：封面/封底全幅图写入 backgroundImage；内页可用 bg_global 氛围底图",
+    "Agent：封面/封底全幅图写入 backgroundImage；内容页优先用 bg_global 氛围底图，无图时回退 texture",
   ],
 } as const;
 

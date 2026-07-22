@@ -4,7 +4,9 @@ import {
   chartWideLayout,
   compareSplitLayout,
   coverCenterLayout,
+  coverLeftLayout,
   coverLayout,
+  coverRightLayout,
   endingCenterLayout,
   endingLayout,
   imageTextLayout,
@@ -54,6 +56,8 @@ export {
 const LAYOUTS: Record<LayoutKey, LayoutSkeleton> = {
   cover: { ...coverLayout, pageTypes: ["hero"] },
   "cover-center": { ...coverCenterLayout, pageTypes: ["hero"] },
+  "cover-left": { ...coverLeftLayout, pageTypes: ["hero"] },
+  "cover-right": { ...coverRightLayout, pageTypes: ["hero"] },
   toc: { ...tocLayout, pageTypes: ["agenda"] },
   "toc-cards": { ...tocCardsLayout, pageTypes: ["agenda"] },
   "two-column": { ...twoColumnLayout, pageTypes: ["problem", "solution"] },

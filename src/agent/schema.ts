@@ -29,6 +29,8 @@ export const ThemeTokenSchema = z.object({
 export const LayoutKeySchema = z.enum([
   "cover",
   "cover-center",
+  "cover-left",
+  "cover-right",
   "toc",
   "toc-cards",
   "two-column",

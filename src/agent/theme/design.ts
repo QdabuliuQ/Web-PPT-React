@@ -69,6 +69,8 @@ export function fontSizeForRole(
   const hero =
     layoutKey === "cover" ||
     layoutKey === "cover-center" ||
+    layoutKey === "cover-left" ||
+    layoutKey === "cover-right" ||
     layoutKey === "ending";
   if (role === "metric") return FONT_SCALE.metric;
   if (hero && role === "title") return FONT_SCALE.coverTitle;

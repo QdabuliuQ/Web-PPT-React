@@ -66,6 +66,8 @@ export const LAYOUT_INTENT: Record<
 > = {
   cover: { intent: "hero", when: "默认封面：左下标题叠全幅图" },
   "cover-center": { intent: "hero", when: "居中封面" },
+  "cover-left": { intent: "hero", when: "左半幅图 + 右侧标题副标题" },
+  "cover-right": { intent: "hero", when: "右半幅图 + 左侧标题副标题" },
   toc: { intent: "agenda", when: "目录/议程" },
   "toc-cards": { intent: "agenda", when: "四宫格目录卡" },
   "two-column": { intent: "problem|solution", when: "左文右图论证" },

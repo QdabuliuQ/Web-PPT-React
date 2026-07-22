@@ -216,24 +216,41 @@ export function mapPageBackground(
   layoutKey?: LayoutKey,
   backgroundImage?: string
 ): PageBackgroundTokens {
-  if (backgroundImage && layoutKey && isHeroLayout(layoutKey)) {
-    return {
-      backgroundType: "image",
-      background: "#0F1115",
-      bgColor: "#0F1115",
-      fgColor: theme.secondary,
-      bgOpacity: 0.3,
-      backgroundImage,
-    };
-  }
+  const hasImage =
+    typeof backgroundImage === "string" &&
+    backgroundImage.length > 0 &&
+    !backgroundImage.includes("placehold.co");
 
+  // 封面/封底：全幅图叠字，偏暗底
   if (layoutKey && isHeroLayout(layoutKey)) {
+    if (hasImage) {
+      return {
+        backgroundType: "image",
+        background: "#0F1115",
+        bgColor: "#0F1115",
+        fgColor: theme.secondary,
+        bgOpacity: 0.3,
+        backgroundImage,
+      };
+    }
     return {
       backgroundType: "solidColor",
       background: "#0F1115",
       bgColor: "#0F1115",
       fgColor: theme.secondary,
       bgOpacity: 0.2,
+    };
+  }
+
+  // 内容页：有氛围底图则用 image，否则纹理
+  if (hasImage) {
+    return {
+      backgroundType: "image",
+      background: theme.background,
+      bgColor: theme.background,
+      fgColor: theme.secondary,
+      bgOpacity: 0.18,
+      backgroundImage,
     };
   }
 

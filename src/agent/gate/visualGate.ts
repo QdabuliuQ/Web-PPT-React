@@ -4,10 +4,16 @@ import type { Elements, Page } from "@/store/zustand/pptStore";
 import { contrastRatio } from "../contrast";
 import type { GateReport, PageDefect } from "../types";
 import type { CompiledDocument } from "../compile/engine";
+import {
+  measureTextOverflowWithPuppeteer,
+  overflowHitKey,
+  type TextOverflowHit,
+} from "./measureTextOverflow";
 
 const VAGUE_TITLE_RE =
   /^(商业计划书|公司介绍|核心优势|未来展望|产品介绍|关于我们|总结|概述|目录|谢谢|thank\s*you|introduction|overview)$/i;
 
+/** 无浏览器时的字符估高回退 */
 function estimateTextOverflow(el: Elements): boolean {
   if (el.type !== "text") return false;
   const fontSize = el.fontSize || 16;
@@ -52,7 +58,6 @@ function collectTextStats(page: Page): {
     if (isAccentOrEmptyText(el)) continue;
     const t = (el.text || "").trim();
     const fs = el.fontSize || 16;
-    // 大标题：字号偏大且较短
     if (fs >= 28 && t.length <= 40) {
       titleEls.push(el);
     }
@@ -64,8 +69,18 @@ function collectTextStats(page: Page): {
   return { titleEls, contentChars, contentBoxes };
 }
 
-export function inspectPage(page: Page): PageDefect[] {
+export type InspectPageOptions = {
+  /** DOM 测高命中表；未传则用字符估高 */
+  overflowHits?: Set<string>;
+  overflowMetrics?: Map<string, TextOverflowHit>;
+};
+
+export function inspectPage(
+  page: Page,
+  options: InspectPageOptions = {}
+): PageDefect[] {
   const defects: PageDefect[] = [];
+  const { overflowHits, overflowMetrics } = options;
 
   if ((page.elements?.length || 0) > MAX_ELEMENTS_PER_PAGE) {
     defects.push({
@@ -78,20 +93,19 @@ export function inspectPage(page: Page): PageDefect[] {
   const bg =
     page.backgroundType === "image" || page.backgroundType === "solidColor"
       ? page.backgroundType === "image"
-        ? page.bgColor || "#0F1115"
+        ? page.bgColor || page.background || "#0F1115"
         : page.background || page.bgColor || "#FFFFFF"
       : page.bgColor || page.background || "#FFFFFF";
 
   const surfaceIsDark =
-    page.backgroundType === "image" ||
-    (typeof bg === "string" &&
-      (() => {
-        try {
-          return contrastRatio("#FFFFFF", bg) > contrastRatio("#111111", bg);
-        } catch {
-          return false;
-        }
-      })());
+    typeof bg === "string" &&
+    (() => {
+      try {
+        return contrastRatio("#FFFFFF", bg) > contrastRatio("#111111", bg);
+      } catch {
+        return page.backgroundType === "image";
+      }
+    })();
 
   for (const el of page.elements || []) {
     if (isOutOfBounds(el)) {
@@ -106,12 +120,21 @@ export function inspectPage(page: Page): PageDefect[] {
     if (el.type === "text") {
       if (isAccentOrEmptyText(el)) continue;
 
-      if (estimateTextOverflow(el)) {
+      const key = overflowHitKey(page.id, el.id);
+      const overflow =
+        overflowHits != null
+          ? overflowHits.has(key)
+          : estimateTextOverflow(el);
+      if (overflow) {
+        const m = overflowMetrics?.get(key);
+        const detail = m
+          ? `content=${Math.round(m.contentHeight)}px > box=${Math.round(m.clientHeight)}px`
+          : `疑似文字溢出`;
         defects.push({
           pageId: page.id,
           elementId: el.id,
           kind: "text-overflow",
-          message: `疑似文字溢出：${el.text?.slice(0, 20)}…`,
+          message: `文字截断（${detail}）：${el.text?.slice(0, 20)}…`,
         });
       }
       const textBg =
@@ -142,7 +165,6 @@ export function inspectPage(page: Page): PageDefect[] {
     }
   }
 
-  // —— 观感软规则 ——
   const { titleEls, contentChars, contentBoxes } = collectTextStats(page);
   for (const el of titleEls) {
     const t = (el.text || "").trim().replace(/[。.!！？?\s]/g, "");
@@ -160,7 +182,6 @@ export function inspectPage(page: Page): PageDefect[] {
     (el) => el.type === "chart" || el.type === "table"
   );
 
-  // 有多个正文框却几乎没字（纯数据页豁免）
   if (!hasDataVisual && contentBoxes >= 2 && contentChars < 24) {
     defects.push({
       pageId: page.id,
@@ -169,7 +190,6 @@ export function inspectPage(page: Page): PageDefect[] {
     });
   }
 
-  // 单框塞满超长文（易溢出与拥挤）
   for (const el of page.elements || []) {
     if (el.type !== "text" || isAccentOrEmptyText(el)) continue;
     const len = (el.text || "").trim().length;
@@ -186,12 +206,46 @@ export function inspectPage(page: Page): PageDefect[] {
   return defects;
 }
 
-/** Node 侧静态视觉门禁（浏览器 DOM 测高可后续接入 PreviewCanvas） */
-export function runVisualGate(
+export type RunVisualGateOptions = {
+  /** 默认 true：Puppeteer DOM 测高；失败回退字符估高 */
+  useDomMeasure?: boolean;
+};
+
+/** VisualGate：硬规则 + Puppeteer 文本截断测高 */
+export async function runVisualGate(
   doc: CompiledDocument,
-  iterations = 0
-): GateReport {
-  const defects = doc.pages.flatMap(inspectPage);
+  iterations = 0,
+  options: RunVisualGateOptions = {}
+): Promise<GateReport> {
+  const useDom = options.useDomMeasure !== false;
+  let overflowHits: Set<string> | undefined;
+  let overflowMetrics: Map<string, TextOverflowHit> | undefined;
+
+  if (useDom) {
+    try {
+      const hits = await measureTextOverflowWithPuppeteer(doc.pages);
+      overflowHits = new Set(
+        hits.map((h) => overflowHitKey(h.pageId, h.elementId))
+      );
+      overflowMetrics = new Map(
+        hits.map((h) => [overflowHitKey(h.pageId, h.elementId), h])
+      );
+      if (hits.length > 0) {
+        console.log(
+          `[visualGate] DOM 测高截断 ${hits.length} 处`
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `[visualGate] Puppeteer 测高失败，回退字符估高:`,
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
+
+  const defects = doc.pages.flatMap((page) =>
+    inspectPage(page, { overflowHits, overflowMetrics })
+  );
   return {
     ok: defects.length === 0,
     defects,

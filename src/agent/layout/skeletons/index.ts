@@ -1,4 +1,9 @@
-export { coverLayout, coverCenterLayout } from "./hero";
+export {
+  coverLayout,
+  coverCenterLayout,
+  coverLeftLayout,
+  coverRightLayout,
+} from "./hero";
 export { tocLayout, tocCardsLayout } from "./agenda";
 export { twoColumnLayout, imageTextLayout } from "./narrative";
 export { threePointsLayout, pillarsIconsLayout } from "./pillars";

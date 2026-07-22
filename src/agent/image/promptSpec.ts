@@ -34,6 +34,13 @@ export function inferImageKind(opts: {
     // 全幅背景倾向 hero
     if (width >= 900 && height >= 500) return "hero";
   }
+  if (
+    (layoutKey === "cover-left" || layoutKey === "cover-right") &&
+    width >= 450 &&
+    height >= 500
+  ) {
+    return "photo";
+  }
   if (role === "decor") return "decoration";
   if (ROLE_IMAGE_KIND[role as SlotRole]) {
     return ROLE_IMAGE_KIND[role as SlotRole]!;

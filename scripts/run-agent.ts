@@ -61,7 +61,15 @@ function printHelp() {
   - meta.json
   - asset-map.json
   - report.json
+  - score-report.json   页面 VL 打分（≥9 通过）
+  - score-shots/        Puppeteer 页面截图
   - platform-catalog.json
+
+打分相关环境变量:
+  DASHSCOPE_API_KEY / SCORE_VL_API_KEY  视觉模型 Key
+  SCORE_VL_MODEL                        默认 qwen-vl-max
+  SCORE_VL_BASE_URL                     默认 DashScope compatible-mode
+  AGENT_PAGE_SCORE=0                    关闭打分回炉
 
 参考图说明:
   --samples 可重复；支持目录、单文件、逗号分隔路径，或关键字 demo

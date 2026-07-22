@@ -154,6 +154,19 @@ function buildTextElement(
   };
 }
 
+function resolveAssetSrc(
+  entry: AssetMap[string] | undefined
+): string {
+  // 优先本地同源 /agent-assets（需 public/agent-assets 有文件）
+  if (entry?.url?.startsWith("/")) return entry.url;
+  if (entry?.localPath) {
+    return `/agent-assets/${path.basename(entry.localPath)}`;
+  }
+  if (entry?.url) return entry.url;
+  if (entry?.remoteUrl?.startsWith("http")) return entry.remoteUrl;
+  return "https://placehold.co/800x600/png?text=image";
+}
+
 function buildImageElement(
   slot: LayoutSlot,
   fill: MetaSlotFill | undefined,
@@ -164,18 +177,17 @@ function buildImageElement(
 ): Elements {
   const key = fill?.assetKey;
   const entry = key ? assetMap[key] : undefined;
-  const src =
-    entry?.url ||
-    (entry?.localPath
-      ? `/agent-assets/${path.basename(entry.localPath)}`
-      : undefined) ||
-    "https://placehold.co/800x600/png?text=image";
+  const src = resolveAssetSrc(entry);
   const hero =
     isHeroOverlayLayout(layoutKey) &&
     slot.width >= 900 &&
     slot.height >= 500;
-  const isDecorStrip = !hero && slot.height <= 140;
-  const radius = hero ? 0 : DESIGN_RADIUS.image;
+  const splitCover =
+    (layoutKey === "cover-left" || layoutKey === "cover-right") &&
+    slot.role === "image";
+  const flush = hero || splitCover;
+  const isDecorStrip = !flush && slot.height <= 140;
+  const radius = flush ? 0 : DESIGN_RADIUS.image;
   return {
     type: "image",
     id: `image_${slot.elementId}_${rid()}`,
@@ -183,8 +195,8 @@ function buildImageElement(
     src,
     opacity: 1,
     borderRadius: radius,
-    border: !hero,
-    borderWidth: hero ? 0 : 1,
+    border: !flush,
+    borderWidth: flush ? 0 : 1,
     borderColor: "rgba(0,0,0,0.06)",
     borderStyle: "solid",
     keepRatio: true,
@@ -195,15 +207,15 @@ function buildImageElement(
     hueRotate: 0,
     invert: 0,
     sepia: 0,
-    shadow: !hero,
+    shadow: !flush,
     shadowOffsetX: 0,
-    shadowOffsetY: hero
+    shadowOffsetY: flush
       ? 0
       : isDecorStrip
         ? DESIGN_SHADOW.card.offsetY
         : DESIGN_SHADOW.image.offsetY,
     shadowColor: DESIGN_SHADOW.image.color,
-    shadowBlur: hero
+    shadowBlur: flush
       ? 0
       : isDecorStrip
         ? DESIGN_SHADOW.card.blur
@@ -429,16 +441,24 @@ function resolveBackgroundImageUrl(
   skeleton: ReturnType<typeof getLayout>,
   assetMap: AssetMap
 ): string | undefined {
-  // 仅封面/封底使用全幅主图作页面背景；内页保持浅色纹理，避免暗底叠暗字
-  if (!isHeroOverlayLayout(layoutKey)) return undefined;
-
-  const heroSlot = skeleton.slots.find((s) => isFullBleedBgSlot(s));
-  if (heroSlot) {
-    const fill = findFill(fills, heroSlot);
-    const url = fill?.assetKey ? assetMap[fill.assetKey]?.url : undefined;
-    if (url) return url;
+  // 封面/封底：全幅主图作背景
+  if (isHeroOverlayLayout(layoutKey)) {
+    const heroSlot = skeleton.slots.find((s) => isFullBleedBgSlot(s));
+    if (heroSlot) {
+      const fill = findFill(fills, heroSlot);
+      const entry = fill?.assetKey ? assetMap[fill.assetKey] : undefined;
+      if (entry) {
+        const url = resolveAssetSrc(entry);
+        if (url && !url.includes("placehold.co")) return url;
+      }
+    }
   }
-  return assetMap[GLOBAL_BG_ASSET_KEY]?.url;
+
+  // 内容页（及封面缺图时）：用全局氛围底图
+  const global = assetMap[GLOBAL_BG_ASSET_KEY];
+  if (!global) return undefined;
+  const url = resolveAssetSrc(global);
+  return url.includes("placehold.co") ? undefined : url;
 }
 
 function compilePage(

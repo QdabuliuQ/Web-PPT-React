@@ -17,6 +17,8 @@ export type SlotRole =
 export type LayoutKey =
   | "cover"
   | "cover-center"
+  | "cover-left"
+  | "cover-right"
   | "toc"
   | "toc-cards"
   | "two-column"
@@ -149,10 +151,10 @@ export type MetaJson = {
 };
 
 export type AssetMapEntry = {
-  /** 文档内使用的地址：优先本地 /agent-assets/xxx.png */
+  /** 文档内优先使用的本地同源地址：/agent-assets/xxx.png */
   url: string;
   localPath?: string;
-  /** 生图服务原始 CDN，仅调试用 */
+  /** 生图 CDN，仅作下载/调试回退 */
   remoteUrl?: string;
   width?: number;
   height?: number;
@@ -183,6 +185,31 @@ export type GateReport = {
   iterations: number;
 };
 
+export type PageScore = {
+  pageId: string;
+  score: number;
+  dimensions?: Partial<{
+    layout: number;
+    typography: number;
+    contrast: number;
+    hierarchy: number;
+    content: number;
+    polish: number;
+  }>;
+  summary: string;
+  issues: string[];
+  suggestions: string[];
+  needOptimize: boolean;
+};
+
+export type ScoreReport = {
+  ok: boolean;
+  passThreshold: number;
+  iterations: number;
+  pages: PageScore[];
+  error?: string;
+};
+
 export type PipelineResult = {
   meta: MetaJson;
   assetMap: AssetMap;
@@ -198,4 +225,5 @@ export type PipelineResult = {
     keyboardToggle: boolean;
   };
   report: GateReport;
+  scoreReport?: ScoreReport;
 };

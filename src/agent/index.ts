@@ -5,9 +5,19 @@ export type { CompiledDocument } from "./compile/engine";
 export { runThemeAgent } from "./agents/themeAgent";
 export { runContentAgent, repairPageContent } from "./agents/contentAgent";
 export { runImageAgent } from "./agents/imageAgent";
+export {
+  runPageScoreAgent,
+  scoreToRepairInstruction,
+} from "./agents/scoreAgent";
 export { runVisualGate, inspectPage } from "./gate/visualGate";
+export {
+  measureTextOverflowWithPuppeteer,
+  collectTextProbes,
+} from "./gate/measureTextOverflow";
+export { screenshotPagesWithPuppeteer } from "./gate/screenshotPages";
 export { runTemplatePipeline } from "./pipeline/run";
 export type { RunPipelineOptions } from "./pipeline/run";
+export { SCORE_PASS_THRESHOLD, PAGE_SCORE_SYSTEM_PROMPT } from "./prompts/score";
 export {
   listLayouts,
   getLayout,
@@ -58,4 +68,6 @@ export type {
   PageType,
   PipelineResult,
   GateReport,
+  PageScore,
+  ScoreReport,
 } from "./types";
