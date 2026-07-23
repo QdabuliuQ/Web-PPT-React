@@ -18,7 +18,8 @@ import {
   runVisualGate,
 } from "../gate/visualGate";
 import { normalizeMetaPages } from "../meta/normalize";
-import type { PipelineResult, ScoreReport } from "../types";
+import type { PipelineResult, ScoreReport, ThemeToken } from "../types";
+import { runHtmlPipeline } from "./runHtml";
 
 export type RunPipelineOptions = {
   userPrompt: string;
@@ -28,12 +29,38 @@ export type RunPipelineOptions = {
   /** 断点：已有 meta / assetMap 可跳过对应阶段 */
   resumeMeta?: unknown;
   resumeAssetMap?: Record<string, { url: string; localPath?: string }>;
+  /**
+   * 固定主题（编辑器当前主题 / 预设）。
+   * 提供后跳过 ThemeAgent 抽色，文案/生图/编译均按此配色。
+   */
+  theme?: ThemeToken;
 };
 
-export async function runTemplatePipeline(
+/**
+ * 统一入口：按 config.pipelineMode 分流。
+ * - skeleton（默认）：原 meta + 骨架 compile
+ * - html：Layout HTML + Puppeteer 测坐标
+ */
+export async function runPipeline(
   options: RunPipelineOptions
 ): Promise<PipelineResult> {
   const config = loadAgentConfig(options.config);
+  if (config.pipelineMode === "html") {
+    console.log("[pipeline] mode=html（无骨架）");
+    return runHtmlPipeline(options);
+  }
+  console.log("[pipeline] mode=skeleton（meta + layout skeletons）");
+  return runTemplatePipeline(options);
+}
+
+/** 原骨架流水线（保留） */
+export async function runTemplatePipeline(
+  options: RunPipelineOptions
+): Promise<PipelineResult> {
+  const config = loadAgentConfig({
+    ...options.config,
+    pipelineMode: "skeleton",
+  });
   const outDir =
     options.outDir || path.join(process.cwd(), "agent-output");
   await mkdir(outDir, { recursive: true });
@@ -47,6 +74,7 @@ export async function runTemplatePipeline(
         config,
         userPrompt: options.userPrompt,
         sampleImageUrls: options.sampleImageUrls,
+        fixedTheme: options.theme,
       });
 
   let meta = options.resumeMeta
@@ -90,7 +118,6 @@ export async function runTemplatePipeline(
     const before = meta;
     try {
       for (const [pageId, instruction] of instructions) {
-        // 对比度由 ThemeMapper/Compile 纠正，不必让 LLM 改文案
         const onlyContrast =
           /\[contrast\]/.test(instruction) &&
           !/\[text-overflow\]/.test(instruction) &&
@@ -111,7 +138,6 @@ export async function runTemplatePipeline(
       meta = normalizeMetaPages(meta);
       document = compileDocument(meta, assetMap);
       report = await runVisualGate(document, iter, gateOpts);
-      // 若只剩对比度 / 无法由 LLM 改坐标的问题，接受并退出
       if (
         !report.ok &&
         report.defects.every(
@@ -135,7 +161,6 @@ export async function runTemplatePipeline(
     }
   }
 
-  // —— 页面打分：Puppeteer 截图 + VL；<9 分按建议回炉 ——
   let scoreReport: ScoreReport | undefined;
   if (config.usePageScore) {
     let scoreIter = 0;
@@ -173,7 +198,6 @@ export async function runTemplatePipeline(
         }
         meta = normalizeMetaPages(meta);
         document = compileDocument(meta, assetMap);
-        // 文案变更后快速再跑一次硬门禁（截断等）
         report = await runVisualGate(document, report.iterations, gateOpts);
         scoreReport = await runPageScoreAgent({
           config,
@@ -201,7 +225,6 @@ export async function runTemplatePipeline(
     }
   }
 
-  // 最终再规范化一次，保证落盘 meta 可编译
   meta = normalizeMetaPages(meta);
   await writeFile(
     path.join(outDir, "meta.json"),
@@ -216,7 +239,11 @@ export async function runTemplatePipeline(
   );
   await writeFile(
     path.join(outDir, "report.json"),
-    JSON.stringify({ ...report, scoreReport }, null, 2),
+    JSON.stringify(
+      { ...report, scoreReport, pipelineMode: "skeleton" },
+      null,
+      2
+    ),
     "utf-8"
   );
   if (scoreReport) {
@@ -227,5 +254,12 @@ export async function runTemplatePipeline(
     );
   }
 
-  return { meta, assetMap, document, report, scoreReport };
+  return {
+    meta,
+    assetMap,
+    document,
+    report,
+    scoreReport,
+    pipelineMode: "skeleton",
+  };
 }

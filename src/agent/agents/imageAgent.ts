@@ -33,16 +33,19 @@ async function writeLocalPlaceholder(
 
 export async function runImageAgent(opts: {
   config: AgentRuntimeConfig;
-  meta: MetaJson;
+  meta?: MetaJson;
+  /** 直接传任务（HTML 流水线）；与 meta.drawTasks 二选一 */
+  drawTasks?: MetaJson["drawTasks"];
   outDir?: string;
 }): Promise<AssetMap> {
-  const { config, meta, outDir } = opts;
+  const { config, outDir } = opts;
+  const tasks = opts.drawTasks || opts.meta?.drawTasks || [];
   const assetsDir =
     outDir || path.join(process.cwd(), "agent-output", "assets");
   const map: AssetMap = {};
 
   const results = await mapPool(
-    meta.drawTasks,
+    tasks,
     config.imageConcurrency,
     async (task) => {
       try {

@@ -1,5 +1,8 @@
 export type ImageProvider = "openai" | "custom";
 
+/** skeleton：meta + 骨架 compile；html：Layout HTML + Puppeteer 测坐标 */
+export type AgentPipelineMode = "skeleton" | "html";
+
 export type AgentRuntimeConfig = {
   llmBaseUrl: string;
   llmApiKey: string;
@@ -18,6 +21,8 @@ export type AgentRuntimeConfig = {
   imageAspectRatio: string;
   imageConcurrency: number;
   mock: boolean;
+  /** 生成管线：默认 skeleton；AGENT_PIPELINE=html 或 --html 切换 */
+  pipelineMode: AgentPipelineMode;
   maxGateIterations: number;
   /** VisualGate 是否用 Puppeteer DOM 测高（默认 true；AGENT_GATE_DOM=0 关闭） */
   useDomMeasure: boolean;
@@ -79,6 +84,16 @@ export function loadAgentConfig(
       "1024x1024",
     imageConcurrency: overrides.imageConcurrency ?? 2,
     mock,
+    pipelineMode: (() => {
+      if (overrides.pipelineMode === "html" || overrides.pipelineMode === "skeleton") {
+        return overrides.pipelineMode;
+      }
+      const env = (process.env.AGENT_PIPELINE || "").trim().toLowerCase();
+      if (env === "html" || env === "html-slide" || env === "slide-html") {
+        return "html";
+      }
+      return "skeleton";
+    })(),
     maxGateIterations: overrides.maxGateIterations ?? 3,
     useDomMeasure:
       overrides.useDomMeasure ??

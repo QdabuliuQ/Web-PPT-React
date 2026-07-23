@@ -51,6 +51,8 @@ ${buildPageTypeConstraintPrompt()}
 
 插图 Prompt：
 - 必须有业务语义；禁抽象纹理装饰
+- 必须服从主题五色（primary/secondary/background/textOnLight/textOnDark）
+- imagePrompt 里必须显式写出这 5 个 #RRGGBB，并说明主色/辅色如何定调画面
 - hero/close 全幅叠字图偏暗中调留暗区；cover-left/cover-right 半幅侧图干净浅亮；内页图干净浅亮
 - 禁止改槽位几何
 

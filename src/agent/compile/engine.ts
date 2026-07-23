@@ -10,6 +10,10 @@ import {
   PLATFORM_LIMITS,
 } from "../catalog";
 import { getLayout } from "../layout";
+import {
+  alignIconToTextY,
+  findInlineIconTextPairs,
+} from "../layout/alignIconText";
 import { resolvePageTypeAndLayout } from "../layout/pageTypes";
 import {
   GLOBAL_BG_ASSET_KEY,
@@ -523,6 +527,18 @@ function compilePage(
     }
   }
 
+  // 文本经 fitTextBox 后高度可能变，按最终框把同行 icon 垂直居中
+  for (const { icon, text } of findInlineIconTextPairs(skeleton.slots)) {
+    const iconEl = elements.find(
+      (e) => e.type === "icon" && e.id.startsWith(`icon_${icon.elementId}_`)
+    );
+    const textEl = elements.find(
+      (e) => e.type === "text" && e.id.startsWith(`text_${text.elementId}_`)
+    );
+    if (!iconEl || !textEl) continue;
+    iconEl.y = alignIconToTextY(iconEl, textEl);
+  }
+
   return {
     id: pageId,
     elements,
@@ -545,6 +561,7 @@ function compilePage(
 
 export type CompiledDocument = {
   name: string;
+  theme: ThemeToken;
   gridSize: number;
   gridType: "grid" | "line" | "none";
   verticalLine: number[];
@@ -617,6 +634,7 @@ export function compileDocument(
 
   return {
     name: meta.theme.templateName,
+    theme: meta.theme,
     gridSize: 20,
     gridType: "none",
     verticalLine: [],

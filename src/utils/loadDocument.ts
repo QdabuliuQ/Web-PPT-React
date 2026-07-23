@@ -4,11 +4,15 @@ import {
   pageActiveStore,
   pptStore,
 } from "@/store";
-import type { Page } from "@/store/ppt";
+import { usePPTStore } from "@/store/zustand/pptStore";
+import type { ThemeToken } from "@/agent/types";
+import type { Page } from "@/store";
+import { inferThemeFromPages } from "@/theme";
 import { cloneDeep } from "@/utils";
 
 export type PPTDocumentJSON = {
   name?: string;
+  theme?: ThemeToken;
   pages: Page[];
   gridSize?: number;
   gridType?: "grid" | "line" | "none";
@@ -39,6 +43,12 @@ export function loadDocument(doc: PPTDocumentJSON) {
   if (doc.keyboardToggle != null) {
     pptStore.setKeyboardToggle(doc.keyboardToggle);
   }
+
+  const theme =
+    doc.theme && typeof doc.theme === "object"
+      ? doc.theme
+      : inferThemeFromPages(doc.pages);
+  usePPTStore.getState().setTheme(theme);
 
   elementActiveStore.resetElementActive();
   menuActiveStore.resetMenu();

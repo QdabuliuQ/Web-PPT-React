@@ -73,6 +73,10 @@ export type InspectPageOptions = {
   /** DOM 测高命中表；未传则用字符估高 */
   overflowHits?: Set<string>;
   overflowMetrics?: Map<string, TextOverflowHit>;
+  /** 页面类型：hero/close 不做 sparse 密度抽检（应由 Layout 定调，且本就偏收束） */
+  pageType?: string;
+  /** 显式跳过 sparse（例如 HTML 流水线仅告警不回炉时仍可由调用方过滤） */
+  skipSparseContent?: boolean;
 };
 
 export function inspectPage(
@@ -80,7 +84,7 @@ export function inspectPage(
   options: InspectPageOptions = {}
 ): PageDefect[] {
   const defects: PageDefect[] = [];
-  const { overflowHits, overflowMetrics } = options;
+  const { overflowHits, overflowMetrics, pageType } = options;
 
   if ((page.elements?.length || 0) > MAX_ELEMENTS_PER_PAGE) {
     defects.push({
@@ -182,11 +186,22 @@ export function inspectPage(
     (el) => el.type === "chart" || el.type === "table"
   );
 
-  if (!hasDataVisual && contentBoxes >= 2 && contentChars < 24) {
+  // hero/close 允许收束版式；内容密度由 Layout 首轮负责，不在此用 sparse 逼回炉长文
+  const skipSparse =
+    pageType === "hero" ||
+    pageType === "close" ||
+    options.skipSparseContent === true;
+
+  if (
+    !skipSparse &&
+    !hasDataVisual &&
+    contentBoxes >= 2 &&
+    contentChars < 80
+  ) {
     defects.push({
       pageId: page.id,
       kind: "sparse-content",
-      message: `文案过稀：约 ${contentChars} 字 / ${contentBoxes} 框，请补足信息密度`,
+      message: `文案过稀：约 ${contentChars} 字 / ${contentBoxes} 框（内容页建议首轮 Layout 即写满）`,
     });
   }
 
@@ -209,6 +224,10 @@ export function inspectPage(
 export type RunVisualGateOptions = {
   /** 默认 true：Puppeteer DOM 测高；失败回退字符估高 */
   useDomMeasure?: boolean;
+  /** pageId → pageType，用于 hero/close 跳过 sparse */
+  pageTypeById?: Record<string, string>;
+  /** 为 true 时所有页不做 sparse 缺陷（仍做结构硬伤） */
+  skipSparseContent?: boolean;
 };
 
 /** VisualGate：硬规则 + Puppeteer 文本截断测高 */
@@ -244,7 +263,12 @@ export async function runVisualGate(
   }
 
   const defects = doc.pages.flatMap((page) =>
-    inspectPage(page, { overflowHits, overflowMetrics })
+    inspectPage(page, {
+      overflowHits,
+      overflowMetrics,
+      pageType: options.pageTypeById?.[page.id],
+      skipSparseContent: options.skipSparseContent,
+    })
   );
   return {
     ok: defects.length === 0,

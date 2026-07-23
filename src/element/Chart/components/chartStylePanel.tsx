@@ -158,7 +158,7 @@ export const ChartStyleForm: FC<{
               max={props.max ?? 1}
               step={props.step ?? 0.1}
               tooltip={{ open: false }}
-              style={{ width: "100%" }}
+              style={{ width: "100%", margin: "11px 0" }}
             />
           );
         default:

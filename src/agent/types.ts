@@ -150,6 +150,23 @@ export type MetaJson = {
   drawTasks: DrawTask[];
 };
 
+/** HTML 流水线：一页幻灯片（无骨架） */
+export type HtmlSlidePage = {
+  pageId: string;
+  pageType: PageType;
+  /** 含 #slide 的 HTML 片段 */
+  html: string;
+};
+
+/** HTML 流水线中间态 */
+export type HtmlDeck = {
+  version: "html-1.0";
+  name: string;
+  theme: ThemeToken;
+  pages: HtmlSlidePage[];
+  drawTasks: DrawTask[];
+};
+
 export type AssetMapEntry = {
   /** 文档内优先使用的本地同源地址：/agent-assets/xxx.png */
   url: string;
@@ -211,6 +228,7 @@ export type ScoreReport = {
 };
 
 export type PipelineResult = {
+  /** skeleton 路径为真实 meta；html 路径为兼容桩（供 Gate/Score） */
   meta: MetaJson;
   assetMap: AssetMap;
   document: {
@@ -226,4 +244,7 @@ export type PipelineResult = {
   };
   report: GateReport;
   scoreReport?: ScoreReport;
+  /** 仅 html 流水线 */
+  htmlDeck?: HtmlDeck;
+  pipelineMode?: "skeleton" | "html";
 };

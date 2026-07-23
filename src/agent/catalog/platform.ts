@@ -20,6 +20,11 @@ export const PLATFORM_LIMITS = {
   recommendedPages: { min: 6, max: 10 },
   /** Agent 生成页数硬限制（与 recommended 一致） */
   agentPages: { min: 6, max: 10 },
+  /**
+   * HTML 流水线页数：允许用户指定更少页（如「生成 4 页」）。
+   * 未指定时仍建议 6～10。
+   */
+  agentPagesHtml: { min: 1, max: 10 },
   tableMaxGrid: { cols: 10, rows: 10 },
   fontSize: { min: 12, max: 50, step: 2 },
 } as const;

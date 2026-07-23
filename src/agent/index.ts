@@ -2,7 +2,7 @@ export { loadAgentConfig } from "./config";
 export type { AgentRuntimeConfig } from "./config";
 export { compileDocument } from "./compile/engine";
 export type { CompiledDocument } from "./compile/engine";
-export { runThemeAgent } from "./agents/themeAgent";
+export { runThemeAgent, finalizeTheme, resolveProvidedTheme } from "./agents/themeAgent";
 export { runContentAgent, repairPageContent } from "./agents/contentAgent";
 export { runImageAgent } from "./agents/imageAgent";
 export {
@@ -15,8 +15,20 @@ export {
   collectTextProbes,
 } from "./gate/measureTextOverflow";
 export { screenshotPagesWithPuppeteer } from "./gate/screenshotPages";
-export { runTemplatePipeline } from "./pipeline/run";
+export {
+  runPipeline,
+  runTemplatePipeline,
+} from "./pipeline/run";
+export { runHtmlPipeline } from "./pipeline/runHtml";
 export type { RunPipelineOptions } from "./pipeline/run";
+export {
+  runLayoutHtmlAgent,
+  repairHtmlPage,
+  htmlDeckToCompatMeta,
+  extractDrawTasksFromDeck,
+} from "./agents/layoutHtmlAgent";
+export { compileHtmlDocument } from "./htmlCompile";
+export type { HtmlCompiledDocument } from "./htmlCompile";
 export { SCORE_PASS_THRESHOLD, PAGE_SCORE_SYSTEM_PROMPT } from "./prompts/score";
 export {
   listLayouts,
@@ -37,6 +49,8 @@ export {
 export type { PagePlanItem } from "./layout/sequence";
 export {
   MetaJsonSchema,
+  HtmlDeckSchema,
+  HtmlDeckLlmSchema,
   ThemeTokenSchema,
   AssetMapSchema,
   PageTypeSchema,
@@ -62,6 +76,8 @@ export {
 } from "./catalog/exportCatalog";
 export type {
   MetaJson,
+  HtmlDeck,
+  HtmlSlidePage,
   ThemeToken,
   AssetMap,
   LayoutKey,
@@ -71,3 +87,4 @@ export type {
   PageScore,
   ScoreReport,
 } from "./types";
+export type { AgentPipelineMode } from "./config";

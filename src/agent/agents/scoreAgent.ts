@@ -122,7 +122,10 @@ export function scoreToRepairInstruction(
   const tips = score.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n");
   const issues =
     score.issues.length > 0 ? `\n问题：${score.issues.join("；")}` : "";
-  return `[page-score] 得分 ${score.score}/10（<${passThreshold} 需优化）。总评：${score.summary}${issues}\n请仅改文案/imagePrompt 等槽位内容落实下列建议（禁止改坐标）：\n${tips}`;
+  return `[page-score] 得分 ${score.score}/10（<${passThreshold} 需优化）。总评：${score.summary}${issues}
+请优先落实版式/对比/层级/裁切类建议；**不要大幅新增长文或把收束页改成内容页**（正文密度应在首轮 Layout 已定稿）。可微调措辞与层级。
+建议：
+${tips}`;
 }
 
 /**

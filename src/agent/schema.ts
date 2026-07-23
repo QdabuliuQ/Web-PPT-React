@@ -10,6 +10,8 @@ import {
 
 const PAGE_MIN = PLATFORM_LIMITS.agentPages.min;
 const PAGE_MAX = PLATFORM_LIMITS.agentPages.max;
+const HTML_PAGE_MIN = PLATFORM_LIMITS.agentPagesHtml.min;
+const HTML_PAGE_MAX = PLATFORM_LIMITS.agentPagesHtml.max;
 
 export const ThemeTokenSchema = z.object({
   templateName: z.string().min(1),
@@ -143,6 +145,25 @@ export const MetaJsonSchema = z.object({
   version: z.literal("1.0"),
   theme: ThemeTokenSchema,
   pages: z.array(MetaPageSchema).min(PAGE_MIN).max(PAGE_MAX),
+  drawTasks: z.array(DrawTaskSchema),
+});
+
+export const HtmlSlidePageSchema = z.object({
+  pageId: z.string().min(1),
+  pageType: PageTypeSchema,
+  html: z.string().min(20),
+});
+
+export const HtmlDeckLlmSchema = z.object({
+  name: z.string().min(1).max(120),
+  pages: z.array(HtmlSlidePageSchema).min(HTML_PAGE_MIN).max(HTML_PAGE_MAX),
+});
+
+export const HtmlDeckSchema = z.object({
+  version: z.literal("html-1.0"),
+  name: z.string(),
+  theme: ThemeTokenSchema,
+  pages: z.array(HtmlSlidePageSchema).min(HTML_PAGE_MIN).max(HTML_PAGE_MAX),
   drawTasks: z.array(DrawTaskSchema),
 });
 

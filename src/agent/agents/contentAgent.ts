@@ -16,6 +16,7 @@ import {
 import { normalizeMetaPage, truncatePageContents } from "../meta/normalize";
 import { buildContentSystemPrompt } from "../prompts/content";
 import { ContentAgentLlmSchema, MetaJsonSchema } from "../schema";
+import { buildPaletteHint, appendPaletteToImagePrompt, formatThemeForContentPrompt } from "../theme/colorPrompt";
 import type {
   DrawTask,
   MetaJson,
@@ -53,6 +54,7 @@ function clampPages(pages: MetaPage[]): MetaPage[] {
 
 function buildDrawTasks(pages: MetaPage[], theme?: ThemeToken): DrawTask[] {
   const tasks: DrawTask[] = [];
+  const paletteHint = theme ? buildPaletteHint(theme) : undefined;
   for (const p of pages) {
     const layout = getLayout(p.layoutKey);
     for (const s of p.slots) {
@@ -62,10 +64,11 @@ function buildDrawTasks(pages: MetaPage[], theme?: ThemeToken): DrawTask[] {
       tasks.push(
         buildDrawTaskFromSlot({
           assetKey: s.assetKey,
-          basePrompt: s.imagePrompt,
+          basePrompt: appendPaletteToImagePrompt(s.imagePrompt, theme!),
           slot,
           pageId: p.pageId,
           layoutKey: p.layoutKey,
+          paletteHint,
         })
       );
     }
@@ -75,7 +78,8 @@ function buildDrawTasks(pages: MetaPage[], theme?: ThemeToken): DrawTask[] {
       buildGlobalBgDrawTask(
         theme.globalBgPrompt ||
           theme.globalDecorPrompt ||
-          "soft abstract editorial atmosphere, muted paper-like texture, subtle gradient, no objects, no text"
+          "soft abstract editorial atmosphere, muted paper-like texture, subtle gradient, no objects, no text",
+        paletteHint
       )
     );
   }
@@ -165,7 +169,10 @@ function mockContent(theme: ThemeToken, plan?: PagePlanItem[]): MetaJson {
           return {
             ...base,
             assetKey,
-            imagePrompt: `${theme.globalDecorPrompt || "modern editorial photo"}, ${layoutKey} ${s.hint || s.elementId}, concrete subject related to the page topic, no abstract texture filler`,
+            imagePrompt: appendPaletteToImagePrompt(
+              `${theme.globalDecorPrompt || "modern editorial photo"}, ${layoutKey} ${s.hint || s.elementId}, concrete subject related to the page topic, no abstract texture filler`,
+              theme
+            ),
           };
         }
         if (s.type === "chart") {
@@ -240,9 +247,9 @@ export async function runContentAgent(opts: {
       { role: "system", content: buildContentSystemPrompt(layouts) },
       {
         role: "user",
-        content: `主题：${JSON.stringify(theme)}\n用户需求：${userPrompt}\n建议页计划（可微调，须含 hero 与 close）：${suggested
+        content: `主题五色已锁定（文案气质 + imagePrompt 必须服从，禁止另起色系）：\n${formatThemeForContentPrompt(theme)}\n\n用户需求：${userPrompt}\n建议页计划（可微调，须含 hero 与 close）：${suggested
           .map((p) => `${p.pageType}/${p.layoutKey}`)
-          .join(" → ")}\n请生成 ${PAGE_MIN}～${PAGE_MAX} 页内容 JSON（硬限制）。`,
+          .join(" → ")}\n请生成 ${PAGE_MIN}～${PAGE_MAX} 页内容 JSON（硬限制）。每个 imagePrompt 必须包含上述 5 个 hex。`,
       },
     ],
     parse: (data) => ContentAgentLlmSchema.parse(data),
@@ -275,11 +282,14 @@ export async function runContentAgent(opts: {
           tableData: s?.tableData,
           chartSeries: s?.chartSeries,
           chartType: s?.chartType,
-          imagePrompt:
-            s?.imagePrompt ||
-            (sk.type === "image"
-              ? `${theme.globalDecorPrompt || "modern editorial photo"}, ${layout.layoutKey} ${sk.hint || sk.elementId}, concrete subject related to the page topic, no abstract texture filler`
-              : undefined),
+          imagePrompt: s?.imagePrompt
+            ? appendPaletteToImagePrompt(s.imagePrompt, theme)
+            : sk.type === "image"
+              ? appendPaletteToImagePrompt(
+                  `${theme.globalDecorPrompt || "modern editorial photo"}, ${layout.layoutKey} ${sk.hint || sk.elementId}, concrete subject related to the page topic, no abstract texture filler`,
+                  theme
+                )
+              : undefined,
           iconName: s?.iconName,
           shapeType:
             s?.shapeType ||

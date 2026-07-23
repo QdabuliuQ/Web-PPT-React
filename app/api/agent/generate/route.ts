@@ -1,4 +1,5 @@
-import { runTemplatePipeline } from "@/agent/pipeline/run";
+import { runPipeline } from "@/agent/pipeline/run";
+import type { AgentPipelineMode } from "@/agent/config";
 import {
   DEFAULT_SAMPLE_DIR,
   loadSampleImageUrls,
@@ -15,7 +16,8 @@ export const maxDuration = 300;
  *   prompt: string,
  *   sampleImageUrls?: string[],
  *   useDemoSamples?: boolean,  // 使用 src/agent/assets 内置参考图
- *   mock?: boolean
+ *   mock?: boolean,
+ *   pipelineMode?: "skeleton" | "html"  // 默认 skeleton；html=无骨架
  * }
  */
 export async function POST(request: Request) {
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
       useDemoSamples?: boolean;
       mock?: boolean;
       outDir?: string;
+      pipelineMode?: AgentPipelineMode;
     };
 
     if (!body.prompt?.trim()) {
@@ -40,7 +43,12 @@ export async function POST(request: Request) {
       sampleImageUrls = [...(sampleImageUrls || []), ...urls];
     }
 
-    const result = await runTemplatePipeline({
+    const pipelineMode =
+      body.pipelineMode === "html" || body.pipelineMode === "skeleton"
+        ? body.pipelineMode
+        : undefined;
+
+    const result = await runPipeline({
       userPrompt: body.prompt.trim(),
       sampleImageUrls,
       outDir: body.outDir,
@@ -49,17 +57,20 @@ export async function POST(request: Request) {
           body.mock === true ||
           process.env.AGENT_MOCK === "1" ||
           !process.env.LLM_API_KEY,
+        ...(pipelineMode ? { pipelineMode } : {}),
       },
     });
 
     return NextResponse.json({
       ok: result.report.ok,
+      pipelineMode: result.pipelineMode || pipelineMode || "skeleton",
       name: result.document.name,
       pageCount: result.document.pages.length,
       report: result.report,
       document: result.document,
       meta: result.meta,
       assetMap: result.assetMap,
+      htmlDeck: result.htmlDeck,
     });
   } catch (error) {
     console.error("[api/agent/generate]", error);

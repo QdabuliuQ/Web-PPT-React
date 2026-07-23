@@ -42,7 +42,10 @@
     "duplicateCanvas": "Duplicate Slide",
     "deleteCanvas": "Delete Slide",
     "confirmDeleteCanvas": "Delete this slide? This cannot be undone.",
-    "confirmResetSlide": "Reset this slide? All elements on the page will be cleared."
+    "confirmResetSlide": "Reset this slide? All elements on the page will be cleared.",
+    "theme": "Theme",
+    "themePanelTitle": "Theme Colors",
+    "themeHint": "Each preset has primary, secondary, background, text-on-light, and text-on-dark. Applies to text, icons, shapes, tables, and charts."
   },
   "viewPanel": {
     "normalView": "Normal View",
@@ -73,7 +76,9 @@
     "longImageSuffix": "long-image",
     "noExportPages": "No pages to export",
     "pptxSuccess": "PPTX exported successfully",
-    "pptxFailed": "Failed to export PPTX"
+    "pptxFailed": "Failed to export PPTX",
+    "palette": "Colors",
+    "paletteHint": "Pick a preset palette to restyle text, icons, shapes, and charts"
   },
   "footer": {
     "slideCount": "Slide {{current}} / {{total}}",

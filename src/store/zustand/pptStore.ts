@@ -1,3 +1,4 @@
+import type { ThemeToken } from "@/agent/types";
 import type { IChartProps } from "@/element/Chart";
 import type { IIconProps } from "@/element/Icon";
 import type { IImageProps } from "@/element/Image";
@@ -9,6 +10,7 @@ import {
   MAX_PAGES,
 } from "@/constants/limits";
 import i18n from "@/i18n";
+import { applyDocumentTheme, DEFAULT_PPT_THEME, toThemeToken } from "@/theme";
 import type { IMindMapProps } from "@/types/element";
 import { getRandomId } from "@/utils";
 import { message } from "antd";
@@ -48,6 +50,7 @@ type IPage = Array<Page>;
 
 interface PPTState {
   name: string;
+  theme: ThemeToken;
   gridSize: number;
   gridType: "grid" | "line" | "none";
   verticalLine: Array<number>;
@@ -81,6 +84,11 @@ interface PPTState {
 
   setName: (value: string) => void;
   getName: () => string;
+
+  setTheme: (theme: ThemeToken) => void;
+  getTheme: () => ThemeToken;
+  /** 切换主题色并重映射当前文档配色 */
+  applyTheme: (theme: ThemeToken) => void;
 
   setPages: (pages: IPage) => void;
   getActivePage: (pageId: string) => Page | undefined;
@@ -121,6 +129,7 @@ interface PPTState {
 export const usePPTStore = create<PPTState>((set, get) => ({
   // Initial state
   name: "",
+  theme: toThemeToken(DEFAULT_PPT_THEME),
   gridSize: 20,
   gridType: "grid",
   verticalLine: [],
@@ -161,6 +170,15 @@ export const usePPTStore = create<PPTState>((set, get) => ({
   // Name
   setName: (value) => set({ name: value }),
   getName: () => get().name,
+
+  // Theme
+  setTheme: (theme) => set({ theme }),
+  getTheme: () => get().theme,
+  applyTheme: (theme) => {
+    const prev = get().theme;
+    const pages = applyDocumentTheme(get().pages, theme, prev);
+    set({ theme, pages });
+  },
 
   // Pages
   setPages: (pages) => set({ pages: [...pages] }),

@@ -69,7 +69,7 @@ const KIND_PROMPT: Record<ImageKind, string> = {
   decoration:
     "subtle brand accent atmosphere only when explicitly needed, prefer real materials with clear subject, no abstract waves, no empty geometry strips, no text, no logos",
   texture: "seamless abstract texture pattern, soft colors, no text",
-  hero: "cinematic wide hero background, 16:9, darker midtones, soft vignette, clear darker band in lower-left for text overlay, atmospheric, no text overlay",
+  hero: "cinematic wide hero background, 16:9, darker midtones, soft vignette, clear darker band for text overlay, atmospheric, never pale or white wash, no text overlay",
 };
 
 /**
@@ -81,16 +81,21 @@ export function enrichImagePrompt(opts: {
   height: number;
   kind: ImageKind;
   aspectRatio: string;
+  /** 主题色约束，写入生图 prompt */
+  paletteHint?: string;
 }): string {
-  const { basePrompt, width, height, kind, aspectRatio } = opts;
+  const { basePrompt, width, height, kind, aspectRatio, paletteHint } = opts;
   const kindHint = KIND_PROMPT[kind];
   return [
     basePrompt.trim().replace(/[.\s]+$/, ""),
+    paletteHint?.trim() || "",
     `image type: ${kind} (${kindHint})`,
     `target canvas slot: ${Math.round(width)}x${Math.round(height)}px`,
     `generate at aspectRatio ${aspectRatio}`,
     "no watermark, no readable text, no logos",
-  ].join(". ");
+  ]
+    .filter(Boolean)
+    .join(". ");
 }
 
 export function buildDrawTaskFromSlot(opts: {
@@ -100,9 +105,17 @@ export function buildDrawTaskFromSlot(opts: {
   pageId: string;
   layoutKey: string;
   scope?: "global" | "page";
+  paletteHint?: string;
 }) {
-  const { assetKey, basePrompt, slot, pageId, layoutKey, scope = "page" } =
-    opts;
+  const {
+    assetKey,
+    basePrompt,
+    slot,
+    pageId,
+    layoutKey,
+    scope = "page",
+    paletteHint,
+  } = opts;
   const kind = inferImageKind({
     role: slot.role,
     layoutKey,
@@ -118,6 +131,7 @@ export function buildDrawTaskFromSlot(opts: {
     height: slot.height,
     kind,
     aspectRatio,
+    paletteHint,
   });
 
   return {
@@ -136,7 +150,10 @@ export function buildDrawTaskFromSlot(opts: {
 /** 全局页面氛围底图（写入 page.backgroundImage） */
 export const GLOBAL_BG_ASSET_KEY = "bg_global";
 
-export function buildGlobalBgDrawTask(basePrompt: string) {
+export function buildGlobalBgDrawTask(
+  basePrompt: string,
+  paletteHint?: string
+) {
   const width = 1000;
   const height = 562;
   const aspectRatio = mapAspectRatio(width, height);
@@ -151,6 +168,7 @@ export function buildGlobalBgDrawTask(basePrompt: string) {
       height,
       kind,
       aspectRatio,
+      paletteHint,
     }),
     scope: "global" as const,
     width,

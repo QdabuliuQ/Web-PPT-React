@@ -4,6 +4,9 @@ import {
   PanelSelect,
   PanelSplitLine,
 } from "@/components";
+import ThemePalettePanel, {
+  THEME_PANEL_SECTION_KEY,
+} from "@/components/ThemePalettePanel";
 import {
   elementActiveStore,
   menuActiveStore,
@@ -13,6 +16,7 @@ import {
   usePPTStore,
   usePageActiveStore,
 } from "@/store";
+import { useChartInspectorStore } from "@/store/zustand/chartInspectorStore";
 import {
   addPageAndActivate,
   duplicatePageAndActivate,
@@ -37,6 +41,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Add,
   Clear,
+  ColorCard,
   Copy,
   Delete,
   Drag,
@@ -74,6 +79,9 @@ export const Start: FC = () => {
     (state) => state.setElementHoverActive
   );
   const setActiveMenu = useMenuActiveStore((state) => state.setActiveMenu);
+  const toggleThemeSection = useChartInspectorStore(
+    (state) => state.toggleSection
+  );
 
   // 获取当前页面
   const currentPage = pageActive ? getActivePage(pageActive) : null;
@@ -441,6 +449,7 @@ export const Start: FC = () => {
   return (
     <div className="flex items-center h-[53px] gap-[10px]">
       {contextHolder}
+      <ThemePalettePanel />
       <Popover content={layerContent} placement="bottomLeft">
         <div className="h-full">
           <PanelLargeButton
@@ -450,6 +459,16 @@ export const Start: FC = () => {
           />
         </div>
       </Popover>
+      <PanelLargeButton
+        title={t("startPanel.theme")}
+        icon={<ColorCard theme="outline" size="18" fill="var(--icon-color)" />}
+        onClick={() =>
+          toggleThemeSection(
+            THEME_PANEL_SECTION_KEY,
+            t("startPanel.themePanelTitle")
+          )
+        }
+      />
       <PanelSplitLine />
       <div className="flex flex-col justify-between h-full">
         <Tooltip title={t("startPanel.backgroundType")}>

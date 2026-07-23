@@ -1,4 +1,5 @@
 import type { LayoutKey, LayoutSkeleton } from "../types";
+import { alignLayoutIconText } from "./alignIconText";
 import {
   chartLayout,
   chartWideLayout,
@@ -52,6 +53,12 @@ export {
   resolvePageTypeAndLayout,
 } from "./pageTypes";
 
+export {
+  alignIconToTextY,
+  alignLayoutIconText,
+  findInlineIconTextPairs,
+} from "./alignIconText";
+
 /** 按 pageType 分组的骨架源文件见 ./skeletons/ */
 const LAYOUTS: Record<LayoutKey, LayoutSkeleton> = {
   cover: { ...coverLayout, pageTypes: ["hero"] },
@@ -82,11 +89,11 @@ const LAYOUTS: Record<LayoutKey, LayoutSkeleton> = {
 export function getLayout(key: LayoutKey): LayoutSkeleton {
   const layout = LAYOUTS[key];
   if (!layout) throw new Error(`未知 layoutKey: ${key}`);
-  return layout;
+  return alignLayoutIconText(layout);
 }
 
 export function listLayouts(): LayoutSkeleton[] {
-  return Object.values(LAYOUTS);
+  return Object.values(LAYOUTS).map((l) => alignLayoutIconText(l));
 }
 
 export { LAYOUTS };

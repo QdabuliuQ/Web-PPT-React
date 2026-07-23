@@ -184,6 +184,18 @@ class PPTStoreCompat {
     return usePPTStore.getState().getName();
   };
 
+  setTheme = (theme: import("@/agent/types").ThemeToken) => {
+    usePPTStore.getState().setTheme(theme);
+  };
+
+  getTheme = () => {
+    return usePPTStore.getState().getTheme();
+  };
+
+  applyTheme = (theme: import("@/agent/types").ThemeToken) => {
+    usePPTStore.getState().applyTheme(theme);
+  };
+
   setRule = (rule: boolean) => {
     usePPTStore.getState().setRule(rule);
   };

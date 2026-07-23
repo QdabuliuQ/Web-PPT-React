@@ -165,6 +165,7 @@ export const Header: FC = () => {
   const setName = usePPTStore((state) => state.setName);
   const getName = usePPTStore((state) => state.getName);
   const getPages = usePPTStore((state) => state.getPages);
+  const getTheme = usePPTStore((state) => state.getTheme);
   const inputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [isEdit, setIsEdit] = useState(false);
@@ -219,6 +220,7 @@ export const Header: FC = () => {
       // 获取数据
       const configData = {
         name: getName(),
+        theme: getTheme(),
         pages: getPages(),
       };
 

@@ -42,7 +42,10 @@
     "duplicateCanvas": "复制画布",
     "deleteCanvas": "删除画布",
     "confirmDeleteCanvas": "确认删除当前画布？删除后无法恢复。",
-    "confirmResetSlide": "确认重置当前幻灯片？将清空页面上的所有元素。"
+    "confirmResetSlide": "确认重置当前幻灯片？将清空页面上的所有元素。",
+    "theme": "主题色",
+    "themePanelTitle": "主题色",
+    "themeHint": "每套含主色、辅色、背景、浅底字、深底字；切换后同步文字、图标、形状、表格与图表"
   },
   "viewPanel": {
     "normalView": "普通视图",
@@ -73,7 +76,9 @@
     "longImageSuffix": "长图",
     "noExportPages": "没有可导出的页面",
     "pptxSuccess": "PPTX 导出成功",
-    "pptxFailed": "导出 PPTX 失败"
+    "pptxFailed": "导出 PPTX 失败",
+    "palette": "配色",
+    "paletteHint": "选择预设主题色，将更新文字、图标、形状与图表颜色"
   },
   "footer": {
     "slideCount": "幻灯片 {{current}} / {{total}}",

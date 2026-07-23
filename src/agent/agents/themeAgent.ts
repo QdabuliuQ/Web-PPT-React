@@ -1,20 +1,19 @@
 import type { AgentRuntimeConfig } from "../config";
 import { meetsContrast, pickReadableText, relativeLuminance } from "../contrast";
-import { ThemeTokenSchema } from "../schema";
-import type { ThemeToken } from "../types";
 import { chatJson } from "../clients/llm";
 import { THEME_SYSTEM_PROMPT } from "../prompts/theme";
+import { ThemeTokenSchema } from "../schema";
+import { ensureThemeImagePrompts } from "../theme/colorPrompt";
+import type { ThemeToken } from "../types";
 
 function ensureContrast(theme: ThemeToken): ThemeToken {
   const bg = theme.background;
   let textOnLight = theme.textOnLight;
   let textOnDark = theme.textOnDark;
 
-  // 叠深色图的字必须够亮
   if (relativeLuminance(textOnDark) < 0.6) {
     textOnDark = "#FFFFFF";
   }
-  // 浅底上的字必须够暗
   if (relativeLuminance(textOnLight) > 0.35) {
     textOnLight = "#1A1A1A";
   }
@@ -47,15 +46,37 @@ function mockTheme(userPrompt: string): ThemeToken {
     globalBgPrompt: `Soft paper texture, muted editorial, theme: ${userPrompt}`,
     globalDecorPrompt: `Clean editorial illustration, soft lighting: ${userPrompt}`,
   };
-  return ensureContrast(ThemeTokenSchema.parse(base));
+  return finalizeTheme(ThemeTokenSchema.parse(base), userPrompt);
+}
+
+/** 对比度校正 + 补齐带配色的生图 Prompt */
+export function finalizeTheme(
+  theme: ThemeToken,
+  userPrompt?: string
+): ThemeToken {
+  return ensureThemeImagePrompts(ensureContrast(theme), userPrompt);
+}
+
+/** 使用外部给定主题（编辑器当前主题 / 预设），跳过 ThemeAgent 抽色 */
+export function resolveProvidedTheme(
+  input: unknown,
+  userPrompt?: string
+): ThemeToken {
+  return finalizeTheme(ThemeTokenSchema.parse(input), userPrompt);
 }
 
 export async function runThemeAgent(opts: {
   config: AgentRuntimeConfig;
   userPrompt: string;
   sampleImageUrls?: string[];
+  /** 若提供则直接使用，不再调用 LLM 抽色 */
+  fixedTheme?: ThemeToken;
 }): Promise<ThemeToken> {
-  const { config, userPrompt, sampleImageUrls } = opts;
+  const { config, userPrompt, sampleImageUrls, fixedTheme } = opts;
+
+  if (fixedTheme) {
+    return resolveProvidedTheme(fixedTheme, userPrompt);
+  }
 
   if (config.mock) {
     return mockTheme(userPrompt);
@@ -87,5 +108,5 @@ export async function runThemeAgent(opts: {
     parse: (data) => ThemeTokenSchema.parse(data),
   });
 
-  return ensureContrast(raw);
+  return finalizeTheme(raw, userPrompt);
 }
