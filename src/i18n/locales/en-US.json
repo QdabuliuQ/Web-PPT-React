@@ -341,6 +341,7 @@
       "panel": "Shape",
       "shapeType": "Shape Type",
       "fill": "Fill Color",
+      "borderRadius": "Corner Radius",
       "types": {
         "rect": "Rectangle",
         "roundedRect": "Rounded Rectangle",

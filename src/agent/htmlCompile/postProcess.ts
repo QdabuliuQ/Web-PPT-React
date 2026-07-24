@@ -12,6 +12,32 @@ function overlapArea(a: Box, b: Box): number {
 }
 
 /**
+ * 白卡片 shape 常因 zIndex 高于文案把字盖住；保证重叠文字在 shape 之上。
+ */
+export function ensureTextAboveShapes(elements: Elements[]): Elements[] {
+  const shapes = elements.filter((e) => e.type === "shape");
+  if (shapes.length === 0) return elements;
+
+  return elements.map((el) => {
+    if (el.type !== "text" && el.type !== "icon") return el;
+    let z = el.zIndex ?? 0;
+    let raised = false;
+    for (const sh of shapes) {
+      const textArea = Math.max(1, el.width * el.height);
+      const overlap = overlapArea(el, sh);
+      if (overlap / textArea < 0.35) continue;
+      const shZ = sh.zIndex ?? 0;
+      if (z <= shZ) {
+        z = shZ + 1;
+        raised = true;
+      }
+    }
+    if (!raised) return el;
+    return { ...el, zIndex: z };
+  });
+}
+
+/**
  * 丢掉严重压住文字/卡片的装饰图（LLM 常在 KPI 旁塞一张插图盖住第三卡）。
  */
 export function pruneOverlappingImages(elements: Elements[]): Elements[] {
@@ -28,8 +54,10 @@ export function pruneOverlappingImages(elements: Elements[]): Elements[] {
     let hit = false;
     for (const c of content) {
       const area = overlapArea(el, c);
-      // 盖住任意内容块 ≥25%，或盖住文字中心区域
-      if (area / imgArea >= 0.25 || area / Math.max(1, c.width * c.height) >= 0.35) {
+      if (
+        area / imgArea >= 0.25 ||
+        area / Math.max(1, c.width * c.height) >= 0.35
+      ) {
         hit = true;
         break;
       }

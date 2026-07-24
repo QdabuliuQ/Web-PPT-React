@@ -83,5 +83,15 @@ export function addShapeElement(
     options.rotate = el.rotate;
   }
 
+  if (el.shapeType === "roundedRect") {
+    const short = Math.min(el.width || 1, el.height || 1);
+    const px = el.borderRadius ?? 0;
+    // pptxgenjs rectRadius: 0–1，相对短边
+    options.rectRadius = Math.max(
+      0,
+      Math.min(0.5, short > 0 ? px / short : 0)
+    );
+  }
+
   slide.addShape(shapeName, options);
 }

@@ -12,7 +12,7 @@ import {
 } from "@/store";
 import { Redo, Undo } from "@icon-park/react";
 import { useDebounceFn } from "ahooks";
-import { ColorPicker, Tooltip } from "antd";
+import { ColorPicker, Slider, Tooltip } from "antd";
 import { useMemo, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { IShapeProps } from "./index";
@@ -20,6 +20,8 @@ import { SHAPE_TYPES, type ShapeType } from "./shapes";
 
 export const ShapePanelKey = "shape";
 export const ShapePanelTitle = "elements.shape.panel";
+
+const DEFAULT_ROUNDED_RADIUS = 14;
 
 const ShapePanelComponent: FC = () => {
   const { t } = useTranslation();
@@ -67,6 +69,21 @@ const ShapePanelComponent: FC = () => {
     });
   };
 
+  const handleShapeTypeChange = (value: ShapeType) => {
+    if (!pageId || !elementId || !shapeInfo) return;
+    const next: IShapeProps = {
+      ...shapeInfo,
+      shapeType: value,
+    };
+    if (value === "roundedRect" && !(shapeInfo.borderRadius > 0)) {
+      next.borderRadius = DEFAULT_ROUNDED_RADIUS;
+    }
+    if (value === "rect") {
+      next.borderRadius = 0;
+    }
+    setElementInfo(pageId, elementId, next);
+  };
+
   const { run: debouncedFillChange } = useDebounceFn(
     (color: string) => {
       handleChange("fill", color);
@@ -110,7 +127,7 @@ const ShapePanelComponent: FC = () => {
             value={shapeInfo.shapeType}
             style={{ width: 110 }}
             options={shapeOptions}
-            onChange={(value) => handleChange("shapeType", value as ShapeType)}
+            onChange={(value) => handleShapeTypeChange(value as ShapeType)}
           />
         </Tooltip>
         <div className="h-[24px] flex items-center gap-[6px]">
@@ -125,6 +142,26 @@ const ShapePanelComponent: FC = () => {
           />
         </div>
       </div>
+      {shapeInfo.shapeType === "roundedRect" ? (
+        <>
+          <PanelSplitLine />
+          <div className="h-full flex flex-col justify-around">
+            <div className="flex items-center gap-[5px]">
+              <span className="text-[12px] text-chrome-muted whitespace-nowrap">
+                {t("elements.shape.borderRadius")}
+              </span>
+              <Slider
+                min={0}
+                max={80}
+                step={1}
+                value={shapeInfo.borderRadius ?? DEFAULT_ROUNDED_RADIUS}
+                onChange={(value) => handleChange("borderRadius", value)}
+                style={{ width: 90, margin: 0 }}
+              />
+            </div>
+          </div>
+        </>
+      ) : null}
       <PanelSplitLine />
       <PanelBorderSetting
         border={shapeInfo.border || false}

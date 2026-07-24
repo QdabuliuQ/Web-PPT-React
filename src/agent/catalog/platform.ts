@@ -385,9 +385,13 @@ export const ELEMENT_SCHEMAS = {
       borderWidth: "number",
       borderColor: "hex",
       borderStyle: BORDER_STYLES.join("|") + "|double",
+      borderRadius: "number（px；仅 roundedRect；卡片常用 12~16）",
       opacity: "0~1",
     },
-    agentFill: ["shapeType（强调条 decor 优先 rect/roundedRect）"],
+    agentFill: [
+      "shapeType（强调条 decor 优先 rect/roundedRect）",
+      "borderRadius（roundedRect 时与 CSS border-radius 一致）",
+    ],
     agentForbidden: ["自创 shapeType", "随意改 fill（颜色由主题注入）"],
   },
 } as const;

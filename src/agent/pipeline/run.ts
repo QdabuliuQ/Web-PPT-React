@@ -108,7 +108,7 @@ export async function runTemplatePipeline(
   );
 
   let document = compileDocument(normalizeMetaPages(meta), assetMap);
-  const gateOpts = { useDomMeasure: config.useDomMeasure };
+  const gateOpts = {};
   let report = await runVisualGate(document, 0, gateOpts);
 
   let iter = 0;
@@ -120,7 +120,6 @@ export async function runTemplatePipeline(
       for (const [pageId, instruction] of instructions) {
         const onlyContrast =
           /\[contrast\]/.test(instruction) &&
-          !/\[text-overflow\]/.test(instruction) &&
           !/\[out-of-bounds\]/.test(instruction) &&
           !/\[empty-image\]/.test(instruction) &&
           !/\[vague-title\]/.test(instruction) &&

@@ -24,8 +24,6 @@ export type AgentRuntimeConfig = {
   /** 生成管线：默认 skeleton；AGENT_PIPELINE=html 或 --html 切换 */
   pipelineMode: AgentPipelineMode;
   maxGateIterations: number;
-  /** VisualGate 是否用 Puppeteer DOM 测高（默认 true；AGENT_GATE_DOM=0 关闭） */
-  useDomMeasure: boolean;
   /** 截图 + VL 打分（默认 true；AGENT_PAGE_SCORE=0 关闭） */
   usePageScore: boolean;
   /** ≥ 该分不回炉，默认 9 */
@@ -95,12 +93,6 @@ export function loadAgentConfig(
       return "skeleton";
     })(),
     maxGateIterations: overrides.maxGateIterations ?? 3,
-    useDomMeasure:
-      overrides.useDomMeasure ??
-      !(
-        process.env.AGENT_GATE_DOM === "0" ||
-        process.env.AGENT_GATE_DOM === "false"
-      ),
     usePageScore:
       overrides.usePageScore ??
       !(

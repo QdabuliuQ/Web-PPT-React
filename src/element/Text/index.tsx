@@ -353,11 +353,15 @@ const Component: FC<ITextProps> = (props) => {
         shadowColor
       ),
       border:
-        border && !isHoverActive
+        border
           ? `${borderWidth}px ${borderStyle} ${borderColor}`
-          : isHoverActive && !isSelected
-            ? "1px solid var(--primary-color, #1890ff)"
-            : "none",
+          : "none",
+      // hover 用 outline，避免从 none→1px border 改变内容区尺寸
+      outline:
+        mode === "edit" && isHoverActive && !isSelected && !border
+          ? "1px solid var(--primary-color, #1890ff)"
+          : undefined,
+      outlineOffset: 0,
       ...placementConvey(placement),
       cursor: mode === "edit" ? (isSelected ? "text" : "pointer") : "default",
       backgroundColor:

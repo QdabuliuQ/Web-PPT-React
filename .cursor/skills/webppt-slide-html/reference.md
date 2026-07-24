@@ -8,35 +8,14 @@ Aligned with `src/agent/catalog/platform.ts` (`ELEMENT_SCHEMAS`, enums).
 |-----------|----------|--------|
 | `data-element` | yes | Must be `"1"` |
 | `data-type` | yes | `text\|image\|icon\|shape\|chart\|table` |
-| `data-z-index` | no | Integer stacking hint |
+| `data-z-index` | **yes** | Integer stacking；卡片底板 &lt; 卡上文案/图标。须与 CSS `z-index` 一致 |
 | `data-rotate` | no | Degrees; avoid unless needed |
 
-Geometry (`x,y,width,height`) comes from measured rect, not from attributes.
+Geometry (`x,y,width,height`) comes from measured rect. **text** boxes are then expanded by editor padding (`TEXT_EDITOR_PADDING_PX`, currently 4px each side) so PPT Text content area matches HTML glyphs. Do not invent sizes; do not use `transform` on export nodes.
 
-## text
-
-| Attribute | Required | Notes |
-|-----------|----------|--------|
-| `data-font-size` | **yes** | 12–50, prefer even |
-| `data-font-family` | **yes** | theme `fontTitle` / `fontBody`（如 PingFang SC） |
-| `data-color` | **yes** | hex |
-| `data-line-height` | **yes** | multiplier，如 `1.4` / `1.6`（须与 CSS `line-height` 一致） |
-| `data-placement` | **yes** | see placements below |
-| `data-bold` | when bold | presence = true |
-| `data-italic` | when italic | presence = true |
-| `data-underline` | when used | presence = true |
-| `data-strikethrough` | when used | presence = true |
-| `data-background-color` | when used | hex or `transparent` |
-| `data-border` | when used | presence = true；也可只写 CSS `border`，编译会读 computed style |
-| `data-border-width` | with border | px |
-| `data-border-color` | with border | hex |
-| `data-border-style` | with border | `solid\|dashed\|dotted` |
-| `data-shadow` | when used | presence = true |
-| `data-shadow-color` / `data-shadow-offset-x` / `data-shadow-offset-y` / `data-shadow-blur` | with shadow | optional |
-
-> **必写五项**：font-size、font-family、color、line-height、placement。禁止只写 CSS 不写 `data-line-height` / `data-font-family`。  
+> **必写六项**：font-size、font-family、color、line-height、placement、**z-index**。禁止只写 CSS 不写对应 `data-*`。  
 > 映射优先级：`data-border*` > CSS `getComputedStyle` 边框。透明/`none` 边框不会写入 JSON。  
-> 几何 x/y/w/h 来自 DOM 测量，不做估宽估高改写。
+> 单行 KPI/标题/页脚须有足够 **显式 `width`**（或 `width:100%`）；禁止 `translate(-50%,-50%)` 居中。
 
 **Placements:**  
 `left-top` `left-center` `left-bottom`  
@@ -66,6 +45,7 @@ Geometry (`x,y,width,height`) comes from measured rect, not from attributes.
 | `data-icon-name` | **yes** | IconPark PascalCase |
 | `data-icon-theme` | **yes** | `outline\|filled\|two-tone\|multi-color` |
 | `data-fill` | **yes** | hex color |
+| `data-z-index` | **yes** | integer |
 | `data-stroke-width` | recommended | number |
 
 **Whitelist (prefer these):**  
@@ -77,11 +57,15 @@ Geometry (`x,y,width,height`) comes from measured rect, not from attributes.
 |-----------|----------|--------|
 | `data-shape-type` | **yes** | enum |
 | `data-fill` | **yes** | hex |
+| `data-z-index` | **yes** | 卡片底板应小于卡内 text/icon |
 | `data-opacity` | recommended | 0–1，默认可视作 1 |
+| `data-border-radius` | **roundedRect 必写** | px；须与 CSS `border-radius` 一致 → document `borderRadius` |
 | `data-border` / width / color / style | when used | style may include `double` |
 
 **shape-type:**  
 `rect` `roundedRect` `oval` `triangle` `rightTriangle` `diamond` `pentagon` `hexagon` `star5` `arrowRight` `heart`
+
+卡片底板用 `roundedRect` + `data-border-radius="12|14|16"`；强调条用 `rect`（无圆角）。
 
 ## chart
 

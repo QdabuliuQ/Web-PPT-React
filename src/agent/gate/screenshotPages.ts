@@ -111,8 +111,12 @@ function renderElement(
   if (el.type === "shape") {
     const fill = el.fill || "#CCCCCC";
     const shapeType = el.shapeType || "rect";
-    const radius =
-      shapeType === "ellipse" || shapeType === "circle" ? "50%" : "4px";
+    let radius = "0";
+    if (shapeType === "oval") {
+      radius = "50%";
+    } else if (shapeType === "roundedRect") {
+      radius = `${el.borderRadius ?? 14}px`;
+    }
     return `<div style="${base}background:${fill};border-radius:${radius};"></div>`;
   }
 

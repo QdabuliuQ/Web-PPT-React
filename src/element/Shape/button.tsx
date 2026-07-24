@@ -43,7 +43,10 @@ export default function ShapeButton() {
       timerRef.current = null;
     }
 
-    const option = CreateShape({ shapeType });
+    const option = CreateShape({
+      shapeType,
+      borderRadius: shapeType === "roundedRect" ? 14 : 0,
+    });
     const ok = addElement(pageId, option);
     if (ok && pageId) {
       setElementActive(option.id);

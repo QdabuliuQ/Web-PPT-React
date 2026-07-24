@@ -8,7 +8,7 @@ import type { AssetMap, HtmlDeck, PageType, ThemeToken } from "../types";
 import { resolveDocumentSrc } from "./assets";
 import { mapMeasuredNodeToElement } from "./mapElement";
 import { measureSlideHtml } from "./measure";
-import { pruneOverlappingImages } from "./postProcess";
+import { ensureTextAboveShapes, pruneOverlappingImages } from "./postProcess";
 
 export type HtmlCompiledDocument = {
   name: string;
@@ -51,7 +51,7 @@ async function compileHtmlPage(opts: {
     if (el) elements.push(el);
   }
 
-  const pruned = pruneOverlappingImages(elements);
+  const pruned = ensureTextAboveShapes(pruneOverlappingImages(elements));
 
   if (pruned.length > PLATFORM_LIMITS.maxElementsPerPage) {
     pruned.length = PLATFORM_LIMITS.maxElementsPerPage;
@@ -141,4 +141,10 @@ export async function compileHtmlDocument(
 }
 
 export { measureSlideHtml } from "./measure";
-export { mapMeasuredNodeToElement } from "./mapElement";
+export {
+  mapMeasuredNodeToElement,
+  applyTextEditorChrome,
+  TEXT_EDITOR_PADDING_PX,
+  TEXT_EDITOR_SAFETY_PX,
+} from "./mapElement";
+export { ensureTextAboveShapes, pruneOverlappingImages } from "./postProcess";

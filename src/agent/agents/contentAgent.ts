@@ -327,8 +327,8 @@ export async function repairPageContent(opts: {
   if (pageIndex < 0) return meta;
   const page = meta.pages[pageIndex];
 
-  // 纯本地缩短：对比度等问题仍走 LLM，但结构永不被整页替换
-  if (config.mock || /text-overflow/i.test(instruction)) {
+  // mock：本地缩短文案；真实模式走 LLM 定向回炉
+  if (config.mock) {
     const fixed = truncatePageContents(normalizeMetaPage(page), 0.75);
     const pages = meta.pages.map((p, i) => (i === pageIndex ? fixed : p));
     return { ...meta, pages };

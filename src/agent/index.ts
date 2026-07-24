@@ -10,10 +10,6 @@ export {
   scoreToRepairInstruction,
 } from "./agents/scoreAgent";
 export { runVisualGate, inspectPage } from "./gate/visualGate";
-export {
-  measureTextOverflowWithPuppeteer,
-  collectTextProbes,
-} from "./gate/measureTextOverflow";
 export { screenshotPagesWithPuppeteer } from "./gate/screenshotPages";
 export {
   runPipeline,
@@ -26,8 +22,27 @@ export {
   repairHtmlPage,
   htmlDeckToCompatMeta,
   extractDrawTasksFromDeck,
+  renderPageFromSlots,
 } from "./agents/layoutHtmlAgent";
 export { compileHtmlDocument } from "./htmlCompile";
+export {
+  renderHtmlTemplate,
+  renderHeroTemplate,
+  renderMetricsTemplate,
+  renderPillarsTemplate,
+  renderCloseTemplate,
+  templateIdForPageType,
+  TEMPLATE_SUITE,
+  HTML_TEMPLATE_SUITE_IDS,
+} from "./htmlTemplates";
+export type {
+  HtmlTemplateId,
+  HtmlTemplateSuiteId,
+  HeroTemplateSlots,
+  MetricsTemplateSlots,
+  PillarsTemplateSlots,
+  CloseTemplateSlots,
+} from "./htmlTemplates";
 export type { HtmlCompiledDocument } from "./htmlCompile";
 export { SCORE_PASS_THRESHOLD, PAGE_SCORE_SYSTEM_PROMPT } from "./prompts/score";
 export {
@@ -51,6 +66,8 @@ export {
   MetaJsonSchema,
   HtmlDeckSchema,
   HtmlDeckLlmSchema,
+  HtmlTemplateDeckLlmSchema,
+  HtmlTemplateRepairLlmSchema,
   ThemeTokenSchema,
   AssetMapSchema,
   PageTypeSchema,

@@ -118,6 +118,21 @@ export function resolveElementBorder(
   };
 }
 
+/** 圆角：优先 data-border-radius；否则用测量 CSS border-radius（px） */
+export function resolveBorderRadius(
+  ds: Record<string, string>,
+  chrome?: MeasuredChrome
+): number {
+  if (ds.borderRadius != null && ds.borderRadius !== "") {
+    const n = Number(ds.borderRadius);
+    if (Number.isFinite(n) && n >= 0) return Math.round(n);
+  }
+  if (chrome && chrome.borderRadius > 0.5) {
+    return Math.round(chrome.borderRadius);
+  }
+  return 0;
+}
+
 function clampBox(n: MeasuredNode): MeasuredNode {
   // 仅钳制完全越界的坐标；宽高保持测量值不变（调用方要求 JSON 几何 = DOM）
   let { x, y, width, height } = n;
@@ -178,6 +193,41 @@ function placementOf(raw?: string) {
   return PLACEMENT_KEYS[0];
 }
 
+/**
+ * 与 `src/element/Text/index.module.less` 默认 padding 对齐。
+ * HTML 测量的是「字的外接框」；编辑器 Text 还有 padding，需补偿否则溢裁。
+ * （选中/hover 用 outline，不再用占位 border。）
+ */
+export const TEXT_EDITOR_PADDING_PX = 4;
+/** 额外安全余量（亚像素 / 字体回退），每侧 */
+export const TEXT_EDITOR_SAFETY_PX = 2;
+
+/** 将测量框扩成编辑器盒子，并按 placement 回移原点，保持内容视觉位置 */
+export function applyTextEditorChrome(geo: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  placement?: string;
+}): { x: number; y: number; width: number; height: number } {
+  const inset = TEXT_EDITOR_PADDING_PX + TEXT_EDITOR_SAFETY_PX;
+  const dx = inset * 2;
+  const dy = inset * 2;
+  const [h = "left", v = "top"] = (geo.placement || "left-top").split("-");
+  let { x, y, width, height } = geo;
+  width = Math.max(1, Math.round(width + dx));
+  height = Math.max(1, Math.round(height + dy));
+  if (h === "center") x -= inset;
+  else if (h === "right") x -= dx;
+  if (v === "center") y -= inset;
+  else if (v === "bottom") y -= dy;
+  x = Math.max(0, Math.round(x));
+  y = Math.max(0, Math.round(y));
+  if (x + width > CANVAS_WIDTH) width = Math.max(1, CANVAS_WIDTH - x);
+  if (y + height > CANVAS_HEIGHT) height = Math.max(1, CANVAS_HEIGHT - y);
+  return { x, y, width, height };
+}
+
 export function mapMeasuredNodeToElement(
   node: MeasuredNode,
   theme: ThemeToken,
@@ -203,7 +253,14 @@ export function mapMeasuredNodeToElement(
     const lineHeight = Number(ds.lineHeight) || 1.4;
     const text = n.text || ds.content || "";
     const border = resolveElementBorder(ds, n.chrome);
-    // 宽高/坐标一律用 DOM 测量值，禁止估宽估高改写
+    const placement = placementOf(ds.placement);
+    const boxed = applyTextEditorChrome({
+      x: geo.x,
+      y: geo.y,
+      width: geo.width,
+      height: geo.height,
+      placement,
+    });
     return {
       type: "text",
       id: `text_${rid()}`,
@@ -217,7 +274,7 @@ export function mapMeasuredNodeToElement(
       underline: hasFlag(ds, "underline"),
       strikethrough: hasFlag(ds, "strikethrough"),
       lineHeight,
-      placement: placementOf(ds.placement) as never,
+      placement: placement as never,
       backgroundColor: ds.backgroundColor || "transparent",
       ...border,
       shadow: hasFlag(ds, "shadow"),
@@ -226,6 +283,7 @@ export function mapMeasuredNodeToElement(
       shadowOffsetY: Number(ds.shadowOffsetY) || 0,
       shadowBlur: Number(ds.shadowBlur) || 4,
       ...geo,
+      ...boxed,
     } as Elements;
   }
 
@@ -244,13 +302,25 @@ export function mapMeasuredNodeToElement(
 
   if (type === "shape") {
     const border = resolveElementBorder(ds, n.chrome);
+    const radius = resolveBorderRadius(ds, n.chrome);
+    let shapeType = normalizeShapeType(ds.shapeType || "roundedRect");
+    // CSS/data 有圆角时，强制为 roundedRect，保证 document 可调圆角
+    if (radius > 0 && shapeType === "rect") {
+      shapeType = "roundedRect";
+    }
     return {
       type: "shape",
       id: `shape_${rid()}`,
       mode: "edit",
-      shapeType: normalizeShapeType(ds.shapeType || "roundedRect"),
+      shapeType,
       fill: ds.fill || theme.secondary || "#FFFFFF",
       opacity: ds.opacity != null ? Number(ds.opacity) : 1,
+      borderRadius:
+        shapeType === "roundedRect"
+          ? radius > 0
+            ? radius
+            : 14
+          : 0,
       ...border,
       ...geo,
     } as Elements;
@@ -266,7 +336,7 @@ export function mapMeasuredNodeToElement(
       mode: "edit",
       src: src || "",
       opacity: ds.opacity != null ? Number(ds.opacity) : 1,
-      borderRadius: Number(ds.borderRadius) || 0,
+      borderRadius: resolveBorderRadius(ds, n.chrome),
       ...border,
       keepRatio: true,
       shadow: hasFlag(ds, "shadow"),

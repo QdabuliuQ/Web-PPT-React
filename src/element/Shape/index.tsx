@@ -33,6 +33,8 @@ export interface IShapeProps extends ICommonElementProps {
   borderWidth: number;
   borderColor: string;
   borderStyle: "solid" | "dashed" | "dotted" | "double";
+  /** 圆角矩形圆角半径（px）；仅 shapeType=roundedRect 生效 */
+  borderRadius: number;
   opacity: number;
 }
 
@@ -46,6 +48,7 @@ const Component: FC<IShapeProps> = (props) => {
     borderWidth,
     borderColor,
     borderStyle,
+    borderRadius = 0,
     opacity,
     x,
     y,
@@ -60,6 +63,13 @@ const Component: FC<IShapeProps> = (props) => {
     onSelect,
     onUnSelect,
   } = props;
+
+  const effectiveBorderRadius =
+    shapeType === "roundedRect"
+      ? borderRadius > 0
+        ? borderRadius
+        : 14
+      : 0;
 
   const shapeRef = useRef<HTMLDivElement>(null);
   const moveableRef = useRef<any>(null);
@@ -164,6 +174,9 @@ const Component: FC<IShapeProps> = (props) => {
   const shapeContent = (
     <ShapeSvg
       shapeType={shapeType}
+      borderRadius={effectiveBorderRadius}
+      width={width}
+      height={height}
       fill={fill}
       stroke={borderColor}
       strokeWidth={strokeWidth}
@@ -237,6 +250,7 @@ export const CreateShape = (props: Partial<IShapeProps> = {}) => {
     borderWidth: 2,
     borderColor: "#000000",
     borderStyle: "solid",
+    borderRadius: 0,
     opacity: 1,
     ...getCenteredElementPosition(width, height),
     width,

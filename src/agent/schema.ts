@@ -152,12 +152,28 @@ export const HtmlSlidePageSchema = z.object({
   pageId: z.string().min(1),
   pageType: PageTypeSchema,
   html: z.string().min(20),
+  templateId: z.string().optional(),
+  slots: z.record(z.string(), z.unknown()).optional(),
 });
 
-export const HtmlDeckLlmSchema = z.object({
-  name: z.string().min(1).max(120),
-  pages: z.array(HtmlSlidePageSchema).min(HTML_PAGE_MIN).max(HTML_PAGE_MAX),
+/** LLM 输出：选套 + 槽位（不再直接写 HTML） */
+export const HtmlTemplatePageLlmSchema = z.object({
+  pageId: z.string().min(1),
+  pageType: PageTypeSchema,
+  templateId: z.string().optional(),
+  slots: z.record(z.string(), z.unknown()),
 });
+
+export const HtmlTemplateDeckLlmSchema = z.object({
+  name: z.string().min(1).max(120),
+  pages: z
+    .array(HtmlTemplatePageLlmSchema)
+    .min(HTML_PAGE_MIN)
+    .max(HTML_PAGE_MAX),
+});
+
+/** @deprecated 自由 HTML 路径；现用 HtmlTemplateDeckLlmSchema */
+export const HtmlDeckLlmSchema = HtmlTemplateDeckLlmSchema;
 
 export const HtmlDeckSchema = z.object({
   version: z.literal("html-1.0"),
@@ -165,6 +181,13 @@ export const HtmlDeckSchema = z.object({
   theme: ThemeTokenSchema,
   pages: z.array(HtmlSlidePageSchema).min(HTML_PAGE_MIN).max(HTML_PAGE_MAX),
   drawTasks: z.array(DrawTaskSchema),
+});
+
+export const HtmlTemplateRepairLlmSchema = z.object({
+  pageId: z.string().min(1),
+  pageType: PageTypeSchema.optional(),
+  templateId: z.string().optional(),
+  slots: z.record(z.string(), z.unknown()),
 });
 
 export const AssetMapEntrySchema = z.object({

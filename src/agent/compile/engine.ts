@@ -418,6 +418,7 @@ function buildShapeElement(
     isAccent && !isCard ? "rect" : "roundedRect"
   );
   const style = mapShapeStyle(theme, { card: isCard });
+  const isRounded = shapeType === "roundedRect";
   return {
     type: "shape",
     id: `shape_${slot.elementId}_${rid()}`,
@@ -428,6 +429,11 @@ function buildShapeElement(
     borderWidth: style.borderWidth,
     borderColor: style.borderColor,
     borderStyle: style.borderStyle,
+    borderRadius: isRounded
+      ? isCard
+        ? DESIGN_RADIUS.card
+        : DESIGN_RADIUS.accent
+      : 0,
     opacity: style.opacity,
     x: slot.x,
     y: slot.y,

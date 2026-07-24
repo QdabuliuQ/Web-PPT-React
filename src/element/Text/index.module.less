@@ -12,14 +12,16 @@
   box-sizing: border-box;
   outline: none;
   background: transparent;
-  border: 2px solid transparent;
+  /* 不用占位 border（会吃掉内容区宽度导致 Agent 文字挤扁）；hover/选中用 outline */
+  border: none;
   border-radius: 0;
-  padding: 4px; /* 设置默认padding，与编辑模式保持一致 */
+  /* 与 htmlCompile/mapElement TEXT_EDITOR_PADDING_PX 保持一致 */
+  padding: 4px;
   cursor: text; /* 文本输入光标 */
   user-select: none;
   min-height: auto;
   transition:
-    border 0.2s ease,
+    outline-color 0.2s ease,
     background 0.2s ease,
     box-shadow 0.2s ease;
 
@@ -31,11 +33,10 @@
 
   /* 编辑模式样式 */
   &.editing {
-    /* 利用已有的透明border，只改变颜色，不影响尺寸 */
-    border-color: var(--primary-color, #ff7043);
+    outline: 2px solid var(--primary-color, #ff7043);
+    outline-offset: 0;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.95);
-    /* 轻微的内边距，不会挤压文本 */
     padding: 4px;
     cursor: text;
     user-select: text;

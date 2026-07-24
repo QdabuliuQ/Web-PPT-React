@@ -13,6 +13,7 @@ export type MeasuredChrome = {
   borderWidth: number;
   borderColor: string;
   borderStyle: string;
+  borderRadius: number;
   paddingX: number;
   paddingY: number;
 };
@@ -71,37 +72,43 @@ async function prepareSlideDom(page: Page, assetHrefs: Record<string, string>) {
       const type = el.getAttribute("data-type") || "";
       const ds = el.dataset;
 
-        // 只同步 data-* → 字体样式；不要改 padding/nowrap/height，以免量到的盒子偏离页面
-        if (type === "text") {
-          const fs = Number(ds.fontSize);
-          if (Number.isFinite(fs) && fs > 0) {
-            el.style.fontSize = fs + "px";
-          }
-          const lh = Number(ds.lineHeight);
-          if (Number.isFinite(lh) && lh > 0) {
-            el.style.lineHeight = String(lh);
-          }
-          const ff =
-            ds.fontFamily ||
-            '"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif';
-          el.style.fontFamily = ff;
-          if (!ds.fontFamily) {
-            el.dataset.fontFamily = "PingFang SC";
-          }
-          if (Object.prototype.hasOwnProperty.call(ds, "bold")) {
-            el.style.fontWeight = "700";
-          }
-          if (Object.prototype.hasOwnProperty.call(ds, "italic")) {
-            el.style.fontStyle = "italic";
-          }
-          if (Object.prototype.hasOwnProperty.call(ds, "border")) {
-            const bw = Number(ds.borderWidth);
-            const w = Number.isFinite(bw) && bw > 0 ? bw : 1;
-            const color = ds.borderColor || "#000000";
-            const style = ds.borderStyle || "solid";
-            el.style.border = w + "px " + style + " " + color;
-          }
+      // data-z-index → 真实 CSS，保证预览叠层 = JSON zIndex
+      const zFromData = Number(ds.zIndex);
+      if (Number.isFinite(zFromData)) {
+        el.style.zIndex = String(zFromData);
+        if (!el.style.position || el.style.position === "static") {
+          el.style.position = "relative";
         }
+      }
+
+      // 只同步 data-* → 字体样式；不要改 padding/nowrap/height，以免量到的盒子偏离页面
+      if (type === "text") {
+        const fs = Number(ds.fontSize);
+        if (Number.isFinite(fs) && fs > 0) {
+          el.style.fontSize = fs + "px";
+        }
+        const lh = Number(ds.lineHeight);
+        if (Number.isFinite(lh) && lh > 0) {
+          el.style.lineHeight = String(lh);
+        }
+        if (ds.fontFamily) {
+          el.style.fontFamily = ds.fontFamily;
+        }
+        if (Object.prototype.hasOwnProperty.call(ds, "bold")) {
+          el.style.fontWeight = "700";
+        }
+        if (Object.prototype.hasOwnProperty.call(ds, "italic")) {
+          el.style.fontStyle = "italic";
+        }
+        if (ds.color) el.style.color = ds.color;
+        if (Object.prototype.hasOwnProperty.call(ds, "border")) {
+          const bw = Number(ds.borderWidth);
+          const w = Number.isFinite(bw) && bw > 0 ? bw : 1;
+          const color = ds.borderColor || "#000000";
+          const style = ds.borderStyle || "solid";
+          el.style.border = w + "px " + style + " " + color;
+        }
+      }
 
       if (type === "image") {
         const key = el.getAttribute("data-asset-key") || "";
@@ -111,6 +118,17 @@ async function prepareSlideDom(page: Page, assetHrefs: Record<string, string>) {
           el.style.backgroundSize = "cover";
           el.style.backgroundPosition = "center";
           el.style.backgroundRepeat = "no-repeat";
+        }
+        const br = Number(ds.borderRadius);
+        if (Number.isFinite(br) && br >= 0) {
+          el.style.borderRadius = br + "px";
+        }
+      }
+
+      if (type === "shape") {
+        const br = Number(ds.borderRadius);
+        if (Number.isFinite(br) && br >= 0) {
+          el.style.borderRadius = br + "px";
         }
       }
 
@@ -138,6 +156,56 @@ async function prepareSlideDom(page: Page, assetHrefs: Record<string, string>) {
       setTimeout(resolve, 50);
     });
   });
+
+  // 字体就绪后再：① text 按内容锁宽 ② 剥离 transform 并烘焙为 left/top/width/height
+  const transformHits = await page.evaluate(() => {
+    const slide = document.querySelector("#slide");
+    if (!slide) return 0;
+    const slideEl = slide as HTMLElement;
+    const slideRect = slideEl.getBoundingClientRect();
+    const els = document.querySelectorAll('[data-element="1"]');
+    let hits = 0;
+
+    for (let i = 0; i < els.length; i++) {
+      const el = els[i] as HTMLElement;
+      const type = el.getAttribute("data-type") || "";
+
+      if (type === "text") {
+        // 测量「纯内容框」；编辑器 padding 在 mapElement 补偿
+        el.style.boxSizing = "border-box";
+        el.style.padding = "0";
+        if (!Object.prototype.hasOwnProperty.call(el.dataset, "border")) {
+          el.style.border = "none";
+        }
+        const w = (el.style.width || "").trim();
+        if (!w || w === "auto") {
+          el.style.width = "max-content";
+        }
+      }
+
+      const cs = getComputedStyle(el);
+      if (cs.transform && cs.transform !== "none") {
+        hits += 1;
+        const r = el.getBoundingClientRect();
+        el.style.transform = "none";
+        el.style.position = "absolute";
+        el.style.left = Math.round(r.left - slideRect.left) + "px";
+        el.style.top = Math.round(r.top - slideRect.top) + "px";
+        el.style.right = "auto";
+        el.style.bottom = "auto";
+        el.style.margin = "0";
+        el.style.width = Math.max(1, Math.round(r.width)) + "px";
+        el.style.height = Math.max(1, Math.round(r.height)) + "px";
+      }
+    }
+    return hits;
+  });
+
+  if (transformHits > 0) {
+    console.warn(
+      `[htmlCompile] 已剥离 ${transformHits} 个导出节点的 transform；请改用无 transform 布局（显式 width / flex）`
+    );
+  }
 }
 
 /**
@@ -197,6 +265,7 @@ export async function measureSlideHtml(opts: {
           borderWidth: number;
           borderColor: string;
           borderStyle: string;
+          borderRadius: number;
           paddingX: number;
           paddingY: number;
         };
@@ -213,8 +282,9 @@ export async function measureSlideHtml(opts: {
           }
         }
         const type = el.getAttribute("data-type") || dataset.type || "text";
-        const zRaw = el.style.zIndex || getComputedStyle(el).zIndex;
-        const zIndex = Number.parseInt(zRaw, 10);
+        // 叠层：优先 data-z-index；否则用 DOM 顺序。忽略 style 里随意写的 z-index:1（常把字压在卡片下）
+        const fromData = Number(dataset.zIndex);
+        const zIndex = Number.isFinite(fromData) ? fromData : index;
         const cs = getComputedStyle(el);
 
         const bt = parseFloat(cs.borderTopWidth) || 0;
@@ -224,13 +294,24 @@ export async function measureSlideHtml(opts: {
         const borderWidth = Math.max(bt, br, bb, bl);
         const borderStyle = cs.borderTopStyle || cs.borderStyle || "none";
         const borderColor = cs.borderTopColor || cs.borderColor || "";
+        // 百分比圆角（如 50%）按盒子短边换算成 px；纯 px 直接取
+        let borderRadius = 0;
+        const brRaw = cs.borderTopLeftRadius || "";
+        if (brRaw.indexOf("%") >= 0) {
+          const pct = parseFloat(brRaw);
+          if (Number.isFinite(pct) && pct > 0) {
+            borderRadius = (pct / 100) * Math.min(r.width, r.height);
+          }
+        } else {
+          borderRadius = parseFloat(brRaw) || 0;
+        }
         const paddingX =
           (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
         const paddingY =
           (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
 
-        let width = Math.max(1, Math.round(r.width));
-        let height = Math.max(1, Math.round(r.height));
+        const width = Math.max(1, Math.round(r.width));
+        const height = Math.max(1, Math.round(r.height));
         // 几何以 getBoundingClientRect 为准，不用 scrollWidth 拉大
 
         // textContent 会丢掉 <br>；innerText 会按渲染把 <br>/块级折成 \n
@@ -261,6 +342,15 @@ export async function measureSlideHtml(opts: {
           text = (el.textContent || "").trim();
         }
 
+        // shape/image：仅有 CSS border-radius 时回写 dataset，供 mapElement 落盘
+        if (
+          (type === "shape" || type === "image") &&
+          (dataset.borderRadius == null || dataset.borderRadius === "") &&
+          borderRadius > 0.5
+        ) {
+          dataset.borderRadius = String(Math.round(borderRadius));
+        }
+
         nodes.push({
           type: type,
           text: text,
@@ -269,11 +359,12 @@ export async function measureSlideHtml(opts: {
           y: Math.round(r.top - slideRect.top),
           width: width,
           height: height,
-          zIndex: Number.isFinite(zIndex) ? zIndex : index,
+          zIndex: zIndex,
           chrome: {
             borderWidth: borderWidth,
             borderColor: borderColor,
             borderStyle: borderStyle,
+            borderRadius: borderRadius,
             paddingX: paddingX,
             paddingY: paddingY,
           },

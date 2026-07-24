@@ -58,7 +58,7 @@
   → ImageAgent（批量绘图 + 容错）
   → asset-map.json
   → CompileEngine（骨架 ⊕ 主题 ⊕ 文案 ⊕ 图片 → Document JSON）
-  → VisualGate（PreviewCanvas 同构渲染 + 测高/对比度/出界检测）
+  → VisualGate（越界 / 对比度 / 空图 / 标题与密度等硬规则）
        ↓ 不合格：定向回炉对应页槽位
   → 产出 document.json + assets/ + preview.png
 ```
@@ -334,7 +334,7 @@ type LayoutSlot = {
 
 | 规则 | 实现 |
 |------|------|
-| 文本超高 | 按字号/行高估高或 DOM 测高；超则截断 / 降字号一档（ThemeMapper 允许档内）/ 回炉 |
+| 文本超高 | 由 Layout/HTML 测量保证；Gate 不再做文字截断测高 |
 | 图片 | 容器几何锁死；前端 `object-fit` 行为与编辑器一致；禁止 LLM 改框 |
 | 对比度 | chroma-js 或等价；不达标切换 textOnLight/Dark |
 | 样式统一 | 仅 ThemeMapper 写样式字段 |

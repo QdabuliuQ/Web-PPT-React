@@ -4,25 +4,9 @@ import type { Elements, Page } from "@/store/zustand/pptStore";
 import { contrastRatio } from "../contrast";
 import type { GateReport, PageDefect } from "../types";
 import type { CompiledDocument } from "../compile/engine";
-import {
-  measureTextOverflowWithPuppeteer,
-  overflowHitKey,
-  type TextOverflowHit,
-} from "./measureTextOverflow";
 
 const VAGUE_TITLE_RE =
   /^(商业计划书|公司介绍|核心优势|未来展望|产品介绍|关于我们|总结|概述|目录|谢谢|thank\s*you|introduction|overview)$/i;
-
-/** 无浏览器时的字符估高回退 */
-function estimateTextOverflow(el: Elements): boolean {
-  if (el.type !== "text") return false;
-  const fontSize = el.fontSize || 16;
-  const lineHeight = el.lineHeight || 1.4;
-  const lineH = fontSize * lineHeight;
-  const approxCharsPerLine = Math.max(1, Math.floor(el.width / (fontSize * 0.6)));
-  const lines = Math.ceil((el.text?.length || 0) / approxCharsPerLine) || 1;
-  return lines * lineH > el.height + 2;
-}
 
 function isOutOfBounds(el: Elements): boolean {
   return (
@@ -70,9 +54,6 @@ function collectTextStats(page: Page): {
 }
 
 export type InspectPageOptions = {
-  /** DOM 测高命中表；未传则用字符估高 */
-  overflowHits?: Set<string>;
-  overflowMetrics?: Map<string, TextOverflowHit>;
   /** 页面类型：hero/close 不做 sparse 密度抽检（应由 Layout 定调，且本就偏收束） */
   pageType?: string;
   /** 显式跳过 sparse（例如 HTML 流水线仅告警不回炉时仍可由调用方过滤） */
@@ -84,7 +65,7 @@ export function inspectPage(
   options: InspectPageOptions = {}
 ): PageDefect[] {
   const defects: PageDefect[] = [];
-  const { overflowHits, overflowMetrics, pageType } = options;
+  const { pageType } = options;
 
   if ((page.elements?.length || 0) > MAX_ELEMENTS_PER_PAGE) {
     defects.push({
@@ -124,23 +105,6 @@ export function inspectPage(
     if (el.type === "text") {
       if (isAccentOrEmptyText(el)) continue;
 
-      const key = overflowHitKey(page.id, el.id);
-      const overflow =
-        overflowHits != null
-          ? overflowHits.has(key)
-          : estimateTextOverflow(el);
-      if (overflow) {
-        const m = overflowMetrics?.get(key);
-        const detail = m
-          ? `content=${Math.round(m.contentHeight)}px > box=${Math.round(m.clientHeight)}px`
-          : `疑似文字溢出`;
-        defects.push({
-          pageId: page.id,
-          elementId: el.id,
-          kind: "text-overflow",
-          message: `文字截断（${detail}）：${el.text?.slice(0, 20)}…`,
-        });
-      }
       const textBg =
         el.backgroundColor &&
         el.backgroundColor !== "transparent" &&
@@ -222,50 +186,20 @@ export function inspectPage(
 }
 
 export type RunVisualGateOptions = {
-  /** 默认 true：Puppeteer DOM 测高；失败回退字符估高 */
-  useDomMeasure?: boolean;
   /** pageId → pageType，用于 hero/close 跳过 sparse */
   pageTypeById?: Record<string, string>;
   /** 为 true 时所有页不做 sparse 缺陷（仍做结构硬伤） */
   skipSparseContent?: boolean;
 };
 
-/** VisualGate：硬规则 + Puppeteer 文本截断测高 */
+/** VisualGate：结构硬规则（越界/对比度/空图/标题/密度） */
 export async function runVisualGate(
   doc: CompiledDocument,
   iterations = 0,
   options: RunVisualGateOptions = {}
 ): Promise<GateReport> {
-  const useDom = options.useDomMeasure !== false;
-  let overflowHits: Set<string> | undefined;
-  let overflowMetrics: Map<string, TextOverflowHit> | undefined;
-
-  if (useDom) {
-    try {
-      const hits = await measureTextOverflowWithPuppeteer(doc.pages);
-      overflowHits = new Set(
-        hits.map((h) => overflowHitKey(h.pageId, h.elementId))
-      );
-      overflowMetrics = new Map(
-        hits.map((h) => [overflowHitKey(h.pageId, h.elementId), h])
-      );
-      if (hits.length > 0) {
-        console.log(
-          `[visualGate] DOM 测高截断 ${hits.length} 处`
-        );
-      }
-    } catch (err) {
-      console.warn(
-        `[visualGate] Puppeteer 测高失败，回退字符估高:`,
-        err instanceof Error ? err.message : err
-      );
-    }
-  }
-
   const defects = doc.pages.flatMap((page) =>
     inspectPage(page, {
-      overflowHits,
-      overflowMetrics,
       pageType: options.pageTypeById?.[page.id],
       skipSparseContent: options.skipSparseContent,
     })

@@ -9,12 +9,21 @@ import {
 import { DEFAULT_PAGE_TYPE_SEQUENCE } from "../layout/sequence";
 import { PAGE_TYPE_LAYOUTS } from "../layout/pageTypes";
 import {
+  materializeTemplatePage,
+  materializeTemplatePages,
+} from "../htmlTemplates/materialize";
+import { defaultTemplateForPageType } from "../htmlTemplates/pageTypeMap";
+import type { AnyTemplateSlots } from "../htmlTemplates/types";
+import {
   buildLayoutHtmlSystemPrompt,
   buildLayoutHtmlUserPrompt,
   buildRepairHtmlPagePrompt,
   parseRequestedPageCount,
 } from "../prompts/layoutHtml";
-import { HtmlDeckLlmSchema, HtmlSlidePageSchema } from "../schema";
+import {
+  HtmlTemplateDeckLlmSchema,
+  HtmlTemplateRepairLlmSchema,
+} from "../schema";
 import {
   appendPaletteToImagePrompt,
   buildPaletteHint,
@@ -32,10 +41,17 @@ const PAGE_MIN = PLATFORM_LIMITS.agentPagesHtml.min;
 const PAGE_MAX = PLATFORM_LIMITS.agentPagesHtml.max;
 const PAGE_DEFAULT_MIN = PLATFORM_LIMITS.agentPages.min;
 
-function clampPages(
-  pages: HtmlSlidePage[],
+type LlmTemplatePage = {
+  pageId: string;
+  pageType: PageType;
+  templateId?: string;
+  slots: Record<string, unknown>;
+};
+
+function clampTemplatePages(
+  pages: LlmTemplatePage[],
   requested?: number
-): HtmlSlidePage[] {
+): LlmTemplatePage[] {
   let list = pages.map((p, i) => ({
     ...p,
     pageId: p.pageId || `page_${i + 1}`,
@@ -55,7 +71,6 @@ function clampPages(
   if (list.length < PAGE_MIN) {
     throw new Error(`页数 ${list.length} 少于下限 ${PAGE_MIN}`);
   }
-  // 未指定时若明显偏少，仍接受 ≥1，但提示日志由上层处理
   if (list.length < PAGE_DEFAULT_MIN) {
     console.warn(
       `[LayoutHtml] 未指定页数却只生成 ${list.length} 页（建议 ${PAGE_DEFAULT_MIN}～${PAGE_MAX}）`
@@ -64,79 +79,129 @@ function clampPages(
   return list;
 }
 
-function escapeAttr(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;");
-}
-
-function mockPageHtml(
+function mockSlotsForPage(
   pageType: PageType,
   index: number,
   theme: ThemeToken
-): string {
-  const bg = theme.background || "#0B1220";
-  const fg = theme.textOnDark || "#FFFFFF";
-  const muted = theme.textOnLight || "#B8C0CC";
-  const accent = theme.primary || "#F5B942";
-  const title =
-    pageType === "hero"
-      ? theme.templateName || "演示文稿"
-      : pageType === "close"
-        ? "谢谢"
-        : `第 ${index + 1} 页 · ${pageType}`;
-  const body =
-    pageType === "metrics"
-      ? "核心指标示意"
-      : "本页概述观点与路径，HTML 流水线 mock。";
-
-  const extra =
-    pageType === "metrics"
-      ? `
-  <div style="display:flex;gap:20px;margin-top:36px;">
-    ${[1, 2, 3]
-      .map(
-        (n) => `
-    <div style="position:relative;flex:1;height:200px;">
-      <div data-element="1" data-type="shape" data-shape-type="roundedRect" data-fill="#FFFFFF"
-        style="position:absolute;inset:0;background:#fff;border-radius:16px;"></div>
-      <div style="position:relative;padding:24px;display:flex;flex-direction:column;gap:8px;">
-        <div data-element="1" data-type="text" data-font-size="14" data-color="#6B7280" data-placement="left-center"
-          style="font-size:14px;color:#6B7280;">指标 ${n}</div>
-        <div data-element="1" data-type="text" data-font-size="36" data-bold data-color="#111827" data-placement="left-center"
-          style="font-size:36px;font-weight:700;color:#111;">${20 + n * 10}%</div>
-      </div>
-    </div>`
-      )
-      .join("")}
-  </div>`
-      : pageType === "hero" || pageType === "close"
-        ? `<div data-element="1" data-type="image" data-asset-key="page_${index + 1}_img"
-        data-image-prompt="Clean editorial illustration matching page topic, soft daylight, restrained theme accents, concrete subject, no abstract filler only, no readable text, no logos, no watermark"
-        data-border-radius="0"
-        style="display:none;width:1px;height:1px;"></div>`
-        : "";
-
-  const bgKey =
-    pageType === "hero" || pageType === "close"
-      ? ` data-bg-image-key="page_${index + 1}_bg" data-bg-image-prompt="Cinematic 16:9 hero background, darker midtones with soft vignette, clear darker center and lower band for light title overlay, atmospheric corporate mood using theme colors, no readable text, no logos, no pale white wash"`
-      : "";
-
-  return `<section id="slide" data-page-id="page_${index + 1}" data-bg="${escapeAttr(bg)}"${bgKey}
-  style="width:1000px;height:562.5px;position:relative;overflow:hidden;background:${escapeAttr(bg)};box-sizing:border-box;padding:48px 56px;font-family:${escapeAttr(theme.fontTitle || "PingFang SC")},sans-serif;color:${escapeAttr(fg)};">
-  <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
-    <div data-element="1" data-type="icon" data-icon-name="Lightning" data-icon-theme="outline"
-      style="width:32px;height:32px;flex-shrink:0;background:${escapeAttr(accent)};border-radius:8px;"></div>
-    <div data-element="1" data-type="text" data-font-size="30" data-bold data-color="${escapeAttr(fg)}" data-placement="left-center"
-      style="font-size:30px;font-weight:700;line-height:1.2;">${escapeAttr(title)}</div>
-  </div>
-  <div data-element="1" data-type="shape" data-shape-type="rect" data-fill="${escapeAttr(accent)}"
-    style="width:48px;height:4px;background:${escapeAttr(accent)};margin-bottom:24px;"></div>
-  <div data-element="1" data-type="text" data-font-size="16" data-color="${escapeAttr(muted)}" data-placement="left-top" data-line-height="1.5"
-    style="font-size:16px;line-height:1.5;max-width:640px;color:${escapeAttr(muted)};">${escapeAttr(body)}</div>
-  ${extra}
-</section>`;
+): Record<string, unknown> {
+  const pageId = `page_${index + 1}`;
+  const name = theme.templateName || "演示文稿";
+  switch (pageType) {
+    case "hero":
+      return {
+        title: name,
+        subtitle: "平台稳定性、交付效率与设计系统落地回顾",
+        footer: "WEB PLATFORM · BRIEF",
+        bgImageKey: `${pageId}_bg`,
+        bgImagePrompt:
+          "Cinematic dark editorial 16:9 background, soft vignette, darker lower band for title, no text no logos",
+      };
+    case "close":
+      return {
+        title: "谢谢",
+        subtitle: "把约束变成可交付的版式",
+        contact: "platform@example.com",
+        bgImageKey: `${pageId}_bg`,
+        bgImagePrompt:
+          "Quiet dark close background, soft vignette, no text no logos",
+      };
+    case "metrics":
+      return {
+        title: "年度关键成果",
+        metrics: [
+          { value: "40%", label: "首屏性能提升" },
+          { value: "95%", label: "代码复用率" },
+          { value: "12", label: "核心模块数" },
+        ],
+        footer: "基于自建监控与评审口径",
+      };
+    case "pillars":
+      return {
+        title: "三件必须做对的事",
+        pillars: [
+          {
+            iconName: "Lightning",
+            title: "稳定编译",
+            body: "HTML→坐标路径可复现。",
+          },
+          {
+            iconName: "Aiming",
+            title: "版式约束",
+            body: "槽位固定，内容可变。",
+          },
+          {
+            iconName: "CheckOne",
+            title: "可审阅",
+            body: "预览与编辑器同源测量。",
+          },
+        ],
+      };
+    case "agenda":
+      return {
+        title: "今日议程",
+        items: [
+          { title: "背景", body: "为什么模板化" },
+          { title: "版式", body: "20 套签名构图" },
+          { title: "槽位", body: "JSON → HTML" },
+          { title: "接入", body: "流水线与门禁" },
+        ],
+      };
+    case "problem":
+      return {
+        title: "自由 HTML 不稳定",
+        body: "模型一次生成整页，版式漂移与测量失败同时出现。",
+        points: ["构图不一致", "几何难排查", "修复成本高"],
+      };
+    case "solution":
+      return {
+        title: "解法：模板 + 槽位",
+        steps: [
+          { title: "选型", body: "按 pageType 选套" },
+          { title: "填槽", body: "只写内容字段" },
+          { title: "编译", body: "测量导出 JSON" },
+        ],
+      };
+    case "evidence":
+      return {
+        title: "证据：结构可复现",
+        caption: "同一槽位多次渲染得到一致 HTML 结构。",
+        bullets: ["利于 diff", "门禁聚焦内容", "改模板源即可"],
+      };
+    case "compare":
+      return {
+        title: "前后对比",
+        leftTitle: "自由生成",
+        leftBody: "构图漂移、卡片堆叠反复出现。",
+        rightTitle: "模板填槽",
+        rightBody: "签名固定，内容替换，路径更短。",
+      };
+    case "breath":
+      return {
+        quote: "约束不是审美的敌人，是交付的前提。",
+        attribution: "— 工程述职简报",
+      };
+    case "team":
+      return {
+        title: "核心角色",
+        members: [
+          { name: "版式", role: "Design", blurb: "固化构图。" },
+          { name: "编译", role: "Pipeline", blurb: "测量导出。" },
+          { name: "内容", role: "Agent", blurb: "选套填槽。" },
+        ],
+      };
+    case "timeline":
+      return {
+        title: "里程碑",
+        steps: [
+          { label: "Q1", detail: "四页 MVP" },
+          { label: "Q2", detail: "20 套扩展" },
+          { label: "Q3", detail: "Agent 接槽" },
+          { label: "Q4", detail: "主题族扩展" },
+        ],
+      };
+    default:
+      return { title: `第 ${index + 1} 页`, subtitle: String(pageType) };
+  }
 }
 
 function mockHtmlDeck(theme: ThemeToken, userPrompt: string): HtmlDeck {
@@ -145,10 +210,18 @@ function mockHtmlDeck(theme: ThemeToken, userPrompt: string): HtmlDeck {
     0,
     requested ?? DEFAULT_PAGE_TYPE_SEQUENCE.length
   );
-  const pages = seq.map((pageType, i) => ({
+  const rawPages = seq.map((pageType, i) => ({
     pageId: `page_${i + 1}`,
     pageType,
-    html: mockPageHtml(pageType, i, theme),
+    templateId: defaultTemplateForPageType(pageType),
+    slots: mockSlotsForPage(pageType, i, theme),
+  }));
+  const pages = materializeTemplatePages(rawPages, theme).map((p) => ({
+    pageId: p.pageId,
+    pageType: p.pageType,
+    templateId: p.templateId,
+    slots: p.slots as unknown as Record<string, unknown>,
+    html: p.html,
   }));
   const deck: HtmlDeck = {
     version: "html-1.0",
@@ -207,13 +280,18 @@ export function extractDrawTasksFromDeck(deck: HtmlDeck): DrawTask[] {
       re.lastIndex = 0;
       let m: RegExpExecArray | null;
       while ((m = re.exec(html))) {
-        push(m[1], m[2] || "illustration, no text", page.pageId, 400, 400, "illustration");
+        push(
+          m[1],
+          m[2] || "illustration, no text",
+          page.pageId,
+          400,
+          400,
+          "illustration"
+        );
       }
     }
 
-    const bgKey =
-      html.match(/data-bg-image-key=["']([^"']+)["']/)?.[1] ||
-      html.match(/data-bg-image-key=["']([^"']+)["']/)?.[1];
+    const bgKey = html.match(/data-bg-image-key=["']([^"']+)["']/)?.[1];
     const bgPrompt =
       html.match(/data-bg-image-prompt=["']([^"']*)["']/)?.[1] ||
       "cinematic wide 16:9 hero background, darker midtones, soft vignette, clear darker band for white title overlay, atmospheric corporate mood, no text, no logos, no pale white wash";
@@ -251,6 +329,19 @@ export function htmlDeckToCompatMeta(deck: HtmlDeck): MetaJson {
   };
 }
 
+function toHtmlSlidePages(
+  pages: LlmTemplatePage[],
+  theme: ThemeToken
+): HtmlSlidePage[] {
+  return materializeTemplatePages(pages, theme).map((p) => ({
+    pageId: p.pageId,
+    pageType: p.pageType,
+    templateId: p.templateId,
+    slots: p.slots as unknown as Record<string, unknown>,
+    html: p.html,
+  }));
+}
+
 export async function runLayoutHtmlAgent(opts: {
   config: AgentRuntimeConfig;
   theme: ThemeToken;
@@ -269,10 +360,13 @@ export async function runLayoutHtmlAgent(opts: {
       { role: "system", content: buildLayoutHtmlSystemPrompt(theme) },
       { role: "user", content: buildLayoutHtmlUserPrompt(userPrompt) },
     ],
-    parse: (j) => HtmlDeckLlmSchema.parse(j),
+    parse: (j) => HtmlTemplateDeckLlmSchema.parse(j),
   });
 
-  const pages = clampPages(raw.pages, requested);
+  const pages = toHtmlSlidePages(
+    clampTemplatePages(raw.pages as LlmTemplatePage[], requested),
+    theme
+  );
   const deck: HtmlDeck = {
     version: "html-1.0",
     name: raw.name,
@@ -307,20 +401,64 @@ export async function repairHtmlPage(opts: {
         content: buildRepairHtmlPagePrompt({
           pageId: page.pageId,
           pageType: page.pageType,
-          html: page.html,
+          templateId: page.templateId,
+          slots: page.slots ?? {},
           instruction,
         }),
       },
     ],
-    parse: (j) => HtmlSlidePageSchema.parse(j),
+    parse: (j) => HtmlTemplateRepairLlmSchema.parse(j),
   });
+
+  const pageType = (fixed.pageType || page.pageType) as PageType;
+  const rendered = materializeTemplatePage(
+    {
+      pageId: page.pageId,
+      pageType,
+      templateId: fixed.templateId || page.templateId,
+      slots: fixed.slots,
+    },
+    deck.theme
+  );
 
   const pages = deck.pages.map((p) =>
     p.pageId === pageId
-      ? { ...p, html: fixed.html, pageType: fixed.pageType || p.pageType }
+      ? {
+          pageId: rendered.pageId,
+          pageType: rendered.pageType,
+          templateId: rendered.templateId,
+          slots: rendered.slots as unknown as Record<string, unknown>,
+          html: rendered.html,
+        }
       : p
   );
   const next: HtmlDeck = { ...deck, pages, drawTasks: [] };
   next.drawTasks = extractDrawTasksFromDeck(next);
   return next;
+}
+
+/** 供外部直接用槽位渲染一页 */
+export function renderPageFromSlots(opts: {
+  pageId: string;
+  pageType: PageType;
+  templateId?: string;
+  slots: AnyTemplateSlots | Record<string, unknown>;
+  theme: ThemeToken;
+}): HtmlSlidePage {
+  const rendered = materializeTemplatePage(
+    {
+      pageId: opts.pageId,
+      pageType: opts.pageType,
+      templateId: opts.templateId,
+      slots: opts.slots,
+    },
+    opts.theme
+  );
+  return {
+    pageId: rendered.pageId,
+    pageType: rendered.pageType,
+    templateId: rendered.templateId,
+    slots: rendered.slots as unknown as Record<string, unknown>,
+    html: rendered.html,
+  };
 }

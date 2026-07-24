@@ -45,7 +45,6 @@ function pageTypeByIdFromDeck(deck: HtmlDeck): Record<string, string> {
 function shouldSkipGateRepair(instruction: string): boolean {
   const hasSparse = /\[sparse-content\]/.test(instruction);
   const hasStructural =
-    /\[text-overflow\]/.test(instruction) ||
     /\[out-of-bounds\]/.test(instruction) ||
     /\[empty-image\]/.test(instruction) ||
     /\[vague-title\]/.test(instruction) ||
@@ -55,7 +54,6 @@ function shouldSkipGateRepair(instruction: string): boolean {
 
   const onlyContrast =
     /\[contrast\]/.test(instruction) &&
-    !/\[text-overflow\]/.test(instruction) &&
     !/\[out-of-bounds\]/.test(instruction) &&
     !/\[empty-image\]/.test(instruction) &&
     !/\[vague-title\]/.test(instruction) &&
@@ -65,7 +63,7 @@ function shouldSkipGateRepair(instruction: string): boolean {
 }
 
 /**
- * HTML 流水线：Theme → LayoutHTML（内容定稿）→ Image → Compile → Gate（结构）→ Score（可选观感）
+ * HTML 流水线：Theme → LayoutHTML（选套+填槽→模板渲染）→ Image → Compile → Gate → Score
  * 不经过 layout skeletons / meta slot compile。
  */
 export async function runHtmlPipeline(
@@ -114,8 +112,8 @@ export async function runHtmlPipeline(
     "utf-8"
   );
 
+  // HTML 几何已由 compile 阶段页面 DOM 量过；Gate 只做结构硬规则
   const gateOpts = {
-    useDomMeasure: config.useDomMeasure,
     pageTypeById: pageTypeByIdFromDeck(htmlDeck),
   };
 

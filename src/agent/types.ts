@@ -150,12 +150,16 @@ export type MetaJson = {
   drawTasks: DrawTask[];
 };
 
-/** HTML 流水线：一页幻灯片（无骨架） */
+/** HTML 流水线：一页幻灯片（模板填槽 → html） */
 export type HtmlSlidePage = {
   pageId: string;
   pageType: PageType;
-  /** 含 #slide 的 HTML 片段 */
+  /** 含 #slide 的 HTML 片段（由模板渲染） */
   html: string;
+  /** 使用的模板套 id */
+  templateId?: string;
+  /** 槽位内容（回炉/调试保留） */
+  slots?: Record<string, unknown>;
 };
 
 /** HTML 流水线中间态 */
@@ -181,7 +185,6 @@ export type AssetMap = Record<string, AssetMapEntry>;
 
 export type DefectKind =
   | "out-of-bounds"
-  | "text-overflow"
   | "contrast"
   | "empty-image"
   | "too-many-elements"

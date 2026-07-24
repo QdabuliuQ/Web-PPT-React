@@ -67,8 +67,34 @@ function regularPolygonPath(sides: number, radius = 46): string {
   return `M ${points.join(" L ")} Z`;
 }
 
-export const ShapeSvg: FC<{ shapeType: ShapeType } & ShapePathProps> = ({
+/** CSS px 圆角 → viewBox(0–100) 上 inset 96×96 矩形的 rx/ry */
+export function roundedRectRxRy(
+  borderRadiusPx: number,
+  widthPx: number,
+  heightPx: number
+): { rx: number; ry: number } {
+  const r = Math.max(0, borderRadiusPx);
+  const w = Math.max(1, widthPx);
+  const h = Math.max(1, heightPx);
+  return {
+    rx: Math.min(48, (r / w) * 96),
+    ry: Math.min(48, (r / h) * 96),
+  };
+}
+
+export const ShapeSvg: FC<
+  {
+    shapeType: ShapeType;
+    /** 圆角矩形圆角（px）；其它形状忽略 */
+    borderRadius?: number;
+    width?: number;
+    height?: number;
+  } & ShapePathProps
+> = ({
   shapeType,
+  borderRadius = 14,
+  width = 100,
+  height = 100,
   ...pathProps
 }) => {
   const attrs = strokeAttrs(pathProps);
@@ -80,12 +106,14 @@ export const ShapeSvg: FC<{ shapeType: ShapeType } & ShapePathProps> = ({
           <rect x={2} y={2} width={96} height={96} {...attrs} />
         </svg>
       );
-    case "roundedRect":
+    case "roundedRect": {
+      const { rx, ry } = roundedRectRxRy(borderRadius, width, height);
       return (
         <svg {...svgBaseProps}>
-          <rect x={2} y={2} width={96} height={96} rx={14} ry={14} {...attrs} />
+          <rect x={2} y={2} width={96} height={96} rx={rx} ry={ry} {...attrs} />
         </svg>
       );
+    }
     case "oval":
       return (
         <svg {...svgBaseProps}>

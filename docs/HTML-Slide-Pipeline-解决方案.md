@@ -181,9 +181,10 @@ Pipeline 须 **显式把 Skill 正文注入** LayoutAgent system prompt（Cursor
 2. **文案与信息密度在 Layout 首轮 HTML 定稿**；短需求须自由扩写。Gate/Score 不负责把空壳页写满。
 3. ImageAgent 生成后写本地/`/agent-assets/` URL，再编译。
 4. 编译：无页级 `data-bg-image-key` 时，hero/close 或深色 `data-bg` **不**回退浅色 `bg_global`，避免白字不可读。
-5. **文本几何**：`document.json` 的 x/y/width/height **等于** Puppeteer `getBoundingClientRect`；文案用 **`innerText`**（`<br>` → `\n`），不用会丢换行的 `textContent`。
+5. **文本几何 / 保真**：`document.json` 的 x/y/width/height **等于** Puppeteer `getBoundingClientRect`；文案用 **`innerText`**（`<br>` → `\n`）。每个导出节点须有 `data-z-index`（与 CSS 一致）；编译保证重叠 text/icon 不低于盖住它们的 shape（兜底）。属性以 `data-*` 为准，禁止估宽估高。
 6. Gate 回炉后须同步写回 `html-pages/`，与 `document.json` 同源。
-7. Layout 的每个 text 节点必须写全 data-font-size / data-font-family / data-color / data-line-height / data-placement，且 CSS 与之一致；禁止只写 style 漏 data-*（否则易出现本机 1.6、JSON 默认 1.4 等偏差）。
+7. Layout 的每个 text 须写全 data-font-size / font-family / color / line-height / placement / **z-index**，且 CSS 一致。
+8. Theme：向 HTML 注入主题 hex；测量页套统一中文字体栈，减少换行偏差。
 
 ---
 
