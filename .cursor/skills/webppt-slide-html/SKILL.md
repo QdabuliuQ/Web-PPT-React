@@ -40,9 +40,10 @@ Generate **one 16:9 slide** as HTML. Layout may use flex/grid. Exportable nodes 
    - Other types: write every required field in [reference.md](reference.md) (icon name+theme+fill; shape type+fill; image key+prompt+radius; chart type+series; table data; slide `data-bg` + `data-page-id`).
    - No `transform` / `scale` / `rotate` on export nodes（硬禁止；`translate(-50%,-50%)` 会导致量宽过紧）。需要旋转时才用 `data-rotate` 并自测。
    - Do **not** set a fixed tiny `height` on text export nodes; let content define height (or omit height). Give single-line text an explicit **`width`**.
+   - **禁止**在 `data-element` text 上写 CSS `padding`（Text 组件无 padding；测量会强制 `padding:0`）。卡内缩进写在**未标记** wrapper 上，例如：`<div style="padding:36px"><div data-element text …></div></div>`。
 
 4. **Fidelity — HTML ≡ JSON（硬约束）**
-   - **几何**：导出节点以测量 `getBoundingClientRect` 为准；**text** 在落盘时会加上编辑器 `padding` 补偿（与 Text 组件一致），不是估字宽。禁止随意改写其它类型几何。
+   - **几何**：导出节点以测量 `getBoundingClientRect` 为准（`x/y/width/height` 原样写入 JSON）。**text** 不做 padding 补偿。禁止随意改写其它类型几何。
    - **元素集合**：HTML 里每个 `data-element="1"` 对应 JSON 里恰好一个元素；不要用未标记节点冒充可见内容。
    - **属性**：JSON 字段来自 `data-*`（+ 文案 `innerText`）；`data-*` 与同名 CSS 必须一致；缺属性就写缺，不要靠编译猜。
    - **层级**：每个导出节点 **必须**写 `data-z-index`（整数）。卡片底板 &lt; 卡上图标/文案；装饰 &lt; 内容；后画的不一定更大，以 `data-z-index` 为准。禁止只写 CSS `z-index:1` 而不写 `data-z-index`。
@@ -52,7 +53,7 @@ Generate **one 16:9 slide** as HTML. Layout may use flex/grid. Exportable nodes 
    - Do **not** invent final `x/y` for export. Browser layout + rect measurement owns geometry.
    - Keep all content inside the 1000×562.5 root (no overflow clipping of critical text).
    - **禁止**在导出节点上使用 `transform` / `translate(-50%,-50%)` / `scale`（编译会剥离，但布局易量错）。KPI/居中：用 flex/`text-align`/`data-placement`，并给 text **显式 width**（或 `width:100%` 相对卡片）。
-   - 卡片：`position:relative` 容器 + shape `absolute;inset:0` + 文案在文档流或相对定位，并设好 `data-z-index`。
+   - 卡片：`position:relative` 容器 + shape `absolute;inset:0` + **未标记** padding wrapper + 文案 `data-element`（文案自身无 padding），并设好 `data-z-index`。
 
 6. **Output**
    - Return a single HTML fragment or full document with one `#slide`.
@@ -142,12 +143,19 @@ Minimal required `data-*` per type. Full field list: [reference.md](reference.md
 ```html
 <div data-element="1" data-type="image"
      data-asset-key="page_2_img" data-border-radius="16"
+     data-border data-border-width="1" data-border-color="#D0D5DD" data-border-style="solid"
+     data-image-kind="photo"
      data-image-prompt="Clean editorial photo of a dual-monitor developer desk, soft daylight, light surface matching theme background, restrained blue UI glow accents, subject on the right third with clean left negative space, no readable text on screens, no logos, no watermark"
-     style="width:380px;height:400px"></div>
+     data-z-index="12"
+     style="width:380px;height:400px;border-radius:16px;border:1px solid #D0D5DD;z-index:12;overflow:hidden;"></div>
 ```
-- **Required:** `data-asset-key` + **detailed** English `data-image-prompt` (≈40–120 words). Short slogans like `soft abstract, no text` are forbidden.
+- **Required:** `data-asset-key` + **detailed** English `data-image-prompt` (≈40–120 words) + `data-z-index`.
 - Prompt must cover: **subject**, **composition/framing**, **lighting & palette** (name theme hex when useful), **mood**, and bans (`no text`, `no logos`, `no watermark`).
-- Side/content images: prefer clean, **lighter** midtones that match content-page `data-bg` / theme.background — not dark cinematic washes under dark body text.
+- **`data-image-kind`:** `photo`（铺满 cover）| `cutout`（透明底抠图，测量用 `<img>` + contain）| `illustration` | `decoration`。
+- **边框 / 圆角：** 写全 `data-border*` + `data-border-radius`，CSS 必须镜像（`border` / `border-radius` / `overflow:hidden`）。
+- **透明底：** `data-image-kind="cutout"`，prompt 写明 `isolated subject on fully transparent background, PNG alpha`；头像可用大圆角。
+- Side/content images: prefer clean, **lighter** midtones that match content-page `data-bg` — not dark cinematic washes under dark body text.
+- **禁止**把文案叠在 content image 正上方（compile 会按重叠剪掉图片）；图与字分区排布。
 - `src` may be filled later before measure.
 
 ### chart

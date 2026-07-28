@@ -1,4 +1,5 @@
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
+import { resolveFontStack } from "@/fonts/stacks";
 import type { Elements } from "@/store/zustand/pptStore";
 import {
   isSupportedPlacement,
@@ -194,15 +195,13 @@ function placementOf(raw?: string) {
 }
 
 /**
- * 与 `src/element/Text/index.module.less` 默认 padding 对齐。
- * HTML 测量的是「字的外接框」；编辑器 Text 还有 padding，需补偿否则溢裁。
- * （选中/hover 用 outline，不再用占位 border。）
+ * @deprecated Text 无内边距；几何直接用测量值。保留导出以免外部引用断裂。
  */
-export const TEXT_EDITOR_PADDING_PX = 4;
-/** 额外安全余量（亚像素 / 字体回退），每侧 */
-export const TEXT_EDITOR_SAFETY_PX = 2;
+export const TEXT_EDITOR_PADDING_PX = 0;
+/** @deprecated 见 TEXT_EDITOR_PADDING_PX */
+export const TEXT_EDITOR_SAFETY_PX = 0;
 
-/** 将测量框扩成编辑器盒子，并按 placement 回移原点，保持内容视觉位置 */
+/** @deprecated 恒等：x/y/width/height 直接取测量值，不再做 padding 补偿 */
 export function applyTextEditorChrome(geo: {
   x: number;
   y: number;
@@ -210,17 +209,10 @@ export function applyTextEditorChrome(geo: {
   height: number;
   placement?: string;
 }): { x: number; y: number; width: number; height: number } {
-  const inset = TEXT_EDITOR_PADDING_PX + TEXT_EDITOR_SAFETY_PX;
-  const dx = inset * 2;
-  const dy = inset * 2;
-  const [h = "left", v = "top"] = (geo.placement || "left-top").split("-");
+  void geo.placement;
   let { x, y, width, height } = geo;
-  width = Math.max(1, Math.round(width + dx));
-  height = Math.max(1, Math.round(height + dy));
-  if (h === "center") x -= inset;
-  else if (h === "right") x -= dx;
-  if (v === "center") y -= inset;
-  else if (v === "bottom") y -= dy;
+  width = Math.max(1, Math.round(width));
+  height = Math.max(1, Math.round(height));
   x = Math.max(0, Math.round(x));
   y = Math.max(0, Math.round(y));
   if (x + width > CANVAS_WIDTH) width = Math.max(1, CANVAS_WIDTH - x);
@@ -254,20 +246,16 @@ export function mapMeasuredNodeToElement(
     const text = n.text || ds.content || "";
     const border = resolveElementBorder(ds, n.chrome);
     const placement = placementOf(ds.placement);
-    const boxed = applyTextEditorChrome({
-      x: geo.x,
-      y: geo.y,
-      width: geo.width,
-      height: geo.height,
-      placement,
-    });
+    // 几何 = DOM 测量值；Text 组件无 padding，不做 chrome 补偿
     return {
       type: "text",
       id: `text_${rid()}`,
       mode: "edit",
       text,
       fontSize,
-      fontFamily: ds.fontFamily || theme.fontBody || "PingFang SC",
+      fontFamily: resolveFontStack(
+        ds.fontFamily || theme.fontBody || "PingFang SC"
+      ),
       color: ds.color || theme.textOnLight || "#111111",
       bold: hasFlag(ds, "bold"),
       italic: hasFlag(ds, "italic"),
@@ -283,7 +271,6 @@ export function mapMeasuredNodeToElement(
       shadowOffsetY: Number(ds.shadowOffsetY) || 0,
       shadowBlur: Number(ds.shadowBlur) || 4,
       ...geo,
-      ...boxed,
     } as Elements;
   }
 

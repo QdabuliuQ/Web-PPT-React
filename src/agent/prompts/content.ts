@@ -34,7 +34,8 @@ ${buildPageTypeConstraintPrompt()}
 硬性：
 - 页数恰好 6～10（含 hero 封面与 close 封底）
 - 每页必须有 pageType；layoutKey 若填写必须属于该 pageType 白名单
-- 叙事节奏：hero → agenda → problem/solution → pillars/metrics/evidence → team/timeline/breath → close
+- 叙事节奏：hero → agenda →（按目录展开的内容页）→ close；不要机械套固定类型序列而丢掉目录
+- **目录一致性**：有 agenda 时，先定目录条目，其后内容页必须一一展开对应条目（标题语义呼应）；禁止目录与正文两套故事
 - 禁止连续两页相同 pageType（agenda/close 除外）
 - 密疏交替：论证页 ↔ 并列/指标 ↔ 数据 ↔ 团队/时间线/留白
 - 每个 image 槽必须给 imagePrompt；icon 给白名单 iconName；chart 给 chartSeries+chartType；table 给 tableData；metric 给短数字
@@ -47,7 +48,8 @@ ${buildPageTypeConstraintPrompt()}
 
 文案质量：
 - 标题要具体（禁「商业计划书」「公司介绍」「核心优势」「未来展望」）
-- 正文含数字/场景/动作/对比；目录结果导向；三要点问题→方案→结果
+- 正文含数字/场景/动作/对比；目录结果导向；三要点问题→方案→结果；内容页标题与目录条目对齐
+- 信息密度优先：禁止「赋能」「闭环」「全面提升」空转；每段尽量落到可核对事实或动作
 
 插图 Prompt：
 - 必须有业务语义；禁抽象纹理装饰

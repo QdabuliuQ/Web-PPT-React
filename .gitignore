@@ -20,6 +20,7 @@ cypress/downloads
 dist
 *.log
 .DS_Store
+*.tsbuildinfo
 
 # Env
 .env

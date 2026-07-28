@@ -3,6 +3,7 @@ export type { AgentRuntimeConfig } from "./config";
 export { compileDocument } from "./compile/engine";
 export type { CompiledDocument } from "./compile/engine";
 export { runThemeAgent, finalizeTheme, resolveProvidedTheme } from "./agents/themeAgent";
+export { runStoryAgent } from "./agents/storyAgent";
 export { runContentAgent, repairPageContent } from "./agents/contentAgent";
 export { runImageAgent } from "./agents/imageAgent";
 export {
@@ -19,11 +20,32 @@ export { runHtmlPipeline } from "./pipeline/runHtml";
 export type { RunPipelineOptions } from "./pipeline/run";
 export {
   runLayoutHtmlAgent,
+  layoutFromStory,
   repairHtmlPage,
   htmlDeckToCompatMeta,
   extractDrawTasksFromDeck,
-  renderPageFromSlots,
 } from "./agents/layoutHtmlAgent";
+export { runBriefAgent, mockDesignBrief } from "./agents/briefAgent";
+export {
+  buildDesignProfileFromBrief,
+  directDesign,
+  formatDesignProfileForPrompt,
+  type DesignArchetypeId,
+  type DesignModuleBias,
+  type DesignProfile,
+} from "./design/director";
+export type { DesignBrief } from "./brief/types";
+export { assembleSlideFromModules, canAssembleWithModules } from "./modules/assemble";
+export {
+  resolveComposition,
+  type SlideComposition,
+} from "./modules/composition";
+export type { StoryDeck, StoryPageDraft } from "./story/types";
+export { storyPageToSlots } from "./story/mapToSlots";
+export {
+  StoryDeckLlmSchema,
+  StoryPageDraftSchema,
+} from "./schema";
 export { compileHtmlDocument } from "./htmlCompile";
 export {
   renderHtmlTemplate,
@@ -31,7 +53,6 @@ export {
   renderMetricsTemplate,
   renderPillarsTemplate,
   renderCloseTemplate,
-  templateIdForPageType,
   TEMPLATE_SUITE,
   HTML_TEMPLATE_SUITE_IDS,
 } from "./htmlTemplates";
@@ -48,15 +69,11 @@ export { SCORE_PASS_THRESHOLD, PAGE_SCORE_SYSTEM_PROMPT } from "./prompts/score"
 export {
   listLayouts,
   getLayout,
-  DEFAULT_LAYOUT_SEQUENCE,
   DEFAULT_PAGE_TYPE_SEQUENCE,
-  ALT_LAYOUT_SEQUENCE,
-  ALT_PAGE_TYPE_SEQUENCE,
-  LAYOUT_INTENT,
   PAGE_TYPES,
   PAGE_TYPE_META,
   PAGE_TYPE_LAYOUTS,
-  pickLayoutSequence,
+  pageTypesFromPlan,
   pickPagePlan,
   resolvePageTypeAndLayout,
   buildPageTypeConstraintPrompt,

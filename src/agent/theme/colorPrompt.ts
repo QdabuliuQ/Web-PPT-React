@@ -69,7 +69,7 @@ export function appendPaletteToImagePrompt(
   return `${base}. color grade using theme 5 colors: ${list}`;
 }
 
-/** 缺省时补齐全局氛围 / 装饰 Prompt，并带上五色 */
+/** 缺省时补齐全局氛围 / 装饰 Prompt，并带上五色与场合材质 */
 export function ensureThemeImagePrompts(
   theme: ThemeToken,
   userPrompt?: string
@@ -79,6 +79,31 @@ export function ensureThemeImagePrompts(
     80
   );
   const palette = buildPaletteHint(theme);
+  const mat = theme.material;
+  let genreMaterial =
+    mat?.imageMaterials ||
+    [
+      mat?.surface,
+      mat?.light,
+    ]
+      .filter(Boolean)
+      .join(", ");
+  if (!genreMaterial && userPrompt) {
+    const cat = `${theme.category || ""} ${(theme.tags || []).join(" ")}`;
+    if (/年会|庆典|暖金|stage/.test(cat)) {
+      genreMaterial =
+        "warm gala materials: silk, foil, stage soft light; no tech neon";
+    } else if (/消费|奶油|产品|product/.test(cat)) {
+      genreMaterial =
+        "cream brand materials: paper, soft product photography; no HUD or circuit";
+    } else if (/工程|冷灰|克制|editorial/.test(cat)) {
+      genreMaterial =
+        "cool engineering materials: concrete, brushed metal; no warm brass foil";
+    } else if (/路演|融资|monument/.test(cat)) {
+      genreMaterial = "pitch stage lighting, clean product render";
+    }
+  }
+  const coverHint = mat?.coverImageHint || "";
   const globalBgPrompt = appendPaletteToImagePrompt(
     theme.globalBgPrompt?.trim() ||
       [
@@ -88,7 +113,11 @@ export function ensureThemeImagePrompts(
         "no objects",
         "no text",
         `mood for: ${topic}`,
-      ].join(", "),
+        genreMaterial,
+        coverHint,
+      ]
+        .filter(Boolean)
+        .join(", "),
     theme
   );
 
@@ -102,15 +131,18 @@ export function ensureThemeImagePrompts(
         "no text",
         "no logos",
         `topic: ${topic}`,
-      ].join(", "),
+        genreMaterial,
+      ]
+        .filter(Boolean)
+        .join(", "),
     theme
   );
 
-  // 再叠一层 palette 约束（append 已含 hex；此处补语义句）
+  const materialSuffix = genreMaterial ? ` ${genreMaterial}.` : "";
   return {
     ...theme,
-    globalBgPrompt: `${globalBgPrompt}. ${palette}`,
-    globalDecorPrompt: `${globalDecorPrompt}. ${palette}`,
+    globalBgPrompt: `${globalBgPrompt}. ${palette}.${materialSuffix}`,
+    globalDecorPrompt: `${globalDecorPrompt}. ${palette}.${materialSuffix}`,
   };
 }
 
@@ -119,12 +151,18 @@ export function formatThemeForContentPrompt(theme: ThemeToken): string {
   const five = getThemeFiveColors(theme)
     .map((c, i) => `${i + 1}. ${c.role}=${c.hex}  // ${c.usage}`)
     .join("\n");
+  const mat = theme.material;
   return [
     `templateName=${theme.templateName}`,
     `category=${theme.category}`,
+    theme.visualFamily ? `visualFamily=${theme.visualFamily}` : "",
     `fonts: title=${theme.fontTitle}; body=${theme.fontBody}`,
     "THEME_5_COLORS（必须全部服从，禁止另起色系）:",
     five,
+    mat
+      ? `material: surface=${mat.surface}; light=${mat.light}; coverScrim=${mat.coverScrim}`
+      : "",
+    mat?.imageMaterials ? `imageMaterials=${mat.imageMaterials}` : "",
     theme.globalBgPrompt ? `globalBgPrompt=${theme.globalBgPrompt}` : "",
     theme.globalDecorPrompt
       ? `globalDecorPrompt=${theme.globalDecorPrompt}`

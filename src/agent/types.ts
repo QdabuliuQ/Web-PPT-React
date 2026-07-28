@@ -90,6 +90,23 @@ export type LayoutSkeleton = {
   slots: LayoutSlot[];
 };
 
+/** 视觉家族：editorial | monument | product | stage */
+export type VisualFamilyId =
+  | "editorial"
+  | "monument"
+  | "product"
+  | "stage";
+
+/** 主题材质包（表面/光/封面暗带/生图提示） */
+export type ThemeMaterial = {
+  surface: string;
+  light: string;
+  /** 封面叠字暗带强度 0～1 */
+  coverScrim: number;
+  imageMaterials: string;
+  coverImageHint: string;
+};
+
 export type ThemeToken = {
   templateName: string;
   category: string;
@@ -101,8 +118,14 @@ export type ThemeToken = {
   textOnDark: string;
   fontTitle: string;
   fontBody: string;
+  /** KPI / 大数字；默认衬线，偏编辑报告感 */
+  fontNumeric?: string;
   globalBgPrompt?: string;
   globalDecorPrompt?: string;
+  /** 整场视觉家族（选套 + 材质） */
+  visualFamily?: VisualFamilyId;
+  /** 材质包：纸面/光影/封面暗带 */
+  material?: ThemeMaterial;
 };
 
 export type MetaSlotFill = {
@@ -138,7 +161,7 @@ export type DrawTask = {
   height?: number;
   /** 传给生图 API 的 aspectRatio */
   aspectRatio?: string;
-  /** 图片类型：photo/illustration/decoration/texture/hero */
+  /** 图片类型：photo/illustration/decoration/texture/hero/cutout */
   imageKind?: string;
   elementId?: string;
 };
@@ -190,7 +213,9 @@ export type DefectKind =
   | "too-many-elements"
   | "vague-title"
   | "sparse-content"
-  | "dense-content";
+  | "dense-content"
+  /** 文字落在照片/底图上且无实色底板覆盖 */
+  | "unsafe-text-surface";
 
 export type PageDefect = {
   pageId: string;

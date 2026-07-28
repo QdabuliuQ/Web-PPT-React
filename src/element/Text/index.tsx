@@ -21,6 +21,7 @@ import { PlacementMapped } from "./constant";
 import styles from "./index.module.less";
 import { getTextMenuItems } from "./menu";
 import { buildTextDropShadow, buildTextGlyphShadow } from "./utils";
+import { resolveFontStack } from "@/fonts/stacks";
 export { TextPanel, TextPanelKey, TextPanelTitle } from "./panel";
 
 export interface ITextProps extends ICommonElementProps {
@@ -334,7 +335,7 @@ const Component: FC<ITextProps> = (props) => {
       fontSize,
       fontWeight: bold ? "bold" : "normal",
       fontStyle: italic ? "italic" : "normal",
-      fontFamily: fontFamily,
+      fontFamily: resolveFontStack(fontFamily),
       textDecoration: `${underline ? "underline" : ""} ${strikethrough ? "line-through" : ""}`,
       lineHeight,
       color,

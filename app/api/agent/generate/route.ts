@@ -17,6 +17,7 @@ export const maxDuration = 300;
  *   sampleImageUrls?: string[],
  *   useDemoSamples?: boolean,  // 使用 src/agent/assets 内置参考图
  *   mock?: boolean,
+ *   skipImageGen?: boolean, // 跳过生图，纯色占位
  *   pipelineMode?: "skeleton" | "html"  // 默认 skeleton；html=无骨架
  * }
  */
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
       sampleImageUrls?: string[];
       useDemoSamples?: boolean;
       mock?: boolean;
+      skipImageGen?: boolean;
       outDir?: string;
       pipelineMode?: AgentPipelineMode;
     };
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
           body.mock === true ||
           process.env.AGENT_MOCK === "1" ||
           !process.env.LLM_API_KEY,
+        ...(body.skipImageGen === true ? { skipImageGen: true } : {}),
         ...(pipelineMode ? { pipelineMode } : {}),
       },
     });

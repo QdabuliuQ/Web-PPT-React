@@ -4,6 +4,12 @@
 
 /* CSS 变量定义 */
 :root {
+  /* 与 src/fonts/stacks.ts / 测量 HTML 对齐 */
+  --webppt-font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC",
+    "STSong", serif;
+  --webppt-font-sans: "PingFang SC", "Noto Sans SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+
   /* 主题色 */
   --primary-color: #f25f00;
   --primary-hover: #ff7b33;
@@ -160,8 +166,14 @@ html.dark {
 }
 
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  font-family: var(
+    --webppt-font-sans,
+    "PingFang SC",
+    "Noto Sans SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif
+  );
   background-color: var(--app-bg);
   color: var(--text-primary);
 }

@@ -1,6 +1,11 @@
 import { copyFile, mkdir, writeFile } from "fs/promises";
 import path from "path";
 import type { AgentRuntimeConfig } from "../config";
+import {
+  colorFromAssetKey,
+  createSolidColorPng,
+  sizeFromAspectRatio,
+} from "./solidPng";
 
 async function sleep(ms: number) {
   await new Promise((r) => setTimeout(r, ms));
@@ -22,7 +27,22 @@ type CustomImageResponse = {
 };
 
 type OpenAIImageResponse = {
-  data?: Array<{ url?: string; b64_json?: string }>;
+  data?: Array<{
+    url?: string;
+    b64_json?: string;
+    task_id?: string;
+    status?: string;
+  }>;
+  error?: { message?: string; code?: string | number };
+};
+
+type MaiziTaskResponse = {
+  id?: string;
+  status?: string;
+  display_status?: string;
+  progress?: number;
+  result_urls?: string[] | null;
+  error_msg?: string | null;
 };
 
 /** 下载远程图 → agent-output/assets + public/agent-assets，返回同源本地链接 */
@@ -151,6 +171,72 @@ function extractCustomImageUrl(data: CustomImageResponse): string {
   );
 }
 
+function extractSyncImageUrl(
+  item: NonNullable<OpenAIImageResponse["data"]>[number] | undefined
+): string | null {
+  if (!item) return null;
+  if (item.url) return item.url;
+  if (item.b64_json) return `data:image/png;base64,${item.b64_json}`;
+  return null;
+}
+
+/** MaiziTech 等网关：images/generations 先返回 task_id，再轮询 /tasks/{id} */
+async function pollMaiziImageTask(
+  host: string,
+  apiKey: string,
+  taskId: string,
+  opts?: { timeoutMs?: number; intervalMs?: number }
+): Promise<string> {
+  const timeoutMs = opts?.timeoutMs ?? 180_000;
+  const intervalMs = opts?.intervalMs ?? 2_000;
+  const started = Date.now();
+  let lastStatus = "pending";
+
+  while (Date.now() - started < timeoutMs) {
+    const res = await fetch(`${host}/tasks/${encodeURIComponent(taskId)}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`任务查询 ${res.status}: ${text.slice(0, 300)}`);
+    }
+
+    let task: MaiziTaskResponse;
+    try {
+      task = JSON.parse(text) as MaiziTaskResponse;
+    } catch {
+      throw new Error(`任务响应非 JSON: ${text.slice(0, 200)}`);
+    }
+
+    lastStatus = task.status || task.display_status || lastStatus;
+    const url = task.result_urls?.find((u) => !!u);
+    if (url) return url;
+
+    if (
+      lastStatus === "failed" ||
+      lastStatus === "error" ||
+      lastStatus === "cancelled"
+    ) {
+      throw new Error(task.error_msg || `生图任务失败 status=${lastStatus}`);
+    }
+
+    if (
+      (lastStatus === "completed" ||
+        lastStatus === "succeeded" ||
+        lastStatus === "success") &&
+      !url
+    ) {
+      throw new Error(`生图任务完成但无 result_urls: ${text.slice(0, 300)}`);
+    }
+
+    await sleep(intervalMs);
+  }
+
+  throw new Error(
+    `生图任务超时（${Math.round(timeoutMs / 1000)}s）task=${taskId} lastStatus=${lastStatus}`
+  );
+}
+
 async function generateImageOpenAI(
   config: AgentRuntimeConfig,
   prompt: string,
@@ -160,19 +246,21 @@ async function generateImageOpenAI(
     /\/$/,
     ""
   );
-  const size = aspectRatio.includes("x") ? aspectRatio : "1024x1024";
+  const apiKey = config.imageApiKey || config.llmApiKey || "";
+  // 精确像素：直接传 HTML/槽位宽高映射出的 size（如 320x180 / 1000x562）
+  const size =
+    aspectRatio && aspectRatio !== "auto" ? aspectRatio : "auto";
   const res = await fetch(`${host}/images/generations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${config.imageApiKey || config.llmApiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: config.imageModel,
+      model: config.imageModel || "gpt-image-2",
       prompt,
-      n: 1,
       size,
-      response_format: "url",
+      resolution: config.imageResolution || "1K",
     }),
   });
 
@@ -181,14 +269,50 @@ async function generateImageOpenAI(
     throw new Error(`Image API ${res.status}: ${text.slice(0, 400)}`);
   }
 
-  const data = (await res.json()) as OpenAIImageResponse;
-  const item = data.data?.[0];
-  let url = item?.url;
-  if (!url && item?.b64_json) {
-    url = `data:image/png;base64,${item.b64_json}`;
+  const rawText = await res.text();
+  let data: OpenAIImageResponse;
+  try {
+    data = JSON.parse(rawText) as OpenAIImageResponse;
+  } catch {
+    throw new Error(`生图返回非 JSON: ${rawText.slice(0, 200)}`);
   }
-  if (!url) throw new Error("生图返回空");
-  return url;
+
+  if (data.error?.message) {
+    throw new Error(`生图错误: ${data.error.message}`);
+  }
+
+  const item = data.data?.[0];
+  const syncUrl = extractSyncImageUrl(item);
+  if (syncUrl) return syncUrl;
+
+  const taskId = item?.task_id;
+  if (taskId) {
+    return pollMaiziImageTask(host, apiKey, taskId);
+  }
+
+  throw new Error(
+    `生图返回空（无 url/b64/task_id）: ${rawText.slice(0, 280)}`
+  );
+}
+
+/** 纯色占位图（跳过生图 / mock / 无 key） */
+async function writeSolidPlaceholder(
+  outDir: string,
+  assetKey: string,
+  aspectRatio: string
+): Promise<{ url: string; localPath: string }> {
+  const { width, height } = sizeFromAspectRatio(aspectRatio);
+  const png = createSolidColorPng(width, height, colorFromAssetKey(assetKey));
+  await mkdir(outDir, { recursive: true });
+  await mkdir(PUBLIC_ASSET_DIR, { recursive: true });
+  const fileName = `${assetKey}.png`;
+  const localPath = path.join(outDir, fileName);
+  await writeFile(localPath, png);
+  await copyFile(localPath, path.join(PUBLIC_ASSET_DIR, fileName));
+  return {
+    url: `${PUBLIC_ASSET_URL_PREFIX}/${fileName}`,
+    localPath,
+  };
 }
 
 export async function generateImage(opts: {
@@ -199,28 +323,15 @@ export async function generateImage(opts: {
   outDir?: string;
   retries?: number;
 }): Promise<{ url: string; localPath: string; remoteUrl?: string }> {
-  const { config, prompt, assetKey } = opts;
-  const retries = opts.retries ?? 3;
+  const { config, assetKey, prompt } = opts;
+  const retries = opts.retries ?? 2;
   const aspectRatio =
-    opts.aspectRatio || config.imageAspectRatio || "1024x1024";
+    opts.aspectRatio || config.imageAspectRatio || "auto";
   const outDir =
     opts.outDir || path.join(process.cwd(), "agent-output", "assets");
 
-  if (config.mock || !config.imageApiKey) {
-    const grayPng = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-      "base64"
-    );
-    await mkdir(outDir, { recursive: true });
-    await mkdir(PUBLIC_ASSET_DIR, { recursive: true });
-    const fileName = `${assetKey}.png`;
-    const localPath = path.join(outDir, fileName);
-    await writeFile(localPath, grayPng);
-    await copyFile(localPath, path.join(PUBLIC_ASSET_DIR, fileName));
-    return {
-      url: `${PUBLIC_ASSET_URL_PREFIX}/${fileName}`,
-      localPath,
-    };
+  if (config.skipImageGen || config.mock || !config.imageApiKey) {
+    return writeSolidPlaceholder(outDir, assetKey, aspectRatio);
   }
 
   let lastErr: unknown;

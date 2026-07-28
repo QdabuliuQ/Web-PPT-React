@@ -262,16 +262,18 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
       transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
       zIndex,
       cursor: isSelected ? "move" : mode === "edit" ? "pointer" : "default",
+      overflow: "hidden" as const,
     }),
     [x, y, width, height, rotate, zIndex, isSelected, mode]
   );
 
-  // 图片样式
+  // 图片样式：keepRatio 时 cover 不拉伸；关闭后才 fill 铺满
   const imageStyle = useMemo(
     () => ({
       width: "100%",
       height: "100%",
-      objectFit: "fill" as const,
+      objectFit: (keepRatio ? "cover" : "fill") as "cover" | "fill",
+      objectPosition: "center",
       opacity,
       borderRadius: `${borderRadius}px`,
       border:
@@ -289,6 +291,7 @@ const Component = forwardRef<ImageRef, IImageProps>((props, ref) => {
         : "none",
     }),
     [
+      keepRatio,
       opacity,
       borderRadius,
       border,

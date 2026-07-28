@@ -67,7 +67,7 @@ function regularPolygonPath(sides: number, radius = 46): string {
   return `M ${points.join(" L ")} Z`;
 }
 
-/** CSS px 圆角 → viewBox(0–100) 上 inset 96×96 矩形的 rx/ry */
+/** CSS px 圆角 → viewBox(0–100) 矩形的 rx/ry（矩形贴满 viewBox） */
 export function roundedRectRxRy(
   borderRadiusPx: number,
   widthPx: number,
@@ -77,9 +77,26 @@ export function roundedRectRxRy(
   const w = Math.max(1, widthPx);
   const h = Math.max(1, heightPx);
   return {
-    rx: Math.min(48, (r / w) * 96),
-    ry: Math.min(48, (r / h) * 96),
+    rx: Math.min(50, (r / w) * 100),
+    ry: Math.min(50, (r / h) * 100),
   };
+}
+
+/**
+ * 有描边时按半线宽内缩，避免 stroke 被裁切；无描边则贴满 0–100。
+ * （vectorEffect=non-scaling-stroke，线宽近似为屏幕 px）
+ */
+function rectBox(
+  strokeWidth: number,
+  widthPx: number,
+  heightPx: number
+): { x: number; y: number; width: number; height: number } {
+  if (!(strokeWidth > 0)) {
+    return { x: 0, y: 0, width: 100, height: 100 };
+  }
+  const ix = Math.min(49, ((strokeWidth / 2) / Math.max(1, widthPx)) * 100);
+  const iy = Math.min(49, ((strokeWidth / 2) / Math.max(1, heightPx)) * 100);
+  return { x: ix, y: iy, width: 100 - ix * 2, height: 100 - iy * 2 };
 }
 
 export const ShapeSvg: FC<
@@ -98,26 +115,36 @@ export const ShapeSvg: FC<
   ...pathProps
 }) => {
   const attrs = strokeAttrs(pathProps);
+  const sw = pathProps.strokeWidth ?? 0;
 
   switch (shapeType) {
-    case "rect":
+    case "rect": {
+      const box = rectBox(sw, width, height);
       return (
         <svg {...svgBaseProps}>
-          <rect x={2} y={2} width={96} height={96} {...attrs} />
+          <rect {...box} {...attrs} />
         </svg>
       );
+    }
     case "roundedRect": {
+      const box = rectBox(sw, width, height);
       const { rx, ry } = roundedRectRxRy(borderRadius, width, height);
       return (
         <svg {...svgBaseProps}>
-          <rect x={2} y={2} width={96} height={96} rx={rx} ry={ry} {...attrs} />
+          <rect {...box} rx={rx} ry={ry} {...attrs} />
         </svg>
       );
     }
     case "oval":
       return (
         <svg {...svgBaseProps}>
-          <ellipse cx={50} cy={50} rx={48} ry={48} {...attrs} />
+          <ellipse
+            cx={50}
+            cy={50}
+            rx={sw > 0 ? 49 : 50}
+            ry={sw > 0 ? 49 : 50}
+            {...attrs}
+          />
         </svg>
       );
     case "triangle":
@@ -174,7 +201,7 @@ export const ShapeSvg: FC<
     default:
       return (
         <svg {...svgBaseProps}>
-          <rect x={2} y={2} width={96} height={96} {...attrs} />
+          <rect x={0} y={0} width={100} height={100} {...attrs} />
         </svg>
       );
   }

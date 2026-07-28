@@ -29,15 +29,9 @@ import {
 export type { PagePlanItem } from "./sequence";
 
 export {
-  ALT_LAYOUT_SEQUENCE,
-  ALT_PAGE_TYPE_SEQUENCE,
-  DEFAULT_LAYOUT_SEQUENCE,
   DEFAULT_PAGE_TYPE_SEQUENCE,
-  LAYOUT_INTENT,
-  ensurePagePlanItem,
-  pickLayoutSequence,
+  pageTypesFromPlan,
   pickPagePlan,
-  planToLayoutSequence,
 } from "./sequence";
 
 export {

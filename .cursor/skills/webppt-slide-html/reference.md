@@ -11,7 +11,7 @@ Aligned with `src/agent/catalog/platform.ts` (`ELEMENT_SCHEMAS`, enums).
 | `data-z-index` | **yes** | Integer stacking；卡片底板 &lt; 卡上文案/图标。须与 CSS `z-index` 一致 |
 | `data-rotate` | no | Degrees; avoid unless needed |
 
-Geometry (`x,y,width,height`) comes from measured rect. **text** boxes are then expanded by editor padding (`TEXT_EDITOR_PADDING_PX`, currently 4px each side) so PPT Text content area matches HTML glyphs. Do not invent sizes; do not use `transform` on export nodes.
+Geometry (`x,y,width,height`) comes from measured rect — **text uses measured box as-is** (Text component has no padding). Do not invent sizes; do not use `transform` on export nodes.
 
 > **必写六项**：font-size、font-family、color、line-height、placement、**z-index**。禁止只写 CSS 不写对应 `data-*`。  
 > 映射优先级：`data-border*` > CSS `getComputedStyle` 边框。透明/`none` 边框不会写入 JSON。  
@@ -26,17 +26,21 @@ Geometry (`x,y,width,height`) comes from measured rect. **text** boxes are then 
 
 | Attribute | Notes |
 |-----------|--------|
-| `data-asset-key` | preferred asset id (`page_{n}_img`) |
+| `data-asset-key` | preferred asset id (`page_{n}_img` / `page_{n}_evidence` / `page_{n}_avatar_1`) |
 | `data-image-prompt` | **required**, detailed English (≈40–120 words): subject, framing, lighting, palette/hex, mood, bans (`no text/logos/watermark`). Forbidden: 3–8 word slogans |
+| `data-image-kind` | `photo` \| `cutout` \| `illustration` \| `decoration`（cutout=透明底抠图） |
 | `data-src` | optional; filled before measure |
 | `data-opacity` | 0–1 |
-| `data-border-radius` | px |
-| `data-border` / width / color / style | optional |
+| `data-border-radius` | px；圆形头像可用半边长 |
+| `data-border` / width / color / style | optional；须与 CSS `border` 一致 |
 | `data-keep-ratio` | presence = true |
 | `data-shadow*` | optional |
+| `data-z-index` | **required** |
 
-**Content images:** lighter/clean midtones matching page `data-bg`.  
-**Hero/close full-bleed:** use `#slide` `data-bg-image-*` instead of a full-size image element.
+**Content images:** lighter/clean midtones matching page `data-bg`；可加细边框+圆角。  
+**Cutout / transparent:** `data-image-kind="cutout"` + prompt 含 transparent/alpha；测量阶段用 `<img object-fit:contain>`。  
+**Hero/close full-bleed:** use `#slide` `data-bg-image-*` instead of a full-size image element.  
+**Layout:** 不要把 text 叠在 image 上（会被 `pruneOverlappingImages` 丢掉）。
 
 ## icon
 

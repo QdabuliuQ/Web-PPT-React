@@ -141,10 +141,11 @@ const Component: FC<IShapeProps> = (props) => {
       zIndex,
       opacity,
       cursor: mode === "edit" ? (isSelected ? "move" : "pointer") : "default",
-      border:
+      outline:
         mode === "edit" && isHoverActive && !isSelected
           ? "1px solid var(--primary-color, #f25f00)"
           : "none",
+      outlineOffset: 0,
     }),
     [
       x,

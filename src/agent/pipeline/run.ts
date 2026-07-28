@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import path from "path";
 import { repairPageContent, runContentAgent } from "../agents/contentAgent";
 import { runImageAgent } from "../agents/imageAgent";
@@ -19,6 +19,7 @@ import {
 } from "../gate/visualGate";
 import { normalizeMetaPages } from "../meta/normalize";
 import type { PipelineResult, ScoreReport, ThemeToken } from "../types";
+import { prepareOutDir } from "./outDir";
 import { runHtmlPipeline } from "./runHtml";
 
 export type RunPipelineOptions = {
@@ -61,10 +62,10 @@ export async function runTemplatePipeline(
     ...options.config,
     pipelineMode: "skeleton",
   });
-  const outDir =
-    options.outDir || path.join(process.cwd(), "agent-output");
-  await mkdir(outDir, { recursive: true });
-  await mkdir(path.join(outDir, "assets"), { recursive: true });
+  const outDir = await prepareOutDir(
+    options.outDir || path.join(process.cwd(), "agent-output"),
+    { resume: Boolean(options.resumeMeta || options.resumeAssetMap) }
+  );
   await writePlatformCatalog(outDir);
 
   const theme = options.resumeMeta

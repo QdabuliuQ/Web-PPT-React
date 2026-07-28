@@ -8,6 +8,8 @@ import type { CompiledDocument } from "../compile/engine";
 const VAGUE_TITLE_RE =
   /^(商业计划书|公司介绍|核心优势|未来展望|产品介绍|关于我们|总结|概述|目录|谢谢|thank\s*you|introduction|overview)$/i;
 
+type Box = { x: number; y: number; width: number; height: number };
+
 function isOutOfBounds(el: Elements): boolean {
   return (
     el.x < -2 ||
@@ -27,6 +29,109 @@ function isAccentOrEmptyText(el: Extract<Elements, { type: "text" }>): boolean {
       el.color === el.backgroundColor
     )
   );
+}
+
+function intersectArea(a: Box, b: Box): number {
+  const x0 = Math.max(a.x, b.x);
+  const y0 = Math.max(a.y, b.y);
+  const x1 = Math.min(a.x + a.width, b.x + b.width);
+  const y1 = Math.min(a.y + a.height, b.y + b.height);
+  if (x1 <= x0 || y1 <= y0) return 0;
+  return (x1 - x0) * (y1 - y0);
+}
+
+function coverageRatio(text: Box, surface: Box): number {
+  const area = Math.max(1, text.width * text.height);
+  return intersectArea(text, surface) / area;
+}
+
+function isOpaqueSolidFill(fill: string | undefined, opacity = 1): boolean {
+  if (opacity < 0.85) return false;
+  const f = String(fill || "").trim();
+  if (!f || f === "transparent") return false;
+  if (/^rgba?\(/i.test(f)) {
+    const m = f.match(
+      /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/i
+    );
+    if (!m) return false;
+    const a = m[4] != null ? Number(m[4]) : 1;
+    return a >= 0.85;
+  }
+  return (
+    /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(f) || /^[a-z]+$/i.test(f)
+  );
+}
+
+function findTextSurfaceFill(
+  el: Extract<Elements, { type: "text" }>,
+  shapes: Array<Extract<Elements, { type: "shape" }>>
+): string | undefined {
+  const fs = el.fontSize || 16;
+  const textBox: Box = {
+    x: el.x,
+    y: el.y,
+    width: el.width,
+    height: Math.max(el.height || 0, fs * 1.2),
+  };
+  const textZ = el.zIndex ?? 0;
+  const candidates = shapes
+    .filter((sh) => {
+      if ((sh.zIndex ?? 0) >= textZ) return false;
+      if (!isOpaqueSolidFill(sh.fill, sh.opacity ?? 1)) return false;
+      if (sh.width < 80 || sh.height < 36) return false;
+      return coverageRatio(textBox, sh) >= 0.85;
+    })
+    .sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
+  return candidates[0]?.fill;
+}
+
+/**
+ * 双平面硬规则：可读文字不得裸落在 page 底图或 image 元素上。
+ * 必须有更低 zIndex 的不透明 shape 覆盖 ≥85% 文字包围盒。
+ */
+function inspectTextSurfaces(page: Page): PageDefect[] {
+  const defects: PageDefect[] = [];
+  const els = page.elements || [];
+  const hasPageBgImage = page.backgroundType === "image";
+  const images = els.filter((e) => e.type === "image");
+  const shapes = els.filter(
+    (e): e is Extract<Elements, { type: "shape" }> => e.type === "shape"
+  );
+
+  if (!hasPageBgImage && images.length === 0) return defects;
+
+  for (const el of els) {
+    if (el.type !== "text" || isAccentOrEmptyText(el)) continue;
+    const fs = el.fontSize || 16;
+    if (fs < 12) continue;
+
+    const textBox: Box = {
+      x: el.x,
+      y: el.y,
+      width: el.width,
+      height: Math.max(el.height || 0, fs * 1.2),
+    };
+    const textZ = el.zIndex ?? 0;
+
+    if (findTextSurfaceFill(el, shapes)) continue;
+
+    const overlapsImage = images.some((img) => {
+      if ((img.zIndex ?? 0) >= textZ) return false;
+      return coverageRatio(textBox, img) >= 0.2;
+    });
+
+    if (hasPageBgImage || overlapsImage) {
+      defects.push({
+        pageId: page.id,
+        elementId: el.id,
+        kind: "unsafe-text-surface",
+        message:
+          "文字落在照片/底图上且无实色底板；请改用 split/band/card 双平面构图（字在实色区，图在媒体区）",
+      });
+    }
+  }
+
+  return defects;
 }
 
 function collectTextStats(page: Page): {
@@ -91,6 +196,9 @@ export function inspectPage(
         return page.backgroundType === "image";
       }
     })();
+  const shapes = (page.elements || []).filter(
+    (e): e is Extract<Elements, { type: "shape" }> => e.type === "shape"
+  );
 
   for (const el of page.elements || []) {
     if (isOutOfBounds(el)) {
@@ -105,15 +213,21 @@ export function inspectPage(
     if (el.type === "text") {
       if (isAccentOrEmptyText(el)) continue;
 
-      const textBg =
+      const ownTextBg =
         el.backgroundColor &&
         el.backgroundColor !== "transparent" &&
         !String(el.backgroundColor).startsWith("rgba(0,0,0")
           ? el.backgroundColor
-          : surfaceIsDark
-            ? "#1A1A1A"
-            : bg;
-      if (contrastRatio(el.color || "#000", textBg) < 4.5) {
+          : undefined;
+      const textBg =
+        ownTextBg ||
+        findTextSurfaceFill(el, shapes) ||
+        (surfaceIsDark ? "#1A1A1A" : bg);
+      // 有底图时颜色对比交给 unsafe-text-surface；此处只查实色页
+      if (
+        page.backgroundType !== "image" &&
+        contrastRatio(el.color || "#000", textBg) < 4.5
+      ) {
         defects.push({
           pageId: page.id,
           elementId: el.id,
@@ -132,6 +246,8 @@ export function inspectPage(
       });
     }
   }
+
+  defects.push(...inspectTextSurfaces(page));
 
   const { titleEls, contentChars, contentBoxes } = collectTextStats(page);
   for (const el of titleEls) {
@@ -154,6 +270,8 @@ export function inspectPage(
   const skipSparse =
     pageType === "hero" ||
     pageType === "close" ||
+    pageType === "breath" ||
+    pageType === "metrics" ||
     options.skipSparseContent === true;
 
   if (
@@ -192,7 +310,7 @@ export type RunVisualGateOptions = {
   skipSparseContent?: boolean;
 };
 
-/** VisualGate：结构硬规则（越界/对比度/空图/标题/密度） */
+/** VisualGate：结构硬规则（越界/对比度/空图/标题/密度/双平面字面） */
 export async function runVisualGate(
   doc: CompiledDocument,
   iterations = 0,

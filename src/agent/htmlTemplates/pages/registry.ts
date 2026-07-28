@@ -6,6 +6,12 @@ import {
   MANIFESTO_COVER,
 } from "./heroes";
 import {
+  HERO_DATA_MONUMENT,
+  HERO_PRODUCT_SHOWCASE,
+  HERO_REPORT_SPINE,
+  HERO_STAGE_MARQUEE,
+} from "./heroSafe";
+import {
   METRICS_BAND,
   METRICS_FOCUS,
   METRICS_LEDGER,
@@ -60,6 +66,35 @@ import {
   TIMELINE_VERTICAL,
 } from "./expand";
 import {
+  AGENDA_COLUMNS,
+  BREATH_FLOOR,
+  CLOSE_FLOOR,
+  COMPARE_PANELS,
+  EVIDENCE_QUOTE,
+  HERO_FLOOR,
+  METRICS_CORNER,
+  PILLARS_MAST,
+  PROBLEM_RAIL,
+  SOLUTION_CASCADE,
+  TEAM_MAST,
+  TIMELINE_MAST,
+} from "./wave2";
+import {
+  AGENDA_FOLIO,
+  EVIDENCE_STAGE,
+  HERO_BLEED,
+  METRICS_HERO,
+  PILLARS_SPINE,
+} from "./wave3";
+import {
+  BREATH_BILLBOARD,
+  EVIDENCE_PLAZA,
+  HERO_SLAB,
+  METRICS_MONUMENT,
+  PILLARS_LOOSE,
+  PROBLEM_TIGHT,
+} from "./wave4";
+import {
   AGENDA_STEPS,
   BREATH_MARK,
   COMPARE_DUEL,
@@ -96,7 +131,7 @@ export type TemplateMeta = {
   html: string;
 };
 
-/** 61 套实体模板（frontend-design 差异化签名） */
+/** 实体模板（frontend-design / taste 差异化签名） */
 export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
   "hero-rail": {
     id: "hero-rail",
@@ -138,6 +173,60 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     signature: "左边条 + 右窄栏副文",
     html: MANIFESTO_COVER,
   },
+  "hero-floor": {
+    id: "hero-floor",
+    kind: "hero",
+    dark: true,
+    title: "地台封面",
+    signature: "底黄铜地台托住标题",
+    html: HERO_FLOOR,
+  },
+  "hero-bleed": {
+    id: "hero-bleed",
+    kind: "hero",
+    dark: true,
+    title: "半幅封面",
+    signature: "左实色字区 + 右半幅媒体槽（双平面）",
+    html: HERO_BLEED,
+  },
+  "hero-slab": {
+    id: "hero-slab",
+    kind: "hero",
+    dark: true,
+    title: "色板封面",
+    signature: "左半幅实色字区 + 右媒体槽（双平面）",
+    html: HERO_SLAB,
+  },
+  "hero-product-showcase": {
+    id: "hero-product-showcase",
+    kind: "hero",
+    title: "产品橱窗封面",
+    signature: "左编辑标题 + 右实框产品媒体",
+    html: HERO_PRODUCT_SHOWCASE,
+  },
+  "hero-data-monument": {
+    id: "hero-data-monument",
+    kind: "hero",
+    dark: true,
+    title: "数据纪念碑封面",
+    signature: "整页深色巨型标题 + 侧向标尺",
+    html: HERO_DATA_MONUMENT,
+  },
+  "hero-report-spine": {
+    id: "hero-report-spine",
+    kind: "hero",
+    title: "报告脊线封面",
+    signature: "左报告书脊 + 右侧注解卡",
+    html: HERO_REPORT_SPINE,
+  },
+  "hero-stage-marquee": {
+    id: "hero-stage-marquee",
+    kind: "hero",
+    dark: true,
+    title: "舞台灯牌封面",
+    signature: "居中灯牌标题 + 胶囊副标题",
+    html: HERO_STAGE_MARQUEE,
+  },
   "metrics-ledger": {
     id: "metrics-ledger",
     kind: "metrics",
@@ -172,6 +261,28 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     title: "内联 KPI",
     signature: "单行居中三指标 + 竖分隔",
     html: METRICS_INLINE,
+  },
+  "metrics-corner": {
+    id: "metrics-corner",
+    kind: "metrics",
+    title: "角标 KPI",
+    signature: "主指标占左上，辅两项沉底",
+    html: METRICS_CORNER,
+  },
+  "metrics-hero": {
+    id: "metrics-hero",
+    kind: "metrics",
+    dark: true,
+    title: "主指标舞台",
+    signature: "全幅墨底 + 巨型主 KPI + 右辅两项",
+    html: METRICS_HERO,
+  },
+  "metrics-monument": {
+    id: "metrics-monument",
+    kind: "metrics",
+    title: "纪念碑 KPI",
+    signature: "单数字占屏纪念碑（贵价签名·敢空）",
+    html: METRICS_MONUMENT,
   },
   "pillars-open": {
     id: "pillars-open",
@@ -208,6 +319,27 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     signature: "底墨带三列要点",
     html: PILLARS_BAND,
   },
+  "pillars-mast": {
+    id: "pillars-mast",
+    kind: "pillars",
+    title: "桅杆要点",
+    signature: "左墨桅杆标题 + 右三要点",
+    html: PILLARS_MAST,
+  },
+  "pillars-spine": {
+    id: "pillars-spine",
+    kind: "pillars",
+    title: "脊柱要点",
+    signature: "左通高色柱首要点 + 右两要点错落",
+    html: PILLARS_SPINE,
+  },
+  "pillars-loose": {
+    id: "pillars-loose",
+    kind: "pillars",
+    title: "宽松要点",
+    signature: "疏边距 56×80 三栏（贵价签名）",
+    html: PILLARS_LOOSE,
+  },
   "close-rail": {
     id: "close-rail",
     kind: "close",
@@ -229,7 +361,7 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     kind: "close",
     dark: true,
     title: "分栏封底",
-    signature: "右黄铜实底 + 左下收束",
+    signature: "左媒体槽 + 右实色收束（双平面）",
     html: CLOSE_SPLIT,
   },
   "close-type": {
@@ -245,8 +377,16 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     kind: "close",
     dark: true,
     title: "色带封底",
-    signature: "底黄铜横带收束",
+    signature: "上部媒体 + 底实色横带（双平面）",
     html: CLOSE_BAND,
+  },
+  "close-floor": {
+    id: "close-floor",
+    kind: "close",
+    dark: true,
+    title: "框线地台封底",
+    signature: "四角框线 + 底黄铜地台",
+    html: CLOSE_FLOOR,
   },
   "agenda-steps": {
     id: "agenda-steps",
@@ -283,6 +423,20 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     signature: "大标题堆叠 + 细线分隔",
     html: AGENDA_STACK,
   },
+  "agenda-columns": {
+    id: "agenda-columns",
+    kind: "agenda",
+    title: "四列议程",
+    signature: "四列竖排，编号压在列顶",
+    html: AGENDA_COLUMNS,
+  },
+  "agenda-folio": {
+    id: "agenda-folio",
+    kind: "agenda",
+    title: "杂志目录",
+    signature: "左墨栏标题 + 右巨型 01–04 错落条目",
+    html: AGENDA_FOLIO,
+  },
   "problem-slash": {
     id: "problem-slash",
     kind: "problem",
@@ -317,6 +471,20 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     title: "色带问题",
     signature: "底墨带承载问题叙事",
     html: PROBLEM_BAND,
+  },
+  "problem-rail": {
+    id: "problem-rail",
+    kind: "problem",
+    title: "竖轨问题",
+    signature: "左黄铜竖轨 + 右要点账本",
+    html: PROBLEM_RAIL,
+  },
+  "problem-tight": {
+    id: "problem-tight",
+    kind: "problem",
+    title: "紧边距问题",
+    signature: "紧边距 28×40 信息更满（节奏对比）",
+    html: PROBLEM_TIGHT,
   },
   "solution-flow": {
     id: "solution-flow",
@@ -353,6 +521,13 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     signature: "开放三列，顶线分隔无卡片",
     html: SOLUTION_OPEN,
   },
+  "solution-cascade": {
+    id: "solution-cascade",
+    kind: "solution",
+    title: "瀑布方案",
+    signature: "首步全宽，后两步并排",
+    html: SOLUTION_CASCADE,
+  },
   "evidence-split": {
     id: "evidence-split",
     kind: "evidence",
@@ -387,6 +562,27 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     title: "焦点证据",
     signature: "巨型证据块垄断画面",
     html: EVIDENCE_FOCUS,
+  },
+  "evidence-quote": {
+    id: "evidence-quote",
+    kind: "evidence",
+    title: "引语证据",
+    signature: "证据作巨型引语 + 编号解读",
+    html: EVIDENCE_QUOTE,
+  },
+  "evidence-stage": {
+    id: "evidence-stage",
+    kind: "evidence",
+    title: "舞台证据",
+    signature: "全宽证据图舞台 + 底三解读条",
+    html: EVIDENCE_STAGE,
+  },
+  "evidence-plaza": {
+    id: "evidence-plaza",
+    kind: "evidence",
+    title: "广场证据",
+    signature: "疏边距全宽证据图 + 底三解读（贵价签名）",
+    html: EVIDENCE_PLAZA,
   },
   "compare-duel": {
     id: "compare-duel",
@@ -423,6 +619,13 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     signature: "左右旗标色块标记两栏",
     html: COMPARE_FLAGS,
   },
+  "compare-panels": {
+    id: "compare-panels",
+    kind: "dual",
+    title: "双面板对比",
+    signature: "左墨板 / 右浅板双面对照",
+    html: COMPARE_PANELS,
+  },
   "breath-mark": {
     id: "breath-mark",
     kind: "breath",
@@ -457,6 +660,20 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     title: "分栏金句",
     signature: "左金句 + 右归属",
     html: BREATH_SPLIT,
+  },
+  "breath-floor": {
+    id: "breath-floor",
+    kind: "breath",
+    title: "地台金句",
+    signature: "金句贴上，归属沉入底黄铜带",
+    html: BREATH_FLOOR,
+  },
+  "breath-billboard": {
+    id: "breath-billboard",
+    kind: "breath",
+    title: "广告牌金句",
+    signature: "巨幅引语 + 极端留白（贵价签名）",
+    html: BREATH_BILLBOARD,
   },
   "team-strip": {
     id: "team-strip",
@@ -493,6 +710,13 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     signature: "底墨带三成员横排",
     html: TEAM_BAND,
   },
+  "team-mast": {
+    id: "team-mast",
+    kind: "team",
+    title: "桅杆团队",
+    signature: "姓名作主信号，角色作眉题",
+    html: TEAM_MAST,
+  },
   "timeline-pulse": {
     id: "timeline-pulse",
     kind: "timeline",
@@ -527,6 +751,13 @@ export const TEMPLATE_SUITE: Record<HtmlTemplateSuiteId, TemplateMeta> = {
     title: "色带时间",
     signature: "主色横带四节点",
     html: TIMELINE_BAND,
+  },
+  "timeline-mast": {
+    id: "timeline-mast",
+    kind: "timeline",
+    title: "桅杆时间",
+    signature: "顶标 + 连续黄铜轴四节点",
+    html: TIMELINE_MAST,
   },
   "narrative-column": {
     id: "narrative-column",

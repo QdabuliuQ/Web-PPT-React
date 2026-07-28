@@ -1,4 +1,5 @@
 import type { Elements } from "@/store/zustand/pptStore";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
 
 type Box = { x: number; y: number; width: number; height: number; zIndex?: number };
 
@@ -38,21 +39,30 @@ export function ensureTextAboveShapes(elements: Elements[]): Elements[] {
 }
 
 /**
- * 丢掉严重压住文字/卡片的装饰图（LLM 常在 KPI 旁塞一张插图盖住第三卡）。
+ * 丢掉严重压住文字/卡片的装饰图。
+ * 大幅媒体图属于版式结构，不能在编译期静默删除；可读性问题交给 Gate 回炉换版。
  */
 export function pruneOverlappingImages(elements: Elements[]): Elements[] {
-  const content = elements.filter(
-    (e) => e.type === "text" || e.type === "shape" || e.type === "icon"
-  );
+  const content = elements.filter((e) => e.type === "text" || e.type === "icon");
   const out: Elements[] = [];
+  const canvasArea = CANVAS_WIDTH * CANVAS_HEIGHT;
   for (const el of elements) {
     if (el.type !== "image") {
       out.push(el);
       continue;
     }
     const imgArea = Math.max(1, el.width * el.height);
+    const isStructuralMedia =
+      imgArea >= canvasArea * 0.24 || (el.zIndex ?? 0) <= 5;
+    if (isStructuralMedia) {
+      out.push(el);
+      continue;
+    }
+
     let hit = false;
     for (const c of content) {
+      // 低层图片不会视觉压住高层文字；这种情况由双平面 Gate 判断是否需要换版。
+      if ((el.zIndex ?? 0) < (c.zIndex ?? 0)) continue;
       const area = overlapArea(el, c);
       if (
         area / imgArea >= 0.25 ||

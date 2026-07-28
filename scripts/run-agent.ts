@@ -12,6 +12,7 @@
  *   pnpm agent -- --theme current -- "使用 document.json 里的当前主题"
  *   pnpm agent -- --html --mock "HTML 流水线（无骨架）"
  *   pnpm agent -- --mode html -- "HTML 流水线"
+ *   pnpm agent -- --html --no-image -- "跳过生图，纯色占位调布局"
  *
  * 默认输出目录：项目根 agent-output/
  *   document.json / meta.json / asset-map.json / report.json
@@ -72,6 +73,7 @@ function printHelp() {
   pnpm agent -- --html -- "<需求>"           # HTML 流水线（无骨架）
   pnpm agent -- --mode skeleton|html -- "<需求>"
   pnpm agent -- --html --no-score -- "<需求>"  # 跳过 VL PageScore
+  pnpm agent -- --html --no-image -- "<需求>" # 跳过生图 API，纯色占位
 
 --theme:
   - 预设 id（如 navy-gold）
@@ -86,6 +88,11 @@ function printHelp() {
 --no-score / --skip-score:
   - 跳过截图 + VL 页面打分与回炉（usePageScore=false）
   - 也可用环境变量 AGENT_PAGE_SCORE=0
+
+--no-image / --skip-image:
+  - 不调用生图 API，按 aspectRatio 写本地纯色 PNG 占位（调试元素位置）
+  - LLM / 主题等其它 API 仍照常调用
+  - 也可用环境变量 AGENT_SKIP_IMAGE=1
 
 可用预设: ${presetIds}
 
@@ -106,6 +113,7 @@ function printHelp() {
   SCORE_VL_BASE_URL                     默认 DashScope compatible-mode
   AGENT_PAGE_SCORE=0                    关闭打分回炉
   AGENT_PIPELINE=html                   默认走 HTML 流水线
+  AGENT_SKIP_IMAGE=1                    跳过生图，纯色占位
 
 参考图说明:
   --samples 可重复；支持目录、单文件、逗号分隔路径，或关键字 demo
@@ -167,6 +175,7 @@ function parseArgs(argv: string[]) {
   let themeArg = "";
   let pipelineMode: AgentPipelineMode | undefined;
   let noScore = false;
+  let noImage = false;
   const sampleInputs: string[] = [];
   const rest: string[] = [];
 
@@ -182,6 +191,7 @@ function parseArgs(argv: string[]) {
         themeArg,
         pipelineMode,
         noScore,
+        noImage,
       };
     }
     if (a === "--mock") {
@@ -190,6 +200,10 @@ function parseArgs(argv: string[]) {
     }
     if (a === "--no-score" || a === "--skip-score") {
       noScore = true;
+      continue;
+    }
+    if (a === "--no-image" || a === "--skip-image") {
+      noImage = true;
       continue;
     }
     if (a === "--html") {
@@ -249,6 +263,7 @@ function parseArgs(argv: string[]) {
     themeArg,
     pipelineMode,
     noScore,
+    noImage,
   };
 }
 
@@ -265,6 +280,7 @@ async function main() {
     themeArg,
     pipelineMode,
     noScore,
+    noImage,
   } = parseArgs(process.argv);
   if (help) {
     printHelp();
@@ -298,8 +314,17 @@ async function main() {
   }
 
   const forceMock = mock || process.env.AGENT_MOCK === "1";
+  const skipImage =
+    noImage ||
+    process.env.AGENT_SKIP_IMAGE === "1" ||
+    process.env.AGENT_SKIP_IMAGE === "true" ||
+    process.env.AGENT_NO_IMAGE === "1" ||
+    process.env.AGENT_NO_IMAGE === "true";
   console.log(`[agent] prompt: ${prompt}`);
   console.log(`[agent] mock: ${forceMock}`);
+  console.log(
+    `[agent] image: ${skipImage || forceMock ? "solid placeholder (--no-image / mock)" : "api"}`
+  );
   console.log(`[agent] mode: ${pipelineMode || process.env.AGENT_PIPELINE || "skeleton"}`);
   console.log(`[agent] pageScore: ${noScore ? "off (--no-score)" : "on"}`);
   console.log(`[agent] out: ${outDir}`);
@@ -315,6 +340,7 @@ async function main() {
     theme,
     config: {
       mock: forceMock,
+      ...(skipImage ? { skipImageGen: true } : {}),
       ...(pipelineMode ? { pipelineMode } : {}),
       ...(noScore ? { usePageScore: false } : {}),
     },

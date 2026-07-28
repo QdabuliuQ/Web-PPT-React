@@ -35,6 +35,15 @@ export async function addImageElement(
     rotate: el.rotate || 0,
   };
 
+  // 保持比例：cover 裁切铺满，避免 PPTX 把图拉伸变形
+  if (el.keepRatio !== false && pos.w && pos.h) {
+    options.sizing = {
+      type: "cover",
+      w: pos.w,
+      h: pos.h,
+    };
+  }
+
   const shadow = shadowFromOffsets({
     enabled: el.shadow,
     offsetX: el.shadowOffsetX,

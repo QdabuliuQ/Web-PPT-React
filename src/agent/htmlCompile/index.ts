@@ -1,7 +1,5 @@
 import type { Elements, Page } from "@/store/zustand/pptStore";
 import { PLATFORM_LIMITS } from "../catalog";
-import { relativeLuminance } from "../contrast";
-import { GLOBAL_BG_ASSET_KEY } from "../image/promptSpec";
 import { PAGE_TYPE_LAYOUTS } from "../layout/pageTypes";
 import { mapPageBackground } from "../theme/mapper";
 import type { AssetMap, HtmlDeck, PageType, ThemeToken } from "../types";
@@ -22,17 +20,6 @@ export type HtmlCompiledDocument = {
   keyboardToggle: boolean;
   pages: Page[];
 };
-
-/** 浅色全局氛围底不宜盖在深色实底/叠白字封面上 */
-function shouldSkipGlobalBg(opts: {
-  pageType?: PageType;
-  solidBg: string;
-}): boolean {
-  if (opts.pageType === "hero" || opts.pageType === "close") return true;
-  // 深色实底：挂浅色 bg_global 会冲掉设计并导致白字不可读
-  if (relativeLuminance(opts.solidBg) < 0.35) return true;
-  return false;
-}
 
 async function compileHtmlPage(opts: {
   pageId: string;
@@ -62,12 +49,6 @@ async function compileHtmlPage(opts: {
   let backgroundImage: string | undefined;
   if (bgImageKey) {
     backgroundImage = resolveDocumentSrc(bgImageKey, assetMap) || undefined;
-  } else if (
-    assetMap[GLOBAL_BG_ASSET_KEY] &&
-    !shouldSkipGlobalBg({ pageType, solidBg })
-  ) {
-    backgroundImage =
-      resolveDocumentSrc(GLOBAL_BG_ASSET_KEY, assetMap) || undefined;
   }
 
   const layoutKey =

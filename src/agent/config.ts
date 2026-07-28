@@ -17,10 +17,17 @@ export type AgentRuntimeConfig = {
   imageBaseUrl: string;
   imageApiKey: string;
   imageModel: string;
-  /** 自定义生图尺寸，如 1024x1024 / 16:9 */
+  /** 生图尺寸：比例(1:1/16:9)或像素(1024x1024)，默认 auto */
   imageAspectRatio: string;
+  /** 输出分辨率：1K / 2K / 4K，默认 1K */
+  imageResolution: string;
   imageConcurrency: number;
   mock: boolean;
+  /**
+   * 跳过生图 API，用代码生成的纯色 PNG 占位（调试布局用）。
+   * CLI: --no-image；环境变量: AGENT_SKIP_IMAGE=1
+   */
+  skipImageGen: boolean;
   /** 生成管线：默认 skeleton；AGENT_PIPELINE=html 或 --html 切换 */
   pipelineMode: AgentPipelineMode;
   maxGateIterations: number;
@@ -79,9 +86,19 @@ export function loadAgentConfig(
     imageAspectRatio:
       overrides.imageAspectRatio ||
       process.env.IMAGE_ASPECT_RATIO ||
-      "1024x1024",
+      "auto",
+    imageResolution:
+      overrides.imageResolution ||
+      process.env.IMAGE_RESOLUTION ||
+      "1K",
     imageConcurrency: overrides.imageConcurrency ?? 2,
     mock,
+    skipImageGen:
+      overrides.skipImageGen ??
+      (process.env.AGENT_SKIP_IMAGE === "1" ||
+        process.env.AGENT_SKIP_IMAGE === "true" ||
+        process.env.AGENT_NO_IMAGE === "1" ||
+        process.env.AGENT_NO_IMAGE === "true"),
     pipelineMode: (() => {
       if (overrides.pipelineMode === "html" || overrides.pipelineMode === "skeleton") {
         return overrides.pipelineMode;

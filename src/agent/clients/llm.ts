@@ -44,6 +44,8 @@ export async function chatJson<T>(opts: {
   apiKey?: string;
   /** 默认 true；部分 VL 模型不支持 json_object */
   jsonObject?: boolean;
+  /** 默认 0.55；Layout 填槽建议 0.75～0.85 以提高同 prompt 差异 */
+  temperature?: number;
   retries?: number;
   parse: (raw: unknown) => T;
 }): Promise<T> {
@@ -53,6 +55,7 @@ export async function chatJson<T>(opts: {
   const baseUrl = (opts.baseUrl || config.llmBaseUrl).replace(/\/$/, "");
   const apiKey = opts.apiKey || config.llmApiKey;
   const jsonObject = opts.jsonObject !== false;
+  const temperature = opts.temperature ?? 0.55;
 
   if (config.mock) {
     throw new Error("chatJson 在 mock 模式下应由 Agent 走本地假数据路径");
@@ -66,7 +69,7 @@ export async function chatJson<T>(opts: {
       const body: Record<string, unknown> = {
         model,
         messages: messagesForApi,
-        temperature: 0.4,
+        temperature,
       };
       if (jsonObject) {
         body.response_format = { type: "json_object" };

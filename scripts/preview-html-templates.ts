@@ -1,5 +1,5 @@
 /**
- * 生成 61 套 HTML 模板预览到 agent-output/html-templates-preview/
+ * 生成 HTML 模板预览到 agent-output/html-templates-preview/
  * 用法: npx tsx scripts/preview-html-templates.ts
  */
 import fs from "node:fs";
@@ -208,9 +208,12 @@ function wrapPreview(id: string, title: string, slideHtml: string): string {
 <head>
 <meta charset="utf-8"/>
 <meta name="theme-color" content="#0e1218"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap"/>
 <title>${title}</title>
 <style>
-  html,body{margin:0;background:#0e1218;color:#eee;font-family:system-ui,sans-serif;}
+  html,body{margin:0;background:#0e1218;color:#eee;font-family:"PingFang SC","Noto Sans SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
   .wrap{padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px;}
   .meta{font-size:13px;letter-spacing:0.08em;opacity:0.7;}
   .stage{box-shadow:0 12px 40px rgba(0,0,0,0.45);}

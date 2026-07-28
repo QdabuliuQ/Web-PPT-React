@@ -8,9 +8,11 @@
   box-sizing: border-box;
   outline: none;
   background: transparent;
-  border: 2px solid transparent;
+  /* 不用透明 border：会吃掉内容区，宽条左右露底 */
+  border: none;
+  padding: 0;
   user-select: none;
-  overflow: visible;
+  overflow: hidden;
 
   &.dragging {
     transition: none !important;

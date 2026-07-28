@@ -6,9 +6,17 @@ export {
 export type { TemplateMeta, TemplateKind } from "./pages/registry";
 export {
   PAGE_TYPE_TEMPLATE_SUITES,
+  STICKY_TEMPLATE_DEFAULTS,
+  PREMIUM_SIGNATURES,
+  BREATHING_TEMPLATE_IDS,
   defaultTemplateForPageType,
   resolveTemplateForPage,
   formatTemplateCatalogForPrompt,
+  diversifyTemplateIds,
+  isBreathingPage,
+  hashPromptSeed,
+  freshRunSeed,
+  seededShuffle,
 } from "./pageTypeMap";
 export {
   materializeTemplatePage,
@@ -18,6 +26,18 @@ export type {
   MaterializePageInput,
   MaterializedPage,
 } from "./materialize";
+export {
+  applyLayoutKnobs,
+  parseLayoutKnobs,
+  splitSlotsAndKnobs,
+  DEFAULT_LAYOUT_KNOBS,
+} from "./layoutKnobs";
+export type {
+  LayoutKnobs,
+  LayoutDensity,
+  LayoutEmphasis,
+  LayoutAlign,
+} from "./layoutKnobs";
 export type {
   HtmlTemplateId,
   HtmlTemplateSuiteId,
@@ -64,11 +84,6 @@ export {
   renderNarrativeTemplate,
   themeToTemplateColors,
   darkSurfaceColors,
-  templateIdForPageType,
   escapeAttr,
   escapeHtmlText,
 } from "./fill";
-export { HERO_TEMPLATE } from "./hero";
-export { METRICS_TEMPLATE } from "./metrics";
-export { PILLARS_TEMPLATE } from "./pillars";
-export { CLOSE_TEMPLATE } from "./close";

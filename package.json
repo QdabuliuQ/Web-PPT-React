@@ -16,7 +16,9 @@
     "test:e2e:headless": "cypress run --headless",
     "agent:mock": "AGENT_MOCK=1 npx --yes tsx scripts/run-agent.ts --mock",
     "agent": "npx --yes tsx scripts/run-agent.ts",
-    "agent:localize": "npx --yes tsx scripts/localize-agent-assets.ts"
+    "agent:localize": "npx --yes tsx scripts/localize-agent-assets.ts",
+    "agent:audit-templates": "npx --yes tsx scripts/audit-html-templates.ts",
+    "agent:audit-variety": "npx --yes tsx scripts/audit-design-variety.ts"
   },
   "dependencies": {
     "@ant-design/v5-patch-for-react-19": "^1.0.3",

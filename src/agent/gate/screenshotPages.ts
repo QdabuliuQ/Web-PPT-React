@@ -7,6 +7,11 @@ import { tmpdir } from "os";
 import path from "path";
 import { pathToFileURL } from "url";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
+import {
+  FONT_STACK_SANS,
+  WEB_FONT_STYLESHEET_HREF,
+  resolveFontStack,
+} from "@/fonts/stacks";
 
 export type PageScreenshot = {
   pageId: string;
@@ -99,7 +104,8 @@ function renderElement(
       el.border && el.borderWidth
         ? `border:${el.borderWidth}px ${el.borderStyle || "solid"} ${el.borderColor || "#000"};`
         : "border:none;";
-    return `<div style="${base}display:flex;flex-direction:column;align-items:stretch;justify-content:${place.justifyContent};text-align:${place.textAlign};font-size:${el.fontSize || 16}px;font-family:${escapeHtml(el.fontFamily || "Arial")},sans-serif;font-weight:${el.bold ? "bold" : "normal"};font-style:${el.italic ? "italic" : "normal"};line-height:${el.lineHeight || 1.4};color:${el.color || "#000"};background:${el.backgroundColor && el.backgroundColor !== "transparent" ? el.backgroundColor : "transparent"};padding:4px;overflow:hidden;word-break:break-word;${border}"><span>${escapeHtml(el.text || "")}</span></div>`;
+    const family = escapeHtml(resolveFontStack(el.fontFamily));
+    return `<div style="${base}display:flex;flex-direction:column;align-items:stretch;justify-content:${place.justifyContent};text-align:${place.textAlign};font-size:${el.fontSize || 16}px;font-family:${family};font-weight:${el.bold ? "bold" : "normal"};font-style:${el.italic ? "italic" : "normal"};line-height:${el.lineHeight || 1.4};color:${el.color || "#000"};background:${el.backgroundColor && el.backgroundColor !== "transparent" ? el.backgroundColor : "transparent"};padding:0;overflow:hidden;word-break:break-word;${border}"><span>${escapeHtml(el.text || "")}</span></div>`;
   }
 
   if (el.type === "image") {
@@ -146,8 +152,11 @@ function buildPageHtml(
 
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="${WEB_FONT_STYLESHEET_HREF}"/>
 <style>
-  html,body{margin:0;padding:0;background:#111;}
+  html,body{margin:0;padding:0;background:#111;font-family:${FONT_STACK_SANS};}
   .stage{width:${CANVAS_WIDTH}px;height:${CANVAS_HEIGHT}px;position:relative;overflow:hidden;${pageBackgroundStyle(page, assetMap, assetsDir)}}
 </style></head>
 <body><div class="stage" id="stage">${els}</div></body></html>`;
@@ -190,7 +199,21 @@ export async function screenshotPagesWithPuppeteer(opts: {
         waitUntil: "networkidle0",
       });
       await page.evaluate(async () => {
-        if (document.fonts?.ready) await document.fonts.ready;
+        const fonts = document.fonts as FontFaceSet & {
+          load?: (font: string) => Promise<unknown>;
+        };
+        try {
+          if (fonts?.load) {
+            await Promise.all([
+              fonts.load('700 40px "Noto Serif SC"'),
+              fonts.load('400 16px "Noto Sans SC"'),
+              fonts.load('700 16px "Noto Sans SC"'),
+            ]);
+          }
+        } catch {
+          /* ignore */
+        }
+        if (fonts?.ready) await fonts.ready;
       });
       const shotPath = path.join(outDir, `${pptPage.id}.png`);
       const el = await page.$("#stage");

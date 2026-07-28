@@ -5,14 +5,17 @@ import {
   repairHtmlPage,
   runLayoutHtmlAgent,
 } from "../agents/layoutHtmlAgent";
+import { runBriefAgent } from "../agents/briefAgent";
 import { runImageAgent } from "../agents/imageAgent";
 import {
   runPageScoreAgent,
   scoreToRepairInstruction,
 } from "../agents/scoreAgent";
+import { runStoryAgent } from "../agents/storyAgent";
 import { runThemeAgent } from "../agents/themeAgent";
 import { writePlatformCatalog } from "../catalog/exportCatalog";
 import { loadAgentConfig } from "../config";
+import { buildDesignProfileFromBrief } from "../design/director";
 import {
   defectsToRepairInstructions,
   runVisualGate,
@@ -20,6 +23,7 @@ import {
 import { compileHtmlDocument } from "../htmlCompile";
 import type { HtmlDeck, PipelineResult, ScoreReport } from "../types";
 import type { RunPipelineOptions } from "./run";
+import { prepareOutDir } from "./outDir";
 
 /** 写出 html-deck + 逐页 html-pages（回炉后必须再调，避免与 document 脱节） */
 async function persistHtmlDeck(outDir: string, htmlDeck: HtmlDeck) {
@@ -49,8 +53,12 @@ function shouldSkipGateRepair(instruction: string): boolean {
     /\[empty-image\]/.test(instruction) ||
     /\[vague-title\]/.test(instruction) ||
     /\[dense-content\]/.test(instruction) ||
-    /\[too-many-elements\]/.test(instruction);
+    /\[too-many-elements\]/.test(instruction) ||
+    /\[unsafe-text-surface\]/.test(instruction);
   if (hasSparse && !hasStructural) return true;
+
+  // 双平面字面缺陷必须回炉，不可跳过
+  if (/\[unsafe-text-surface\]/.test(instruction)) return false;
 
   const onlyContrast =
     /\[contrast\]/.test(instruction) &&
@@ -58,13 +66,13 @@ function shouldSkipGateRepair(instruction: string): boolean {
     !/\[empty-image\]/.test(instruction) &&
     !/\[vague-title\]/.test(instruction) &&
     !/\[sparse-content\]/.test(instruction) &&
-    !/\[dense-content\]/.test(instruction);
+    !/\[dense-content\]/.test(instruction) &&
+    !/\[unsafe-text-surface\]/.test(instruction);
   return onlyContrast;
 }
 
 /**
- * HTML 流水线：Theme → LayoutHTML（选套+填槽→模板渲染）→ Image → Compile → Gate → Score
- * 不经过 layout skeletons / meta slot compile。
+ * HTML 流水线：Brief（AI 定场合）→ Theme → Story → Layout → Image → Compile → Gate → Score
  */
 export async function runHtmlPipeline(
   options: RunPipelineOptions
@@ -73,26 +81,64 @@ export async function runHtmlPipeline(
     ...options.config,
     pipelineMode: "html",
   });
-  const outDir =
-    options.outDir || path.join(process.cwd(), "agent-output");
-  await mkdir(outDir, { recursive: true });
-  await mkdir(path.join(outDir, "assets"), { recursive: true });
+  const outDir = await prepareOutDir(
+    options.outDir || path.join(process.cwd(), "agent-output"),
+    { resume: Boolean(options.resumeMeta || options.resumeAssetMap) }
+  );
   await mkdir(path.join(outDir, "html-pages"), { recursive: true });
   await writePlatformCatalog(outDir);
 
-  const theme =
-    options.theme ||
-    (await runThemeAgent({
-      config,
-      userPrompt: options.userPrompt,
-      sampleImageUrls: options.sampleImageUrls,
-      fixedTheme: options.theme,
-    }));
+  const brief = await runBriefAgent({
+    config,
+    userPrompt: options.userPrompt,
+  });
+  await writeFile(
+    path.join(outDir, "brief.json"),
+    JSON.stringify(brief, null, 2),
+    "utf-8"
+  );
+  const designProfile = buildDesignProfileFromBrief(brief);
+  await writeFile(
+    path.join(outDir, "design-profile.json"),
+    JSON.stringify(designProfile, null, 2),
+    "utf-8"
+  );
+  console.log(
+    `[html-pipeline] brief genre=${brief.genreId} archetype=${designProfile.archetype} family=${designProfile.visualFamily} · ${brief.reason.slice(0, 48)}`
+  );
+
+  const theme = await runThemeAgent({
+    config,
+    userPrompt: options.userPrompt,
+    sampleImageUrls: options.sampleImageUrls,
+    fixedTheme: options.theme,
+    designProfile,
+    brief,
+  });
+
+  const story = await runStoryAgent({
+    config,
+    theme,
+    userPrompt: options.userPrompt,
+    designProfile,
+    brief,
+  });
+  await writeFile(
+    path.join(outDir, "story.json"),
+    JSON.stringify(story, null, 2),
+    "utf-8"
+  );
+  console.log(
+    `[html-pipeline] story runId=${story.runId} angle=${story.angle.slice(0, 48)} pages=${story.pages.length}`
+  );
 
   let htmlDeck = await runLayoutHtmlAgent({
     config,
     theme,
     userPrompt: options.userPrompt,
+    story,
+    designProfile,
+    brief,
   });
 
   await persistHtmlDeck(outDir, htmlDeck);

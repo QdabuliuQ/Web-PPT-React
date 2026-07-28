@@ -4,6 +4,12 @@ import path from "path";
 import { pathToFileURL } from "url";
 import puppeteer, { type Page } from "puppeteer";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/constants/canvas";
+import {
+  FONT_STACK_SANS,
+  FONT_STACK_SERIF,
+  WEB_FONT_STYLESHEET_HREF,
+  resolveFontStack,
+} from "@/fonts/stacks";
 import { puppeteerLaunchOptions } from "../gate/puppeteerLaunch";
 import { buildAssetHrefMap } from "./assets";
 import type { AssetMap } from "../types";
@@ -30,21 +36,22 @@ export type MeasuredNode = {
   chrome?: MeasuredChrome;
 };
 
-/** 测量与编辑器对齐的中文优先字体栈（避免 Puppeteer/本机 Chrome 默认字体不同导致换行行数不一致） */
-const MEASURE_FONT_STACK =
-  '"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif';
-
+/** 与编辑器共用 Web 字体；用 link 加载 Noto，避免 @import 时序不稳 */
 function wrapSlideHtml(fragment: string): string {
   const hasHtml = /<html[\s>]/i.test(fragment);
   if (hasHtml) return fragment;
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="${WEB_FONT_STYLESHEET_HREF}"/>
 <style>
-  html,body{margin:0;padding:0;background:#111;}
-  *{box-sizing:border-box;}
-  #slide, #slide *{
-    font-family:${MEASURE_FONT_STACK};
+  :root {
+    --webppt-font-serif: ${FONT_STACK_SERIF};
+    --webppt-font-sans: ${FONT_STACK_SANS};
   }
+  html,body{margin:0;padding:0;background:#111;font-family:var(--webppt-font-sans);}
+  *{box-sizing:border-box;}
 </style>
 </head><body>${fragment}</body></html>`;
 }
@@ -54,93 +61,162 @@ function wrapSlideHtml(fragment: string): string {
  * 回调内禁止具名内部函数（tsx/esbuild 会注入 __name，页面里不存在 → ReferenceError）。
  */
 async function prepareSlideDom(page: Page, assetHrefs: Record<string, string>) {
-  await page.evaluate((hrefs) => {
-    const slide = document.querySelector("#slide");
-    if (!slide) throw new Error("缺少 #slide");
-    const slideEl = slide as HTMLElement;
+  await page.evaluate(
+    (hrefs, fontStacks) => {
+      const expandFont = (raw: string) => {
+        const name = String(raw || "")
+          .split(",")[0]
+          .replace(/["']/g, "")
+          .trim();
+        if (!name) return fontStacks.sans;
+        if (/Noto Serif SC|Noto Sans SC/i.test(raw)) return raw;
+        if (/serif|song|songti|stsong|simsun/i.test(name)) {
+          if (/^source han serif sc$/i.test(name)) return fontStacks.serif;
+          return '"' + name + '",' + fontStacks.serif.replace(/^"[^"]+",\s*/, "");
+        }
+        if (/^pingfang sc$/i.test(name)) return fontStacks.sans;
+        return '"' + name + '",' + fontStacks.sans.replace(/^"[^"]+",\s*/, "");
+      };
 
-    const bgKey = slide.getAttribute("data-bg-image-key");
-    if (bgKey && hrefs[bgKey]) {
-      slideEl.style.backgroundImage = 'url("' + hrefs[bgKey] + '")';
-      slideEl.style.backgroundSize = "cover";
-      slideEl.style.backgroundPosition = "center";
+      const slide = document.querySelector("#slide");
+      if (!slide) throw new Error("缺少 #slide");
+      const slideEl = slide as HTMLElement;
+
+      const bgKey = slide.getAttribute("data-bg-image-key");
+      if (bgKey && hrefs[bgKey]) {
+        slideEl.style.backgroundImage = 'url("' + hrefs[bgKey] + '")';
+        slideEl.style.backgroundSize = "cover";
+        slideEl.style.backgroundPosition = "center";
+      }
+
+      const els = document.querySelectorAll('[data-element="1"]');
+      for (let i = 0; i < els.length; i++) {
+        const el = els[i] as HTMLElement;
+        const type = el.getAttribute("data-type") || "";
+        const ds = el.dataset;
+
+        const zFromData = Number(ds.zIndex);
+        if (Number.isFinite(zFromData)) {
+          el.style.zIndex = String(zFromData);
+          if (!el.style.position || el.style.position === "static") {
+            el.style.position = "relative";
+          }
+        }
+
+        if (type === "text") {
+          const fs = Number(ds.fontSize);
+          if (Number.isFinite(fs) && fs > 0) {
+            el.style.fontSize = fs + "px";
+          }
+          const lh = Number(ds.lineHeight);
+          if (Number.isFinite(lh) && lh > 0) {
+            el.style.lineHeight = String(lh);
+          }
+          const familyRaw =
+            ds.fontFamily ||
+            (el.style.fontFamily || "").split(",")[0] ||
+            "";
+          if (familyRaw) {
+            el.style.fontFamily = expandFont(familyRaw);
+          } else {
+            el.style.fontFamily = fontStacks.sans;
+          }
+          if (Object.prototype.hasOwnProperty.call(ds, "bold")) {
+            el.style.fontWeight = "700";
+          }
+          if (Object.prototype.hasOwnProperty.call(ds, "italic")) {
+            el.style.fontStyle = "italic";
+          }
+          if (ds.color) el.style.color = ds.color;
+          if (Object.prototype.hasOwnProperty.call(ds, "border")) {
+            const bw = Number(ds.borderWidth);
+            const w = Number.isFinite(bw) && bw > 0 ? bw : 1;
+            const color = ds.borderColor || "#000000";
+            const style = ds.borderStyle || "solid";
+            el.style.border = w + "px " + style + " " + color;
+          }
+        }
+
+        if (type === "image") {
+          const key = el.getAttribute("data-asset-key") || "";
+          const href = key ? hrefs[key] : "";
+          const kind = (el.getAttribute("data-image-kind") || "").toLowerCase();
+          const isCutout =
+            kind === "cutout" || kind === "transparent" || kind === "avatar";
+          if (href) {
+            if (isCutout) {
+              el.style.backgroundImage = "none";
+              el.style.backgroundColor = "transparent";
+              el.innerHTML = "";
+              const img = document.createElement("img");
+              img.src = href;
+              img.alt = "";
+              img.style.width = "100%";
+              img.style.height = "100%";
+              img.style.objectFit = "contain";
+              img.style.display = "block";
+              img.style.pointerEvents = "none";
+              el.appendChild(img);
+            } else {
+              el.style.backgroundImage = 'url("' + href + '")';
+              el.style.backgroundSize = "cover";
+              el.style.backgroundPosition = "center";
+              el.style.backgroundRepeat = "no-repeat";
+            }
+          }
+          const br = Number(ds.borderRadius);
+          if (Number.isFinite(br) && br >= 0) {
+            el.style.borderRadius = br + "px";
+            el.style.overflow = el.style.overflow || "hidden";
+          }
+          if (Object.prototype.hasOwnProperty.call(ds, "border")) {
+            const bw = Number(ds.borderWidth);
+            const w = Number.isFinite(bw) && bw > 0 ? bw : 1;
+            const color = ds.borderColor || "#000000";
+            const style = ds.borderStyle || "solid";
+            el.style.border = w + "px " + style + " " + color;
+            el.style.boxSizing = "border-box";
+          }
+        }
+
+        if (type === "shape") {
+          const br = Number(ds.borderRadius);
+          if (Number.isFinite(br) && br >= 0) {
+            el.style.borderRadius = br + "px";
+          }
+        }
+
+        if (type === "icon" && !el.innerHTML.trim()) {
+          el.style.display = el.style.display || "block";
+        }
+      }
+    },
+    assetHrefs,
+    {
+      serif: resolveFontStack("Source Han Serif SC"),
+      sans: resolveFontStack("PingFang SC"),
     }
-
-    const els = document.querySelectorAll('[data-element="1"]');
-    for (let i = 0; i < els.length; i++) {
-      const el = els[i] as HTMLElement;
-      const type = el.getAttribute("data-type") || "";
-      const ds = el.dataset;
-
-      // data-z-index → 真实 CSS，保证预览叠层 = JSON zIndex
-      const zFromData = Number(ds.zIndex);
-      if (Number.isFinite(zFromData)) {
-        el.style.zIndex = String(zFromData);
-        if (!el.style.position || el.style.position === "static") {
-          el.style.position = "relative";
-        }
-      }
-
-      // 只同步 data-* → 字体样式；不要改 padding/nowrap/height，以免量到的盒子偏离页面
-      if (type === "text") {
-        const fs = Number(ds.fontSize);
-        if (Number.isFinite(fs) && fs > 0) {
-          el.style.fontSize = fs + "px";
-        }
-        const lh = Number(ds.lineHeight);
-        if (Number.isFinite(lh) && lh > 0) {
-          el.style.lineHeight = String(lh);
-        }
-        if (ds.fontFamily) {
-          el.style.fontFamily = ds.fontFamily;
-        }
-        if (Object.prototype.hasOwnProperty.call(ds, "bold")) {
-          el.style.fontWeight = "700";
-        }
-        if (Object.prototype.hasOwnProperty.call(ds, "italic")) {
-          el.style.fontStyle = "italic";
-        }
-        if (ds.color) el.style.color = ds.color;
-        if (Object.prototype.hasOwnProperty.call(ds, "border")) {
-          const bw = Number(ds.borderWidth);
-          const w = Number.isFinite(bw) && bw > 0 ? bw : 1;
-          const color = ds.borderColor || "#000000";
-          const style = ds.borderStyle || "solid";
-          el.style.border = w + "px " + style + " " + color;
-        }
-      }
-
-      if (type === "image") {
-        const key = el.getAttribute("data-asset-key") || "";
-        const href = key ? hrefs[key] : "";
-        if (href) {
-          el.style.backgroundImage = 'url("' + href + '")';
-          el.style.backgroundSize = "cover";
-          el.style.backgroundPosition = "center";
-          el.style.backgroundRepeat = "no-repeat";
-        }
-        const br = Number(ds.borderRadius);
-        if (Number.isFinite(br) && br >= 0) {
-          el.style.borderRadius = br + "px";
-        }
-      }
-
-      if (type === "shape") {
-        const br = Number(ds.borderRadius);
-        if (Number.isFinite(br) && br >= 0) {
-          el.style.borderRadius = br + "px";
-        }
-      }
-
-      if (type === "icon" && !el.innerHTML.trim()) {
-        el.style.display = el.style.display || "block";
-      }
-    }
-  }, assetHrefs);
+  );
 
   await page.evaluate(async () => {
-    const doc = document as Document & { fonts?: { ready: Promise<unknown> } };
-    if (doc.fonts && doc.fonts.ready) {
+    const doc = document as Document & {
+      fonts?: {
+        ready: Promise<unknown>;
+        load?: (font: string) => Promise<unknown>;
+      };
+    };
+    try {
+      if (doc.fonts?.load) {
+        await Promise.all([
+          doc.fonts.load('700 40px "Noto Serif SC"'),
+          doc.fonts.load('400 16px "Noto Sans SC"'),
+          doc.fonts.load('700 16px "Noto Sans SC"'),
+        ]);
+      }
+    } catch {
+      /* ignore */
+    }
+    if (doc.fonts?.ready) {
       await doc.fonts.ready;
     }
     const imgs = Array.from(document.images);
@@ -153,7 +229,7 @@ async function prepareSlideDom(page: Page, assetHrefs: Record<string, string>) {
       });
     }
     await new Promise((resolve) => {
-      setTimeout(resolve, 50);
+      setTimeout(resolve, 80);
     });
   });
 
@@ -171,7 +247,7 @@ async function prepareSlideDom(page: Page, assetHrefs: Record<string, string>) {
       const type = el.getAttribute("data-type") || "";
 
       if (type === "text") {
-        // 测量「纯内容框」；编辑器 padding 在 mapElement 补偿
+        // Text 无 padding：强制清零，几何 = 可见文字外接框
         el.style.boxSizing = "border-box";
         el.style.padding = "0";
         if (!Object.prototype.hasOwnProperty.call(el.dataset, "border")) {
@@ -236,8 +312,8 @@ export async function measureSlideHtml(opts: {
       deviceScaleFactor: 1,
     });
     await page.goto(pathToFileURL(htmlPath).href, {
-      waitUntil: "domcontentloaded",
-      timeout: 30000,
+      waitUntil: "networkidle0",
+      timeout: 60000,
     });
 
     await prepareSlideDom(page, assetHrefs);

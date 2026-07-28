@@ -15,8 +15,8 @@
   /* 不用占位 border（会吃掉内容区宽度导致 Agent 文字挤扁）；hover/选中用 outline */
   border: none;
   border-radius: 0;
-  /* 与 htmlCompile/mapElement TEXT_EDITOR_PADDING_PX 保持一致 */
-  padding: 4px;
+  /* Text 无内边距：HTML 测量几何直接对应组件盒子 */
+  padding: 0;
   cursor: text; /* 文本输入光标 */
   user-select: none;
   min-height: auto;
@@ -37,7 +37,7 @@
     outline-offset: 0;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.95);
-    padding: 4px;
+    padding: 0;
     cursor: text;
     user-select: text;
     min-height: 20px;

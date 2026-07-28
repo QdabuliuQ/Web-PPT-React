@@ -5,15 +5,23 @@ import {
   buildGlobalBgDrawTask,
   enrichImagePrompt,
   mapAspectRatio,
+  parseHtmlImageKind,
+  type ImageKind,
 } from "../image/promptSpec";
-import { DEFAULT_PAGE_TYPE_SEQUENCE } from "../layout/sequence";
+import { pageTypesFromPlan, pickPagePlan } from "../layout/sequence";
 import { PAGE_TYPE_LAYOUTS } from "../layout/pageTypes";
 import {
   materializeTemplatePage,
   materializeTemplatePages,
 } from "../htmlTemplates/materialize";
-import { defaultTemplateForPageType } from "../htmlTemplates/pageTypeMap";
-import type { AnyTemplateSlots } from "../htmlTemplates/types";
+import {
+  diversifyTemplateIds,
+  defaultTemplateForPageType,
+  freshRunSeed,
+  isBreathingPage,
+} from "../htmlTemplates/pageTypeMap";
+import { assembleSlideFromModules } from "../modules/assemble";
+import { resolveVisualFamily } from "../theme/visualFamily";
 import {
   buildLayoutHtmlSystemPrompt,
   buildLayoutHtmlUserPrompt,
@@ -28,6 +36,9 @@ import {
   appendPaletteToImagePrompt,
   buildPaletteHint,
 } from "../theme/colorPrompt";
+import { storyPageToSlots } from "../story/mapToSlots";
+import type { StoryDeck } from "../story/types";
+import type { DesignProfile } from "../design/director";
 import type {
   DrawTask,
   HtmlDeck,
@@ -94,7 +105,7 @@ function mockSlotsForPage(
         footer: "WEB PLATFORM · BRIEF",
         bgImageKey: `${pageId}_bg`,
         bgImagePrompt:
-          "Cinematic dark editorial 16:9 background, soft vignette, darker lower band for title, no text no logos",
+          "Cinematic dark editorial 16:9 background, real materials soft directional light, darker top-left band for typography, gentle vignette, no tech grid no HUD no stickers no cheap illustration no text no logos",
       };
     case "close":
       return {
@@ -204,18 +215,129 @@ function mockSlotsForPage(
   }
 }
 
-function mockHtmlDeck(theme: ThemeToken, userPrompt: string): HtmlDeck {
-  const requested = parseRequestedPageCount(userPrompt);
-  const seq = DEFAULT_PAGE_TYPE_SEQUENCE.slice(
-    0,
-    requested ?? DEFAULT_PAGE_TYPE_SEQUENCE.length
+/** 每场至少 1 页呼吸页（breath / 超大 KPI / 全宽 evidence） */
+function ensureBreathingPage<
+  T extends {
+    pageId: string;
+    pageType: PageType;
+    templateId?: string | null;
+    slots: Record<string, unknown>;
+  },
+>(pages: T[], seed: number, maxPages: number = PAGE_MAX): T[] {
+  if (
+    pages.some((p) =>
+      isBreathingPage({ pageType: p.pageType, templateId: p.templateId })
+    )
+  ) {
+    return pages;
+  }
+
+  const closeIdx = pages.findIndex((p) => p.pageType === "close");
+  const insertAt = closeIdx > 0 ? closeIdx : Math.max(1, pages.length - 1);
+
+  if (pages.length < maxPages) {
+    const breath = {
+      pageId: "page_breath",
+      pageType: "breath" as PageType,
+      templateId: "breath-billboard",
+      slots: {
+        quote: "留白不是空，是敢把重点说清楚。",
+        attribution: "DESIGN PRINCIPLE",
+      },
+    } as unknown as T;
+    const next = [...pages];
+    next.splice(insertAt, 0, breath);
+    return next.map((p, i) => ({ ...p, pageId: `page_${i + 1}` }));
+  }
+
+  const metricsIdx = pages.findIndex((p) => p.pageType === "metrics");
+  if (metricsIdx >= 0) {
+    return pages.map((p, i) =>
+      i === metricsIdx ? { ...p, templateId: "metrics-monument" } : p
+    );
+  }
+
+  const evidenceIdx = pages.findIndex((p) => p.pageType === "evidence");
+  if (evidenceIdx >= 0) {
+    return pages.map((p, i) =>
+      i === evidenceIdx ? { ...p, templateId: "evidence-plaza" } : p
+    );
+  }
+
+  const denseIdx = pages.findIndex(
+    (p, i) =>
+      i > 0 &&
+      i < pages.length - 1 &&
+      ["pillars", "problem", "solution", "agenda", "team"].includes(p.pageType)
   );
-  const rawPages = seq.map((pageType, i) => ({
+  if (denseIdx >= 0) {
+    const title =
+      typeof pages[denseIdx]!.slots?.title === "string"
+        ? String(pages[denseIdx]!.slots.title)
+        : "把重点说清楚";
+    return pages.map((p, i) =>
+      i === denseIdx
+        ? {
+            ...p,
+            pageType: "breath" as PageType,
+            templateId: "breath-billboard",
+            slots: {
+              quote: title.slice(0, 48),
+              attribution: "BRIEF",
+            },
+          }
+        : p
+    );
+  }
+
+  const target = Math.max(1, pages.length - 2);
+  void seed;
+  return pages.map((p, i) =>
+    i === target
+      ? {
+          ...p,
+          pageType: "breath" as PageType,
+          templateId: "breath-billboard",
+          slots: {
+            quote: "敢空，才有高级感。",
+            attribution: "BRIEF",
+          },
+        }
+      : p
+  );
+}
+
+function mockHtmlDeck(
+  theme: ThemeToken,
+  userPrompt: string,
+  designProfile?: DesignProfile
+): HtmlDeck {
+  const requested = parseRequestedPageCount(userPrompt);
+  const plan = pickPagePlan(userPrompt, designProfile);
+  const seq = pageTypesFromPlan(plan, requested);
+  const seed = freshRunSeed(userPrompt);
+  const family = resolveVisualFamily(theme.visualFamily);
+  let rawPages = seq.map((pageType, i) => ({
     pageId: `page_${i + 1}`,
     pageType,
     templateId: defaultTemplateForPageType(pageType),
-    slots: mockSlotsForPage(pageType, i, theme),
+    slots: {
+      ...mockSlotsForPage(pageType, i, theme),
+      density: theme.visualFamily === "monument" ? "airy" : "normal",
+      emphasis:
+        pageType === "metrics"
+          ? "number"
+          : pageType === "evidence"
+            ? "image"
+            : "title",
+      align: "left",
+    },
   }));
+  rawPages = ensureBreathingPage(
+    diversifyTemplateIds(rawPages, seed, family, designProfile),
+    seed,
+    requested ?? PAGE_MAX
+  );
   const pages = materializeTemplatePages(rawPages, theme).map((p) => ({
     pageId: p.pageId,
     pageType: p.pageType,
@@ -235,10 +357,14 @@ function mockHtmlDeck(theme: ThemeToken, userPrompt: string): HtmlDeck {
 }
 
 /** 从 HTML 抽取生图任务 */
-export function extractDrawTasksFromDeck(deck: HtmlDeck): DrawTask[] {
+export function extractDrawTasksFromDeck(
+  deck: HtmlDeck,
+  runId?: string
+): DrawTask[] {
   const tasks: DrawTask[] = [];
   const seen = new Set<string>();
   const paletteHint = buildPaletteHint(deck.theme);
+  const runTag = runId || `t${Date.now().toString(16).slice(-6)}`;
 
   const push = (
     assetKey: string,
@@ -246,15 +372,18 @@ export function extractDrawTasksFromDeck(deck: HtmlDeck): DrawTask[] {
     pageId: string,
     width: number,
     height: number,
-    kind: "hero" | "illustration" | "texture"
+    kind: ImageKind
   ) => {
     if (!assetKey || seen.has(assetKey)) return;
     seen.add(assetKey);
     const aspectRatio = mapAspectRatio(width, height);
+    const variedPrompt = /variation:/i.test(prompt)
+      ? prompt
+      : `${prompt.replace(/[.\s]+$/, "")}. variation:${runTag}/${pageId}/${assetKey}`;
     tasks.push({
       assetKey,
       prompt: enrichImagePrompt({
-        basePrompt: appendPaletteToImagePrompt(prompt, deck.theme),
+        basePrompt: appendPaletteToImagePrompt(variedPrompt, deck.theme),
         width,
         height,
         kind,
@@ -272,31 +401,46 @@ export function extractDrawTasksFromDeck(deck: HtmlDeck): DrawTask[] {
 
   for (const page of deck.pages) {
     const html = page.html;
-    const imgRe =
-      /data-type=["']image["'][^>]*data-asset-key=["']([^"']+)["'][^>]*data-image-prompt=["']([^"']*)["']/gi;
-    const imgRe2 =
-      /data-asset-key=["']([^"']+)["'][^>]*data-type=["']image["'][^>]*data-image-prompt=["']([^"']*)["']/gi;
-    for (const re of [imgRe, imgRe2]) {
-      re.lastIndex = 0;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(html))) {
-        push(
-          m[1],
-          m[2] || "illustration, no text",
-          page.pageId,
-          400,
-          400,
-          "illustration"
-        );
+    // 逐个 image 节点解析，属性顺序不限
+    const tagRe = /<[^>]*data-type=["']image["'][^>]*>/gi;
+    let tagMatch: RegExpExecArray | null;
+    while ((tagMatch = tagRe.exec(html))) {
+      const tag = tagMatch[0];
+      const assetKey = tag.match(/data-asset-key=["']([^"']+)["']/i)?.[1];
+      const prompt =
+        tag.match(/data-image-prompt=["']([^"']*)["']/i)?.[1] ||
+        "illustration, no text";
+      if (!assetKey) continue;
+      const kind = parseHtmlImageKind(
+        tag.match(/data-image-kind=["']([^"']*)["']/i)?.[1]
+      );
+      const style = tag.match(/style=["']([^"']*)["']/i)?.[1] || "";
+      const wMatch = style.match(/(?:^|;)\s*width\s*:\s*([\d.]+)px/i);
+      const hMatch = style.match(/(?:^|;)\s*height\s*:\s*([\d.]+)px/i);
+      let width = wMatch ? Number(wMatch[1]) : 0;
+      let height = hMatch ? Number(hMatch[1]) : 0;
+      if (!(width > 0 && height > 0)) {
+        if (kind === "cutout") {
+          width = 512;
+          height = 512;
+        } else if (kind === "photo") {
+          width = 800;
+          height = 600;
+        } else {
+          width = 400;
+          height = 400;
+        }
       }
+      push(assetKey, prompt, page.pageId, width, height, kind);
     }
 
     const bgKey = html.match(/data-bg-image-key=["']([^"']+)["']/)?.[1];
     const bgPrompt =
       html.match(/data-bg-image-prompt=["']([^"']*)["']/)?.[1] ||
-      "cinematic wide 16:9 hero background, darker midtones, soft vignette, clear darker band for white title overlay, atmospheric corporate mood, no text, no logos, no pale white wash";
+      "editorial wide photograph as media panel, atmospheric subject, natural light, no text, no logos";
     if (bgKey) {
-      push(bgKey, bgPrompt, page.pageId, 1000, 562, "hero");
+      // 遗留整页底图路径：仍生图，但 Gate 会要求字区有实色底板
+      push(bgKey, bgPrompt, page.pageId, 1000, 562, "photo");
     }
   }
 
@@ -346,27 +490,61 @@ export async function runLayoutHtmlAgent(opts: {
   config: AgentRuntimeConfig;
   theme: ThemeToken;
   userPrompt: string;
+  /** A：故事稿优先；有则不再让 Layout LLM 重写内容 */
+  story?: StoryDeck;
+  designProfile?: DesignProfile;
+  brief?: import("../brief/types").DesignBrief;
 }): Promise<HtmlDeck> {
-  const { config, theme, userPrompt } = opts;
+  const { config, theme, userPrompt, story, designProfile, brief } = opts;
+
+  if (story) {
+    return layoutFromStory({ config, theme, userPrompt, story, designProfile });
+  }
 
   if (config.mock) {
-    return mockHtmlDeck(theme, userPrompt);
+    return mockHtmlDeck(theme, userPrompt, designProfile);
   }
 
   const requested = parseRequestedPageCount(userPrompt);
+  const catalogSeed = freshRunSeed(userPrompt);
+  const family = resolveVisualFamily(
+    designProfile?.visualFamily || brief?.visualFamily || theme.visualFamily
+  );
   const raw = await chatJson({
     config,
+    temperature: 0.82,
     messages: [
-      { role: "system", content: buildLayoutHtmlSystemPrompt(theme) },
-      { role: "user", content: buildLayoutHtmlUserPrompt(userPrompt) },
+      {
+        role: "system",
+        content: buildLayoutHtmlSystemPrompt(theme, {
+          catalogSeed,
+          designProfile,
+        }),
+      },
+      {
+        role: "user",
+        content: buildLayoutHtmlUserPrompt(userPrompt, theme, {
+          runSeed: catalogSeed,
+          designProfile,
+          brief,
+        }),
+      },
     ],
     parse: (j) => HtmlTemplateDeckLlmSchema.parse(j),
   });
 
-  const pages = toHtmlSlidePages(
+  const diversified = diversifyTemplateIds(
     clampTemplatePages(raw.pages as LlmTemplatePage[], requested),
-    theme
+    catalogSeed,
+    family,
+    designProfile
   );
+  const withBreath = ensureBreathingPage(
+    diversified,
+    catalogSeed,
+    requested ?? PAGE_MAX
+  );
+  const pages = toHtmlSlidePages(withBreath, theme);
   const deck: HtmlDeck = {
     version: "html-1.0",
     name: raw.name,
@@ -375,6 +553,84 @@ export async function runLayoutHtmlAgent(opts: {
     drawTasks: [],
   };
   deck.drawTasks = extractDrawTasksFromDeck(deck);
+  return deck;
+}
+
+/**
+ * Story → 积木组装（B）或整页模板填槽（A 回落）
+ * 内容全部来自 Story，Layout 不再二次编造文案。
+ */
+export function layoutFromStory(opts: {
+  config: AgentRuntimeConfig;
+  theme: ThemeToken;
+  userPrompt: string;
+  story: StoryDeck;
+  designProfile?: DesignProfile;
+}): HtmlDeck {
+  const { theme, story } = opts;
+  const designProfile = opts.designProfile || story.designProfile;
+  const family = resolveVisualFamily(
+    designProfile?.visualFamily || theme.visualFamily
+  );
+  const seed = freshRunSeed(`${story.runId}:${story.angle}:${opts.userPrompt}`);
+
+  const forDiversify = story.pages.map((p) => ({
+    pageType: p.pageType,
+    templateId: null as string | null,
+  }));
+  const diversified = diversifyTemplateIds(
+    forDiversify,
+    seed,
+    family,
+    designProfile
+  );
+
+  const pages: HtmlSlidePage[] = story.pages.map((page, i) => {
+    const assembled = assembleSlideFromModules(page, theme, story.runId);
+    if (assembled) {
+      console.log(
+        `[LayoutHtml] ${page.pageId} via modules (${page.pageType}/${assembled.templateId.replace("modules:", "")})`
+      );
+      return {
+        pageId: assembled.pageId,
+        pageType: assembled.pageType,
+        templateId: assembled.templateId,
+        slots: assembled.slots,
+        html: assembled.html,
+      };
+    }
+
+    const templateId = diversified[i]?.templateId;
+    const slots = storyPageToSlots(page, story.runId);
+    const rendered = materializeTemplatePage(
+      {
+        pageId: page.pageId,
+        pageType: page.pageType,
+        templateId,
+        slots,
+      },
+      theme
+    );
+    console.log(
+      `[LayoutHtml] ${page.pageId} via template ${rendered.templateId}`
+    );
+    return {
+      pageId: rendered.pageId,
+      pageType: rendered.pageType,
+      templateId: rendered.templateId,
+      slots: rendered.slots as unknown as Record<string, unknown>,
+      html: rendered.html,
+    };
+  });
+
+  const deck: HtmlDeck = {
+    version: "html-1.0",
+    name: story.name,
+    theme,
+    pages,
+    drawTasks: [],
+  };
+  deck.drawTasks = extractDrawTasksFromDeck(deck, story.runId);
   return deck;
 }
 
@@ -387,6 +643,48 @@ export async function repairHtmlPage(opts: {
   const { config, deck, pageId, instruction } = opts;
   const page = deck.pages.find((p) => p.pageId === pageId);
   if (!page) return deck;
+
+  // 双平面结构缺陷：优先用积木强制 split 重装，避免 LLM 再选全幅叠字模板
+  if (/\[unsafe-text-surface\]/.test(instruction)) {
+    const slots = (page.slots || {}) as Record<string, unknown>;
+    const runId = String(slots.runId || deck.name || "repair");
+    const storyPage = {
+      ...slots,
+      pageId: page.pageId,
+      pageType: page.pageType,
+      claim: String(slots.claim || page.pageType),
+      title: String(slots.title || page.pageId),
+      imageIntent: String(
+        slots.imageIntent ||
+          slots.bgImagePrompt ||
+          "editorial media panel, soft light, no text"
+      ),
+      composition: "split" as const,
+      preferModules: true,
+    };
+    const assembled = assembleSlideFromModules(
+      storyPage as import("../story/types").StoryPageDraft,
+      deck.theme,
+      runId,
+      "split"
+    );
+    if (assembled) {
+      const pages = deck.pages.map((p) =>
+        p.pageId === pageId
+          ? {
+              pageId: assembled.pageId,
+              pageType: assembled.pageType,
+              templateId: assembled.templateId,
+              slots: assembled.slots,
+              html: assembled.html,
+            }
+          : p
+      );
+      const next: HtmlDeck = { ...deck, pages, drawTasks: [] };
+      next.drawTasks = extractDrawTasksFromDeck(next, runId);
+      return next;
+    }
+  }
 
   if (config.mock) {
     return deck;
@@ -435,30 +733,4 @@ export async function repairHtmlPage(opts: {
   const next: HtmlDeck = { ...deck, pages, drawTasks: [] };
   next.drawTasks = extractDrawTasksFromDeck(next);
   return next;
-}
-
-/** 供外部直接用槽位渲染一页 */
-export function renderPageFromSlots(opts: {
-  pageId: string;
-  pageType: PageType;
-  templateId?: string;
-  slots: AnyTemplateSlots | Record<string, unknown>;
-  theme: ThemeToken;
-}): HtmlSlidePage {
-  const rendered = materializeTemplatePage(
-    {
-      pageId: opts.pageId,
-      pageType: opts.pageType,
-      templateId: opts.templateId,
-      slots: opts.slots,
-    },
-    opts.theme
-  );
-  return {
-    pageId: rendered.pageId,
-    pageType: rendered.pageType,
-    templateId: rendered.templateId,
-    slots: rendered.slots as unknown as Record<string, unknown>,
-    html: rendered.html,
-  };
 }

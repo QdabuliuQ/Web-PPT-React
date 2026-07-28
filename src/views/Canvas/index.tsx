@@ -181,23 +181,25 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     };
   }, [mode]);
 
-  // 画布区域滚轮：向上上一页，向下下一页（一次手势只翻一页，忽略惯性）
+  // 画布区域滚轮：向上上一页，向下下一页（固定冷却，不因持续滚动延长锁定）
   useEffect(() => {
     if (mode !== "edit") return;
     const el = containerRef.current;
     if (!el) return;
 
-    /** 滚轮停稳多久后才允许下一次翻页 */
-    const GESTURE_IDLE_MS = 280;
+    /** 翻页后的冷却：冷却期内同向滚动忽略，到期后即使鼠标未动也可继续翻页 */
+    const PAGE_COOLDOWN_MS = 320;
     let locked = false;
-    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastDirection: 1 | -1 | 0 = 0;
+    let cooldownTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const unlockAfterIdle = () => {
-      if (idleTimer) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {
+    const armCooldown = () => {
+      if (cooldownTimer) clearTimeout(cooldownTimer);
+      locked = true;
+      cooldownTimer = setTimeout(() => {
         locked = false;
-        idleTimer = null;
-      }, GESTURE_IDLE_MS);
+        cooldownTimer = null;
+      }, PAGE_COOLDOWN_MS);
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -207,18 +209,19 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
 
       e.preventDefault();
 
-      // 手势进行中（含惯性尾段）：只延长锁定，不再翻页
-      if (locked) {
-        unlockAfterIdle();
-        return;
-      }
+      const direction: 1 | -1 | 0 =
+        e.deltaY > 0 ? 1 : e.deltaY < 0 ? -1 : 0;
+      if (!direction) return;
 
-      locked = true;
-      unlockAfterIdle();
+      // 冷却期内同向滚动（含惯性）忽略；换向视为新手势，立即允许翻页
+      if (locked && direction === lastDirection) return;
 
-      if (e.deltaY > 0) {
+      lastDirection = direction;
+      armCooldown();
+
+      if (direction > 0) {
         pageActiveStore.goToNextPage();
-      } else if (e.deltaY < 0) {
+      } else {
         pageActiveStore.goToPrevPage();
       }
       elementActiveStore.resetElementActive();
@@ -228,7 +231,7 @@ const Component: FC<CanvasProps> = ({ mode = "edit", page, previewZoom }) => {
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       el.removeEventListener("wheel", onWheel);
-      if (idleTimer) clearTimeout(idleTimer);
+      if (cooldownTimer) clearTimeout(cooldownTimer);
     };
   }, [mode]);
 

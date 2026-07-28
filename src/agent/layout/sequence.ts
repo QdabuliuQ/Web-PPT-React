@@ -1,9 +1,6 @@
 import type { LayoutKey, PageType } from "../types";
-import {
-  resolveLayoutKey,
-  resolvePageTypeAndLayout,
-  PAGE_TYPE_LAYOUTS,
-} from "./pageTypes";
+import { resolveLayoutKey } from "./pageTypes";
+import type { DesignProfile } from "../design/director";
 
 export {
   PAGE_TYPES,
@@ -23,7 +20,7 @@ export type PagePlanItem = {
   layoutKey: LayoutKey;
 };
 
-/** 默认：封面 → 目录 → 痛点 → 方案 → 要点 → 指标 → 团队 → 封底 */
+/** 默认：封面 → 目录 → 痛点 → 方案 → 要点 → 指标 → 呼吸 → 封底 */
 export const DEFAULT_PAGE_TYPE_SEQUENCE: PageType[] = [
   "hero",
   "agenda",
@@ -31,63 +28,9 @@ export const DEFAULT_PAGE_TYPE_SEQUENCE: PageType[] = [
   "solution",
   "pillars",
   "metrics",
-  "team",
+  "breath",
   "close",
 ];
-
-export const DEFAULT_LAYOUT_SEQUENCE: LayoutKey[] =
-  DEFAULT_PAGE_TYPE_SEQUENCE.map((pt) => PAGE_TYPE_LAYOUTS[pt][0]);
-
-/** 备选：居中封面 + 数据证据 + 对比 + 时间线 */
-export const ALT_PAGE_TYPE_SEQUENCE: PageType[] = [
-  "hero",
-  "agenda",
-  "problem",
-  "pillars",
-  "evidence",
-  "compare",
-  "timeline",
-  "close",
-];
-
-export const ALT_LAYOUT_SEQUENCE: LayoutKey[] = ALT_PAGE_TYPE_SEQUENCE.map(
-  (pt) =>
-    pt === "hero"
-      ? "cover-center"
-      : pt === "evidence"
-        ? "chart-wide"
-        : PAGE_TYPE_LAYOUTS[pt][0]
-);
-
-/** @deprecated 使用 LAYOUT 描述见 pageTypes；保留兼容 */
-export const LAYOUT_INTENT: Record<
-  LayoutKey,
-  { intent: string; when: string }
-> = {
-  cover: { intent: "hero", when: "默认封面：左下标题叠全幅图" },
-  "cover-center": { intent: "hero", when: "居中封面" },
-  "cover-left": { intent: "hero", when: "左半幅图 + 右侧标题副标题" },
-  "cover-right": { intent: "hero", when: "右半幅图 + 左侧标题副标题" },
-  toc: { intent: "agenda", when: "目录/议程" },
-  "toc-cards": { intent: "agenda", when: "四宫格目录卡" },
-  "two-column": { intent: "problem|solution", when: "左文右图论证" },
-  "image-text": { intent: "problem|solution", when: "左图右文" },
-  "three-points": { intent: "pillars", when: "三支柱含插图" },
-  "pillars-icons": { intent: "pillars", when: "三支柱图标卡" },
-  kpi: { intent: "metrics", when: "三大数字" },
-  "kpi-row": { intent: "metrics", when: "四横排指标" },
-  quote: { intent: "breath", when: "引用+侧图" },
-  "quote-center": { intent: "breath", when: "居中引用留白" },
-  chart: { intent: "evidence", when: "图表+侧图" },
-  "chart-wide": { intent: "evidence", when: "通栏图表" },
-  table: { intent: "compare", when: "对比表" },
-  "compare-split": { intent: "compare", when: "左右对照文" },
-  "team-cards": { intent: "team", when: "团队卡片" },
-  "team-list": { intent: "team", when: "团队列表" },
-  timeline: { intent: "timeline", when: "里程碑" },
-  ending: { intent: "close", when: "封底" },
-  "ending-center": { intent: "close", when: "居中封底" },
-};
 
 function planFromPageTypes(
   pageTypes: PageType[],
@@ -102,31 +45,106 @@ function planFromPageTypes(
   });
 }
 
-/** 根据用户需求粗选 pageType 序列，并解析为骨架 */
-export function pickPagePlan(userPrompt: string): PagePlanItem[] {
+function uniquePageTypes(pageTypes: readonly PageType[]): PageType[] {
+  const seen = new Set<PageType>();
+  const out: PageType[] = [];
+  for (const pageType of pageTypes) {
+    if (seen.has(pageType)) continue;
+    seen.add(pageType);
+    out.push(pageType);
+  }
+  return out;
+}
+
+function insertBeforeClose(
+  pageTypes: readonly PageType[],
+  pageType: PageType
+): PageType[] {
+  if (pageTypes.includes(pageType)) return [...pageTypes];
+  const out = [...pageTypes];
+  const closeIdx = out.lastIndexOf("close");
+  out.splice(closeIdx >= 0 ? closeIdx : out.length, 0, pageType);
+  return out;
+}
+
+function applyPromptNeedsToSequence(
+  pageTypes: readonly PageType[],
+  needs: {
+    data: boolean;
+    compare: boolean;
+    team: boolean;
+    timeline: boolean;
+  }
+): PageType[] {
+  let seq = uniquePageTypes(pageTypes);
+  if (needs.data) seq = insertBeforeClose(seq, "metrics");
+  if (needs.compare) seq = insertBeforeClose(seq, "compare");
+  if (needs.team) seq = insertBeforeClose(seq, "team");
+  if (needs.timeline) seq = insertBeforeClose(seq, "timeline");
+  return seq;
+}
+
+/** 按用户指定页数裁剪，但尽量保留收束页，避免 N 页请求裁掉 close。 */
+export function pageTypesFromPlan(
+  plan: readonly PagePlanItem[],
+  requested?: number
+): PageType[] {
+  const planned = plan.map((p) => p.pageType);
+  if (requested == null) return planned;
+
+  let out = planned.slice(0, requested);
+  const fallback = DEFAULT_PAGE_TYPE_SEQUENCE.filter((pt) => !out.includes(pt));
+  let fallbackIndex = 0;
+  while (out.length < requested) {
+    out.push(fallback[fallbackIndex++] || "breath");
+  }
+
+  const plannedClose = planned.includes("close");
+  const closeIdx = out.indexOf("close");
+  if (requested >= 3 && plannedClose && closeIdx < 0) {
+    out[out.length - 1] = "close";
+  } else if (closeIdx >= 0 && closeIdx !== out.length - 1) {
+    out.splice(closeIdx, 1);
+    out.push("close");
+  }
+  return out;
+}
+
+/** 页序优先用 DesignProfile（来自 BriefAgent）；无 profile 时用轻量需求启发兜底 */
+export function pickPagePlan(
+  userPrompt: string,
+  designProfile?: DesignProfile
+): PagePlanItem[] {
   const p = userPrompt.toLowerCase();
   const wantsData =
     /数据|指标|增长|营收|报表|chart|kpi|融资|路演/.test(p);
-  const wantsBrand = /品牌|slogan|发布会|发布|愿景|理念/.test(p);
   const wantsCompare = /对比|竞品|方案对比|表格|明细/.test(p);
   const wantsTeam = /团队|创始人|成员|顾问/.test(p);
   const wantsTimeline = /里程碑|时间线|路线图|发展历程|roadmap/.test(p);
+  const needs = {
+    data: wantsData,
+    compare: wantsCompare,
+    team: wantsTeam,
+    timeline: wantsTimeline,
+  };
 
-  if (wantsBrand && !wantsData) {
+  if (designProfile?.pageSequenceHints?.length) {
     return planFromPageTypes(
-      [
-        "hero",
-        "agenda",
-        "breath",
-        "pillars",
-        "solution",
-        "problem",
-        "metrics",
-        "close",
-      ],
-      { hero: "cover-center" }
+      applyPromptNeedsToSequence(designProfile.pageSequenceHints, needs),
+      {
+        hero:
+          designProfile.archetype === "editorialStory"
+            ? "cover-center"
+            : undefined,
+        evidence:
+          designProfile.archetype === "productLaunch" ||
+          designProfile.archetype === "dataMonument"
+            ? "chart-wide"
+            : undefined,
+      }
     );
   }
+
   if (wantsCompare) {
     return planFromPageTypes([
       "hero",
@@ -147,7 +165,7 @@ export function pickPagePlan(userPrompt: string): PagePlanItem[] {
       "timeline",
       "solution",
       "metrics",
-      "team",
+      "breath",
       "close",
     ]);
   }
@@ -159,7 +177,7 @@ export function pickPagePlan(userPrompt: string): PagePlanItem[] {
       "solution",
       "metrics",
       "evidence",
-      "team",
+      "breath",
       "close",
     ]);
   }
@@ -172,27 +190,11 @@ export function pickPagePlan(userPrompt: string): PagePlanItem[] {
         "evidence",
         "problem",
         "pillars",
-        "compare",
+        "breath",
         "close",
       ],
       { evidence: "chart-wide" }
     );
   }
   return planFromPageTypes(DEFAULT_PAGE_TYPE_SEQUENCE);
-}
-
-/** 兼容旧接口：只返回 layoutKey 序列 */
-export function pickLayoutSequence(userPrompt: string): LayoutKey[] {
-  return pickPagePlan(userPrompt).map((p) => p.layoutKey);
-}
-
-export function planToLayoutSequence(plan: PagePlanItem[]): LayoutKey[] {
-  return plan.map((p) => p.layoutKey);
-}
-
-export function ensurePagePlanItem(input: {
-  pageType?: string | null;
-  layoutKey?: string | null;
-}): PagePlanItem {
-  return resolvePageTypeAndLayout(input);
 }

@@ -6,24 +6,28 @@ import {
   mapPool,
   PUBLIC_ASSET_URL_PREFIX,
 } from "../clients/image";
+import {
+  colorFromAssetKey,
+  createSolidColorPng,
+  sizeFromAspectRatio,
+} from "../clients/solidPng";
 import type { AssetMap, MetaJson } from "../types";
 
 const PUBLIC_ASSET_DIR = path.join(process.cwd(), "public", "agent-assets");
 
-/** 失败时写本地灰图占位，不用远程 placehold */
+/** 失败时写本地纯色占位，不用远程 placehold */
 async function writeLocalPlaceholder(
   outDir: string,
-  assetKey: string
+  assetKey: string,
+  aspectRatio?: string
 ): Promise<{ url: string; localPath: string }> {
-  const grayPng = Buffer.from(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-    "base64"
-  );
+  const { width, height } = sizeFromAspectRatio(aspectRatio);
+  const png = createSolidColorPng(width, height, colorFromAssetKey(assetKey));
   await mkdir(outDir, { recursive: true });
   await mkdir(PUBLIC_ASSET_DIR, { recursive: true });
   const fileName = `${assetKey}.png`;
   const localPath = path.join(outDir, fileName);
-  await writeFile(localPath, grayPng);
+  await writeFile(localPath, png);
   await copyFile(localPath, path.join(PUBLIC_ASSET_DIR, fileName));
   return {
     url: `${PUBLIC_ASSET_URL_PREFIX}/${fileName}`,
@@ -43,6 +47,12 @@ export async function runImageAgent(opts: {
   const assetsDir =
     outDir || path.join(process.cwd(), "agent-output", "assets");
   const map: AssetMap = {};
+
+  if (config.skipImageGen || config.mock) {
+    console.log(
+      `[ImageAgent] 跳过生图 API（${config.skipImageGen ? "skipImageGen" : "mock"}），写入 ${tasks.length} 张纯色占位`
+    );
+  }
 
   const results = await mapPool(
     tasks,
@@ -76,7 +86,12 @@ export async function runImageAgent(opts: {
       };
     } else {
       console.warn(`[ImageAgent] ${r.key} 失败: ${r.error}`);
-      const ph = await writeLocalPlaceholder(assetsDir, r.key);
+      const task = tasks.find((t) => t.assetKey === r.key);
+      const ph = await writeLocalPlaceholder(
+        assetsDir,
+        r.key,
+        task?.aspectRatio
+      );
       map[r.key] = { url: ph.url, localPath: ph.localPath };
     }
   }

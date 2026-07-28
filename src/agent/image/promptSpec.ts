@@ -5,21 +5,14 @@ export type ImageKind =
   | "illustration"
   | "decoration"
   | "texture"
-  | "hero";
+  | "hero"
+  /** 透明底抠图（头像/装饰物） */
+  | "cutout";
 
 const ROLE_IMAGE_KIND: Partial<Record<SlotRole, ImageKind>> = {
   image: "illustration",
   decor: "decoration",
 };
-
-/** 常见生图服务支持的尺寸枚举（优先匹配） */
-const ASPECT_PRESETS: Array<{ label: string; w: number; h: number }> = [
-  { label: "1792x1024", w: 1792, h: 1024 }, // 16:9 横
-  { label: "1024x1792", w: 1024, h: 1792 }, // 9:16 竖
-  { label: "1024x1024", w: 1024, h: 1024 },
-  { label: "1536x1024", w: 1536, h: 1024 },
-  { label: "1024x1536", w: 1024, h: 1536 },
-];
 
 export function inferImageKind(opts: {
   role: string;
@@ -31,7 +24,6 @@ export function inferImageKind(opts: {
 }): ImageKind {
   const { role, layoutKey, width, height } = opts;
   if (layoutKey === "cover" || layoutKey === "ending") {
-    // 全幅背景倾向 hero
     if (width >= 900 && height >= 500) return "hero";
   }
   if (
@@ -48,10 +40,24 @@ export function inferImageKind(opts: {
   return "illustration";
 }
 
+/** 按占位宽高比映射到生图服务常用 size（比例优先；任意像素常被忽略导致拉伸） */
+const ASPECT_PRESETS: Array<{ label: string; w: number; h: number }> = [
+  { label: "16:9", w: 16, h: 9 },
+  { label: "3:2", w: 3, h: 2 },
+  { label: "4:3", w: 4, h: 3 },
+  { label: "1:1", w: 1, h: 1 },
+  { label: "3:4", w: 3, h: 4 },
+  { label: "2:3", w: 2, h: 3 },
+  { label: "9:16", w: 9, h: 16 },
+  { label: "21:9", w: 21, h: 9 },
+];
+
 export function mapAspectRatio(width: number, height: number): string {
-  if (width <= 0 || height <= 0) return "1024x1024";
-  const ratio = width / height;
-  let best = ASPECT_PRESETS[0];
+  const w = Math.round(width);
+  const h = Math.round(height);
+  if (w <= 0 || h <= 0) return "1:1";
+  const ratio = w / h;
+  let best = ASPECT_PRESETS[0]!;
   let bestDiff = Infinity;
   for (const p of ASPECT_PRESETS) {
     const diff = Math.abs(p.w / p.h - ratio);
@@ -69,8 +75,24 @@ const KIND_PROMPT: Record<ImageKind, string> = {
   decoration:
     "subtle brand accent atmosphere only when explicitly needed, prefer real materials with clear subject, no abstract waves, no empty geometry strips, no text, no logos",
   texture: "seamless abstract texture pattern, soft colors, no text",
-  hero: "cinematic wide hero background, 16:9, darker midtones, soft vignette, clear darker band for text overlay, atmospheric, never pale or white wash, no text overlay",
+  hero: "editorial wide photograph as media panel only, atmospheric subject, natural light, no text overlay, no logos, never used as a text backdrop",
+  cutout:
+    "isolated subject on fully transparent background, PNG with alpha channel, clean edge cutout, no drop shadow baked into pixels unless requested, no text, no logos, no solid backdrop",
 };
+
+/** 解析 HTML data-image-kind → ImageKind */
+export function parseHtmlImageKind(raw?: string | null): ImageKind {
+  const k = String(raw || "")
+    .trim()
+    .toLowerCase();
+  if (k === "photo") return "photo";
+  if (k === "cutout" || k === "transparent" || k === "avatar") return "cutout";
+  if (k === "decoration" || k === "decor") return "decoration";
+  if (k === "texture") return "texture";
+  if (k === "hero") return "hero";
+  if (k === "illustration") return "illustration";
+  return "illustration";
+}
 
 /**
  * 在 LLM 文案 Prompt 后追加尺寸/类型约束
@@ -85,13 +107,19 @@ export function enrichImagePrompt(opts: {
   paletteHint?: string;
 }): string {
   const { basePrompt, width, height, kind, aspectRatio, paletteHint } = opts;
+  const w = Math.round(width);
+  const h = Math.round(height);
   const kindHint = KIND_PROMPT[kind];
+  const sizeToken = aspectRatio || mapAspectRatio(w, h);
   return [
     basePrompt.trim().replace(/[.\s]+$/, ""),
     paletteHint?.trim() || "",
     `image type: ${kind} (${kindHint})`,
-    `target canvas slot: ${Math.round(width)}x${Math.round(height)}px`,
-    `generate at aspectRatio ${aspectRatio}`,
+    kind === "cutout"
+      ? "output PNG with transparent background (alpha), subject only"
+      : "",
+    `slot ${w}x${h}px, generate at aspect ratio ${sizeToken}`,
+    "compose subject to fill the frame; keep natural proportions (no stretched anatomy)",
     "no watermark, no readable text, no logos",
   ]
     .filter(Boolean)

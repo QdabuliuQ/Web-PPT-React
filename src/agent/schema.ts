@@ -13,6 +13,21 @@ const PAGE_MAX = PLATFORM_LIMITS.agentPages.max;
 const HTML_PAGE_MIN = PLATFORM_LIMITS.agentPagesHtml.min;
 const HTML_PAGE_MAX = PLATFORM_LIMITS.agentPagesHtml.max;
 
+export const VisualFamilySchema = z.enum([
+  "editorial",
+  "monument",
+  "product",
+  "stage",
+]);
+
+export const ThemeMaterialSchema = z.object({
+  surface: z.string().min(1),
+  light: z.string().min(1),
+  coverScrim: z.number().min(0).max(1),
+  imageMaterials: z.string().min(1),
+  coverImageHint: z.string().min(1),
+});
+
 export const ThemeTokenSchema = z.object({
   templateName: z.string().min(1),
   category: z.string().min(1),
@@ -24,8 +39,17 @@ export const ThemeTokenSchema = z.object({
   textOnDark: z.string().min(1),
   fontTitle: z.string().min(1),
   fontBody: z.string().min(1),
+  fontNumeric: z.string().min(1).optional(),
   globalBgPrompt: z.string().optional(),
   globalDecorPrompt: z.string().optional(),
+  visualFamily: VisualFamilySchema.optional(),
+  material: ThemeMaterialSchema.optional(),
+});
+
+export const LayoutKnobsSchema = z.object({
+  density: z.enum(["airy", "normal", "dense"]).optional(),
+  emphasis: z.enum(["title", "image", "number"]).optional(),
+  align: z.enum(["left", "split", "center"]).optional(),
 });
 
 export const LayoutKeySchema = z.enum([
@@ -67,6 +91,25 @@ export const PageTypeSchema = z.enum([
   "team",
   "timeline",
   "close",
+]);
+
+export const DesignArchetypeSchema = z.enum([
+  "consulting",
+  "productLaunch",
+  "dataMonument",
+  "editorialStory",
+  "opsDashboard",
+  "stageGala",
+  "personalReview",
+]);
+
+export const DeckGenreIdSchema = z.enum([
+  "corp-gala",
+  "personal-review",
+  "pitch",
+  "brand",
+  "consumer",
+  "general",
 ]);
 
 export const PlacementSchema = z.enum(PLACEMENT_KEYS);
@@ -225,4 +268,131 @@ export const ContentAgentLlmSchema = z.object({
     )
     .min(PAGE_MIN)
     .max(PAGE_MAX),
+});
+
+/** Story IR：内容先于版式（对 LLM 输出做宽松清洗） */
+const optionalEnum = <T extends string>(values: readonly T[]) =>
+  z.preprocess((v) => {
+    if (v == null || v === "") return undefined;
+    const s = String(v).trim().toLowerCase();
+    return (values as readonly string[]).includes(s) ? s : undefined;
+  }, z.enum(values as [T, ...T[]]).optional());
+
+const optionalString = z.preprocess((v) => {
+  if (v == null) return undefined;
+  const s = String(v).trim();
+  return s.length ? s : undefined;
+}, z.string().optional());
+
+const requiredStringLoose = z.preprocess((v) => {
+  if (v == null) return "";
+  return String(v).trim();
+}, z.string());
+
+export const StoryPageDraftSchema = z.object({
+  pageId: optionalString,
+  pageType: PageTypeSchema,
+  claim: requiredStringLoose,
+  title: requiredStringLoose,
+  subtitle: optionalString,
+  body: optionalString,
+  bullets: z.array(z.union([z.string(), z.number()]).transform(String)).optional(),
+  metrics: z
+    .array(
+      z.object({
+        value: requiredStringLoose,
+        label: requiredStringLoose,
+      })
+    )
+    .optional(),
+  steps: z
+    .array(
+      z.object({
+        title: requiredStringLoose,
+        body: requiredStringLoose,
+        iconName: optionalString,
+      })
+    )
+    .optional(),
+  pillars: z
+    .array(
+      z.object({
+        title: requiredStringLoose,
+        body: requiredStringLoose,
+        iconName: optionalString,
+      })
+    )
+    .optional(),
+  items: z
+    .array(
+      z.object({
+        title: requiredStringLoose,
+        body: requiredStringLoose,
+        iconName: optionalString,
+      })
+    )
+    .optional(),
+  quote: optionalString,
+  attribution: optionalString,
+  leftTitle: optionalString,
+  leftBody: optionalString,
+  rightTitle: optionalString,
+  rightBody: optionalString,
+  members: z
+    .array(
+      z.object({
+        name: requiredStringLoose,
+        role: requiredStringLoose,
+        blurb: requiredStringLoose,
+        imagePrompt: optionalString,
+      })
+    )
+    .optional(),
+  timeline: z
+    .array(
+      z.object({
+        label: requiredStringLoose,
+        detail: requiredStringLoose,
+      })
+    )
+    .optional(),
+  footer: optionalString,
+  contact: optionalString,
+  caption: optionalString,
+  imageIntent: requiredStringLoose,
+  density: optionalEnum(["airy", "normal", "dense"] as const),
+  emphasis: optionalEnum(["title", "image", "number"] as const),
+  align: optionalEnum(["left", "split", "center"] as const),
+  composition: optionalEnum(["split", "band", "card", "solid"] as const),
+  preferModules: z.preprocess((v) => {
+    if (v == null) return undefined;
+    if (typeof v === "boolean") return v;
+    if (v === "true" || v === 1) return true;
+    if (v === "false" || v === 0) return false;
+    return undefined;
+  }, z.boolean().optional()),
+});
+
+export const StoryDeckLlmSchema = z.object({
+  name: requiredStringLoose.pipe(z.string().min(1).max(160)),
+  angle: requiredStringLoose,
+  pages: z
+    .array(StoryPageDraftSchema)
+    .min(HTML_PAGE_MIN)
+    .max(HTML_PAGE_MAX),
+});
+
+export const DesignBriefLlmSchema = z.object({
+  genreId: DeckGenreIdSchema.default("general"),
+  label: requiredStringLoose.pipe(z.string().min(1).max(80)),
+  visualFamily: VisualFamilySchema.default("editorial"),
+  archetype: DesignArchetypeSchema.default("consulting"),
+  narrativeShape: requiredStringLoose,
+  pageSequenceHints: z
+    .array(PageTypeSchema)
+    .min(3)
+    .max(HTML_PAGE_MAX),
+  themeHints: requiredStringLoose,
+  layoutGuidance: requiredStringLoose,
+  reason: requiredStringLoose.optional(),
 });
